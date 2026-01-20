@@ -1,6 +1,6 @@
 {
   "name": "true-impact",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "private": true,
   "description": "True Impact is an open-source client impact tracking platform",
   "main": "index.js",
