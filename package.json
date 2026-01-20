@@ -1,0 +1,13 @@
+{
+  "name": "true-impact",
+  "version": "0.0.1",
+  "private": true,
+  "description": "True Impact is an open-source client impact tracking platform",
+  "main": "index.js",
+  "author": "Aaron Plahn",
+  "license": "MIT",
+  "workspaces": [
+    "apps/*",
+    "libs/*"
+  ]
+}
