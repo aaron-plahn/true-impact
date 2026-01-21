@@ -1,13 +1,18 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import supertokens from 'supertokens-node';
-import { SuperTokensExceptionFilter } from 'supertokens-nestjs';
+import { SuperTokensExceptionFilter, SuperTokensModule } from 'supertokens-nestjs';
+import { ConfigService } from '@nestjs/config';
+import { SupertokensConfigService } from './auth/supertokens-config.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   app.enableCors({
-    origin: ['http://localhost:4200'],
+    origin: [
+      // TODO Take this from the config
+      "http://localhost:4200"
+    ],
     allowedHeaders: ['content-type', ...supertokens.getAllCORSHeaders()],
     credentials: true,
   });

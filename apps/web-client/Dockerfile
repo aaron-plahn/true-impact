@@ -1,5 +1,5 @@
 # Stage 1: Build the React application
-FROM node:20-alpine AS build
+FROM node:24-alpine AS build
 WORKDIR /app
 COPY apps/web-client/package.json yarn.lock ./
 RUN yarn install --frozen-lock-file
@@ -10,6 +10,6 @@ RUN yarn run react-scripts build
 FROM nginx:alpine AS client
 COPY --from=build app/build /usr/share/nginx/html
 EXPOSE 80
-# CMD ["tail","-f","/dev/null"]
 RUN echo "Static asset server for client started"
 CMD ["nginx", "-g", "daemon off;"]
+# CMD ["tail","-f","/dev/null"]

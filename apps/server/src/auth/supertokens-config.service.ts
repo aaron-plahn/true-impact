@@ -23,7 +23,7 @@ export class SupertokensConfigService implements SuperTokensModuleOptionsFactory
         appName: 'True Impact Authentication Server',
         apiDomain: 'http://localhost:3234',
         apiBasePath: '/auth',
-        origin: 'http://localhost',
+        origin: 'http://localhost:4200',
         // websiteDomain: 'http://localhost:4200',
         websiteBasePath: '/auth',
       },
