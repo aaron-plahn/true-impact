@@ -1,5 +1,7 @@
 # @true-impact/web-client
+
 ## About
+
 This is the web client for the True Impact platform. It is built with React and communicates with the NestJS back-end via a REST API.
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
