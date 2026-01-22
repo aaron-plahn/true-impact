@@ -1,1 +1,1 @@
-export const SiteConfigContext = {}
+export const SiteConfigContext = {};

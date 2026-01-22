@@ -1,4 +1,4 @@
 export type TrueImpactClientConfig = {
-    apiDomain: string;
-    webClientDomain: string;
-}
+  apiDomain: string;
+  webClientDomain: string;
+};

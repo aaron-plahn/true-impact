@@ -18,8 +18,10 @@ import { SupertokensMiddleware } from './auth/supertokens.middleware';
     SuperTokensModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) =>
-        new SupertokensConfigService(configService).createSuperTokensModuleOptions(),
-      inject: [ConfigService]
+        new SupertokensConfigService(
+          configService,
+        ).createSuperTokensModuleOptions(),
+      inject: [ConfigService],
     }),
   ],
   controllers: [AppController],

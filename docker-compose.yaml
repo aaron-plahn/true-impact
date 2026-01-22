@@ -32,7 +32,7 @@ services:
     env_file:
       - .env.local
     environment:
-    #   POSTGRESQL_CONNECTION_URI: "postgresql://supertokens_user:somePassword@db:5432/supertokens"
+      #   POSTGRESQL_CONNECTION_URI: "postgresql://supertokens_user:somePassword@db:5432/supertokens"
       API_KEYS: $SUPERTOKENS_API_KEYS
     networks:
       - app_network

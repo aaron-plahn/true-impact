@@ -15,7 +15,7 @@ describe('AppController', () => {
 
   describe('root', () => {
     it('should return a status message', () => {
-      expect(appController.sanityCheck()).toContain("True Impact")
+      expect(appController.sanityCheck()).toContain('True Impact');
     });
   });
 });

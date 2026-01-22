@@ -5,11 +5,11 @@ import session from 'supertokens-node/recipe/session';
 
 @Controller()
 export class AppController {
-  constructor() { }
+  constructor() {}
 
   @Get()
   sanityCheck(): string {
-    return "The True Impact server is live!"
+    return 'The True Impact server is live!';
   }
 
   @Get('/sessioninfo')

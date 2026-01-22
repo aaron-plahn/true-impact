@@ -10,14 +10,20 @@ import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class SupertokensConfigService implements SuperTokensModuleOptionsFactory {
-  constructor(private readonly configService: ConfigService){}
+  constructor(private readonly configService: ConfigService) {}
 
   createSuperTokensModuleOptions(): SuperTokensModuleOptions {
     const staticConfig: SuperTokensModuleOptions = {
       framework: 'express',
       supertokens: {
-        connectionURI: this.configService.get('SUPERTOKENS_CONNECTION_URI','http://supertokens:3567'),
-        apiKey: this.configService.get('SUPERTOKENS_API_KEYS','abcdefghijklmnop123456xyz'),
+        connectionURI: this.configService.get(
+          'SUPERTOKENS_CONNECTION_URI',
+          'http://supertokens:3567',
+        ),
+        apiKey: this.configService.get(
+          'SUPERTOKENS_API_KEYS',
+          'abcdefghijklmnop123456xyz',
+        ),
       },
       appInfo: {
         appName: 'True Impact Authentication Server',
