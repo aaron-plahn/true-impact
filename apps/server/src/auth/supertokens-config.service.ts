@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import Dashboard from 'supertokens-node/recipe/dashboard';
-import Session from 'supertokens-node/recipe/session';
-import EmailPassword from 'supertokens-node/recipe/emailpassword';
+import { ConfigService } from '@nestjs/config';
 import {
   SuperTokensModuleOptions,
   SuperTokensModuleOptionsFactory,
 } from 'node_modules/supertokens-nestjs/dist/supertokens.types';
-import { ConfigService } from '@nestjs/config';
+import Dashboard from 'supertokens-node/recipe/dashboard';
+import EmailPassword from 'supertokens-node/recipe/emailpassword';
+import Session from 'supertokens-node/recipe/session';
 
 @Injectable()
 export class SupertokensConfigService implements SuperTokensModuleOptionsFactory {
@@ -27,9 +27,9 @@ export class SupertokensConfigService implements SuperTokensModuleOptionsFactory
       },
       appInfo: {
         appName: 'True Impact Authentication Server',
-        apiDomain: 'http://localhost:3234',
+        apiDomain: `${this.configService.get('API_DOMAIN', 'http://localhost')}:${this.configService.get('API_PORT', 3001)}`,
         apiBasePath: '/auth',
-        origin: 'http://localhost:4200',
+        origin: `${this.configService.get('CLIENT_DOMAIN', 'http://localhost')}:${this.configService.get('CLIENT_PORT', 8080)}`,
         // websiteDomain: 'http://localhost:4200',
         websiteBasePath: '/auth',
       },

@@ -1,7 +1,7 @@
 import { Controller, Get, UseGuards } from '@nestjs/common';
-import { AuthGuard } from './auth/auth.guard';
-import { Session } from 'supertokens-nestjs';
 import session from 'supertokens-node/recipe/session';
+import { AuthGuard } from './auth/auth.guard';
+import { Session } from './auth/session.decorator';
 
 @Controller()
 export class AppController {

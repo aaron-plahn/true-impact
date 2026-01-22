@@ -30,7 +30,7 @@ COPY --from=build /usr/src/app/dist ./dist
 
 # Expose the port your NestJS application listens on
 # TODO env var
-EXPOSE 3001
+EXPOSE $API_PORT
 
 # Start the application
 CMD ["node", "dist/main.js"]

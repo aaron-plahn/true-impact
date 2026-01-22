@@ -1,6 +1,6 @@
 import { JSX, useEffect, useState } from "react";
-import { Loading } from "../Loading";
 import { config } from "../../config/config.local";
+import { Loading } from "../Loading";
 
 type UserInfo = {};
 
@@ -32,8 +32,6 @@ export const UserProfile = (): JSX.Element => {
       fetch(new URL(`${config.apiDomain}/sessioninfo`).toString()).then(
         async (response) => {
           const body = await response.json();
-
-          console.log({ body });
 
           if (!response.ok) {
             setErrorInfo({
@@ -68,5 +66,9 @@ export const UserProfile = (): JSX.Element => {
     return <Loading />;
   }
 
+  /**
+   * This is not exactly what we want to do. This is just a placeholder for now. Remove this soon
+   * in favour of hitting a `who-am-i` endpoint.
+   */
   return <div>{JSON.stringify(userInfo)}</div>;
 };

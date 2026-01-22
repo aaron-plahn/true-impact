@@ -15,11 +15,20 @@ export class AuthGuard implements CanActivate {
     const req = ctx.getRequest();
     const resp = ctx.getResponse();
 
-    // If the session doesn't exist and {sessionRequired: true} is passed to the AuthGuard constructor (default is true),
-    // getSession will throw an error that will be handled by the exception filter, returning a 401 response.
+    /**
+     * If the session doesn't exist and {sessionRequired: true} is passed to the AuthGuard constructor (default is true),
+     * getSession will throw an error that will be handled by the exception filter, returning a 401 response.
+     */
 
-    // To avoid an error when the session doesn't exist, pass {sessionRequired: false} to the AuthGuard constructor.
-    // In this case, req.session will be undefined if the session doesn't exist.
+    /**
+     * To avoid an error when the session doesn't exist, pass {sessionRequired: false} to the AuthGuard constructor.
+     * In this case, req.session will be undefined if the session doesn't exist.
+     *
+     * We may want to have a separate `OptionalAuthGuard` in case we want to enhance access to private resources for
+     * authenticated users but serve minimal amount of information to the public. It's not clear whether we will
+     * hit this use case for this project.
+     */
+
     const session = await supertokensRecipeSession.getSession(
       req,
       resp,
