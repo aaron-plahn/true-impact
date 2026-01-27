@@ -10,6 +10,8 @@ import {
 } from '@true-impact/data-types';
 import { TrueImpactError } from '@true-impact/data-types/error-handling';
 
+const GENERATE_A_NEW_ID = 'GENERATE_A_NEW_ID';
+
 interface ValidateInvariants<T> {
   // Should we make this an either?
   validateInvariants(): T | TrueImpactError;
@@ -82,6 +84,19 @@ export class Client extends Entity implements ValidateInvariants<Client> {
     return allErrors;
   }
 
+  // DO We need this?
+  setInitialId(generatedId: string): Client | TrueImpactError {
+    if (this.id !== GENERATE_A_NEW_ID) {
+      return new TrueImpactError(
+        `Cannot overwrite id: ${this.id} with generated ID: ${generatedId}`,
+      );
+    }
+
+    this.id = generatedId;
+
+    return this;
+  }
+
   toPersistenceDto(): ClientPeristenceDto {
     return JSON.parse(JSON.stringify(this));
   }
@@ -100,7 +115,8 @@ export class Client extends Entity implements ValidateInvariants<Client> {
   }
 
   public static fromCreateClientCommand({
-    aggregateComposteIdentifier: { id: clientId },
+    // TODO remove this
+    // aggregateComposteIdentifier: { id: clientId },
     firstName,
     lastName,
     dateOfBirth,
@@ -108,7 +124,7 @@ export class Client extends Entity implements ValidateInvariants<Client> {
     community,
   }: CreateClient) {
     return new Client({
-      id: clientId,
+      id: GENERATE_A_NEW_ID,
       fullName: { firstName, lastName },
       dateOfBirth,
       isIndigenous,

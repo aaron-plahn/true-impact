@@ -1,19 +1,26 @@
 import {
+  Body,
   Controller,
   Get,
   Param,
+  Post,
   UseFilters,
   UseInterceptors,
 } from '@nestjs/common';
 import { QueryResponseInterceptor } from '../../common/framework';
 import { ResourceNotFoundFilter } from '../../common/framework/exceptions';
+import { CreateClient } from './commands/create-client.command';
+import { CreateClientCommandHandler } from './commands/create-client.command-handler';
 import { ClientQueryService } from './services/client-query.service';
 
 @UseFilters(ResourceNotFoundFilter)
 @UseInterceptors(QueryResponseInterceptor)
 @Controller('clients')
 export class ClientController {
-  constructor(private readonly clientsService: ClientQueryService) {}
+  constructor(
+    private readonly clientsService: ClientQueryService,
+    private readonly creationCommandHandler: CreateClientCommandHandler,
+  ) {}
 
   @Get('/:id')
   async fetchById(@Param('id') id: string) {
@@ -21,5 +28,11 @@ export class ClientController {
   }
 
   // TODO We want a dedicated /commands endpoint for extensibility
-  async create() {}
+  @Post('')
+  async create(@Body() creationCommand: CreateClient) {
+    // TODO inject a CommandHandlerService
+    const result = await this.creationCommandHandler.execute(creationCommand);
+
+    return result;
+  }
 }

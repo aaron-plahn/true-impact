@@ -1,0 +1,70 @@
+import { HttpStatus, INestApplication } from '@nestjs/common';
+import { Test } from '@nestjs/testing';
+import request from 'supertest';
+import { Client } from '../client.aggregate-root';
+import { ClientModule } from '../client.module';
+import { CreateClient } from './create-client.command';
+
+const commandType = 'CREATE_CLIENT';
+
+const endpoint = '/clients';
+
+const command: CreateClient = {
+  // TODO remove this?
+  aggregateComposteIdentifier: {
+    id: '1',
+    type: 'client',
+  },
+  firstName: 'Aaron',
+  lastName: 'DeBaron',
+  dateOfBirth: '1999-12-31',
+  isIndigenous: 'Yes',
+  community: 'Tha Rez',
+};
+
+describe(commandType, () => {
+  let app: INestApplication;
+
+  beforeAll(async () => {
+    const testModule = await Test.createTestingModule({
+      imports: [ClientModule],
+    }).compile();
+
+    app = testModule.createNestApplication();
+
+    await app.init();
+  });
+
+  describe('When the command is valid', () => {
+    it(`should create the client`, async () => {
+      const res = await request(app.getHttpServer())
+        .post(endpoint)
+        .send(command);
+
+      expect(res.status).toBe(HttpStatus.CREATED);
+
+      const { id } = res.body;
+
+      const fetchResponse = await request(app.getHttpServer()).get(
+        `${endpoint}/${id}`,
+      );
+
+      const { fullName, community, isIndigenous, dateOfBirth } =
+        fetchResponse.body as Client;
+
+      const { firstName, lastName } = fullName;
+
+      expect(id).not.toContain('GENERATE');
+
+      expect(firstName).toEqual(command.firstName);
+
+      expect(lastName).toEqual(command.lastName);
+
+      expect(community).toEqual(command.community);
+
+      expect(isIndigenous).toEqual(command.isIndigenous);
+
+      expect(dateOfBirth).toEqual(command.dateOfBirth);
+    });
+  });
+});
