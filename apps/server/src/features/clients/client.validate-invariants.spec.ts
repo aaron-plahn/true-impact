@@ -4,6 +4,7 @@ import { Client, ClientPeristenceDto } from './client.aggregate-root';
 
 // TODO Build test instance
 const validDtoWihtoutOptionalProperties: ClientPeristenceDto = {
+  id: '1',
   fullName: {
     firstName: 'Ronald',
     // middleName: undefined,
@@ -41,7 +42,7 @@ describe(`Client.validateInvariants`, () => {
     describe(`when the client is listed as non-indigenous, but has an assigned community`, () => {
       it(`should return the expected error`, () => {
         const invalidDto = clonePlainObject(validDtoWihtoutOptionalProperties, {
-          isIndigenous: false,
+          isIndigenous: 'No',
           community: 'Blue Lake',
         });
 
@@ -55,6 +56,27 @@ describe(`Client.validateInvariants`, () => {
 
         expect(errorMessage).toContain(
           `A non-indigenous client cannot be registered to a community`,
+        );
+      });
+    });
+
+    describe(`when the has a community but indigenous is "Unknown"`, () => {
+      it(`should return the expected error`, () => {
+        const invalidDto = clonePlainObject(validDtoWihtoutOptionalProperties, {
+          isIndigenous: 'Unknown',
+          community: 'Red Mountain',
+        });
+
+        const result = Client.fromPersistenceDto(
+          invalidDto as ClientPeristenceDto,
+        );
+
+        expect(result).toBeInstanceOf(TrueImpactError);
+
+        const errorMessage = result.toString();
+
+        expect(errorMessage).toContain(
+          `When specifying a client's community, the client must be listed as Indigenous`,
         );
       });
     });

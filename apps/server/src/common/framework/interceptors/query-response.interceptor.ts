@@ -1,5 +1,8 @@
 import { CallHandler, ExecutionContext, NestInterceptor } from '@nestjs/common';
-import { TrueImpactBadUserInputError } from '@true-impact/data-types/error-handling';
+import {
+  InvariantValidationError,
+  TrueImpactBadUserInputError,
+} from '@true-impact/data-types/error-handling';
 import { map, Observable } from 'rxjs';
 import { ResourceNotFoundException } from '../exceptions';
 
@@ -15,6 +18,10 @@ export class QueryResponseInterceptor<T> implements NestInterceptor<T, T> {
       map((result) => {
         if (isNotFound(result)) {
           throw new ResourceNotFoundException();
+        }
+
+        if (result instanceof InvariantValidationError) {
+          throw new TrueImpactBadUserInputError([result]);
         }
 
         if (result instanceof TrueImpactBadUserInputError) {

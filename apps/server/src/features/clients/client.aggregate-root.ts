@@ -73,10 +73,18 @@ export class Client extends Entity implements ValidateInvariants<Client> {
   validateComplexInvariants(): TrueImpactError[] {
     const allErrors: TrueImpactError[] = [];
 
-    if (!this.isIndigenous && isNonEmptyString(this.community)) {
+    if (this.isIndigenous === 'No' && isNonEmptyString(this.community)) {
       allErrors.push(
         new TrueImpactError(
           `A non-indigenous client cannot be registered to a community`,
+        ),
+      );
+    }
+
+    if (this.isIndigenous === 'Unknown' && isNonEmptyString(this.community)) {
+      allErrors.push(
+        new TrueImpactError(
+          `When specifying a client's community, the client must be listed as Indigenous`,
         ),
       );
     }
@@ -122,13 +130,15 @@ export class Client extends Entity implements ValidateInvariants<Client> {
     dateOfBirth,
     isIndigenous,
     community,
-  }: CreateClient) {
-    return new Client({
+  }: CreateClient): Client | TrueImpactError {
+    const unverifiedInstance = new Client({
       id: GENERATE_A_NEW_ID,
       fullName: { firstName, lastName },
       dateOfBirth,
       isIndigenous,
       community,
     });
+
+    return unverifiedInstance.validateInvariants();
   }
 }

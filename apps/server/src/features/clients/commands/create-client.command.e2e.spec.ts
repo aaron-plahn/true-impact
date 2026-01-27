@@ -1,5 +1,6 @@
 import { HttpStatus, INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
+import { clonePlainObject } from '@true-impact/data-types';
 import request from 'supertest';
 import { Client } from '../client.aggregate-root';
 import { ClientModule } from '../client.module';
@@ -65,6 +66,62 @@ describe(commandType, () => {
       expect(isIndigenous).toEqual(command.isIndigenous);
 
       expect(dateOfBirth).toEqual(command.dateOfBirth);
+    });
+  });
+
+  describe(`When the command is invalid`, () => {
+    describe(`When the client is not indigenous but has a community`, () => {
+      const invalidCommand = clonePlainObject(command, {
+        isIndigenous: 'No',
+        community: "World's Best Rez",
+      });
+
+      it(`should return the expected error`, async () => {
+        const res = await request(app.getHttpServer())
+          .post(endpoint)
+          .send(invalidCommand);
+
+        expect(res.status).toBe(HttpStatus.BAD_REQUEST);
+
+        const { message } = res.body;
+
+        expect(message).toContain('Client');
+
+        expect(message).toContain('ill-formed');
+
+        expect(message).toContain(
+          'non-indigenous client cannot be registered to a community',
+        );
+      });
+    });
+
+    describe(`When it is unknown whether the client is indigenous, but they have a community`, () => {
+      const invalidCommand = clonePlainObject(command, {
+        isIndigenous: 'Unknown',
+        community: 'Northville',
+      });
+
+      it(`should return the expected error`, async () => {
+        const res = await request(app.getHttpServer())
+          .post(endpoint)
+          .send(invalidCommand);
+
+        expect(res.status).toBe(HttpStatus.BAD_REQUEST);
+
+        const { message } = res.body;
+
+        expect(message).toContain('Client');
+
+        expect(message).toContain('ill-formed');
+
+        expect(message).toContain(
+          `When specifying a client's community, the client must be listed as Indigenous`,
+        );
+      });
+    });
+
+    describe(`when the command has an invalid type`, () => {
+      it.todo(`should have a fuzz-test`);
     });
   });
 });

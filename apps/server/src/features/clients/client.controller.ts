@@ -8,12 +8,15 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { QueryResponseInterceptor } from '../../common/framework';
-import { ResourceNotFoundFilter } from '../../common/framework/exceptions';
+import {
+  BadUserInputFilter,
+  ResourceNotFoundFilter,
+} from '../../common/framework/exceptions';
 import { CreateClient } from './commands/create-client.command';
 import { CreateClientCommandHandler } from './commands/create-client.command-handler';
 import { ClientQueryService } from './services/client-query.service';
 
-@UseFilters(ResourceNotFoundFilter)
+@UseFilters(ResourceNotFoundFilter, BadUserInputFilter)
 @UseInterceptors(QueryResponseInterceptor)
 @Controller('clients')
 export class ClientController {

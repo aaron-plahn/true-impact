@@ -27,7 +27,7 @@ export abstract class Entity {
    * and errors from the call to `validateComplexInvariants` (must be implemented by the class extending `Entity`).
    * Skips calling `validateComplexInvariants` if the schema validation fails to avoid the need for extensive null checks.
    */
-  validateInvariants<T extends Entity>(this: T): TrueImpactError | T {
+  validateInvariants<T extends Entity>(this: T): InvariantValidationError | T {
     const schemaValidationErrors = this.validateAgainstSchema();
 
     if (schemaValidationErrors.length > 0) {
