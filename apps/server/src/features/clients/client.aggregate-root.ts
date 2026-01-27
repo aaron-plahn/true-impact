@@ -3,9 +3,16 @@ import { CreateClient } from './commands/create-client.command';
 // TODO Barrel export?
 import { FullName, FullNameDto } from '../../common/full-name';
 
+import {
+  Entity,
+  isNonEmptyString,
+  NonEmptyString,
+} from '@true-impact/data-types';
+import { TrueImpactError } from '@true-impact/data-types/error-handling';
+
 interface ValidateInvariants<T> {
   // Should we make this an either?
-  validateInvariants(): T | Error;
+  validateInvariants(): T | TrueImpactError;
 }
 
 export class ClientPeristenceDto {
@@ -18,13 +25,19 @@ export class ClientPeristenceDto {
   community?: string;
 }
 
-export class Client implements ValidateInvariants<Client> {
+export class Client extends Entity implements ValidateInvariants<Client> {
   fullName: FullName;
 
   dateOfBirth: string; // Date?
 
   isIndigenous: 'Yes' | 'No' | 'Unknown'; // this is a smell
 
+  @NonEmptyString({
+    label: 'Community',
+    description: 'the Inidgenous community to which the client is registered',
+    isOptional: true,
+    isArray: false,
+  })
   community?: string;
 
   constructor({
@@ -33,6 +46,8 @@ export class Client implements ValidateInvariants<Client> {
     isIndigenous,
     community,
   }: ClientPeristenceDto) {
+    super();
+
     this.fullName = FullName.fromDto(fullName);
 
     this.dateOfBirth = dateOfBirth;
@@ -42,30 +57,18 @@ export class Client implements ValidateInvariants<Client> {
     this.community = community;
   }
 
-  /**
-   * TODO Use annotations \ class-validator style approach to validate schemas.
-   */
-  validateSchema(): Error[] {
-    const allErrors = [];
+  validateComplexInvariants(): TrueImpactError[] {
+    const allErrors: TrueImpactError[] = [];
 
-    return allErrors;
-  }
-
-  validateInvariants(): Error | Client {
-    const allErrors: Error[] = [];
-
-    const schemaValidationErrors = this.validateSchema();
-
-    allErrors.push(...schemaValidationErrors);
-
-    if (allErrors.length > 0) {
-      // TODO `InvariantValidationError`
-      return new Error(
-        `Invalid state for a "Client".\n${allErrors.map((e) => `${e}`).join('\n')}`,
+    if (!this.isIndigenous && isNonEmptyString(this.community)) {
+      allErrors.push(
+        new TrueImpactError(
+          `A non-indigenous client cannot be registered to a community`,
+        ),
       );
     }
 
-    return this;
+    return allErrors;
   }
 
   toPersistenceDto(): ClientPeristenceDto {
@@ -73,12 +76,16 @@ export class Client implements ValidateInvariants<Client> {
   }
 
   // TODO return `ResultOrError`
-  public static fromClientCreated(): Client | Error {
+  public static fromClientCreated(): Client | TrueImpactError {
     throw new NotImplementedException();
   }
 
-  public static fromPersistenceDto(dto: ClientPeristenceDto): Client | Error {
-    return new Client(dto).validateInvariants();
+  public static fromPersistenceDto(
+    dto: ClientPeristenceDto,
+  ): Client | TrueImpactError {
+    const result = new Client(dto).validateInvariants();
+
+    return result;
   }
 
   public static fromCreateClientCommand({
