@@ -1,16 +1,6 @@
 import { InvariantValidationError, TrueImpactError } from "../error-handling";
-import {
-  DataSchema,
-  getDataSchemaFromClassCtor,
-} from "../schema-management/decorators/append-metadata";
-import { DataKeys, DataProperties } from "../utility-types";
+import { getDataSchemaFromClassCtor } from "../schema-management/decorators/append-metadata";
 import { validateObjectAgainstSchema } from "../validation/validate-object-against-schema";
-
-type Foo = DataProperties<Entity>;
-
-type FooKeys = DataKeys<Entity>; // DO_NOT_USE_OR_YOU_WILL_BE_FIRED_CALLBACK_REF_RETURN_VALUES
-
-type S = DataSchema<Entity>;
 
 export abstract class Entity {
   validateAgainstSchema(): TrueImpactError[] {
@@ -29,6 +19,8 @@ export abstract class Entity {
    * to force the implementer to explicity specify that there are no complex invariants if that is the case.
    */
   abstract validateComplexInvariants(): TrueImpactError[];
+
+  abstract getId(): string;
 
   /**
    * @returns an array of all validation errors encountered including schema errors (automatic)

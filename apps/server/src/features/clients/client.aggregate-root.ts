@@ -16,6 +16,8 @@ interface ValidateInvariants<T> {
 }
 
 export class ClientPeristenceDto {
+  id: string;
+
   fullName: FullNameDto;
 
   dateOfBirth: string; // Date?
@@ -26,6 +28,8 @@ export class ClientPeristenceDto {
 }
 
 export class Client extends Entity implements ValidateInvariants<Client> {
+  id: string;
+
   fullName: FullName;
 
   dateOfBirth: string; // Date?
@@ -41,12 +45,15 @@ export class Client extends Entity implements ValidateInvariants<Client> {
   community?: string;
 
   constructor({
+    id,
     fullName,
     dateOfBirth,
     isIndigenous,
     community,
   }: ClientPeristenceDto) {
     super();
+
+    this.id = id;
 
     this.fullName = FullName.fromDto(fullName);
 
@@ -55,6 +62,10 @@ export class Client extends Entity implements ValidateInvariants<Client> {
     this.isIndigenous = isIndigenous;
 
     this.community = community;
+  }
+
+  public getId() {
+    return this.id;
   }
 
   validateComplexInvariants(): TrueImpactError[] {
@@ -97,6 +108,7 @@ export class Client extends Entity implements ValidateInvariants<Client> {
     community,
   }: CreateClient) {
     return new Client({
+      id: clientId,
       fullName: { firstName, lastName },
       dateOfBirth,
       isIndigenous,
