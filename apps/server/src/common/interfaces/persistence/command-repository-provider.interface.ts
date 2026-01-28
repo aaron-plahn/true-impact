@@ -1,4 +1,4 @@
-import { Entity } from '@true-impact/data-types';
+import { Entity } from '../../../libs';
 import { IBaseCommandRepository } from './base-command-repository.interface';
 
 export interface ICommandRepositoryProvider {
