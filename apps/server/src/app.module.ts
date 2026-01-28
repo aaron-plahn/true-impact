@@ -4,11 +4,12 @@ import {
   NestModule,
   UseGuards,
 } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { SuperTokensAuthGuard, SuperTokensModule } from 'supertokens-nestjs';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { SuperTokensAuthGuard, SuperTokensModule } from 'supertokens-nestjs';
+import { AppController } from './app.controller';
 import { SupertokensConfigService } from './auth/supertokens-config.service';
 import { SupertokensMiddleware } from './auth/supertokens.middleware';
+import { ClientModule } from './features/clients/client.module';
 
 @UseGuards(SuperTokensAuthGuard)
 @Module({
@@ -23,6 +24,7 @@ import { SupertokensMiddleware } from './auth/supertokens.middleware';
         ).createSuperTokensModuleOptions(),
       inject: [ConfigService],
     }),
+    ClientModule,
   ],
   controllers: [AppController],
   providers: [],
