@@ -2,6 +2,7 @@ import { HttpStatus, INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { clonePlainObject } from '@true-impact/data-types';
 import request from 'supertest';
+import { App } from 'supertest/types';
 import { Client } from '../client.aggregate-root';
 import { ClientModule } from '../client.module';
 import { CreateClient } from './create-client.command';
@@ -11,11 +12,7 @@ const commandType = 'CREATE_CLIENT';
 const endpoint = '/clients';
 
 const command: CreateClient = {
-  // TODO remove this?
-  aggregateComposteIdentifier: {
-    id: '1',
-    type: 'client',
-  },
+  // aggregateCompositeIdentifier
   firstName: 'Aaron',
   lastName: 'DeBaron',
   dateOfBirth: '1999-12-31',
@@ -24,7 +21,7 @@ const command: CreateClient = {
 };
 
 describe(commandType, () => {
-  let app: INestApplication;
+  let app: INestApplication<App>;
 
   beforeAll(async () => {
     const testModule = await Test.createTestingModule({
@@ -44,7 +41,7 @@ describe(commandType, () => {
 
       expect(res.status).toBe(HttpStatus.CREATED);
 
-      const { id } = res.body;
+      const { id } = res.body as Client;
 
       const fetchResponse = await request(app.getHttpServer()).get(
         `${endpoint}/${id}`,
@@ -83,7 +80,7 @@ describe(commandType, () => {
 
         expect(res.status).toBe(HttpStatus.BAD_REQUEST);
 
-        const { message } = res.body;
+        const { message } = res.body as { message: Error };
 
         expect(message).toContain('Client');
 
@@ -108,7 +105,7 @@ describe(commandType, () => {
 
         expect(res.status).toBe(HttpStatus.BAD_REQUEST);
 
-        const { message } = res.body;
+        const { message } = res.body as { message: Error };
 
         expect(message).toContain('Client');
 

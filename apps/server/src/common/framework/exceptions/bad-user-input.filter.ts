@@ -5,15 +5,16 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { TrueImpactBadUserInputError } from '@true-impact/data-types';
+import { Request, Response } from 'express';
 
 @Catch(TrueImpactBadUserInputError)
 export class BadUserInputFilter implements ExceptionFilter {
-  catch(exception: any, host: ArgumentsHost) {
+  catch(exception: TrueImpactBadUserInputError, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
 
-    const response = ctx.getResponse();
+    const response = ctx.getResponse<Response>();
 
-    const request = ctx.getRequest();
+    const request = ctx.getRequest<Request>();
 
     const statusCode = HttpStatus.BAD_REQUEST;
 

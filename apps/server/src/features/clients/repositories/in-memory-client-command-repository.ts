@@ -40,7 +40,7 @@ export class InMemoryClientCommandRepository implements IClientCommandRepository
     return Promise.resolve(id);
   }
 
-  createMany(instances: Client[]): Promise<void> {
+  createMany(_instances: Client[]): Promise<void> {
     throw new Error('Method not implemented.');
   }
 

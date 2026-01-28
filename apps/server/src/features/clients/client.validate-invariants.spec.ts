@@ -20,6 +20,12 @@ function assertValidInstance<T>(
   expect(input).not.toBeInstanceOf(Error);
 }
 
+function assertTrueImpactError(
+  input: unknown,
+): asserts input is TrueImpactError {
+  expect(input).toBeInstanceOf(TrueImpactError);
+}
+
 describe(`Client.validateInvariants`, () => {
   describe(`When the client is valid`, () => {
     describe(`when all optional properties are omitted`, () => {
@@ -49,7 +55,7 @@ describe(`Client.validateInvariants`, () => {
           invalidDto as ClientPeristenceDto,
         );
 
-        expect(result).toBeInstanceOf(TrueImpactError);
+        assertTrueImpactError(result);
 
         const errorMessage = result.toString();
 
@@ -70,7 +76,7 @@ describe(`Client.validateInvariants`, () => {
           invalidDto as ClientPeristenceDto,
         );
 
-        expect(result).toBeInstanceOf(TrueImpactError);
+        assertTrueImpactError(result);
 
         const errorMessage = result.toString();
 
@@ -93,7 +99,7 @@ describe(`Client.validateInvariants`, () => {
           invalidInstance as unknown as ClientPeristenceDto,
         );
 
-        expect(result).toBeInstanceOf(TrueImpactError);
+        assertTrueImpactError(result);
 
         const errorMessage = result.toString();
 

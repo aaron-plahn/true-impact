@@ -1,6 +1,10 @@
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import {
+  TrueImpactError,
+  TrueImpactRuntimeException,
+} from '@true-impact/data-types';
 import { SuperTokensExceptionFilter } from 'supertokens-nestjs';
 import supertokens from 'supertokens-node';
 import { AppModule } from './app.module';
@@ -10,11 +14,14 @@ async function bootstrap() {
 
   const configService = app.get(ConfigService);
 
-  const NODE_PORT = configService.get('API_PORT', 3001);
+  const NODE_PORT = configService.get<number>('API_PORT', 3001);
 
-  const clientBaseUrl = configService.get('CLIENT_DOMAIN', 'http://localhost');
+  const clientBaseUrl = configService.get<string>(
+    'CLIENT_DOMAIN',
+    'http://localhost',
+  );
 
-  const clientPort = configService.get('CLIENT_PORT', 8080);
+  const clientPort = configService.get<number>('CLIENT_PORT', 8080);
 
   const CLIENT_DOMAIN = `${clientBaseUrl}:${clientPort}`;
 
@@ -41,4 +48,8 @@ async function bootstrap() {
   await app.listen(NODE_PORT);
 }
 
-bootstrap();
+bootstrap().catch((_e) => {
+  throw new TrueImpactRuntimeException([
+    new TrueImpactError(`Failed to bootstrap the server application`),
+  ]);
+});

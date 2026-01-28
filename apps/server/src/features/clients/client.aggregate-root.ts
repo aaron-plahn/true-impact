@@ -104,7 +104,7 @@ export class Client extends Entity implements ValidateInvariants<Client> {
   }
 
   toPersistenceDto(): ClientPeristenceDto {
-    return JSON.parse(JSON.stringify(this));
+    return JSON.parse(JSON.stringify(this)) as ClientPeristenceDto;
   }
 
   public static fromPersistenceDto(

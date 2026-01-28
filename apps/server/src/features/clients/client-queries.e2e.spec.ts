@@ -1,6 +1,7 @@
 import { HttpStatus, INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import request from 'supertest';
+import { App } from 'supertest/types';
 import { Client } from './client.aggregate-root';
 import { ClientModule } from './client.module';
 import { CLIENT_COMMAND_REPOSITORY_INJECTION_TOKEN } from './constants';
@@ -11,7 +12,7 @@ const testClientId = '1';
 const baseEndpoint = '/clients';
 
 describe(`/clients`, () => {
-  let app: INestApplication;
+  let app: INestApplication<App>;
 
   let initialClients: Client[] = [];
 
@@ -61,7 +62,7 @@ describe(`/clients`, () => {
 
         expect(res.status).toBe(HttpStatus.OK);
 
-        const { body } = res;
+        const body = res.body as Client;
 
         expect(body).toMatchSnapshot();
       });
