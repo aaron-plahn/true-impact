@@ -7,14 +7,6 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "Launch Program",
-      "skipFiles": ["<node_internals>/**"],
-      "program": "${workspaceFolder}/libs/data-types/schema-management/decorators/append-metadata.ts",
-      "outFiles": ["${workspaceFolder}/**/*.js"]
-    },
-    {
-      "type": "node",
-      "request": "launch",
       "name": "Jest test Server",
       "cwd": "${workspaceFolder}",
       "runtimeExecutable": "yarn",

@@ -37,19 +37,20 @@ export class ClientCreated {
     this.payload = payload;
 
     this.meta = meta;
+
+    // TODO We should validate the schema before persisting.
   }
 
   /**
    * Use this factory method to build an event record from a persisted document (after applying the thin mapping layer)
    */
-  public static fromDto({
+  public static fromPersistenceDto({
     payload,
     meta,
   }: {
     payload: ClientCreatedPayload;
     meta: EventRecordMetadata;
   }) {
-    // TODO validate invariants
     return new ClientCreated({ payload, meta });
   }
 }

@@ -29,6 +29,6 @@ export class CalendarDate {
     this.year = year;
   }
 
-  // TODO use class-validator like library
+  // TODO extend entity and use `validateInvariants`
   validateSchema() {}
 }

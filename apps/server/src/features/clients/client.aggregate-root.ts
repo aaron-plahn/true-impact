@@ -1,4 +1,3 @@
-import { NotImplementedException } from '@nestjs/common';
 import { CreateClient } from './commands/create-client.command';
 // TODO Barrel export?
 import { FullName, FullNameDto } from '../../common/full-name';
@@ -40,7 +39,7 @@ export class Client extends Entity implements ValidateInvariants<Client> {
 
   @NonEmptyString({
     label: 'Community',
-    description: 'the Inidgenous community to which the client is registered',
+    description: 'the Indigenous community to which the client is registered',
     isOptional: true,
     isArray: false,
   })
@@ -92,7 +91,6 @@ export class Client extends Entity implements ValidateInvariants<Client> {
     return allErrors;
   }
 
-  // DO We need this?
   setInitialId(generatedId: string): Client | TrueImpactError {
     if (this.id !== GENERATE_A_NEW_ID) {
       return new TrueImpactError(
@@ -107,11 +105,6 @@ export class Client extends Entity implements ValidateInvariants<Client> {
 
   toPersistenceDto(): ClientPeristenceDto {
     return JSON.parse(JSON.stringify(this));
-  }
-
-  // TODO return `ResultOrError`
-  public static fromClientCreated(): Client | TrueImpactError {
-    throw new NotImplementedException();
   }
 
   public static fromPersistenceDto(

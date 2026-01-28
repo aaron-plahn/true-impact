@@ -28,8 +28,6 @@ export class QueryResponseInterceptor<T> implements NestInterceptor<T, T> {
           throw result;
         }
 
-        // TODO check for bad user input error
-
         return result;
       }),
     );

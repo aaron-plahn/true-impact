@@ -35,13 +35,20 @@ describe(`/clients`, () => {
     await app.init();
   });
 
+  /**
+   * TODO
+   * - When the user is authenticated
+   *     - when the user has sufficient RBA
+   *     - when the user does not have RBA
+   * - When the user is not authenticated
+   */
   describe(`GET /clients/:id`, () => {
     describe(`when there is a client with the given ID`, () => {
       initialClients = [
         new Client({
           id: testClientId,
           fullName: { firstName: 'John', lastName: 'Deer' },
-          dateOfBirth: '',
+          dateOfBirth: '2025-08-01',
           isIndigenous: 'Yes',
           community: 'Blue Water',
         }),
