@@ -7,8 +7,8 @@ import {
   Entity,
   isNonEmptyString,
   NonEmptyString,
+  TrueImpactError,
 } from '@true-impact/data-types';
-import { TrueImpactError } from '@true-impact/data-types/error-handling';
 
 const GENERATE_A_NEW_ID = 'GENERATE_A_NEW_ID';
 

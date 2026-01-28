@@ -2,7 +2,7 @@ import { CallHandler, ExecutionContext, NestInterceptor } from '@nestjs/common';
 import {
   InvariantValidationError,
   TrueImpactBadUserInputError,
-} from '@true-impact/data-types/error-handling';
+} from '@true-impact/data-types';
 import { map, Observable } from 'rxjs';
 import { ResourceNotFoundException } from '../exceptions';
 

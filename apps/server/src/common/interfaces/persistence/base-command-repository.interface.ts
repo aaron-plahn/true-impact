@@ -1,5 +1,4 @@
-import { Entity } from '@true-impact/data-types';
-import { TrueImpactError } from '@true-impact/data-types/error-handling';
+import { Entity, TrueImpactError } from '@true-impact/data-types';
 
 export interface IBaseCommandRepository<T extends Entity = Entity> {
   fetchById(id: string): Promise<T> | null; // Maybe<T>

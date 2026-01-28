@@ -14,6 +14,9 @@ export function NonEmptyString(
   userOptions: TypeDecoratorOptions,
 ): PropertyDecorator {
   return (target: Object, propertyKey: string | symbol) => {
-    appendMetadata(target, propertyKey, userOptions);
+    appendMetadata(target, propertyKey, {
+      ...userOptions,
+      type: NON_EMPTY_STRING,
+    });
   };
 }

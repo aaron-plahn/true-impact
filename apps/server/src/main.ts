@@ -1,5 +1,6 @@
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { SuperTokensExceptionFilter } from 'supertokens-nestjs';
 import supertokens from 'supertokens-node';
 import { AppModule } from './app.module';
@@ -24,6 +25,18 @@ async function bootstrap() {
   });
 
   app.useGlobalFilters(new SuperTokensExceptionFilter());
+
+  const config = new DocumentBuilder()
+    .setTitle('True Impact API')
+    .setDescription('Internal Rest API for the True Impact Platform')
+    // TODO SSOT for the server version between this, package.json, and monorepo package.json
+    .setVersion('0.0.1')
+    .addTag('CRM')
+    .build();
+
+  const documentFactory = () => SwaggerModule.createDocument(app, config);
+
+  SwaggerModule.setup('api/docs', app, documentFactory);
 
   await app.listen(NODE_PORT);
 }
