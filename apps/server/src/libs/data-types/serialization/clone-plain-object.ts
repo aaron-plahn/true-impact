@@ -1,4 +1,4 @@
-import { DeepOverrides } from "@true-impact/data-types";
+import { DeepOverrides } from '../utility-types';
 
 export const clonePlainObject = <
   T extends object,
@@ -34,12 +34,12 @@ export const clonePlainObject = <
      * Primitive values do not require recursion
      */
     if (
-      newValueType === "boolean" ||
-      newValueType === "bigint" ||
-      newValueType === "number" ||
-      newValueType === "string" ||
-      newValueType === "symbol" ||
-      newValueType === "undefined" ||
+      newValueType === 'boolean' ||
+      newValueType === 'bigint' ||
+      newValueType === 'number' ||
+      newValueType === 'string' ||
+      newValueType === 'symbol' ||
+      newValueType === 'undefined' ||
       newValue === null
     ) {
       Object.assign(cloned, {
@@ -52,7 +52,7 @@ export const clonePlainObject = <
     /**
      * We do not deal with cloning instances at this level.
      */
-    if (newValueType === "function") {
+    if (newValueType === 'function') {
       return;
     }
 

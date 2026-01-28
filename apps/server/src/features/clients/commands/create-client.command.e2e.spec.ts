@@ -1,6 +1,6 @@
 import { HttpStatus, INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { clonePlainObject } from '@true-impact/data-types';
+import { clonePlainObject } from 'src/libs';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { Client } from '../client.aggregate-root';
