@@ -1,0 +1,14 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`/clients GET /clients/:id when there is a client with the given ID should return the client 1`] = `
+{
+  "community": "Blue Water",
+  "dateOfBirth": "2025-08-01",
+  "fullName": {
+    "firstName": "John",
+    "lastName": "Deer",
+  },
+  "id": "1",
+  "isIndigenous": "Yes",
+}
+`;
