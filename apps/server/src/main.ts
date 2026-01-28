@@ -1,13 +1,10 @@
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import {
-  TrueImpactError,
-  TrueImpactRuntimeException,
-} from '@true-impact/data-types';
 import { SuperTokensExceptionFilter } from 'supertokens-nestjs';
 import supertokens from 'supertokens-node';
 import { AppModule } from './app.module';
+import { TrueImpactError, TrueImpactRuntimeException } from './libs';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -36,7 +33,7 @@ async function bootstrap() {
   const config = new DocumentBuilder()
     .setTitle('True Impact API')
     .setDescription('Internal Rest API for the True Impact Platform')
-    // TODO SSOT for the server version between this, package.json, and monorepo package.json
+    // TODO SSOT for the server version between this and the package.json
     .setVersion('0.0.1')
     .addTag('CRM')
     .build();

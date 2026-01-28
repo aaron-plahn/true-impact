@@ -1,4 +1,4 @@
-import { IBaseCommandRepository } from 'src/common/interfaces/persistence';
+import { IBaseCommandRepository } from '../../../common/interfaces/persistence';
 import { Client } from '../client.aggregate-root';
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
