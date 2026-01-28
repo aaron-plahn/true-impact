@@ -1,6 +1,6 @@
-const SCHEMA_PROPERTY_METADATA_KEY = "__SCHEMA_PROPERTY_METADATA_KEY__";
-import { Ctor, DataKeys } from "../../utility-types";
-import { NON_EMPTY_STRING } from "./non-empty-string.decorator";
+const SCHEMA_PROPERTY_METADATA_KEY = '__SCHEMA_PROPERTY_METADATA_KEY__';
+import { Ctor, DataKeys } from '../../utility-types';
+import { NON_EMPTY_STRING } from './non-empty-string.decorator';
 
 export type SimpleSchemaPropertyMetadata = {
   type: string;
@@ -15,7 +15,7 @@ export type SchemaPropertyMetadata = SimpleSchemaPropertyMetadata;
 
 export type DataSchema<T = object> = {
   properties: DataKeys<T> extends never
-    ? {}
+    ? object
     : Record<DataKeys<T>, SchemaPropertyMetadata>;
 };
 
@@ -35,7 +35,7 @@ export const getDataSchemaFromClassCtor = <T>(
   target: Ctor<T>,
 ): DataSchema<DataKeys<T>> => {
   return (
-    getDataSchemaFromPrototype<T>(target.prototype) ||
+    getDataSchemaFromPrototype<T>(target.prototype as object) ||
     ({
       properties: {},
     } as DataSchema<DataKeys<T>>)
@@ -43,7 +43,7 @@ export const getDataSchemaFromClassCtor = <T>(
 };
 
 export const appendMetadata = (
-  target: Object,
+  target: object,
   propertyKey: string | symbol,
   propertyMetadata: SimpleSchemaPropertyMetadata,
 ) => {

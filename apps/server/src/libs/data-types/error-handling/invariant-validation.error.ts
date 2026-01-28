@@ -1,5 +1,5 @@
-import { Ctor } from "../utility-types";
-import { TrueImpactError } from "./true-impact.error";
+import { Ctor } from '../utility-types';
+import { TrueImpactError } from './true-impact.error';
 
 export class InvariantValidationError extends TrueImpactError {
   constructor(ctor: Ctor, innerErrors: TrueImpactError[]) {

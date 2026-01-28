@@ -1,4 +1,4 @@
-import { TrueImpactError } from 'src/libs';
+import { TrueImpactError } from '../../../libs';
 
 export class ResourceNotFoundException extends TrueImpactError {
   constructor() {

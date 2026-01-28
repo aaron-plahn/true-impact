@@ -1,11 +1,12 @@
-import React from "react";
-import "./App.css";
+import { BrowserRouter } from "react-router-dom";
 import SuperTokens, { SuperTokensWrapper } from "supertokens-auth-react";
-import { AppRoutes } from "./routes";
+import "./App.css";
 import { getSupertokensConfig } from "./config";
-import { BrowserRouter, Router } from "react-router-dom";
+import { AppRoutes } from "./routes";
 
-SuperTokens.init(getSupertokensConfig());
+if (typeof window !== "undefined") {
+  SuperTokens.init(getSupertokensConfig());
+}
 
 function App() {
   return (

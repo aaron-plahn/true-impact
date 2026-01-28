@@ -1,6 +1,8 @@
-import { InvariantValidationError, TrueImpactError } from "../error-handling";
-import { getDataSchemaFromClassCtor } from "../schema-management/decorators/append-metadata";
-import { validateObjectAgainstSchema } from "../validation/validate-object-against-schema";
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+import { InvariantValidationError, TrueImpactError } from '../error-handling';
+import { getDataSchemaFromClassCtor } from '../schema-management/decorators/append-metadata';
+import { validateObjectAgainstSchema } from '../validation/validate-object-against-schema';
 
 export abstract class Entity {
   validateAgainstSchema(): TrueImpactError[] {

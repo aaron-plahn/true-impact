@@ -1,1 +1,1 @@
-export * from "./clone-plain-object";
+export * from './clone-plain-object';

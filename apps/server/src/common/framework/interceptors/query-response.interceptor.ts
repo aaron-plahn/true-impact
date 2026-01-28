@@ -3,7 +3,7 @@ import { map, Observable } from 'rxjs';
 import {
   InvariantValidationError,
   TrueImpactBadUserInputError,
-} from 'src/libs';
+} from '../../../libs';
 import { ResourceNotFoundException } from '../exceptions';
 
 const isNotFound = (input: unknown) =>

@@ -1,1 +1,1 @@
-export * from "./is-non-empty-string";
+export * from './is-non-empty-string';

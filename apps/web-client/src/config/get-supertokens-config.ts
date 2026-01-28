@@ -1,14 +1,11 @@
-import EmailPassword, {
-  GetRedirectionURLContext,
-} from "supertokens-auth-react/recipe/emailpassword";
-import { config as trueImpactConfig } from "./config.local";
-import Session from "supertokens-auth-react/recipe/session";
 import {
   NormalisedGetRedirectionURLContext,
-  SuccessRedirectContext,
   SuccessRedirectContextInApp,
   SuperTokensConfig,
 } from "supertokens-auth-react/lib/build/types";
+import EmailPassword from "supertokens-auth-react/recipe/emailpassword";
+import Session from "supertokens-auth-react/recipe/session";
+import { config as trueImpactConfig } from "./config.local";
 
 export const getSupertokensConfig = () => {
   const { apiDomain, webClientDomain } = trueImpactConfig;

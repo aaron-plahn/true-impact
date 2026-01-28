@@ -9,9 +9,9 @@ export const clonePlainObject = <
   overrides: U,
   propsToRemove: V[] = [],
 ): Omit<T, V> => {
-  const cloned = JSON.parse(JSON.stringify(input));
+  const cloned = JSON.parse(JSON.stringify(input)) as T;
 
-  for (let propToRemove of propsToRemove) {
+  for (const propToRemove of propsToRemove) {
     delete cloned[propToRemove];
   }
 
@@ -19,7 +19,7 @@ export const clonePlainObject = <
    * In this case, the property was `undefined` to start with, so
    * we simply set the desired override.
    */
-  Object.entries(overrides).forEach(([key, newValue]) => {
+  Object.entries(overrides).forEach(([key, newValue]: [string, unknown]) => {
     if (!(key in input)) {
       Object.assign(cloned, {
         [key]: newValue,

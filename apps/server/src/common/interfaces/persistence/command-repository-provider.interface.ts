@@ -1,4 +1,4 @@
-import { Entity } from 'src/libs';
+import { Entity } from '../../../libs';
 import { IBaseCommandRepository } from './base-command-repository.interface';
 
 export interface ICommandRepositoryProvider {

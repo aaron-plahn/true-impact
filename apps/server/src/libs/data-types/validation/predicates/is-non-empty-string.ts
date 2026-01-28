@@ -1,2 +1,2 @@
 export const isNonEmptyString = (input: unknown): input is string =>
-  typeof input === "string" && input.length > 0;
+  typeof input === 'string' && input.length > 0;

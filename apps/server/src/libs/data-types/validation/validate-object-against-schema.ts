@@ -1,10 +1,10 @@
-import { TrueImpactError } from "../error-handling";
-import { NON_EMPTY_STRING } from "../schema-management";
+import { TrueImpactError } from '../error-handling';
+import { NON_EMPTY_STRING } from '../schema-management';
 import {
   DataSchema,
   SimpleSchemaPropertyMetadata,
-} from "../schema-management/decorators/append-metadata";
-import { isNonEmptyString } from "./predicates";
+} from '../schema-management/decorators/append-metadata';
+import { isNonEmptyString } from './predicates';
 
 export const validateObjectAgainstSchema = <T = object>(
   o: T,
@@ -15,10 +15,11 @@ export const validateObjectAgainstSchema = <T = object>(
       acc: TrueImpactError[],
       [k, propertySchema]: [string, SimpleSchemaPropertyMetadata],
     ) => {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const value = o[k];
 
       if (propertySchema.type === NON_EMPTY_STRING) {
-        if (value === null || typeof value === "undefined") {
+        if (value === null || typeof value === 'undefined') {
           return acc;
         }
 

@@ -1,12 +1,12 @@
 import { CreateClient } from './commands/create-client.command';
 // TODO Barrel export?
+import { FullName, FullNameDto } from '../../common/full-name';
 import {
   Entity,
   isNonEmptyString,
   NonEmptyString,
   TrueImpactError,
-} from 'src/libs';
-import { FullName, FullNameDto } from '../../common/full-name';
+} from '../../libs';
 
 const GENERATE_A_NEW_ID = 'GENERATE_A_NEW_ID';
 

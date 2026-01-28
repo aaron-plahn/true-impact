@@ -12,11 +12,11 @@ export class TrueImpactError extends Error {
   protected buildCompleteErrorMessage() {
     const lines = [this.message, `See inner errors for more info.`];
 
-    for (let e of this.innerErrors) {
+    for (const e of this.innerErrors) {
       lines.push(e.buildCompleteErrorMessage());
     }
 
-    return lines.join("\n");
+    return lines.join('\n');
   }
 
   toString() {

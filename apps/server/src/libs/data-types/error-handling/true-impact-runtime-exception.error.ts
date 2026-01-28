@@ -1,4 +1,4 @@
-import { TrueImpactError } from "./true-impact.error";
+import { TrueImpactError } from './true-impact.error';
 
 /**
  * The following represents an error from which we cannot recover from, i.e., cause to "panic". This should only be used in exception cases,

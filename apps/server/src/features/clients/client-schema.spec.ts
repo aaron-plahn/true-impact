@@ -1,4 +1,4 @@
-import { getDataSchemaFromClassCtor } from 'src/libs/data-types/schema-management/decorators/append-metadata';
+import { getDataSchemaFromClassCtor } from '../../libs/data-types/schema-management/decorators/append-metadata';
 import { Client } from './client.aggregate-root';
 
 describe(`ClientSchema`, () => {

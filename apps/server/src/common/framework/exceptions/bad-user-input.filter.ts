@@ -5,7 +5,7 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
-import { TrueImpactBadUserInputError } from 'src/libs';
+import { TrueImpactBadUserInputError } from '../../../libs';
 
 @Catch(TrueImpactBadUserInputError)
 export class BadUserInputFilter implements ExceptionFilter {

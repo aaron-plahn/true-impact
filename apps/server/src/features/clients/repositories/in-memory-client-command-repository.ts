@@ -1,4 +1,4 @@
-import { TrueImpactError } from 'src/libs';
+import { TrueImpactError } from '../../../libs';
 import { Client } from '../client.aggregate-root';
 import { IClientCommandRepository } from './client-command-repository.interface';
 
