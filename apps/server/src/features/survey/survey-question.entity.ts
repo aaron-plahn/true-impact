@@ -1,4 +1,9 @@
-import { Entity, NonEmptyString, TrueImpactError } from '../../libs';
+import {
+  Entity,
+  NonEmptyString,
+  TrueImpactDataExample,
+  TrueImpactError,
+} from '../../libs';
 import { AddQuestionToSurvey } from './commands/add-question-to-survey.command';
 import {
   SurveyOption,
@@ -13,6 +18,13 @@ export class SurveyQuestionPersistenceDto {
   options: Record<SurveyLabel, SurveyOptionPersistenceDto>;
 }
 
+@TrueImpactDataExample<SurveyQuestionPersistenceDto>({
+  example: {
+    label: 'test survey question',
+    prompt: 'How often do you play sports?',
+    options: {},
+  },
+})
 export class SurveyQuestion extends Entity {
   // e.g. 1, 2, 3
   label: string;
@@ -54,6 +66,10 @@ export class SurveyQuestion extends Entity {
     return this.label;
   }
 
+  size(): number {
+    return this.options.size;
+  }
+
   static fromAddQuestionToSurvey({
     label,
     prompt,
@@ -81,5 +97,28 @@ export class SurveyQuestion extends Entity {
     };
 
     return result;
+  }
+
+  static fromPersistenceDto({
+    label,
+    options,
+    prompt,
+  }: SurveyQuestionPersistenceDto): SurveyQuestion {
+    const optionsBuildResult = Object.entries(options).reduce(
+      (acc: Record<string, SurveyOption>, [label, option]) => {
+        const optionBuildResult = SurveyOption.fromPersistenceDto(option);
+
+        acc[label] = optionBuildResult;
+
+        return acc;
+      },
+      {},
+    );
+
+    return new SurveyQuestion({
+      label,
+      prompt,
+      options: optionsBuildResult,
+    });
   }
 }

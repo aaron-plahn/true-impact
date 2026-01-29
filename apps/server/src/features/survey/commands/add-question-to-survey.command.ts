@@ -1,6 +1,16 @@
-import { NonEmptyString } from 'src/libs';
+import { NonEmptyString, TrueImpactDataExample } from '../../../libs';
 import { SurveyCompositeIdentifier } from '../survey.composite-identifier';
 
+@TrueImpactDataExample<AddQuestionToSurvey>({
+  example: {
+    aggregateCompositeIdentifier: {
+      type: 'survey',
+      id: '1',
+    },
+    label: 'My Test Survey Question',
+    prompt: 'What is the best programming language?',
+  },
+})
 export class AddQuestionToSurvey {
   aggregateCompositeIdentifier: SurveyCompositeIdentifier;
 

@@ -1,13 +1,9 @@
 import { Entity, NonEmptyString, TrueImpactError } from '../../libs';
-import {
-  SurveyQuestion,
-  SurveyQuestionPersistenceDto,
-} from './survey-question.entity';
 
 export class SurveyOptionPersistenceDto {
   label: string;
   text: string;
-  nextQuestion: SurveyQuestionPersistenceDto;
+  nextQuestionLabel?: string;
 }
 
 export class SurveyOption extends Entity {
@@ -27,14 +23,35 @@ export class SurveyOption extends Entity {
   })
   text: string; // TODO make this translateable
 
-  // @NestedDataType(SurveyQuestion,{
-  //   label: 'next question',
-  //   description:
-  //     'label that identifies the question the user should answer next based on answering the present question with this option',
-  //   isArray: false,
-  //   isOptional: false,
-  // })
-  nextQuestion: SurveyQuestion;
+  /**
+   * Note that we have to backtrack within the Survey graph to find the corresponding question in order to avoid circular dependencies.
+   */
+  @NonEmptyString({
+    label: 'label for next question',
+    description:
+      'a local ID referring to the question that should be presented if the user has chosen this option',
+    isArray: false,
+    isOptional: false,
+  })
+  nextQuestionLabel?: string;
+
+  constructor({
+    label,
+    text,
+    nextQuestionLabel,
+  }: {
+    label: string;
+    text: string;
+    nextQuestionLabel?: string;
+  }) {
+    super();
+
+    this.label = label;
+
+    this.text = text;
+
+    this.nextQuestionLabel = nextQuestionLabel;
+  }
 
   validateComplexInvariants(): TrueImpactError[] {
     return [];
@@ -57,9 +74,17 @@ export class SurveyOption extends Entity {
     const result: SurveyOptionPersistenceDto = {
       label: this.label,
       text: this.text,
-      nextQuestion: this.nextQuestion?.toPersistenceDto(),
+      nextQuestionLabel: this.nextQuestionLabel,
     };
 
     return result;
+  }
+
+  static fromPersistenceDto({
+    label,
+    text,
+    nextQuestionLabel,
+  }: SurveyOptionPersistenceDto): SurveyOption {
+    return new SurveyOption({ label, text, nextQuestionLabel });
   }
 }

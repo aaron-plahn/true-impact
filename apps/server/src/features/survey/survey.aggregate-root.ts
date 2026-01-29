@@ -4,8 +4,9 @@ import {
   isNonEmptyString,
   NonEmptyString,
   TrueImpactBadUserInputError,
+  TrueImpactDataExample,
   TrueImpactError,
-} from 'src/libs';
+} from '../../libs';
 import { AddQuestionToSurvey } from './commands/add-question-to-survey.command';
 import { CreateSurvey } from './commands/create-survey.command';
 import {
@@ -17,12 +18,21 @@ export class SurveyPersistenceDto {
   id: string;
   name: string;
   questions: Record<string, SurveyQuestionPersistenceDto>;
+  firstQuestionLabel?: string;
 }
 
 // TODO We need to track schema versions
 /**
  * We need a system for creating and publishing drafts.
  */
+@TrueImpactDataExample<SurveyPersistenceDto>({
+  example: {
+    id: '123',
+    name: 'test survey',
+    questions: {},
+    // firstQuestionLabel:
+  },
+})
 export class Survey extends Entity {
   @NonEmptyString({
     label: 'ID',
@@ -94,6 +104,13 @@ export class Survey extends Entity {
     return this.id;
   }
 
+  /**
+   * returns the number of questions in this survey
+   */
+  size(): number {
+    return this.questions.size;
+  }
+
   toPersistenceDto(): SurveyPersistenceDto {
     const result: SurveyPersistenceDto = {
       id: this.id,
@@ -129,7 +146,11 @@ export class Survey extends Entity {
 
   // should this be a bad user input error?
   addQuestion(userRequest: AddQuestionToSurvey): Survey | TrueImpactError {
-    // TODO ensure there isn't already a question with this label
+    if (this.questions.has(userRequest.label)) {
+      return new TrueImpactError(
+        `You cannot add question [${userRequest.label}] to survey [${this.name}], as there is already a question with that label.`,
+      );
+    }
 
     const questionBuildResult =
       SurveyQuestion.fromAddQuestionToSurvey(userRequest);
@@ -141,6 +162,25 @@ export class Survey extends Entity {
     this.questions.set(questionBuildResult.label, questionBuildResult);
 
     return this;
+  }
+
+  static fromPersistenceDto({
+    id,
+    name,
+    questions,
+  }: SurveyPersistenceDto): Survey | TrueImpactError {
+    return new Survey({
+      id,
+      name,
+      questions: Object.entries(questions).reduce(
+        (acc: Record<string, SurveyQuestion>, [label, questionDto]) => {
+          acc[label] = SurveyQuestion.fromPersistenceDto(questionDto);
+
+          return acc;
+        },
+        {},
+      ),
+    });
   }
 
   static fromCreateSurveyCommand({

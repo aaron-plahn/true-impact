@@ -1,5 +1,6 @@
 import { buildTestInstance, DeepPartial, TrueImpactError } from '../../libs';
 import { AddQuestionToSurvey } from './commands/add-question-to-survey.command';
+import { SurveyQuestion } from './survey-question.entity';
 import { Survey, SurveyPersistenceDto } from './survey.aggregate-root';
 
 const overrides: DeepPartial<SurveyPersistenceDto> = {
@@ -10,7 +11,7 @@ const overrides: DeepPartial<SurveyPersistenceDto> = {
 const validEmptySurvey = buildTestInstance<SurveyPersistenceDto, Survey>(
   Survey,
   overrides,
-) as Survey;
+);
 
 const newQuestionLabel = 'i';
 
@@ -19,7 +20,7 @@ const addQuestionCommandPayload = buildTestInstance<
   AddQuestionToSurvey
 >(AddQuestionToSurvey, {
   label: newQuestionLabel,
-}) as AddQuestionToSurvey;
+});
 
 describe(`Survey.addQuestion`, () => {
   describe(`when the survey has no questions to start`, () => {
@@ -29,28 +30,72 @@ describe(`Survey.addQuestion`, () => {
 
         expect(result).not.toBeInstanceOf(TrueImpactError);
 
-        expect((result as Survey).questions).toHaveLength(1);
+        expect((result as Survey).size()).toEqual(1);
 
-        expect(
-          (result as Survey).questions
-            .get(newQuestionLabel)
-            ?.toPersistenceDto(),
-        ).toEqual({
-          foo: 5,
-        });
+        const question = (result as Survey).questions.get(
+          newQuestionLabel,
+        ) as SurveyQuestion;
+
+        const { prompt } = question;
+
+        expect(prompt).toEqual(addQuestionCommandPayload.prompt);
+
+        expect(question.size()).toEqual(0);
       });
     });
   });
 
   describe(`when the survey has existing questions`, () => {
+    const existingQuestion = buildTestInstance<
+      SurveyPersistenceDto,
+      SurveyQuestion
+    >(SurveyQuestion, {
+      label: 'a',
+    });
+
+    const survey = buildTestInstance<SurveyPersistenceDto, Survey>(Survey, {
+      questions: {
+        [existingQuestion.label]: existingQuestion,
+      },
+    });
+
+    const addNewQuestionCommand = buildTestInstance<
+      AddQuestionToSurvey,
+      AddQuestionToSurvey
+    >(AddQuestionToSurvey, {
+      label: 'b',
+    });
+
     describe(`when the request is valid`, () => {
-      it.todo(`should add the question to the survey`);
+      it(`should add the question to the survey`, () => {
+        survey.addQuestion(addNewQuestionCommand);
+
+        expect(survey.size()).toBe(2);
+      });
     });
 
     describe(`when the request is invalid`, () => {
       // TODO do we want to prevent duplicate prompts across questions?
       describe(`when there is already a question with the given label`, () => {
-        it.todo(`should return the expected error`);
+        const invalidCommand = buildTestInstance<
+          AddQuestionToSurvey,
+          AddQuestionToSurvey
+        >(AddQuestionToSurvey, {
+          label: existingQuestion.label,
+        });
+
+        it(`should return the expected error`, () => {
+          const result = survey.addQuestion(invalidCommand);
+
+          expect(result).toBeInstanceOf(TrueImpactError);
+
+          const message = (result as TrueImpactError).toString();
+
+          expect(message).toContain('You cannot add question');
+          expect(message).toContain(existingQuestion.label);
+          expect(message).toContain('already a question');
+          expect(message).toContain(survey.name);
+        });
       });
     });
   });

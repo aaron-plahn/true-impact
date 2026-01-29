@@ -1,6 +1,5 @@
 const SCHEMA_PROPERTY_METADATA_KEY = '__SCHEMA_PROPERTY_METADATA_KEY__';
 import { Ctor, DataKeys } from '../../utility-types';
-import { NON_EMPTY_STRING } from './non-empty-string.decorator';
 
 export type SimpleSchemaPropertyMetadata = {
   type: string;
@@ -51,7 +50,7 @@ export const appendMetadata = (
     properties: {},
   };
 
-  Object.assign(propertyMetadata, { type: NON_EMPTY_STRING });
+  Object.assign(propertyMetadata);
 
   existingMeta.properties[propertyKey as string] = propertyMetadata;
 

@@ -1,5 +1,4 @@
-import { TrueImpactError, TrueImpactRuntimeException } from 'error-handling';
-import { clonePlainObject } from 'serialization';
+import { plainToClass } from 'class-transformer';
 import { Ctor, DeepPartial } from 'utility-types';
 
 const isFromPersistenceDto = <T = unknown>(
@@ -30,51 +29,51 @@ export const buildTestInstance = <
 >(
   ctor: Ctor<UInstance>,
   overrides: DeepPartial<TPersistenceDto>,
-): UInstance | TrueImpactError => {
+): UInstance => {
   const dataExampleMetadata = Reflect.get(
     ctor,
     TRUE_IMPACT_DATA_EXAMPLE_METADATA,
   ) as TrueImpactDataExampleMetadata;
 
   if (!dataExampleMetadata || !dataExampleMetadata.examples.has('default')) {
-    throw new TrueImpactRuntimeException([
-      new TrueImpactError(
-        `You need to register at least one data example as follows.\n@TrueImpactDataExample<TDto,${ctor.name}>({ example: {...}})\nclass ${ctor.name}{...}`,
-      ),
-    ]);
+    throw new Error(
+      `You need to register at least one data example as follows.\n@TrueImpactDataExample<TDto,${ctor.name}>({ example: {...}})\nclass ${ctor.name}{...}`,
+    );
   }
 
   const defaultDto = dataExampleMetadata.examples.get(
     'default',
   ) as TPersistenceDto;
 
-  // @ts-expect-error Fix this type.
-  const dtoWithOverridesApplied = clonePlainObject(defaultDto, overrides);
+  const dtoWithOverridesApplied = JSON.parse(
+    JSON.stringify({
+      ...defaultDto,
+      ...overrides,
+    }),
+  ) as TPersistenceDto;
 
   if (!isFromPersistenceDto(ctor)) {
-    throw new TrueImpactRuntimeException([
-      new TrueImpactError(
-        `You need to add a static factory method as follows.\nclass ${ctor.name}{\nstatic fromPersistenceDto(dto: YourDtoType): ${ctor.name} | TrueImpactError{...}\n}`,
-      ),
-    ]);
+    // throw new Error(
+    //   `You need to add a static factory method as follows.\nclass ${ctor.name}{\nstatic fromPersistenceDto(dto: YourDtoType): ${ctor.name} | TrueImpactError{...}\n}`,
+    // );
+
+    return plainToClass(ctor, dtoWithOverridesApplied);
   }
 
-  const result = ctor.fromPersistenceDto(dtoWithOverridesApplied) as
-    | UInstance
-    | TrueImpactError;
+  const result = ctor.fromPersistenceDto(dtoWithOverridesApplied) as UInstance;
 
   return result;
 };
 
-export function TrueImpactDataExample({
+export function TrueImpactDataExample<TPersistenceDto>({
   example,
-}: TrueImpactDataExampleOptions): ClassDecorator {
+}: TrueImpactDataExampleOptions<TPersistenceDto>): ClassDecorator {
   return function (target: object) {
     const existingMetadata = (Reflect.get(
       target,
       TRUE_IMPACT_DATA_EXAMPLE_METADATA,
     ) as TrueImpactDataExampleMetadata) || {
-      examples: new Map<string, unknown>(),
+      examples: new Map<string, TPersistenceDto>(),
     };
 
     existingMetadata.examples.set('default', example);
