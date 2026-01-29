@@ -1,4 +1,10 @@
-import { Entity, NonEmptyString, TrueImpactError } from '../../libs';
+import {
+  Entity,
+  NonEmptyString,
+  TrueImpactDataExample,
+  TrueImpactError,
+} from '../../libs';
+import { AddOptionToSurveyQuestion } from './commands/add-option-to-survey-question.command';
 
 export class SurveyOptionPersistenceDto {
   label: string;
@@ -6,6 +12,13 @@ export class SurveyOptionPersistenceDto {
   nextQuestionLabel?: string;
 }
 
+@TrueImpactDataExample<SurveyOptionPersistenceDto>({
+  example: {
+    label: 'a',
+    text: 'this is rarely true',
+    // nextQuestionLabel:
+  },
+})
 export class SurveyOption extends Entity {
   @NonEmptyString({
     label: 'label',
@@ -85,6 +98,14 @@ export class SurveyOption extends Entity {
     text,
     nextQuestionLabel,
   }: SurveyOptionPersistenceDto): SurveyOption {
+    return new SurveyOption({ label, text, nextQuestionLabel });
+  }
+
+  static fromAddOptionToSurveyQuestion({
+    optionLabel: label,
+    nextQuestionLabel,
+    text,
+  }: AddOptionToSurveyQuestion): SurveyOption | TrueImpactError {
     return new SurveyOption({ label, text, nextQuestionLabel });
   }
 }

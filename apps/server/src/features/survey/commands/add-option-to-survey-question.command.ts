@@ -1,8 +1,27 @@
-import { NonEmptyString } from 'src/libs';
+import { NonEmptyString, TrueImpactDataExample } from '../../../libs';
 import { SurveyCompositeIdentifier } from '../survey.composite-identifier';
 
+@TrueImpactDataExample<AddOptionToSurveyQuestion>({
+  example: {
+    aggregateCompositeIdentifier: {
+      type: 'survey',
+      id: '1',
+    },
+    questionLabel: '1',
+    optionLabel: 'a',
+    text: 'I often feel happy with myself!',
+  },
+})
 export class AddOptionToSurveyQuestion {
   aggregateCompositeIdentifier: SurveyCompositeIdentifier;
+
+  @NonEmptyString({
+    label: 'question label',
+    description: 'the label for the question that will receive the new option',
+    isArray: false,
+    isOptional: false,
+  })
+  questionLabel: string;
 
   // This is a local identifier for the option within the context of a question
   @NonEmptyString({
@@ -12,7 +31,7 @@ export class AddOptionToSurveyQuestion {
     isArray: false,
     isOptional: false,
   })
-  label: string;
+  optionLabel: string;
 
   // currently the languageCode is assumed to be 'en'
   @NonEmptyString({

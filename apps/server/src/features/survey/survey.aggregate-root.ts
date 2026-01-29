@@ -7,6 +7,7 @@ import {
   TrueImpactDataExample,
   TrueImpactError,
 } from '../../libs';
+import { AddOptionToSurveyQuestion } from './commands/add-option-to-survey-question.command';
 import { AddQuestionToSurvey } from './commands/add-question-to-survey.command';
 import { CreateSurvey } from './commands/create-survey.command';
 import {
@@ -144,6 +145,7 @@ export class Survey extends Entity {
     return this;
   }
 
+  // @UpdateMethod
   // should this be a bad user input error?
   addQuestion(userRequest: AddQuestionToSurvey): Survey | TrueImpactError {
     if (this.questions.has(userRequest.label)) {
@@ -160,6 +162,30 @@ export class Survey extends Entity {
     }
 
     this.questions.set(questionBuildResult.label, questionBuildResult);
+
+    return this;
+  }
+
+  addOptionToQuestion(
+    userRequest: AddOptionToSurveyQuestion,
+  ): Survey | TrueImpactError {
+    const { questionLabel } = userRequest;
+
+    if (!this.questions.has(questionLabel)) {
+      return new TrueImpactError(
+        `You cannot add option [${userRequest.optionLabel}] to survey[${this.name}] as it has no question with the label [${userRequest.questionLabel}].`,
+      );
+    }
+
+    const targetQuestion = this.questions.get(questionLabel) as SurveyQuestion;
+
+    const updatedQuestion = targetQuestion.addOption(userRequest);
+
+    if (updatedQuestion instanceof TrueImpactError) {
+      return updatedQuestion;
+    }
+
+    this.questions.set(questionLabel, updatedQuestion);
 
     return this;
   }

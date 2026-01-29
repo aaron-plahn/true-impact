@@ -1,4 +1,4 @@
-import { NonEmptyString } from 'src/libs';
+import { NonEmptyString } from '../../../libs';
 import { SurveyCompositeIdentifier } from '../survey.composite-identifier';
 
 export class RemoveOptionFromSurveyQuestion {

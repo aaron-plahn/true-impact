@@ -4,6 +4,7 @@ import {
   TrueImpactDataExample,
   TrueImpactError,
 } from '../../libs';
+import { AddOptionToSurveyQuestion } from './commands/add-option-to-survey-question.command';
 import { AddQuestionToSurvey } from './commands/add-question-to-survey.command';
 import {
   SurveyOption,
@@ -68,6 +69,33 @@ export class SurveyQuestion extends Entity {
 
   size(): number {
     return this.options.size;
+  }
+
+  // @UpdateMethod
+  addOption(
+    userRequest: AddOptionToSurveyQuestion,
+  ): SurveyQuestion | TrueImpactError {
+    if (this.options.has(userRequest.optionLabel)) {
+      return new TrueImpactError(
+        `You cannot add option [${userRequest.optionLabel}] to question [${userRequest.questionLabel}] as there is already an option with this label.`,
+      );
+    }
+
+    const { optionLabel: label } = userRequest;
+
+    // TODO validate nextQuestionLabel exists
+    // TODO ensure that we have no cycles
+
+    const optionBuildResult =
+      SurveyOption.fromAddOptionToSurveyQuestion(userRequest);
+
+    if (optionBuildResult instanceof TrueImpactError) {
+      return optionBuildResult;
+    }
+
+    this.options.set(label, optionBuildResult);
+
+    return this;
   }
 
   static fromAddQuestionToSurvey({

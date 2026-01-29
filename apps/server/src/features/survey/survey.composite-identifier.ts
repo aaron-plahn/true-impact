@@ -1,4 +1,4 @@
-import { NonEmptyString } from 'src/libs';
+import { NonEmptyString } from '../../libs';
 import { SURVEY_AGGREGATE_TYPE } from './constants';
 
 export class SurveyCompositeIdentifier {
