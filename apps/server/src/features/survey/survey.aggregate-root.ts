@@ -212,6 +212,40 @@ export class Survey extends Entity {
     return this;
   }
 
+  @UpdateMethod()
+  addWeightsForOptionInQuestion({
+    questionLabel,
+    optionLabel,
+    weights,
+  }: {
+    questionLabel: string;
+    optionLabel: string;
+    weights: Record<string, number>;
+  }): this | TrueImpactError {
+    const targetQuestion =
+      this.get(questionLabel) ||
+      new TrueImpactError(
+        `You cannot add weights to question [${questionLabel}] as there is no such question in survey [${this.name}]`,
+      );
+
+    if (targetQuestion instanceof TrueImpactError) {
+      return targetQuestion;
+    }
+
+    const updatedQuestion = targetQuestion?.addWeightsForOption({
+      optionLabel,
+      weights,
+    });
+
+    if (updatedQuestion instanceof TrueImpactError) {
+      return updatedQuestion;
+    }
+
+    this.questions.set(questionLabel, updatedQuestion);
+
+    return this;
+  }
+
   static fromPersistenceDto({
     id,
     name,

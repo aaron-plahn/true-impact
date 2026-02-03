@@ -3,6 +3,7 @@ import {
   NonEmptyString,
   TrueImpactDataExample,
   TrueImpactError,
+  UpdateMethod,
 } from '../../libs';
 import { AddOptionToSurveyQuestion } from './commands/add-option-to-survey-question.command';
 
@@ -10,12 +11,14 @@ export class SurveyOptionPersistenceDto {
   label: string;
   text: string;
   nextQuestionLabel?: string;
+  weights: Record<string, number>;
 }
 
 @TrueImpactDataExample<SurveyOptionPersistenceDto>({
   example: {
     label: 'a',
     text: 'this is rarely true',
+    weights: {},
     // nextQuestionLabel:
   },
 })
@@ -48,14 +51,19 @@ export class SurveyOption extends Entity {
   })
   nextQuestionLabel?: string;
 
+  // @lookup table
+  weights = new Map<string, number>();
+
   constructor({
     label,
     text,
     nextQuestionLabel,
+    weights,
   }: {
     label: string;
     text: string;
     nextQuestionLabel?: string;
+    weights?: Record<string, number>;
   }) {
     super();
 
@@ -64,6 +72,10 @@ export class SurveyOption extends Entity {
     this.text = text;
 
     this.nextQuestionLabel = nextQuestionLabel;
+
+    if (weights) {
+      this.weights = new Map<string, number>(Object.entries(weights));
+    }
   }
 
   validateComplexInvariants(): TrueImpactError[] {
@@ -88,17 +100,70 @@ export class SurveyOption extends Entity {
       label: this.label,
       text: this.text,
       nextQuestionLabel: this.nextQuestionLabel,
+      weights: Object.fromEntries(this.weights),
     };
 
     return result;
+  }
+
+  getWeight(weightName: string): number {
+    /**
+     * Note that there may be weights that are important to other questions \ options.
+     * They do not need to be registered if they do not apply to this option. We simply
+     * contribute 0 to unknown weights.
+     */
+
+    if (!this.weights.has(weightName)) {
+      return 0;
+    }
+
+    return this.weights.get(weightName) || 0;
+  }
+
+  @UpdateMethod()
+  addWeights(weights: Record<string, number>): SurveyOption | TrueImpactError {
+    const conflictingWeigtErrors: TrueImpactError[] = Object.entries(
+      weights,
+    ).reduce((acc: TrueImpactError[], [weightName, weightValue]) => {
+      if (this.weights.has(weightName)) {
+        acc.push(
+          new TrueImpactError(
+            `You cannot add value [${weightValue}] for weight [${weightName}] to option [${this.label}] as there is already a weight named [${weightName}] with the value [${this.weights.get(weightName)}]`,
+          ),
+        );
+      }
+      return acc;
+    }, []);
+
+    if (conflictingWeigtErrors.length > 0) {
+      // TODO inject Survey and Question context?
+      return new TrueImpactError(
+        `Failed to add weights to option [${this.label}]`,
+        conflictingWeigtErrors,
+      );
+    }
+
+    Object.entries(weights).forEach(([weightName, weightValue]) => {
+      this.weights.set(weightName, weightValue);
+    });
+
+    return this;
   }
 
   static fromPersistenceDto({
     label,
     text,
     nextQuestionLabel,
+    weights,
   }: SurveyOptionPersistenceDto): SurveyOption {
-    return new SurveyOption({ label, text, nextQuestionLabel });
+    const result = new SurveyOption({
+      label,
+      text,
+      nextQuestionLabel,
+      weights,
+    });
+
+    return result;
   }
 
   static fromAddOptionToSurveyQuestion({

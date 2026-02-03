@@ -10,7 +10,11 @@ export class TrueImpactError extends Error {
   }
 
   protected buildCompleteErrorMessage() {
-    const lines = [this.message, `See inner errors for more info.`];
+    const lines = [this.message];
+
+    if (this.innerErrors.length > 0) {
+      lines.push(`See inner errors for more info.`);
+    }
 
     for (const e of this.innerErrors) {
       lines.push(e.buildCompleteErrorMessage());
