@@ -1,14 +1,26 @@
 import { buildTestInstance, TrueImpactError } from '../../libs';
 import { AddOptionToSurveyQuestion } from './commands/add-option-to-survey-question.command';
+import { SURVEY_AGGREGATE_TYPE } from './constants';
+import { SurveyQuestion } from './survey-question.entity';
 import { Survey, SurveyPersistenceDto } from './survey.aggregate-root';
 
+const surveyId = '123';
+
+const aggregateCompositeIdentifier = {
+  type: SURVEY_AGGREGATE_TYPE,
+  id: surveyId,
+} as const;
+
 const emptySurvey = buildTestInstance<SurveyPersistenceDto, Survey>(Survey, {
+  id: surveyId,
   questions: {},
 });
 
 const questionLabel = '1';
 
 const optionLabel = 'a';
+
+const optionText = 'always';
 
 const addOptionCommand = buildTestInstance<
   AddOptionToSurveyQuestion,
@@ -20,17 +32,69 @@ const addOptionCommand = buildTestInstance<
 
 describe(`Survey.addOptionToQuestion`, () => {
   describe(`when the question exists`, () => {
-    describe(`when it does not yet have any options`, () => {
-      it.todo('should add a first option');
-    });
+    const surveyWithOneQuestion = emptySurvey.addFirstQuestion({
+      label: questionLabel,
+      // We don't need this here
+      aggregateCompositeIdentifier,
+      prompt: 'Test prompt for first question',
+    }) as Survey;
 
-    describe(`when the survey already has options`, () => {
-      describe(`when the request is valid`, () => {
-        it.todo(`should add the option to the given question`);
+    describe(`When the target is the first question in a survey`, () => {
+      describe(`when it does not yet have any options`, () => {
+        it('should add a first option', () => {
+          const result = surveyWithOneQuestion.addOptionToQuestion({
+            questionLabel,
+            aggregateCompositeIdentifier,
+            optionLabel,
+            text: optionText,
+          });
+
+          expect(result).toBeInstanceOf(Survey);
+
+          const updatedSurvey = result as Survey;
+
+          expect(updatedSurvey.size()).toBe(1);
+
+          expect(updatedSurvey.getFirstQuestion()?.size()).toBe(1);
+
+          // TODO check options in detail
+        });
       });
 
-      describe(`when the request is invalid`, () => {
-        describe(`when there is already an option with the given label`, () => {
+      describe(`when the survey already has options`, () => {
+        // TODO Update methods should return a `ResultOrError` that we can `.map` over.
+        const surveyWithQuestionAndOneOption =
+          surveyWithOneQuestion.addOptionToQuestion({
+            questionLabel,
+            aggregateCompositeIdentifier,
+            optionLabel: 'existing',
+            text: 'text for the existing option',
+          }) as Survey;
+
+        describe(`when the request is valid`, () => {
+          it(`should add the option to the given question`, () => {
+            const result = surveyWithQuestionAndOneOption.addOptionToQuestion({
+              questionLabel,
+              aggregateCompositeIdentifier,
+              optionLabel,
+              text: optionText,
+            });
+
+            expect(result).not.toBeInstanceOf(TrueImpactError);
+
+            const updatedSurvey = result as Survey;
+
+            expect(updatedSurvey.size()).toBe(1); // still
+
+            expect(
+              (updatedSurvey.getFirstQuestion() as SurveyQuestion).size(),
+            ).toBe(2);
+          });
+        });
+
+        describe(`when the request is invalid`, () => {
+          const existingOptionText = 'Sometimes (test option text)';
+
           const existingSurvey = buildTestInstance<
             SurveyPersistenceDto,
             Survey
@@ -40,30 +104,62 @@ describe(`Survey.addOptionToQuestion`, () => {
                 options: {
                   [optionLabel]: {
                     label: optionLabel,
+                    text: existingOptionText,
                   },
                 },
               },
             },
           });
 
-          const invalidRequest = buildTestInstance<
-            AddOptionToSurveyQuestion,
-            AddOptionToSurveyQuestion
-          >(AddOptionToSurveyQuestion, {
-            optionLabel: optionLabel,
-            questionLabel: questionLabel,
+          describe(`when there is already an option with the given label`, () => {
+            const invalidRequest = buildTestInstance<
+              AddOptionToSurveyQuestion,
+              AddOptionToSurveyQuestion
+            >(AddOptionToSurveyQuestion, {
+              optionLabel: optionLabel,
+              questionLabel: questionLabel,
+            });
+
+            it(`should return the expected error`, () => {
+              const result = existingSurvey.addOptionToQuestion(invalidRequest);
+
+              expect(result).toBeInstanceOf(TrueImpactError);
+
+              const message = (result as TrueImpactError).toString();
+
+              expect(message).toContain('already an option');
+              expect(message).toContain(optionLabel);
+              expect(message).toContain(questionLabel);
+            });
           });
 
-          it(`should return the expected error`, () => {
-            const result = existingSurvey.addOptionToQuestion(invalidRequest);
+          describe(`when there is already an option with the given text`, () => {
+            it(`should return the expected error`, () => {
+              const labelForOptionWithRepeatedText = 'XII';
 
-            expect(result).toBeInstanceOf(TrueImpactError);
+              const userRequest = buildTestInstance<
+                AddOptionToSurveyQuestion,
+                AddOptionToSurveyQuestion
+              >(AddOptionToSurveyQuestion, {
+                optionLabel: labelForOptionWithRepeatedText,
+                // TODO We need type safety here
+                // optionText: existingOptionText,
+                text: existingOptionText,
+                questionLabel: questionLabel,
+              });
 
-            const message = (result as TrueImpactError).toString();
+              const result = existingSurvey.addOptionToQuestion(userRequest);
 
-            expect(message).toContain('already an option');
-            expect(message).toContain(optionLabel);
-            expect(message).toContain(questionLabel);
+              expect(result).toBeInstanceOf(TrueImpactError);
+
+              const message = (result as TrueImpactError).toString();
+
+              expect(message).toContain('already has the text');
+              expect(message).toContain(labelForOptionWithRepeatedText);
+              expect(message).toContain(optionLabel);
+              expect(message).toContain(questionLabel);
+              expect(message).toContain(existingOptionText);
+            });
           });
         });
       });

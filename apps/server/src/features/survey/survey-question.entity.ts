@@ -3,6 +3,7 @@ import {
   NonEmptyString,
   TrueImpactDataExample,
   TrueImpactError,
+  UpdateMethod,
 } from '../../libs';
 import { AddOptionToSurveyQuestion } from './commands/add-option-to-survey-question.command';
 import { AddQuestionToSurvey } from './commands/add-question-to-survey.command';
@@ -71,7 +72,7 @@ export class SurveyQuestion extends Entity {
     return this.options.size;
   }
 
-  // @UpdateMethod
+  @UpdateMethod()
   addOption(
     userRequest: AddOptionToSurveyQuestion,
   ): SurveyQuestion | TrueImpactError {
@@ -83,8 +84,20 @@ export class SurveyQuestion extends Entity {
 
     const { optionLabel: label } = userRequest;
 
-    // TODO validate nextQuestionLabel exists
-    // TODO ensure that we have no cycles
+    const questionsWithTheSameText = Array.from(this.options.values()).filter(
+      // TODO trim and remove punctuation?
+      // TODO add case-insensitive test cases
+      ({ text }) => {
+        return text.toLowerCase() === userRequest.text.toLowerCase();
+      },
+    );
+
+    if (questionsWithTheSameText.length > 0) {
+      return new TrueImpactError(
+        `You cannot add option [${userRequest.optionLabel}] to question [${userRequest.questionLabel}] as question [${questionsWithTheSameText[0].label}] already has the text [${questionsWithTheSameText[0].text}]`,
+      );
+    }
+    // TODO allow the user to register a "next" for a question
 
     const optionBuildResult =
       SurveyOption.fromAddOptionToSurveyQuestion(userRequest);
@@ -96,15 +109,6 @@ export class SurveyQuestion extends Entity {
     this.options.set(label, optionBuildResult);
 
     return this;
-  }
-
-  static fromAddQuestionToSurvey({
-    label,
-    prompt,
-  }: AddQuestionToSurvey): SurveyQuestion | TrueImpactError {
-    const instance = new SurveyQuestion({ label, prompt });
-
-    return instance.validateInvariants();
   }
 
   toPersistenceDto(): SurveyQuestionPersistenceDto {
@@ -125,6 +129,14 @@ export class SurveyQuestion extends Entity {
     };
 
     return result;
+  }
+  static fromAddQuestionToSurvey({
+    label,
+    prompt,
+  }: AddQuestionToSurvey): SurveyQuestion | TrueImpactError {
+    const instance = new SurveyQuestion({ label, prompt });
+
+    return instance.validateInvariants();
   }
 
   static fromPersistenceDto({

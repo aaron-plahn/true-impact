@@ -103,9 +103,8 @@ export class SurveyOption extends Entity {
 
   static fromAddOptionToSurveyQuestion({
     optionLabel: label,
-    nextQuestionLabel,
     text,
   }: AddOptionToSurveyQuestion): SurveyOption | TrueImpactError {
-    return new SurveyOption({ label, text, nextQuestionLabel });
+    return new SurveyOption({ label, text });
   }
 }

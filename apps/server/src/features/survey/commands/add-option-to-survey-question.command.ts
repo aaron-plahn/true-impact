@@ -41,18 +41,4 @@ export class AddOptionToSurveyQuestion {
     isOptional: false,
   })
   text: string;
-
-  /**
-   * If this is omitted, the option forms a `leaf` in the survey graph, i.e., it is a
-   * "dead end".
-   */
-  @NonEmptyString({
-    label: 'label of next question',
-    description:
-      'a reference to the question to show the user this option is chosen',
-    isArray: false,
-    // TODO ensure that (if applicable) is appended to the user facing \ API docs when presenting this schema
-    isOptional: true,
-  })
-  nextQuestionLabel?: string;
 }

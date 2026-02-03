@@ -1,16 +1,16 @@
 import { plainToClass } from 'class-transformer';
 import { Ctor, DeepPartial } from 'utility-types';
 
+interface FromPersistenceDto<TDto = unknown, UInstance = unknown> {
+  fromPersistenceDto(dto: TDto): UInstance;
+}
+
 const isFromPersistenceDto = <T = unknown>(
   input: unknown,
 ): input is FromPersistenceDto<T> =>
   input !== null &&
   typeof input !== 'undefined' &&
   typeof (input as FromPersistenceDto).fromPersistenceDto === 'function';
-
-interface FromPersistenceDto<TDto = unknown, UInstance = unknown> {
-  fromPersistenceDto(dto: TDto): UInstance;
-}
 
 export interface TrueImpactDataExampleOptions<TPeristenceDto = unknown> {
   example: TPeristenceDto;

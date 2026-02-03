@@ -6,6 +6,7 @@ import {
   TrueImpactBadUserInputError,
   TrueImpactDataExample,
   TrueImpactError,
+  UpdateMethod,
 } from '../../libs';
 import { AddOptionToSurveyQuestion } from './commands/add-option-to-survey-question.command';
 import { AddQuestionToSurvey } from './commands/add-question-to-survey.command';
@@ -59,24 +60,29 @@ export class Survey extends Entity {
    * In this way, the survey is directed graph. We should validate as part of the invariant validation
    * that it is acyclic.
    *
-   * If `firstQuestion` is null, it is not possible to publish the survey.
+   * If `firstQuestionLabel` is null, it is not possible to publish the survey.
    */
-  firstQuestion: SurveyQuestion | null;
+  firstQuestionLabel?: string;
 
   constructor({
     id,
     name,
     questions,
+    firstQuestionLabel,
   }: {
     id: string;
     name: string;
     questions?: Record<string, SurveyQuestion>;
+    firstQuestionLabel?: string;
   }) {
     super();
 
     this.id = isNonEmptyString(id) ? id : 'GENERATE_A_NEW_ID';
 
     this.name = name;
+
+    // TODO Ensure that you validate the invariant rule that the `firstQuestionLabel` must be the `label` for some question in `questions.values()`
+    this.firstQuestionLabel = firstQuestionLabel;
 
     this.questions = new Map(Object.entries(questions || {}));
   }
@@ -128,9 +134,22 @@ export class Survey extends Entity {
         },
         {},
       ),
+      firstQuestionLabel: this.firstQuestionLabel,
     };
 
     return result;
+  }
+
+  getFirstQuestion(): SurveyQuestion | null {
+    if (typeof this.firstQuestionLabel === 'undefined') {
+      return null;
+    }
+
+    return this.questions.get(this.firstQuestionLabel) || null;
+  }
+
+  get(questionLabel: string): SurveyQuestion | null {
+    return this.questions.get(questionLabel) || null;
   }
 
   setInitialId(generatedId: string): Survey | TrueImpactError {
@@ -145,12 +164,12 @@ export class Survey extends Entity {
     return this;
   }
 
-  // @UpdateMethod
   // should this be a bad user input error?
-  addQuestion(userRequest: AddQuestionToSurvey): Survey | TrueImpactError {
-    if (this.questions.has(userRequest.label)) {
+  @UpdateMethod()
+  addFirstQuestion(userRequest: AddQuestionToSurvey): Survey | TrueImpactError {
+    if (this.size() !== 0) {
       return new TrueImpactError(
-        `You cannot add question [${userRequest.label}] to survey [${this.name}], as there is already a question with that label.`,
+        `You cannot add question [${userRequest.label}] as the first question in survey [${this.name}], as there is it already has a first question: ${this.firstQuestionLabel}.`,
       );
     }
 
@@ -163,9 +182,12 @@ export class Survey extends Entity {
 
     this.questions.set(questionBuildResult.label, questionBuildResult);
 
+    this.firstQuestionLabel = questionBuildResult.label;
+
     return this;
   }
 
+  @UpdateMethod()
   addOptionToQuestion(
     userRequest: AddOptionToSurveyQuestion,
   ): Survey | TrueImpactError {
@@ -194,10 +216,12 @@ export class Survey extends Entity {
     id,
     name,
     questions,
+    firstQuestionLabel,
   }: SurveyPersistenceDto): Survey | TrueImpactError {
     return new Survey({
       id,
       name,
+      firstQuestionLabel,
       questions: Object.entries(questions).reduce(
         (acc: Record<string, SurveyQuestion>, [label, questionDto]) => {
           acc[label] = SurveyQuestion.fromPersistenceDto(questionDto);

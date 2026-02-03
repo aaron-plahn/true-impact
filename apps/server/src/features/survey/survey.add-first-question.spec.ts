@@ -22,19 +22,21 @@ const addQuestionCommandPayload = buildTestInstance<
   label: newQuestionLabel,
 });
 
-describe(`Survey.addQuestion`, () => {
+describe(`Survey.addFirstQuestion`, () => {
   describe(`when the survey has no questions to start`, () => {
     describe(`when the request is valid`, () => {
       it(`should have a test`, () => {
-        const result = validEmptySurvey.addQuestion(addQuestionCommandPayload);
+        const result = validEmptySurvey.addFirstQuestion(
+          addQuestionCommandPayload,
+        );
 
         expect(result).not.toBeInstanceOf(TrueImpactError);
 
-        expect((result as Survey).size()).toEqual(1);
+        const updatedSurvey = result as Survey;
 
-        const question = (result as Survey).questions.get(
-          newQuestionLabel,
-        ) as SurveyQuestion;
+        expect(updatedSurvey.size()).toEqual(1);
+
+        const question = updatedSurvey.getFirstQuestion() as SurveyQuestion;
 
         const { prompt } = question;
 
@@ -66,35 +68,24 @@ describe(`Survey.addQuestion`, () => {
       label: 'b',
     });
 
-    describe(`when the request is valid`, () => {
-      it(`should add the question to the survey`, () => {
-        survey.addQuestion(addNewQuestionCommand);
-
-        expect(survey.size()).toBe(2);
-      });
-    });
-
     describe(`when the request is invalid`, () => {
-      // TODO do we want to prevent duplicate prompts across questions?
-      describe(`when there is already a question with the given label`, () => {
-        const invalidCommand = buildTestInstance<
-          AddQuestionToSurvey,
-          AddQuestionToSurvey
-        >(AddQuestionToSurvey, {
-          label: existingQuestion.label,
-        });
-
+      describe(`when the survey already has a first question`, () => {
         it(`should return the expected error`, () => {
-          const result = survey.addQuestion(invalidCommand);
+          const result = survey.addFirstQuestion(addNewQuestionCommand);
 
           expect(result).toBeInstanceOf(TrueImpactError);
 
           const message = (result as TrueImpactError).toString();
 
-          expect(message).toContain('You cannot add question');
-          expect(message).toContain(existingQuestion.label);
-          expect(message).toContain('already a question');
+          expect(message).toContain(`You cannot add`);
+
+          expect(message).toContain(`first question`);
+
           expect(message).toContain(survey.name);
+
+          expect(message).toContain(addNewQuestionCommand.label);
+
+          expect(message).toContain('already has');
         });
       });
     });
