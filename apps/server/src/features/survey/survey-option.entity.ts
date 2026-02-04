@@ -5,7 +5,6 @@ import {
   TrueImpactError,
   UpdateMethod,
 } from '../../libs';
-import { AddOptionToSurveyQuestion } from './commands/add-option-to-survey-question.command';
 
 export class SurveyOptionPersistenceDto {
   label: string;
@@ -49,7 +48,7 @@ export class SurveyOption extends Entity {
     isArray: false,
     isOptional: false,
   })
-  nextQuestionLabel?: string;
+  followUpQuestionLabel?: string;
 
   // @lookup table
   weights = new Map<string, number>();
@@ -71,7 +70,7 @@ export class SurveyOption extends Entity {
 
     this.text = text;
 
-    this.nextQuestionLabel = nextQuestionLabel;
+    this.followUpQuestionLabel = nextQuestionLabel;
 
     if (weights) {
       this.weights = new Map<string, number>(Object.entries(weights));
@@ -99,7 +98,7 @@ export class SurveyOption extends Entity {
     const result: SurveyOptionPersistenceDto = {
       label: this.label,
       text: this.text,
-      nextQuestionLabel: this.nextQuestionLabel,
+      nextQuestionLabel: this.followUpQuestionLabel,
       weights: Object.fromEntries(this.weights),
     };
 
@@ -150,6 +149,21 @@ export class SurveyOption extends Entity {
     return this;
   }
 
+  // TODO We may want to allow a top-level flat ordered list of follow-up questions
+  // Note that it is the responsibility of the `Survey` to validate the follow-up question's existence before passing the request up the line
+  @UpdateMethod()
+  addFollowUpQuestion(label: string): this | TrueImpactError {
+    if (this.followUpQuestionLabel) {
+      return new TrueImpactError(
+        `You cannot add follow-up question [${label}] to option [${this.label}] as adding a second follow-up question is not currently supported.\nCurrent follow-up question [${this.followUpQuestionLabel}]`,
+      );
+    }
+
+    this.followUpQuestionLabel = label;
+
+    return this;
+  }
+
   static fromPersistenceDto({
     label,
     text,
@@ -169,7 +183,10 @@ export class SurveyOption extends Entity {
   static fromAddOptionToSurveyQuestion({
     optionLabel: label,
     text,
-  }: AddOptionToSurveyQuestion): SurveyOption | TrueImpactError {
+  }: {
+    optionLabel: string;
+    text: string;
+  }): SurveyOption | TrueImpactError {
     return new SurveyOption({ label, text });
   }
 }

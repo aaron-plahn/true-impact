@@ -8,9 +8,8 @@ import {
   TrueImpactError,
   UpdateMethod,
 } from '../../libs';
-import { AddOptionToSurveyQuestion } from './commands/add-option-to-survey-question.command';
-import { AddQuestionToSurvey } from './commands/add-question-to-survey.command';
 import { CreateSurvey } from './commands/create-survey.command';
+import { SURVEY_AGGREGATE_TYPE } from './constants';
 import {
   SurveyQuestion,
   SurveyQuestionPersistenceDto,
@@ -18,6 +17,7 @@ import {
 
 export class SurveyPersistenceDto {
   id: string;
+  isPublished: boolean;
   name: string;
   questions: Record<string, SurveyQuestionPersistenceDto>;
   firstQuestionLabel?: string;
@@ -30,12 +30,19 @@ export class SurveyPersistenceDto {
 @TrueImpactDataExample<SurveyPersistenceDto>({
   example: {
     id: '123',
+    isPublished: false,
     name: 'test survey',
     questions: {},
     // firstQuestionLabel:
   },
 })
 export class Survey extends Entity {
+  /**
+   * This is useful in case we ever want to iterate through a global collection of
+   * entities and build instances.
+   */
+  readonly type = SURVEY_AGGREGATE_TYPE;
+
   @NonEmptyString({
     label: 'ID',
     description: 'Unique identifier for this survey',
@@ -43,6 +50,10 @@ export class Survey extends Entity {
     isOptional: false,
   })
   id: string;
+
+  // @BooleanDataType
+  // TODO We need a draft \ publication \ versioning work-flow
+  isPublished: boolean;
 
   // TODO support translations?
   @NonEmptyString({
@@ -87,16 +98,6 @@ export class Survey extends Entity {
     this.questions = new Map(Object.entries(questions || {}));
   }
 
-  /**
-   * - A Survey can not be published if it has no `firstQuestion`.
-   * - A Survey must constitute an acyclic graph via its questions. That is, no `SurveyOption.next` should point to a previous
-   * question in the survey.
-   * - A published survey's questions must offer at least 2 options each
-   */
-  validateComplexInvariants(): TrueImpactError[] {
-    return [];
-  }
-
   getId(): string {
     /**
      * This shouldn't happen, but we want to be safe.
@@ -122,6 +123,7 @@ export class Survey extends Entity {
     const result: SurveyPersistenceDto = {
       id: this.id,
       name: this.name,
+      isPublished: this.isPublished,
       // We persist maps as plain objects (lookup tables)
       questions: Array.from(this.questions.entries()).reduce(
         (
@@ -152,6 +154,23 @@ export class Survey extends Entity {
     return this.questions.get(questionLabel) || null;
   }
 
+  /**
+   *
+   * @param questionLabel the label of the target question
+   * @param optionLabel the label of the selected option
+   * @returns the follow-up question to ask
+   */
+  next(questionLabel: string, optionLabel: string): SurveyQuestion | null {
+    const followUpQuestionLabel =
+      this.get(questionLabel)?.get(optionLabel)?.followUpQuestionLabel;
+
+    if (!followUpQuestionLabel) {
+      return null;
+    }
+
+    return this.get(followUpQuestionLabel);
+  }
+
   setInitialId(generatedId: string): Survey | TrueImpactError {
     if (this.id !== 'GENERATE_A_NEW_ID') {
       return new TrueImpactError(
@@ -166,7 +185,10 @@ export class Survey extends Entity {
 
   // should this be a bad user input error?
   @UpdateMethod()
-  addFirstQuestion(userRequest: AddQuestionToSurvey): Survey | TrueImpactError {
+  addFirstQuestion(userRequest: {
+    label: string;
+    prompt: string;
+  }): Survey | TrueImpactError {
     if (this.size() !== 0) {
       return new TrueImpactError(
         `You cannot add question [${userRequest.label}] as the first question in survey [${this.name}], as there is it already has a first question: ${this.firstQuestionLabel}.`,
@@ -188,9 +210,11 @@ export class Survey extends Entity {
   }
 
   @UpdateMethod()
-  addOptionToQuestion(
-    userRequest: AddOptionToSurveyQuestion,
-  ): Survey | TrueImpactError {
+  addOptionToQuestion(userRequest: {
+    questionLabel: string;
+    optionLabel: string;
+    text: string;
+  }): Survey | TrueImpactError {
     const { questionLabel } = userRequest;
 
     if (!this.questions.has(questionLabel)) {
@@ -265,6 +289,103 @@ export class Survey extends Entity {
         {},
       ),
     });
+  }
+
+  @UpdateMethod()
+  addFollowUpQuestion({
+    optionLabel,
+    questionLabel,
+    followUpQuestion,
+  }: {
+    questionLabel: string;
+    optionLabel: string;
+    followUpQuestion: { label: string; prompt: string };
+  }): this | TrueImpactError {
+    this.questions.set(
+      followUpQuestion.label,
+      SurveyQuestion.fromAddQuestionToSurvey(
+        followUpQuestion,
+      ) as SurveyQuestion,
+    );
+
+    const updatedQuestion =
+      this.get(questionLabel)?.addFollowUpQuestionForOption({
+        optionLabel,
+        followUpQuestionLabel: followUpQuestion.label,
+      }) ||
+      new TrueImpactError(
+        `You cannot add a follow-up question to option [${optionLabel}] for question [${questionLabel}] as there is no such question in survey [${this.name}]`,
+      );
+
+    if (updatedQuestion instanceof TrueImpactError) {
+      return updatedQuestion;
+    }
+
+    this.questions.set(questionLabel, updatedQuestion);
+
+    return this;
+  }
+
+  @UpdateMethod()
+  publish(): this | TrueImpactError {
+    if (this.isPublished) {
+      return new TrueImpactError(
+        `You cannot publish survey [${this.name}], as it is already published`,
+      );
+    }
+
+    this.isPublished = true;
+
+    return this;
+  }
+
+  validatePublicationStatus(): TrueImpactError[] {
+    const allErrors: TrueImpactError[] = [];
+
+    /**
+     * There are no restrictions to validate if the survey is unpublished
+     */
+    if (!this.isPublished) {
+      return allErrors;
+    }
+
+    if (this.size() < 1) {
+      allErrors.push(
+        new TrueImpactError(
+          `A survey must have at least 1 question in order to be published`,
+        ),
+      );
+    }
+
+    const MIN_NUMBER_OF_OPTIONS = 2;
+
+    const tooFewOptionsErrors = Array.from(this.questions.values()).flatMap(
+      (q: SurveyQuestion) => {
+        const questionSize = q.size();
+
+        return questionSize < MIN_NUMBER_OF_OPTIONS
+          ? [
+              new TrueImpactError(
+                `Survey [${this.name}] cannot be published as its question [${q.label}] does not have at least ${MIN_NUMBER_OF_OPTIONS} options. It has ${questionSize} options.`,
+              ),
+            ]
+          : [];
+      },
+    );
+
+    allErrors.push(...tooFewOptionsErrors);
+
+    return allErrors;
+  }
+
+  /**
+   * - A Survey can not be published if it has no `firstQuestion`.
+   * - A Survey must constitute an acyclic graph via its questions. That is, no `SurveyOption.next` should point to a previous
+   * question in the survey.
+   * - A published survey's questions must offer at least 2 options each
+   */
+  validateComplexInvariants(): TrueImpactError[] {
+    return [...this.validatePublicationStatus()];
   }
 
   static fromCreateSurveyCommand({

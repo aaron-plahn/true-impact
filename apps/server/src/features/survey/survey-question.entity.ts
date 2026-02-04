@@ -5,8 +5,6 @@ import {
   TrueImpactError,
   UpdateMethod,
 } from '../../libs';
-import { AddOptionToSurveyQuestion } from './commands/add-option-to-survey-question.command';
-import { AddQuestionToSurvey } from './commands/add-question-to-survey.command';
 import {
   SurveyOption,
   SurveyOptionPersistenceDto,
@@ -73,9 +71,11 @@ export class SurveyQuestion extends Entity {
   }
 
   @UpdateMethod()
-  addOption(
-    userRequest: AddOptionToSurveyQuestion,
-  ): SurveyQuestion | TrueImpactError {
+  addOption(userRequest: {
+    optionLabel: string;
+    questionLabel: string;
+    text: string;
+  }): SurveyQuestion | TrueImpactError {
     if (this.options.has(userRequest.optionLabel)) {
       return new TrueImpactError(
         `You cannot add option [${userRequest.optionLabel}] to question [${userRequest.questionLabel}] as there is already an option with this label.`,
@@ -140,6 +140,28 @@ export class SurveyQuestion extends Entity {
     return this;
   }
 
+  addFollowUpQuestionForOption({
+    optionLabel,
+    followUpQuestionLabel,
+  }: {
+    optionLabel: string;
+    followUpQuestionLabel: string;
+  }): this | TrueImpactError {
+    const updatedOption =
+      this.get(optionLabel)?.addFollowUpQuestion(followUpQuestionLabel) ||
+      new TrueImpactError(
+        `You cannot add a follow-up question to option [${optionLabel}] as there is no such option in question [${this.label}]`,
+      );
+
+    if (updatedOption instanceof TrueImpactError) {
+      return updatedOption;
+    }
+
+    this.options.set(optionLabel, updatedOption);
+
+    return this;
+  }
+
   get(optionLabel: string): SurveyOption | null {
     return this.options.get(optionLabel) || null;
   }
@@ -167,7 +189,10 @@ export class SurveyQuestion extends Entity {
   static fromAddQuestionToSurvey({
     label,
     prompt,
-  }: AddQuestionToSurvey): SurveyQuestion | TrueImpactError {
+  }: {
+    label: string;
+    prompt: string;
+  }): SurveyQuestion | TrueImpactError {
     const instance = new SurveyQuestion({ label, prompt });
 
     return instance.validateInvariants();

@@ -1,5 +1,4 @@
 import { buildTestInstance, TrueImpactError } from '../../libs';
-import { SURVEY_AGGREGATE_TYPE } from './constants';
 import { Survey, SurveyPersistenceDto } from './survey.aggregate-root';
 
 const surveyId = '123';
@@ -9,23 +8,16 @@ const emptySurvey = buildTestInstance<SurveyPersistenceDto, Survey>(Survey, {
   questions: {},
 });
 
-const surveyCompositeIdentifier = {
-  type: SURVEY_AGGREGATE_TYPE,
-  id: surveyId,
-} as const;
-
 const targetQuestionLabel = '1';
 
 const targetOptionLabel = 'a';
 
 const surveyWithEmptyQuestion = emptySurvey.addFirstQuestion({
-  aggregateCompositeIdentifier: surveyCompositeIdentifier,
   label: targetQuestionLabel,
   prompt: 'How often do you feel happy?',
 }) as Survey;
 
 const surveyWithUnweightedOption = surveyWithEmptyQuestion.addOptionToQuestion({
-  aggregateCompositeIdentifier: surveyCompositeIdentifier,
   questionLabel: targetQuestionLabel,
   optionLabel: targetOptionLabel,
   text: 'never',
