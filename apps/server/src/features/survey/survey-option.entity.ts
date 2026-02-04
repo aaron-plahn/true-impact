@@ -7,6 +7,7 @@ import {
 } from '../../libs';
 
 export class SurveyOptionPersistenceDto {
+  flagIds: string[];
   label: string;
   text: string;
   nextQuestionLabel?: string;
@@ -18,6 +19,7 @@ export class SurveyOptionPersistenceDto {
     label: 'a',
     text: 'this is rarely true',
     weights: {},
+    flagIds: [],
     // nextQuestionLabel:
   },
 })
@@ -53,16 +55,20 @@ export class SurveyOption extends Entity {
   // @lookup table
   weights = new Map<string, number>();
 
+  flagIds = new Set<string>();
+
   constructor({
     label,
     text,
     nextQuestionLabel,
     weights,
+    flagIds,
   }: {
     label: string;
     text: string;
     nextQuestionLabel?: string;
     weights?: Record<string, number>;
+    flagIds: string[];
   }) {
     super();
 
@@ -75,6 +81,12 @@ export class SurveyOption extends Entity {
     if (weights) {
       this.weights = new Map<string, number>(Object.entries(weights));
     }
+
+    if (Array.isArray(flagIds)) {
+      for (const flagId of flagIds) {
+        this.flagIds.add(flagId);
+      }
+    }
   }
 
   validateComplexInvariants(): TrueImpactError[] {
@@ -82,6 +94,10 @@ export class SurveyOption extends Entity {
   }
 
   getId(): string {
+    return this.label;
+  }
+
+  getName(): string {
     return this.label;
   }
 
@@ -100,9 +116,18 @@ export class SurveyOption extends Entity {
       text: this.text,
       nextQuestionLabel: this.followUpQuestionLabel,
       weights: Object.fromEntries(this.weights),
+      flagIds: Array.from(this.flagIds),
     };
 
     return result;
+  }
+
+  hasFlag(flagId: string): boolean {
+    return this.flagIds.has(flagId);
+  }
+
+  getFlagIds(): string[] {
+    return Array.from(this.flagIds);
   }
 
   getWeight(weightName: string): number {
@@ -164,17 +189,33 @@ export class SurveyOption extends Entity {
     return this;
   }
 
+  @UpdateMethod()
+  addFlag(flagId: string) {
+    if (this.flagIds.has(flagId)) {
+      return new TrueImpactError(
+        // TODO Can we inject the flag at some point?
+        `You cannot add flag [${flagId}] to option [${this.label}] as it already has this flag.`,
+      );
+    }
+
+    this.flagIds.add(flagId);
+
+    return this;
+  }
+
   static fromPersistenceDto({
     label,
     text,
     nextQuestionLabel,
     weights,
+    flagIds,
   }: SurveyOptionPersistenceDto): SurveyOption {
     const result = new SurveyOption({
       label,
       text,
       nextQuestionLabel,
       weights,
+      flagIds,
     });
 
     return result;
@@ -187,6 +228,6 @@ export class SurveyOption extends Entity {
     optionLabel: string;
     text: string;
   }): SurveyOption | TrueImpactError {
-    return new SurveyOption({ label, text });
+    return new SurveyOption({ label, text, flagIds: [] });
   }
 }

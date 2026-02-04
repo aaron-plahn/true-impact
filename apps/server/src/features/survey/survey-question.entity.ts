@@ -66,6 +66,11 @@ export class SurveyQuestion extends Entity {
     return this.label;
   }
 
+  // TODO organize all class methods
+  getName(): string {
+    return this.label;
+  }
+
   size(): number {
     return this.options.size;
   }

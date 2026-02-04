@@ -28,6 +28,8 @@ export abstract class Entity<TEntityPersistenceDto = unknown> {
 
   abstract getId(): string;
 
+  abstract getName(): string;
+
   /**
    * @returns an array of all validation errors encountered including schema errors (automatic)
    * and errors from the call to `validateComplexInvariants` (must be implemented by the class extending `Entity`).

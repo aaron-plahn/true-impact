@@ -77,11 +77,13 @@ export class Survey extends Entity {
 
   constructor({
     id,
+    isPublished,
     name,
     questions,
     firstQuestionLabel,
   }: {
     id: string;
+    isPublished: boolean;
     name: string;
     questions?: Record<string, SurveyQuestion>;
     firstQuestionLabel?: string;
@@ -89,6 +91,8 @@ export class Survey extends Entity {
     super();
 
     this.id = isNonEmptyString(id) ? id : 'GENERATE_A_NEW_ID';
+
+    this.isPublished = typeof isPublished === 'boolean' ? isPublished : false;
 
     this.name = name;
 
@@ -110,6 +114,10 @@ export class Survey extends Entity {
     }
 
     return this.id;
+  }
+
+  getName(): string {
+    return this.name;
   }
 
   /**
@@ -272,12 +280,14 @@ export class Survey extends Entity {
 
   static fromPersistenceDto({
     id,
+    isPublished,
     name,
     questions,
     firstQuestionLabel,
   }: SurveyPersistenceDto): Survey | TrueImpactError {
     return new Survey({
       id,
+      isPublished,
       name,
       firstQuestionLabel,
       questions: Object.entries(questions).reduce(
@@ -320,6 +330,59 @@ export class Survey extends Entity {
     if (updatedQuestion instanceof TrueImpactError) {
       return updatedQuestion;
     }
+
+    this.questions.set(questionLabel, updatedQuestion);
+
+    return this;
+  }
+
+  @UpdateMethod()
+  addFlagToQuestionOption({
+    questionLabel,
+    optionLabel,
+    flagId,
+  }: {
+    questionLabel: string;
+    optionLabel: string;
+    /**
+     * Flags have an identity that spans other parts of the system. Further, flags can
+     * be updated independently of the surveys in which they appear and can be reused
+     * across surveys. For that reason, they are treated as aggregate roots in their
+     * own right. Relabelling or modifying a flag's description externally to a survey
+     * will update it's appearence within surveys to which it is attached.
+     */
+    flagId: string;
+  }): this | TrueImpactError {
+    const updatedQuestion =
+      this.get(questionLabel) ||
+      new TrueImpactError(
+        `You cannot add flag [${flagId}] to option [${optionLabel}] for question [${questionLabel}] as there is no such question in survey [${this.name}]`,
+      );
+
+    if (updatedQuestion instanceof TrueImpactError) {
+      return updatedQuestion;
+    }
+
+    const targetOption =
+      updatedQuestion?.get(optionLabel) ||
+      new TrueImpactError(
+        `You cannot add flag [${flagId}] to option [${optionLabel}] for question [${questionLabel}] in survey [${this.name}] as there is no such option`,
+      );
+
+    if (targetOption instanceof TrueImpactError) {
+      return targetOption;
+    }
+
+    const updatedOption = targetOption.addFlag(flagId);
+
+    if (updatedOption instanceof TrueImpactError) {
+      return new TrueImpactError(
+        `Failed to add [${flagId}] to option [${optionLabel}] for question [${questionLabel}] in survey [${this.name}]`,
+        [updatedOption],
+      );
+    }
+
+    updatedQuestion.options.set(optionLabel, updatedOption);
 
     this.questions.set(questionLabel, updatedQuestion);
 
@@ -393,6 +456,7 @@ export class Survey extends Entity {
   }: CreateSurvey): Survey | InvariantValidationError {
     const instance = new Survey({
       id: 'GENERATE_A_NEW_ID',
+      isPublished: false,
       name,
       questions: {},
     });

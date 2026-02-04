@@ -28,14 +28,59 @@ const publishableSurvey = surveyWithOneOption.addOptionToQuestion({
 describe(`Survey.publish`, () => {
   describe(`when the survey is not yet published`, () => {
     describe(`when the survey meets all publication requirements`, () => {
-      it(`should update the publication status`, () => {
-        const result = publishableSurvey.publish();
+      const result = publishableSurvey.publish();
 
+      it(`should update the publication status`, () => {
         expect(result).toBeInstanceOf(Survey);
 
         const updatedSurvey = result as Survey;
 
         expect(updatedSurvey.isPublished).toBe(true);
+      });
+
+      it(`should prevent additional edits`, () => {
+        const publishedSurvey = result as Survey;
+
+        const results = [
+          publishedSurvey.addFirstQuestion({
+            label: '',
+            prompt: '',
+          }),
+          publishedSurvey.addFlagToQuestionOption({
+            questionLabel: '',
+            optionLabel: '',
+            flagId: 'none',
+          }),
+          publishedSurvey.addFollowUpQuestion({
+            optionLabel: '',
+            questionLabel: '',
+            followUpQuestion: {
+              label: '',
+              prompt: '',
+            },
+          }),
+          publishedSurvey.addOptionToQuestion({
+            questionLabel: '',
+            optionLabel: '',
+            text: '',
+          }),
+          publishedSurvey.addWeightsForOptionInQuestion({
+            questionLabel: '',
+            optionLabel: '',
+            weights: {},
+          }),
+        ];
+
+        results.forEach((r) => {
+          // expect(r).toBeInstanceOf(CannotEditLiveSurveyError);
+          expect(r).toBeInstanceOf(TrueImpactError);
+
+          const message = (r as TrueImpactError).toString();
+
+          expect(message).toContain(publishedSurvey.name);
+
+          expect(message).toContain('has been published');
+        });
       });
     });
 
@@ -98,7 +143,7 @@ describe(`Survey.publish`, () => {
       const message = (result as TrueImpactError).toString();
 
       expect(message).toContain(publishedSurvey.name);
-      expect(message).toContain(`already published`);
+      expect(message).toContain(`has been published`);
     });
   });
 });
