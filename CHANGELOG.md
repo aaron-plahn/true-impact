@@ -2,6 +2,12 @@
 
 This first release of the True Impact platform introduces a working model for user management, client management, and survey creation and completion.
 
+## #3
+
+In this commit, we introduce a domain model and work flow for building a tree-structured survey. Our current model allows for a
+collection of "top-level" questions, each with 2 or more options. These options may point to additional follow-up questions which
+will only be answered if a participant answers the previous question with a given option.
+
 ## #2
 
 In this commit, we

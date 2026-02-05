@@ -1,10 +1,9 @@
 import { buildTestInstance, TrueImpactError } from '../../libs';
 import { Survey, SurveyPersistenceDto } from './survey.aggregate-root';
 
-const emptySurvey = buildTestInstance<SurveyPersistenceDto, Survey>(Survey, {
-  firstQuestionLabel: undefined,
-  questions: {},
-});
+const emptySurvey = Survey.buildEmpty({
+  name: 'test survey',
+}) as Survey;
 
 const targetQuestionLabel = 'i';
 

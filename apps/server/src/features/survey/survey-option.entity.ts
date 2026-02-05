@@ -41,7 +41,13 @@ export class SurveyOption extends Entity {
   text: string; // TODO make this translateable
 
   /**
-   * Note that we have to backtrack within the Survey graph to find the corresponding question in order to avoid circular dependencies.
+   * Note that the parent `Survey` has to handle navigating to the next question. This serves as an "adjacency list" entry.
+   * We designed in this way to avoid introducing the circular build dependency
+   * SurveyQuestion -> SurveyOption -> SurveyQuestion
+   *
+   * Possible alternatives include
+   * class SurveyFollowUpQuestion
+   * interface Question // (indepdent of `Option` class)
    */
   @NonEmptyString({
     label: 'label for next question',
