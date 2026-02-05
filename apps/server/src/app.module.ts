@@ -10,6 +10,7 @@ import { AppController } from './app.controller';
 import { SupertokensConfigService } from './auth/supertokens-config.service';
 import { SupertokensMiddleware } from './auth/supertokens.middleware';
 import { ClientModule } from './features/clients/client.module';
+import { SurveyModule } from './features/survey/survey.module';
 
 @UseGuards(SuperTokensAuthGuard)
 @Module({
@@ -25,6 +26,7 @@ import { ClientModule } from './features/clients/client.module';
       inject: [ConfigService],
     }),
     ClientModule,
+    SurveyModule,
   ],
   controllers: [AppController],
   providers: [],
