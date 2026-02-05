@@ -68,6 +68,10 @@ export class Client extends Entity implements ValidateInvariants<Client> {
     return this.id;
   }
 
+  getName(): string {
+    return this.fullName.toString();
+  }
+
   validateComplexInvariants(): TrueImpactError[] {
     const allErrors: TrueImpactError[] = [];
 

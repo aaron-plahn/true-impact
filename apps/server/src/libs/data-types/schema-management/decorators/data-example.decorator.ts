@@ -1,5 +1,5 @@
 import { plainToClass } from 'class-transformer';
-import { Ctor, DeepPartial } from 'utility-types';
+import { Ctor, DeepPartial } from '../../utility-types';
 
 interface FromPersistenceDto<TDto = unknown, UInstance = unknown> {
   fromPersistenceDto(dto: TDto): UInstance;

@@ -191,6 +191,55 @@ export class Survey extends Entity {
     return this;
   }
 
+  validatePublicationStatus(): TrueImpactError[] {
+    const allErrors: TrueImpactError[] = [];
+
+    /**
+     * There are no restrictions to validate if the survey is unpublished
+     */
+    if (!this.isPublished) {
+      return allErrors;
+    }
+
+    if (this.size() < 1) {
+      allErrors.push(
+        new TrueImpactError(
+          `A survey must have at least 1 question in order to be published`,
+        ),
+      );
+    }
+
+    const MIN_NUMBER_OF_OPTIONS = 2;
+
+    const tooFewOptionsErrors = Array.from(this.questions.values()).flatMap(
+      (q: SurveyQuestion) => {
+        const questionSize = q.size();
+
+        return questionSize < MIN_NUMBER_OF_OPTIONS
+          ? [
+              new TrueImpactError(
+                `Survey [${this.name}] cannot be published as its question [${q.label}] does not have at least ${MIN_NUMBER_OF_OPTIONS} options. It has ${questionSize} options.`,
+              ),
+            ]
+          : [];
+      },
+    );
+
+    allErrors.push(...tooFewOptionsErrors);
+
+    return allErrors;
+  }
+
+  /**
+   * - A Survey can not be published if it has no `firstQuestion`.
+   * - A Survey must constitute an acyclic graph via its questions. That is, no `SurveyOption.next` should point to a previous
+   * question in the survey.
+   * - A published survey's questions must offer at least 2 options each
+   */
+  validateComplexInvariants(): TrueImpactError[] {
+    return [...this.validatePublicationStatus()];
+  }
+
   // should this be a bad user input error?
   @UpdateMethod()
   addFirstQuestion(userRequest: {
@@ -276,29 +325,6 @@ export class Survey extends Entity {
     this.questions.set(questionLabel, updatedQuestion);
 
     return this;
-  }
-
-  static fromPersistenceDto({
-    id,
-    isPublished,
-    name,
-    questions,
-    firstQuestionLabel,
-  }: SurveyPersistenceDto): Survey | TrueImpactError {
-    return new Survey({
-      id,
-      isPublished,
-      name,
-      firstQuestionLabel,
-      questions: Object.entries(questions).reduce(
-        (acc: Record<string, SurveyQuestion>, [label, questionDto]) => {
-          acc[label] = SurveyQuestion.fromPersistenceDto(questionDto);
-
-          return acc;
-        },
-        {},
-      ),
-    });
   }
 
   @UpdateMethod()
@@ -402,55 +428,6 @@ export class Survey extends Entity {
     return this;
   }
 
-  validatePublicationStatus(): TrueImpactError[] {
-    const allErrors: TrueImpactError[] = [];
-
-    /**
-     * There are no restrictions to validate if the survey is unpublished
-     */
-    if (!this.isPublished) {
-      return allErrors;
-    }
-
-    if (this.size() < 1) {
-      allErrors.push(
-        new TrueImpactError(
-          `A survey must have at least 1 question in order to be published`,
-        ),
-      );
-    }
-
-    const MIN_NUMBER_OF_OPTIONS = 2;
-
-    const tooFewOptionsErrors = Array.from(this.questions.values()).flatMap(
-      (q: SurveyQuestion) => {
-        const questionSize = q.size();
-
-        return questionSize < MIN_NUMBER_OF_OPTIONS
-          ? [
-              new TrueImpactError(
-                `Survey [${this.name}] cannot be published as its question [${q.label}] does not have at least ${MIN_NUMBER_OF_OPTIONS} options. It has ${questionSize} options.`,
-              ),
-            ]
-          : [];
-      },
-    );
-
-    allErrors.push(...tooFewOptionsErrors);
-
-    return allErrors;
-  }
-
-  /**
-   * - A Survey can not be published if it has no `firstQuestion`.
-   * - A Survey must constitute an acyclic graph via its questions. That is, no `SurveyOption.next` should point to a previous
-   * question in the survey.
-   * - A published survey's questions must offer at least 2 options each
-   */
-  validateComplexInvariants(): TrueImpactError[] {
-    return [...this.validatePublicationStatus()];
-  }
-
   static fromCreateSurveyCommand({
     name,
   }: CreateSurvey): Survey | InvariantValidationError {
@@ -462,5 +439,28 @@ export class Survey extends Entity {
     });
 
     return instance.validateInvariants();
+  }
+
+  static fromPersistenceDto({
+    id,
+    isPublished,
+    name,
+    questions,
+    firstQuestionLabel,
+  }: SurveyPersistenceDto): Survey | TrueImpactError {
+    return new Survey({
+      id,
+      isPublished,
+      name,
+      firstQuestionLabel,
+      questions: Object.entries(questions).reduce(
+        (acc: Record<string, SurveyQuestion>, [label, questionDto]) => {
+          acc[label] = SurveyQuestion.fromPersistenceDto(questionDto);
+
+          return acc;
+        },
+        {},
+      ),
+    });
   }
 }
