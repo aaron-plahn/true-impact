@@ -7,7 +7,9 @@ export interface ICommandPayload {
   };
 }
 
-export interface ICommandFsa {
+export interface ICommandFsa<
+  TPayload extends ICommandPayload = ICommandPayload,
+> {
   type: string;
-  payload: ICommandPayload;
+  payload: TPayload;
 }

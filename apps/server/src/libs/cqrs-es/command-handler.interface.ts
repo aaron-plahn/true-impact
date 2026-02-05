@@ -1,5 +1,5 @@
 import { TrueImpactError } from '../data-types';
-import { ICommandFsa } from './command-flux-standard-action.interface';
+import { ICommandPayload } from './command-flux-standard-action.interface';
 
 export interface CommandSuccessAcknowledgement {
   id: string;
@@ -8,6 +8,8 @@ export interface CommandSuccessAcknowledgement {
 
 export type CommandResult = TrueImpactError | CommandSuccessAcknowledgement;
 
-export interface ICommandHandler {
-  handle(fsa: ICommandFsa): Promise<CommandResult>;
+export interface ICommandHandler<
+  TPayload extends ICommandPayload = ICommandPayload,
+> {
+  handle(fsa: { payload: TPayload }): Promise<CommandResult>;
 }

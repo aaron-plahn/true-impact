@@ -32,7 +32,8 @@ describe(`CommandHandlerService`, () => {
 
         commandHandlerService.register({
           type: happyCommandType,
-          commandHandler: happyHandler,
+          // TODO we have to make this a class Ctor now
+          CommandHandlerCtor: happyHandler,
         });
       });
 
@@ -81,7 +82,8 @@ describe(`CommandHandlerService`, () => {
 
         commandHandlerService.register({
           type: sadCommandType,
-          commandHandler: sadHandler,
+          // TODO we have to make this a class Ctor now
+          CommandHandlerCtor: sadHandler,
         });
       });
 
