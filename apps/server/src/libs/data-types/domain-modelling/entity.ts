@@ -1,10 +1,14 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
-import { InvariantValidationError, TrueImpactError } from '../error-handling';
+import {
+  InvariantValidationError,
+  TrueImpactError,
+  TrueImpactRuntimeException,
+} from '../error-handling';
 import { getDataSchemaFromClassCtor } from '../schema-management/decorators/append-metadata';
 import { validateObjectAgainstSchema } from '../validation/validate-object-against-schema';
 
-export abstract class Entity {
+export abstract class Entity<TEntityPersistenceDto = unknown> {
   validateAgainstSchema(): TrueImpactError[] {
     const schema = getDataSchemaFromClassCtor(
       Object.getPrototypeOf(this).constructor,
@@ -23,6 +27,8 @@ export abstract class Entity {
   abstract validateComplexInvariants(): TrueImpactError[];
 
   abstract getId(): string;
+
+  abstract getName(): string;
 
   /**
    * @returns an array of all validation errors encountered including schema errors (automatic)
@@ -45,6 +51,16 @@ export abstract class Entity {
     }
 
     return this;
+  }
+
+  abstract toPersistenceDto(): TEntityPersistenceDto;
+
+  static fromPersistenceDto(_dto: any): Entity | TrueImpactError {
+    throw new TrueImpactRuntimeException([
+      new TrueImpactError(
+        'fromPersistenceDto must be implemented on any child class of Entity',
+      ),
+    ]);
   }
 
   private buildInvariantValidationError(
