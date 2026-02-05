@@ -1,10 +1,7 @@
-import { buildTestInstance, TrueImpactError } from '../../libs';
-import { Survey, SurveyPersistenceDto } from './survey.aggregate-root';
+import { TrueImpactError } from '../../libs';
+import { Survey } from './survey.aggregate-root';
 
-const emptySurvey = buildTestInstance<SurveyPersistenceDto, Survey>(Survey, {
-  firstQuestionLabel: undefined,
-  questions: {},
-});
+const emptySurvey = Survey.buildEmpty({ name: 'test survey' }) as Survey;
 
 const targetQuestionLabel = 'I';
 const targetOptionLabel = 'a';
@@ -12,7 +9,7 @@ const targetFlagId = '333';
 
 describe(`Survey.addFlagToOption`, () => {
   describe(`when the question exists`, () => {
-    const surveyWithEmptyQuestion = emptySurvey.addFirstQuestion({
+    const surveyWithEmptyQuestion = emptySurvey.addTopLevelQuestion({
       label: targetQuestionLabel,
       prompt: 'I go to the gym',
     }) as Survey;

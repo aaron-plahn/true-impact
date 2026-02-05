@@ -1,15 +1,9 @@
 import { buildTestInstance, TrueImpactError } from '../../libs';
 import { AddOptionToSurveyQuestion } from './commands/add-option-to-survey-question.command';
-import { SURVEY_AGGREGATE_TYPE } from './constants';
 import { SurveyQuestion } from './survey-question.entity';
 import { Survey, SurveyPersistenceDto } from './survey.aggregate-root';
 
 const surveyId = '123';
-
-const aggregateCompositeIdentifier = {
-  type: SURVEY_AGGREGATE_TYPE,
-  id: surveyId,
-} as const;
 
 const emptySurvey = buildTestInstance<SurveyPersistenceDto, Survey>(Survey, {
   id: surveyId,
@@ -32,10 +26,9 @@ const addOptionCommand = buildTestInstance<
 
 describe(`Survey.addOptionToQuestion`, () => {
   describe(`when the question exists`, () => {
-    const surveyWithOneQuestion = emptySurvey.addFirstQuestion({
+    const surveyWithOneQuestion = emptySurvey.addTopLevelQuestion({
       label: questionLabel,
       // We don't need this here
-      aggregateCompositeIdentifier,
       prompt: 'Test prompt for first question',
     }) as Survey;
 
@@ -44,7 +37,6 @@ describe(`Survey.addOptionToQuestion`, () => {
         it('should add a first option', () => {
           const result = surveyWithOneQuestion.addOptionToQuestion({
             questionLabel,
-            aggregateCompositeIdentifier,
             optionLabel,
             text: optionText,
           });
@@ -66,7 +58,6 @@ describe(`Survey.addOptionToQuestion`, () => {
         const surveyWithQuestionAndOneOption =
           surveyWithOneQuestion.addOptionToQuestion({
             questionLabel,
-            aggregateCompositeIdentifier,
             optionLabel: 'existing',
             text: 'text for the existing option',
           }) as Survey;
@@ -75,7 +66,6 @@ describe(`Survey.addOptionToQuestion`, () => {
           it(`should add the option to the given question`, () => {
             const result = surveyWithQuestionAndOneOption.addOptionToQuestion({
               questionLabel,
-              aggregateCompositeIdentifier,
               optionLabel,
               text: optionText,
             });

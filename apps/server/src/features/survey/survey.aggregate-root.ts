@@ -8,7 +8,6 @@ import {
   TrueImpactError,
   UpdateMethod,
 } from '../../libs';
-import { CreateSurvey } from './commands/create-survey.command';
 import { SURVEY_AGGREGATE_TYPE } from './constants';
 import {
   SurveyQuestion,
@@ -20,7 +19,7 @@ export class SurveyPersistenceDto {
   isPublished: boolean;
   name: string;
   questions: Record<string, SurveyQuestionPersistenceDto>;
-  firstQuestionLabel?: string;
+  questionLabels: string[];
 }
 
 // TODO We need to track schema versions
@@ -33,6 +32,7 @@ export class SurveyPersistenceDto {
     isPublished: false,
     name: 'test survey',
     questions: {},
+    questionLabels: [],
     // firstQuestionLabel:
   },
 })
@@ -64,29 +64,30 @@ export class Survey extends Entity {
   })
   name: string;
 
-  questions: Map<string, SurveyQuestion>;
-
   /**
-   * Each survey question option points to a next question (or null if it is a leaf).
-   * In this way, the survey is directed graph. We should validate as part of the invariant validation
-   * that it is acyclic.
-   *
-   * If `firstQuestionLabel` is null, it is not possible to publish the survey.
+   * We may want to store the questions and follow-up questions directly in the graph.
+   * We are effectively using an adjacency list approach. The main reason we did this was to avoid
+   * circular build dependencies between the `SurveyQuestion` and `SurveyOption` classes. The latter would
+   * have referenced the former when pointing to a follow up question. An interface or `SurveyFollowupQuestion` class
+   * with the same public data type would solve this problem.
    */
-  firstQuestionLabel?: string;
+  questionBank: Map<string, SurveyQuestion>;
+
+  // See the comment about `questionBank`, which applies here as well.
+  questionLabels: string[] = [];
 
   constructor({
     id,
     isPublished,
     name,
     questions,
-    firstQuestionLabel,
+    questionLabels,
   }: {
     id: string;
     isPublished: boolean;
     name: string;
     questions?: Record<string, SurveyQuestion>;
-    firstQuestionLabel?: string;
+    questionLabels?: string[];
   }) {
     super();
 
@@ -97,9 +98,12 @@ export class Survey extends Entity {
     this.name = name;
 
     // TODO Ensure that you validate the invariant rule that the `firstQuestionLabel` must be the `label` for some question in `questions.values()`
-    this.firstQuestionLabel = firstQuestionLabel;
+    if (Array.isArray(questionLabels)) {
+      // Shallow clone of `string[]` is as good as a deep clone.
+      this.questionLabels = [...questionLabels];
+    }
 
-    this.questions = new Map(Object.entries(questions || {}));
+    this.questionBank = new Map(Object.entries(questions || {}));
   }
 
   getId(): string {
@@ -124,7 +128,7 @@ export class Survey extends Entity {
    * returns the number of questions in this survey
    */
   size(): number {
-    return this.questions.size;
+    return this.questionBank.size;
   }
 
   toPersistenceDto(): SurveyPersistenceDto {
@@ -133,7 +137,7 @@ export class Survey extends Entity {
       name: this.name,
       isPublished: this.isPublished,
       // We persist maps as plain objects (lookup tables)
-      questions: Array.from(this.questions.entries()).reduce(
+      questions: Array.from(this.questionBank.entries()).reduce(
         (
           acc: Record<string, SurveyQuestionPersistenceDto>,
           [label, question],
@@ -144,22 +148,22 @@ export class Survey extends Entity {
         },
         {},
       ),
-      firstQuestionLabel: this.firstQuestionLabel,
+      questionLabels: this.questionLabels,
     };
 
     return result;
   }
 
   getFirstQuestion(): SurveyQuestion | null {
-    if (typeof this.firstQuestionLabel === 'undefined') {
+    if (this.questionLabels.length === 0) {
       return null;
     }
 
-    return this.questions.get(this.firstQuestionLabel) || null;
+    return this.questionBank.get(this.questionLabels[0]) || null;
   }
 
   get(questionLabel: string): SurveyQuestion | null {
-    return this.questions.get(questionLabel) || null;
+    return this.questionBank.get(questionLabel) || null;
   }
 
   /**
@@ -211,7 +215,7 @@ export class Survey extends Entity {
 
     const MIN_NUMBER_OF_OPTIONS = 2;
 
-    const tooFewOptionsErrors = Array.from(this.questions.values()).flatMap(
+    const tooFewOptionsErrors = Array.from(this.questionBank.values()).flatMap(
       (q: SurveyQuestion) => {
         const questionSize = q.size();
 
@@ -242,26 +246,31 @@ export class Survey extends Entity {
 
   // should this be a bad user input error?
   @UpdateMethod()
-  addFirstQuestion(userRequest: {
+  addTopLevelQuestion({
+    label,
+    prompt,
+  }: {
     label: string;
     prompt: string;
   }): Survey | TrueImpactError {
-    if (this.size() !== 0) {
+    if (this.questionBank.has(label)) {
       return new TrueImpactError(
-        `You cannot add question [${userRequest.label}] as the first question in survey [${this.name}], as there is it already has a first question: ${this.firstQuestionLabel}.`,
+        `You cannot add top-level question [${prompt}] to survey [${this.name}], as there is already a question with the label [${label}]`,
       );
     }
 
-    const questionBuildResult =
-      SurveyQuestion.fromAddQuestionToSurvey(userRequest);
+    const questionBuildResult = SurveyQuestion.buildEmpty({
+      label,
+      prompt,
+    });
 
     if (questionBuildResult instanceof TrueImpactError) {
       return new TrueImpactBadUserInputError([questionBuildResult]);
     }
 
-    this.questions.set(questionBuildResult.label, questionBuildResult);
+    this.questionBank.set(questionBuildResult.label, questionBuildResult);
 
-    this.firstQuestionLabel = questionBuildResult.label;
+    this.questionLabels.push(questionBuildResult.label);
 
     return this;
   }
@@ -274,13 +283,15 @@ export class Survey extends Entity {
   }): Survey | TrueImpactError {
     const { questionLabel } = userRequest;
 
-    if (!this.questions.has(questionLabel)) {
+    if (!this.questionBank.has(questionLabel)) {
       return new TrueImpactError(
         `You cannot add option [${userRequest.optionLabel}] to survey[${this.name}] as it has no question with the label [${userRequest.questionLabel}].`,
       );
     }
 
-    const targetQuestion = this.questions.get(questionLabel) as SurveyQuestion;
+    const targetQuestion = this.questionBank.get(
+      questionLabel,
+    ) as SurveyQuestion;
 
     const updatedQuestion = targetQuestion.addOption(userRequest);
 
@@ -288,20 +299,20 @@ export class Survey extends Entity {
       return updatedQuestion;
     }
 
-    this.questions.set(questionLabel, updatedQuestion);
+    this.questionBank.set(questionLabel, updatedQuestion);
 
     return this;
   }
 
   @UpdateMethod()
-  addWeightsForOptionInQuestion({
+  addCategoryValueForOptionInQuestion({
     questionLabel,
     optionLabel,
-    weights,
+    valuesByCategory,
   }: {
     questionLabel: string;
     optionLabel: string;
-    weights: Record<string, number>;
+    valuesByCategory: Record<string, number>;
   }): this | TrueImpactError {
     const targetQuestion =
       this.get(questionLabel) ||
@@ -315,14 +326,14 @@ export class Survey extends Entity {
 
     const updatedQuestion = targetQuestion?.addWeightsForOption({
       optionLabel,
-      weights,
+      weights: valuesByCategory,
     });
 
     if (updatedQuestion instanceof TrueImpactError) {
       return updatedQuestion;
     }
 
-    this.questions.set(questionLabel, updatedQuestion);
+    this.questionBank.set(questionLabel, updatedQuestion);
 
     return this;
   }
@@ -337,11 +348,9 @@ export class Survey extends Entity {
     optionLabel: string;
     followUpQuestion: { label: string; prompt: string };
   }): this | TrueImpactError {
-    this.questions.set(
+    this.questionBank.set(
       followUpQuestion.label,
-      SurveyQuestion.fromAddQuestionToSurvey(
-        followUpQuestion,
-      ) as SurveyQuestion,
+      SurveyQuestion.buildEmpty(followUpQuestion) as SurveyQuestion,
     );
 
     const updatedQuestion =
@@ -357,7 +366,7 @@ export class Survey extends Entity {
       return updatedQuestion;
     }
 
-    this.questions.set(questionLabel, updatedQuestion);
+    this.questionBank.set(questionLabel, updatedQuestion);
 
     return this;
   }
@@ -410,7 +419,7 @@ export class Survey extends Entity {
 
     updatedQuestion.options.set(optionLabel, updatedOption);
 
-    this.questions.set(questionLabel, updatedQuestion);
+    this.questionBank.set(questionLabel, updatedQuestion);
 
     return this;
   }
@@ -428,9 +437,12 @@ export class Survey extends Entity {
     return this;
   }
 
-  static fromCreateSurveyCommand({
+  // fromUserRequest? // buildEmpty?
+  static buildEmpty({
     name,
-  }: CreateSurvey): Survey | InvariantValidationError {
+  }: {
+    name: string;
+  }): Survey | InvariantValidationError {
     const instance = new Survey({
       id: 'GENERATE_A_NEW_ID',
       isPublished: false,
@@ -446,13 +458,13 @@ export class Survey extends Entity {
     isPublished,
     name,
     questions,
-    firstQuestionLabel,
+    questionLabels,
   }: SurveyPersistenceDto): Survey | TrueImpactError {
     return new Survey({
       id,
       isPublished,
       name,
-      firstQuestionLabel,
+      questionLabels,
       questions: Object.entries(questions).reduce(
         (acc: Record<string, SurveyQuestion>, [label, questionDto]) => {
           acc[label] = SurveyQuestion.fromPersistenceDto(questionDto);

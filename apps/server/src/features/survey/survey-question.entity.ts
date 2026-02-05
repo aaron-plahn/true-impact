@@ -104,8 +104,7 @@ export class SurveyQuestion extends Entity {
     }
     // TODO allow the user to register a "next" for a question
 
-    const optionBuildResult =
-      SurveyOption.fromAddOptionToSurveyQuestion(userRequest);
+    const optionBuildResult = SurveyOption.buildEmpty(userRequest);
 
     if (optionBuildResult instanceof TrueImpactError) {
       return optionBuildResult;
@@ -191,7 +190,8 @@ export class SurveyQuestion extends Entity {
     return result;
   }
 
-  static fromAddQuestionToSurvey({
+  // An "empty" question has no options
+  static buildEmpty({
     label,
     prompt,
   }: {

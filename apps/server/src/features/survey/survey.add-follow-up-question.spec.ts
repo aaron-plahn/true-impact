@@ -1,11 +1,8 @@
-import { buildTestInstance, TrueImpactError } from '../../libs';
-import { Survey, SurveyPersistenceDto } from './survey.aggregate-root';
+import { TrueImpactError } from '../../libs';
+import { Survey } from './survey.aggregate-root';
 
 describe(`Survey.addFollowUpQuestion`, () => {
-  const emptySurvey = buildTestInstance<SurveyPersistenceDto, Survey>(Survey, {
-    firstQuestionLabel: undefined,
-    questions: {},
-  });
+  const emptySurvey = Survey.buildEmpty({ name: 'test survey' }) as Survey;
 
   const targetQuestionLabel = 'V';
 
@@ -16,7 +13,7 @@ describe(`Survey.addFollowUpQuestion`, () => {
   const followUpQuestionPrompt = "I don't go outside ever because:";
 
   describe(`when the target question exists`, () => {
-    const surveyWithEmptyQuestion = emptySurvey.addFirstQuestion({
+    const surveyWithEmptyQuestion = emptySurvey.addTopLevelQuestion({
       label: targetQuestionLabel,
       prompt: 'I am the first test question and I have no options',
     }) as Survey;

@@ -8,7 +8,7 @@ const emptySurvey = buildTestInstance<SurveyPersistenceDto, Survey>(Survey, {
 
 const targetQuestionLabel = 'i';
 
-const surveyWithEmptyQuestion = emptySurvey.addFirstQuestion({
+const surveyWithEmptyQuestion = emptySurvey.addTopLevelQuestion({
   label: targetQuestionLabel,
   prompt: 'I exercise',
 }) as Survey;
@@ -42,7 +42,7 @@ describe(`Survey.publish`, () => {
         const publishedSurvey = result as Survey;
 
         const results = [
-          publishedSurvey.addFirstQuestion({
+          publishedSurvey.addTopLevelQuestion({
             label: '',
             prompt: '',
           }),
@@ -64,10 +64,10 @@ describe(`Survey.publish`, () => {
             optionLabel: '',
             text: '',
           }),
-          publishedSurvey.addWeightsForOptionInQuestion({
+          publishedSurvey.addCategoryValueForOptionInQuestion({
             questionLabel: '',
             optionLabel: '',
-            weights: {},
+            valuesByCategory: {},
           }),
         ];
 

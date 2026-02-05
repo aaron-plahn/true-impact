@@ -12,7 +12,7 @@ const targetQuestionLabel = '1';
 
 const targetOptionLabel = 'a';
 
-const surveyWithEmptyQuestion = emptySurvey.addFirstQuestion({
+const surveyWithEmptyQuestion = emptySurvey.addTopLevelQuestion({
   label: targetQuestionLabel,
   prompt: 'How often do you feel happy?',
 }) as Survey;
@@ -30,16 +30,16 @@ const weightsToAdd = {
   black: 0,
 };
 
-describe(`Survey.addWeightForOptionInQuestion`, () => {
+describe(`Survey.addCategoryValueForOptionInQuestion`, () => {
   describe(`when the target question exists`, () => {
     describe(`when the target option exists`, () => {
       describe(`when the question does not yet have any weights`, () => {
         it(`should add the first set of weights`, () => {
           const result =
-            surveyWithUnweightedOption.addWeightsForOptionInQuestion({
+            surveyWithUnweightedOption.addCategoryValueForOptionInQuestion({
               questionLabel: targetQuestionLabel,
               optionLabel: targetOptionLabel,
-              weights: weightsToAdd,
+              valuesByCategory: weightsToAdd,
             });
 
           expect(result).toBeInstanceOf(Survey);
@@ -64,10 +64,10 @@ describe(`Survey.addWeightForOptionInQuestion`, () => {
 
       describe(`when the question already has weights`, () => {
         const surveyWithExistingWeights =
-          surveyWithUnweightedOption.addWeightsForOptionInQuestion({
+          surveyWithUnweightedOption.addCategoryValueForOptionInQuestion({
             questionLabel: targetQuestionLabel,
             optionLabel: targetOptionLabel,
-            weights: {
+            valuesByCategory: {
               blue: 22,
             },
           }) as Survey;
@@ -75,10 +75,10 @@ describe(`Survey.addWeightForOptionInQuestion`, () => {
         describe(`when the new weights do not conflict with the existing weights`, () => {
           it(`should add the new weights`, () => {
             const result =
-              surveyWithExistingWeights.addWeightsForOptionInQuestion({
+              surveyWithExistingWeights.addCategoryValueForOptionInQuestion({
                 questionLabel: targetQuestionLabel,
                 optionLabel: targetOptionLabel,
-                weights: weightsToAdd,
+                valuesByCategory: weightsToAdd,
               });
 
             expect(result).toBeInstanceOf(Survey);
@@ -105,10 +105,10 @@ describe(`Survey.addWeightForOptionInQuestion`, () => {
         describe(`when the new weights conflict with the old weights (same name)`, () => {
           it(`should fail with the expected error`, () => {
             const result =
-              surveyWithExistingWeights.addWeightsForOptionInQuestion({
+              surveyWithExistingWeights.addCategoryValueForOptionInQuestion({
                 questionLabel: targetQuestionLabel,
                 optionLabel: targetOptionLabel,
-                weights: {
+                valuesByCategory: {
                   blue: 44,
                   omaha: 10,
                 },
@@ -132,13 +132,14 @@ describe(`Survey.addWeightForOptionInQuestion`, () => {
 
     describe(`when the target option does not exist`, () => {
       it(`should have a test`, () => {
-        const result = surveyWithEmptyQuestion.addWeightsForOptionInQuestion({
-          questionLabel: targetQuestionLabel,
-          optionLabel: targetOptionLabel,
-          weights: {
-            foo: 123,
-          },
-        });
+        const result =
+          surveyWithEmptyQuestion.addCategoryValueForOptionInQuestion({
+            questionLabel: targetQuestionLabel,
+            optionLabel: targetOptionLabel,
+            valuesByCategory: {
+              foo: 123,
+            },
+          });
 
         expect(result).toBeInstanceOf(TrueImpactError);
 
@@ -153,10 +154,10 @@ describe(`Survey.addWeightForOptionInQuestion`, () => {
 
   describe(`when the target question does not exist`, () => {
     it(`should return the expected error`, () => {
-      const result = emptySurvey.addWeightsForOptionInQuestion({
+      const result = emptySurvey.addCategoryValueForOptionInQuestion({
         questionLabel: targetQuestionLabel,
         optionLabel: targetOptionLabel,
-        weights: {
+        valuesByCategory: {
           foo: 555,
         },
       });

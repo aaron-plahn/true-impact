@@ -235,7 +235,8 @@ export class SurveyOption extends Entity {
     return result;
   }
 
-  static fromAddOptionToSurveyQuestion({
+  // an "empty" option has no flags or category values
+  static buildEmpty({
     optionLabel: label,
     text,
   }: {
