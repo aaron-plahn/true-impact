@@ -52,13 +52,13 @@ describe(`Survey.addWeightForOptionInQuestion`, () => {
 
           expect(targetOption).toBeTruthy();
 
-          expect(targetOption?.getWeight('red')).toBe(50);
-          expect(targetOption?.getWeight('yellow')).toBe(25);
-          expect(targetOption?.getWeight('black')).toBe(0);
-          expect(targetOption?.getWeight('white')).toBe(0);
+          expect(targetOption?.getValue('red')).toBe(50);
+          expect(targetOption?.getValue('yellow')).toBe(25);
+          expect(targetOption?.getValue('black')).toBe(0);
+          expect(targetOption?.getValue('white')).toBe(0);
 
           // unknown weights should still return 0
-          expect(targetOption?.getWeight('blue')).toBe(0);
+          expect(targetOption?.getValue('blue')).toBe(0);
         });
       });
 
@@ -91,14 +91,14 @@ describe(`Survey.addWeightForOptionInQuestion`, () => {
 
             expect(targetOption).toBeTruthy();
 
-            expect(targetOption?.getWeight('red')).toBe(50);
-            expect(targetOption?.getWeight('yellow')).toBe(25);
-            expect(targetOption?.getWeight('black')).toBe(0);
-            expect(targetOption?.getWeight('white')).toBe(0);
-            expect(targetOption?.getWeight('blue')).toBe(22);
+            expect(targetOption?.getValue('red')).toBe(50);
+            expect(targetOption?.getValue('yellow')).toBe(25);
+            expect(targetOption?.getValue('black')).toBe(0);
+            expect(targetOption?.getValue('white')).toBe(0);
+            expect(targetOption?.getValue('blue')).toBe(22);
 
             // unknown weights should still return 0
-            expect(targetOption?.getWeight('orange')).toBe(0);
+            expect(targetOption?.getValue('orange')).toBe(0);
           });
         });
 

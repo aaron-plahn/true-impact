@@ -1,12 +1,14 @@
 /* eslint-disable @typescript-eslint/no-floating-promises */
 import { strict as assert } from 'node:assert';
 import { describe, it } from 'node:test';
-import { CreateSurvey } from './commands/create-survey.command';
-import { Survey } from './survey.aggregate-root';
+import { myHelper } from './my-helper';
 
+/**
+ * This is a placeholder for node native tests. We may want to use these
+ * to write true end-to-end tests of the backend that execute against the build.
+ */
 describe('Does this work?', () => {
   it(`should work`, () => {
-    const result = Survey.fromCreateSurveyCommand({} as CreateSurvey);
-    assert.equal(result, 'oops');
+    assert.equal(myHelper(), 500);
   });
 });

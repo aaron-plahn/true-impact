@@ -134,7 +134,7 @@ export class SurveyQuestion extends Entity {
       return targetOption;
     }
 
-    const updatedOption = targetOption.addWeights(weights);
+    const updatedOption = targetOption.addValuesForCategories(weights);
 
     if (updatedOption instanceof TrueImpactError) {
       return updatedOption;

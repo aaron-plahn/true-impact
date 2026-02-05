@@ -25,18 +25,6 @@ export class SurveyImportQuestionOptionDto {
     isOptional: true,
   })
   nextQuestionLabel?: string;
-
-  /**
-   * TODO classifications
-   * {
-   *     "medicine wheel": {
-   *         red: 202
-   *     },
-   *     "learning styles": {
-   *         kinesthetic: 1
-   *     }
-   * }
-   */
 }
 
 export class SurveyImportQuestionDto {

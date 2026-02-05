@@ -11,14 +11,14 @@ export class SurveyOptionPersistenceDto {
   label: string;
   text: string;
   nextQuestionLabel?: string;
-  weights: Record<string, number>;
+  values: Record<string, number>;
 }
 
 @TrueImpactDataExample<SurveyOptionPersistenceDto>({
   example: {
     label: 'a',
     text: 'this is rarely true',
-    weights: {},
+    values: {},
     flagIds: [],
     // nextQuestionLabel:
   },
@@ -52,8 +52,12 @@ export class SurveyOption extends Entity {
   })
   followUpQuestionLabel?: string;
 
+  /**
+   * TODO We probably don't want to attach values for categories here. We should introduce a `SurveyAnalyzer`
+   * which has a `survey` and assigns values across categories along with values for questions. One survey could have multiple analyzers.
+   */
   // @lookup table
-  weights = new Map<string, number>();
+  values = new Map<string, number>();
 
   flagIds = new Set<string>();
 
@@ -61,13 +65,13 @@ export class SurveyOption extends Entity {
     label,
     text,
     nextQuestionLabel,
-    weights,
+    values,
     flagIds,
   }: {
     label: string;
     text: string;
     nextQuestionLabel?: string;
-    weights?: Record<string, number>;
+    values?: Record<string, number>;
     flagIds: string[];
   }) {
     super();
@@ -78,8 +82,8 @@ export class SurveyOption extends Entity {
 
     this.followUpQuestionLabel = nextQuestionLabel;
 
-    if (weights) {
-      this.weights = new Map<string, number>(Object.entries(weights));
+    if (values) {
+      this.values = new Map<string, number>(Object.entries(values));
     }
 
     if (Array.isArray(flagIds)) {
@@ -115,7 +119,7 @@ export class SurveyOption extends Entity {
       label: this.label,
       text: this.text,
       nextQuestionLabel: this.followUpQuestionLabel,
-      weights: Object.fromEntries(this.weights),
+      values: Object.fromEntries(this.values),
       flagIds: Array.from(this.flagIds),
     };
 
@@ -130,29 +134,39 @@ export class SurveyOption extends Entity {
     return Array.from(this.flagIds);
   }
 
-  getWeight(weightName: string): number {
+  /**
+   * TODO Move this behaviour to a separate `SurveyAnalyzer`.
+   */
+  getValue(category: string): number {
     /**
-     * Note that there may be weights that are important to other questions \ options.
+     * Note that there may be categories that are important to other questions \ options.
      * They do not need to be registered if they do not apply to this option. We simply
-     * contribute 0 to unknown weights.
+     * contribute 0 to unknown categories.
      */
 
-    if (!this.weights.has(weightName)) {
+    if (!this.values.has(category)) {
       return 0;
     }
 
-    return this.weights.get(weightName) || 0;
+    return this.values.get(category) || 0;
   }
 
+  /**
+   * TODO Move this behaviour to a separate `SurveyAnalyzer`
+   * @param values
+   * @returns
+   */
   @UpdateMethod()
-  addWeights(weights: Record<string, number>): SurveyOption | TrueImpactError {
+  addValuesForCategories(
+    values: Record<string, number>,
+  ): SurveyOption | TrueImpactError {
     const conflictingWeigtErrors: TrueImpactError[] = Object.entries(
-      weights,
-    ).reduce((acc: TrueImpactError[], [weightName, weightValue]) => {
-      if (this.weights.has(weightName)) {
+      values,
+    ).reduce((acc: TrueImpactError[], [cateogry, valueForCategory]) => {
+      if (this.values.has(cateogry)) {
         acc.push(
           new TrueImpactError(
-            `You cannot add value [${weightValue}] for weight [${weightName}] to option [${this.label}] as there is already a weight named [${weightName}] with the value [${this.weights.get(weightName)}]`,
+            `You cannot add value [${valueForCategory}] for category [${cateogry}] to option [${this.label}] as there is already a category named [${cateogry}] with the value [${this.values.get(cateogry)}]`,
           ),
         );
       }
@@ -162,13 +176,13 @@ export class SurveyOption extends Entity {
     if (conflictingWeigtErrors.length > 0) {
       // TODO inject Survey and Question context?
       return new TrueImpactError(
-        `Failed to add weights to option [${this.label}]`,
+        `Failed to add values for categories to option [${this.label}]`,
         conflictingWeigtErrors,
       );
     }
 
-    Object.entries(weights).forEach(([weightName, weightValue]) => {
-      this.weights.set(weightName, weightValue);
+    Object.entries(values).forEach(([category, valueForCategory]) => {
+      this.values.set(category, valueForCategory);
     });
 
     return this;
@@ -207,14 +221,14 @@ export class SurveyOption extends Entity {
     label,
     text,
     nextQuestionLabel,
-    weights,
+    values,
     flagIds,
   }: SurveyOptionPersistenceDto): SurveyOption {
     const result = new SurveyOption({
       label,
       text,
       nextQuestionLabel,
-      weights,
+      values,
       flagIds,
     });
 
