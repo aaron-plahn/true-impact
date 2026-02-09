@@ -223,6 +223,11 @@ export class SurveyOption extends Entity {
     return this;
   }
 
+  // TODO remove this
+  setInitialId(_id: string): Entity | TrueImpactError {
+    throw new Error('Method not implemented.');
+  }
+
   static fromPersistenceDto({
     label,
     text,

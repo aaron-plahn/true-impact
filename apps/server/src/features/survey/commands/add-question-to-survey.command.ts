@@ -12,6 +12,8 @@ import { SurveyCompositeIdentifier } from '../survey.composite-identifier';
   },
 })
 export class AddQuestionToSurvey {
+  static readonly type = 'ADD_QUESTION_TO_SURVEY';
+
   aggregateCompositeIdentifier: SurveyCompositeIdentifier;
 
   @NonEmptyString({

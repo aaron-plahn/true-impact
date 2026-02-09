@@ -1,40 +1,112 @@
-import { TrueImpactError } from '../data-types';
+import { plainToInstance } from 'class-transformer';
+import {
+  Ctor,
+  TrueImpactError,
+  TrueImpactRuntimeException,
+} from '../data-types';
 import { ICommandFsa } from './command-flux-standard-action.interface';
 import { ICommandHandler } from './command-handler.interface';
-import { CommandHandlerService } from './command-handler.service';
+import {
+  COMMAND_EXECUTION_SCOPE,
+  CommandHandlerService,
+  ICommandHandlerResolver,
+} from './command-handler.service';
 import { AGGREGATE_COMPOSITE_IDENTIFIER } from './constants';
 
 describe(`CommandHandlerService`, () => {
   let commandHandlerService: CommandHandlerService;
 
+  class CompositeIdentifier {
+    readonly type: string;
+
+    readonly id: string;
+  }
+
+  const happyCommandType = 'YES_MAN_COMMAND';
+
+  const dummyRevisionId = '1';
+
+  class HappyCommand {
+    static type = happyCommandType;
+
+    aggregateCompositeIdentifier: CompositeIdentifier;
+  }
+
+  class HappyHandler implements ICommandHandler {
+    async handle({
+      payload: {
+        aggregateCompositeIdentifier: { id },
+      },
+    }: ICommandFsa) {
+      return Promise.resolve({
+        id,
+        revision: dummyRevisionId,
+      });
+    }
+  }
+
+  const happyHandler = plainToInstance(HappyHandler, {});
+
+  const sadCommandType = 'I_ALWAYS_FAIL_AT_EVERYTHING_I_DO';
+
+  class SadHandler implements ICommandHandler {
+    async handle({
+      payload: {
+        aggregateCompositeIdentifier: { type, id },
+      },
+    }: ICommandFsa) {
+      return Promise.resolve(
+        new TrueImpactError(
+          `Failed as usual when attempting to update [${type}/${id}]`,
+        ),
+      );
+    }
+  }
+
+  class SadCommand {
+    static type = sadCommandType;
+
+    aggregateCompositeIdentifier: CompositeIdentifier;
+  }
+
+  const sadHandler: ICommandHandler = plainToInstance(SadHandler, {});
+
+  const mockResolver: ICommandHandlerResolver = {
+    resolve: function (
+      injectionToken: Ctor<ICommandHandler> | string,
+      _scope?: COMMAND_EXECUTION_SCOPE,
+    ): Promise<ICommandHandler> {
+      if (injectionToken === HappyHandler) {
+        return Promise.resolve(happyHandler);
+      }
+
+      if (injectionToken === SadHandler) {
+        return Promise.resolve(sadHandler);
+      }
+
+      throw new TrueImpactRuntimeException([
+        new TrueImpactError(
+          `Failed to inject a dependency of unknown type: ${typeof injectionToken === 'string' ? injectionToken : injectionToken.name}`,
+        ),
+      ]);
+    },
+  };
+
   describe(`when there is a handler for the given command`, () => {
     describe(`when the command succeeds`, () => {
-      const happyCommandType = 'YES_MAN_COMMAND';
-
-      const dummyRevisionId = '1';
-
-      const happyHandler: ICommandHandler = {
-        // Do we want `execute` here instead?
-        handle({
-          payload: {
-            aggregateCompositeIdentifier: { id },
-          },
-        }: ICommandFsa) {
-          return Promise.resolve({
-            id,
-            revision: dummyRevisionId,
-          });
-        },
-      };
-
       beforeAll(() => {
-        commandHandlerService = new CommandHandlerService();
+        commandHandlerService = new CommandHandlerService(mockResolver);
 
-        commandHandlerService.register({
-          type: happyCommandType,
-          // TODO we have to make this a class Ctor now
-          CommandHandlerCtor: happyHandler,
-        });
+        commandHandlerService
+          .register({
+            CommandPayloadCtor: HappyCommand,
+            // TODO we have to make this a class Ctor now
+            CommandHandlerCtor: HappyHandler,
+          })
+          .register({
+            CommandPayloadCtor: SadCommand,
+            CommandHandlerCtor: SadHandler,
+          });
       });
 
       it(`should return the expected acknowledgement`, async () => {
@@ -60,30 +132,12 @@ describe(`CommandHandlerService`, () => {
     });
 
     describe(`when the command fails`, () => {
-      const sadCommandType = 'I_ALWAYS_FAIL_AT_EVERYTHING_I_DO';
-
-      const sadHandler: ICommandHandler = {
-        // Do we want `execute` here instead?
-        handle({
-          payload: {
-            aggregateCompositeIdentifier: { type, id },
-          },
-        }: ICommandFsa) {
-          return Promise.resolve(
-            new TrueImpactError(
-              `Failed as usual when attempting to update [${type}/${id}]`,
-            ),
-          );
-        },
-      };
-
       beforeAll(() => {
-        commandHandlerService = new CommandHandlerService();
+        commandHandlerService = new CommandHandlerService(mockResolver);
 
         commandHandlerService.register({
-          type: sadCommandType,
-          // TODO we have to make this a class Ctor now
-          CommandHandlerCtor: sadHandler,
+          CommandPayloadCtor: SadCommand,
+          CommandHandlerCtor: SadHandler,
         });
       });
 
@@ -110,7 +164,7 @@ describe(`CommandHandlerService`, () => {
   });
 
   describe(`when there is no handler for the given command`, () => {
-    const service = new CommandHandlerService();
+    const service = new CommandHandlerService(mockResolver);
 
     const unknownCommandType = 'UNKNOWN_COMMAND_TYPE';
 
@@ -132,7 +186,9 @@ describe(`CommandHandlerService`, () => {
 
       const message = (result as TrueImpactError).toString();
 
-      expect(message).toContain(`unknown type`);
+      expect(message.toLowerCase()).toContain(
+        `no command handler has been registered`,
+      );
       expect(message).toContain(unknownCommandType);
     });
   });

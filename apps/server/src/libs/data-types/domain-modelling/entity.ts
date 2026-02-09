@@ -28,6 +28,8 @@ export abstract class Entity<TEntityPersistenceDto = unknown> {
 
   abstract getId(): string;
 
+  abstract setInitialId(id: string): Entity | TrueImpactError;
+
   abstract getName(): string;
 
   /**

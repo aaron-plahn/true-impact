@@ -144,6 +144,7 @@ export class SurveyQuestion extends Entity {
     return this;
   }
 
+  @UpdateMethod()
   addFollowUpQuestionForOption({
     optionLabel,
     followUpQuestionLabel,
@@ -164,6 +165,11 @@ export class SurveyQuestion extends Entity {
     this.options.set(optionLabel, updatedOption);
 
     return this;
+  }
+
+  // TODO we don't want this. We need to differentiate `AggregateRoot` from `Entity` in our base lib
+  setInitialId(_id: string): Entity | TrueImpactError {
+    throw new Error('Method not implemented.');
   }
 
   get(optionLabel: string): SurveyOption | null {
