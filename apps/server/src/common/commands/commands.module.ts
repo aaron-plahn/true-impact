@@ -1,23 +1,16 @@
 import { Module } from '@nestjs/common';
-import { ModuleRef } from '@nestjs/core';
-import { CommandHandlerService } from 'src/libs/cqrs-es';
-import { CommandsController } from './commands.controller';
 
 @Module({
-  controllers: [CommandsController],
-  providers: [
-    {
-      provide: CommandHandlerService,
-      // TODO We need to ensure we can acces the child module's providers in this context
-      useFactory: (moduleRef: ModuleRef) =>
-        new CommandHandlerService({
-          resolve(injectionToken) {
-            return moduleRef.get(injectionToken);
-          },
-        }),
-      inject: [ModuleRef],
-    },
+  controllers: [
+    /**
+     * TODO We may want a global `commands` endpoint to execute bulk-jobs.
+     * For now, each feature controller has its own `CommandHandlerService`
+     * whose available commands are scoped to the aggregate roots available
+     * in said feature slice.
+     */
+    // CommandsController
   ],
-  exports: [CommandHandlerService],
+  providers: [],
+  exports: [],
 })
 export class CommandsModule {}

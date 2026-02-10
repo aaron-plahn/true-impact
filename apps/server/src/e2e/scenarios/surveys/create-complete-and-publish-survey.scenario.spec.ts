@@ -17,9 +17,9 @@ const port = '3001';
 
 const baseEndpoint = `http://localhost:${port}`;
 
-const commandEndpoint = `${baseEndpoint}/commands`;
-
 const surveyIndexEndpoint = `${baseEndpoint}/surveys`;
+
+const commandEndpoint = `${surveyIndexEndpoint}/execute`;
 
 const buildSurveyDetailEndpoint = (id: string) =>
   `${surveyIndexEndpoint}/${id}`;
@@ -50,9 +50,9 @@ describe(`Survey Management Scenarios`, () => {
             data: { id },
           } = response as { data: CommandSuccessAcknowledgement };
 
-          const updatedSurveyResponse = await axios.get(
-            buildSurveyDetailEndpoint(id),
-          );
+          const detailEndpoint = buildSurveyDetailEndpoint(id);
+
+          const updatedSurveyResponse = await axios.get(detailEndpoint);
 
           expect(updatedSurveyResponse.status).toBe(HttpStatus.OK);
         });

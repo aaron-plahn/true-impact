@@ -19,7 +19,9 @@ export class InMemoryQueryRepository<T extends ViewModel> {
   }
 
   fetchMany(): Promise<T[]> {
-    throw new Error('Method not implemented.');
+    const result = Array.from(this.entititesById.values());
+
+    return Promise.resolve(result);
   }
 
   async create(instance: T): Promise<string | TrueImpactError> {

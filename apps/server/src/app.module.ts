@@ -1,3 +1,4 @@
+// todo import from our nest wrapper dir
 import {
   MiddlewareConsumer,
   Module,
@@ -9,7 +10,6 @@ import { SuperTokensAuthGuard, SuperTokensModule } from 'supertokens-nestjs';
 import { AppController } from './app.controller';
 import { SupertokensConfigService } from './auth/supertokens-config.service';
 import { SupertokensMiddleware } from './auth/supertokens.middleware';
-import { CommandsModule } from './common/commands/commands.module';
 import { ClientModule } from './features/clients/client.module';
 import { SurveyModule } from './features/survey/survey.module';
 
@@ -26,7 +26,6 @@ import { SurveyModule } from './features/survey/survey.module';
         ).createSuperTokensModuleOptions(),
       inject: [ConfigService],
     }),
-    CommandsModule,
     ClientModule,
     SurveyModule,
   ],

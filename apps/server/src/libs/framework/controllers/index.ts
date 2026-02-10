@@ -1,5 +1,6 @@
 export * from './body.decorator';
 export * from './controller.decorator';
+export * from './detail-query-endpoint';
 export * from './get.decorator';
 export * from './index-query-endpoint';
 export * from './inject.decorator';
