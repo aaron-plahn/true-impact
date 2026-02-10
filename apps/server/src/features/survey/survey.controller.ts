@@ -1,12 +1,17 @@
 import type { ICommandFsa } from '../../libs/cqrs-es';
 import { CommandHandlerService, CommandResult } from '../../libs/cqrs-es';
 import {
+  TrueImpactError,
+  TrueImpactRuntimeException,
+} from '../../libs/data-types';
+import {
   BadUserInputFilter,
   Body,
   Controller,
   DetailQueryEndpoint,
   IdParam,
   IndexQueryEndpoint,
+  Patch,
   Post,
   QueryResponseInterceptor,
   ResourceNotFoundFilter,
@@ -43,6 +48,25 @@ export class SurveyController {
 
   @Post('execute')
   async executeCommand(@Body() fsa: ICommandFsa): Promise<CommandResult> {
-    return this.commandHandlerService.execute(fsa);
+    const result = await this.commandHandlerService.execute(fsa);
+
+    return result;
+  }
+
+  @Patch('test-setup')
+  async testSetup(): Promise<'OK'> {
+    if (process.env.NODE_ENV !== 'test') {
+      throw new TrueImpactRuntimeException([
+        new TrueImpactError(
+          `You cannot access test setup helpers in the environment [${process.env.NODE_ENV}]`,
+        ),
+      ]);
+    }
+
+    // @ts-expect-error This will only work if the private, concrete dependency has a `clear` method (not for the production implementation)
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+    await this.surveyQueryService.surveyQueryRepository.clear();
+
+    return 'OK';
   }
 }

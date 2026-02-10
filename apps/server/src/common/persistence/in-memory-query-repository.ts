@@ -1,4 +1,9 @@
-import { Ctor, TrueImpactError, ViewModel } from 'src/libs';
+import {
+  Ctor,
+  TrueImpactBadUserInputError,
+  TrueImpactError,
+  ViewModel,
+} from 'src/libs';
 
 export class InMemoryQueryRepository<T extends ViewModel> {
   private _nextId = 0;
@@ -29,9 +34,11 @@ export class InMemoryQueryRepository<T extends ViewModel> {
     const id = this.getNextId();
 
     if (this.entititesById.has(id)) {
-      return new TrueImpactError(
-        `Unique key constraint violated (id): ${id} when creating a T.`,
-      );
+      return new TrueImpactBadUserInputError([
+        new TrueImpactError(
+          `Unique key constraint violated (id): ${id} when creating a T.`,
+        ),
+      ]);
     }
 
     this.entititesById.set(id, instance);

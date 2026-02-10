@@ -6,4 +6,5 @@ export * from './index-query-endpoint';
 export * from './inject.decorator';
 export * from './injectable.decorator';
 export * from './params';
+export * from './patch.decorator';
 export * from './post.decorator';

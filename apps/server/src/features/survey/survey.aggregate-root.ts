@@ -36,7 +36,7 @@ export class SurveyPersistenceDto {
     // firstQuestionLabel:
   },
 })
-export class Survey extends Entity {
+export class Survey extends Entity<SurveyPersistenceDto> {
   /**
    * This is useful in case we ever want to iterate through a global collection of
    * entities and build instances.
@@ -46,8 +46,7 @@ export class Survey extends Entity {
   @NonEmptyString({
     label: 'ID',
     description: 'Unique identifier for this survey',
-    isArray: false,
-    isOptional: false,
+    mustBeUnique: true,
   })
   id: string;
 
@@ -56,11 +55,11 @@ export class Survey extends Entity {
   isPublished: boolean;
 
   // TODO support translations?
+  // @Unique
   @NonEmptyString({
     label: 'Name',
     description: 'the name of this survey to display in lists',
-    isArray: false,
-    isOptional: false,
+    mustBeUnique: true,
   })
   name: string;
 
