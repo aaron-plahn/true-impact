@@ -1,9 +1,10 @@
 import { Inject, Injectable } from '../../../libs/framework';
 import { SurveyViewModel } from './survey.view-model';
 
-import { TrueImpactError } from 'src/libs';
+import { TrueImpactBadUserInputError, TrueImpactError } from 'src/libs';
 import { SURVEY_COMMAND_REPOSITORY_DEPENDENCY_TOKEN } from '../constants';
-import type { ISurveyQueryRepository } from './survey-query-repository.interface';
+import type { ISurveyCommandRepository } from '../repositories';
+import { Survey } from '../survey.aggregate-root';
 
 @Injectable()
 export class SurveyQueryService {
@@ -16,14 +17,32 @@ export class SurveyQueryService {
      * their event history grows.
      */
     @Inject(SURVEY_COMMAND_REPOSITORY_DEPENDENCY_TOKEN)
-    private readonly surveyQueryRepository: ISurveyQueryRepository,
+    private readonly surveyCommandRepository: ISurveyCommandRepository,
   ) {}
 
-  async fetchById(id: string): Promise<SurveyViewModel | null> {
-    return this.surveyQueryRepository.fetchById(id);
+  async fetchById(id: string): Promise<SurveyViewModel | TrueImpactError> {
+    const searchResult =
+      (await this.surveyCommandRepository.fetchById(id)) ||
+      new TrueImpactBadUserInputError([
+        new TrueImpactError(
+          `Failed to fetch survey [${id}], as there is no survey with this ID.`,
+        ),
+      ]);
+
+    if (searchResult instanceof TrueImpactError) {
+      return searchResult;
+    }
+
+    return this.buildViewModel(searchResult);
   }
 
   async fetchMany(): Promise<SurveyViewModel[] | TrueImpactError> {
-    return this.surveyQueryRepository.fetchMany();
+    const domainModels = await this.surveyCommandRepository.fetchMany();
+
+    return domainModels.map((dm) => this.buildViewModel(dm));
+  }
+
+  private buildViewModel(domainModel: Survey): SurveyViewModel {
+    return SurveyViewModel.fromDomainModel(domainModel);
   }
 }

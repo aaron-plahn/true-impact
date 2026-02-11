@@ -7,25 +7,47 @@ import {
 import {
   ICommandFsa,
   ICommandPayload,
+  IUpdateCommandFsa,
 } from '../command-flux-standard-action.interface';
+import { CommandSuccessAcknowledgement } from '../command-handler.interface';
 
+const buildCommandFsaInstance = <T>(
+  C: Ctor<T> & { type: string },
+  overrides: DeepPartial<T>,
+) => {
+  const payloadWithOverrides = buildTestInstance(C, overrides);
+
+  const fsa = {
+    type: C.type,
+    payload: payloadWithOverrides,
+  };
+
+  return fsa;
+};
+
+/**
+ * This helper manages a stream of commands targetting a single aggregate root (by `aggregateCompositeIdentifier`).
+ * The first command provided will be treated as the creation command.
+ */
 export class TestCommandStream {
-  private stream: ICommandFsa[] = [];
+  private creationCommandFsa: ICommandFsa;
 
-  constructor(stream: ICommandFsa[]) {
-    this.stream = stream;
+  private updateCommandFsas: IUpdateCommandFsa[] = [];
+
+  constructor(
+    creationCommandFsa: ICommandFsa,
+    updateCommandFsas: IUpdateCommandFsa[],
+  ) {
+    this.creationCommandFsa = creationCommandFsa;
+
+    this.updateCommandFsas = updateCommandFsas;
   }
 
   andThen<T extends ICommandPayload>(
     C: Ctor<T> & { type: string },
     overrides: DeepPartial<T>,
   ) {
-    const payloadWithOverrides = buildTestInstance(C, overrides);
-
-    const fsa = {
-      type: C.type,
-      payload: payloadWithOverrides,
-    };
+    const fsa = buildCommandFsaInstance(C, overrides);
 
     /**
      * Cloning on update allows hierarchical composition using
@@ -33,13 +55,49 @@ export class TestCommandStream {
      * we complete the first 5 steps of set up for a given workflow, we
      * want to easily tack on the 6th in a separate test case.
      */
-    const existing = this.stream.map((fsa) =>
+    const existing = this.updateCommandFsas.map((fsa) =>
       clonePlainObject(fsa, {}),
-    ) as ICommandFsa[];
+    ) as IUpdateCommandFsa[];
 
     existing.push(fsa);
 
-    return new TestCommandStream(existing);
+    return new TestCommandStream(this.creationCommandFsa, existing);
+  }
+
+  async execute(executor: {
+    execute(
+      fsa: ICommandFsa,
+    ): Promise<CommandSuccessAcknowledgement | { message: string }>;
+  }) {
+    const allResults: [
+      ICommandFsa,
+      CommandSuccessAcknowledgement | { message: string },
+    ][] = [];
+
+    const creationResult = await executor.execute(this.creationCommandFsa);
+
+    allResults.push([this.creationCommandFsa, creationResult]);
+
+    if (typeof (creationResult as { message: string }).message === 'string') {
+      return allResults;
+    }
+
+    const updateCommandFsasToExecute = this.as({
+      id: (creationResult as CommandSuccessAcknowledgement).id,
+      // type (on the ack?)
+    });
+
+    for (const fsa of updateCommandFsasToExecute) {
+      const result = await executor.execute(fsa);
+
+      allResults.push([fsa, result]);
+    }
+
+    return allResults;
+  }
+
+  getLast(): ICommandFsa | null {
+    return this.updateCommandFsas.at(-1) || null;
   }
 
   /**
@@ -47,8 +105,8 @@ export class TestCommandStream {
    * @param compositeIdOverrides Note that it is only necessary to override the `type` (aggregate type) property if testing a generic command that can target more than one aggregate type
    * @returns a command FSA stream where each command targets the given aggregate root by composite identifier
    */
-  as(compositeIdOverrides: { type?: string; id: string }): ICommandFsa[] {
-    return this.stream.map(({ type, payload }) => {
+  as(compositeIdOverrides: { type?: string; id: string }): IUpdateCommandFsa[] {
+    return this.updateCommandFsas.map(({ type, payload }) => {
       const aggregateCompositeIdentifierWithOverridesApplied = {
         type:
           compositeIdOverrides.type ||
@@ -72,10 +130,16 @@ export class TestCommandStream {
     });
   }
 
+  getCreationCommand(): ICommandFsa {
+    return clonePlainObject(this.creationCommandFsa, {}, []);
+  }
+
   static first<T extends ICommandPayload>(
     C: Ctor<T> & { type: string },
     overrides: DeepPartial<T>,
   ): TestCommandStream {
-    return new TestCommandStream([]).andThen(C, overrides);
+    const creationCommandFsa = buildCommandFsaInstance(C, overrides);
+
+    return new TestCommandStream(creationCommandFsa, []);
   }
 }

@@ -1,5 +1,5 @@
 import {
-  Entity,
+  AggregateRoot,
   InvariantValidationError,
   isNonEmptyString,
   NonEmptyString,
@@ -36,7 +36,7 @@ export class SurveyPersistenceDto {
     // firstQuestionLabel:
   },
 })
-export class Survey extends Entity<SurveyPersistenceDto> {
+export class Survey extends AggregateRoot<SurveyPersistenceDto> {
   /**
    * This is useful in case we ever want to iterate through a global collection of
    * entities and build instances.

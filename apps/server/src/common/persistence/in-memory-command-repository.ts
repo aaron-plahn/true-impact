@@ -1,14 +1,14 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import {
+  AggregateRoot,
   Ctor,
-  Entity,
   getDataSchemaFromClassCtor,
   TrueImpactBadUserInputError,
   TrueImpactError,
   TrueImpactRuntimeException,
 } from 'src/libs';
 
-export class InMemoryCommandRepository<T extends Entity> {
+export class InMemoryCommandRepository<T extends AggregateRoot<unknown>> {
   private _nextId = 0;
 
   private instanceCtor: Ctor<T>;
@@ -131,6 +131,25 @@ export class InMemoryCommandRepository<T extends Entity> {
 
   createMany(_instances: T[]): Promise<void> {
     throw new Error('Method not implemented.');
+  }
+
+  update(
+    instance: T,
+  ): Promise<{ id: string; revision: string } | TrueImpactError> {
+    const { id } = instance;
+
+    if (!this.entititesById.has(id)) {
+      return Promise.resolve(
+        new TrueImpactError(
+          `Failed to update entity ${this.instanceCtor.name} [${id}], as it does not exist.`,
+        ),
+      );
+    }
+
+    this.entititesById.set(id, instance);
+
+    // We need to track revision numbers
+    return Promise.resolve({ id, revision: 'oops' });
   }
 
   clear() {

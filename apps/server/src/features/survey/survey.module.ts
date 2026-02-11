@@ -15,12 +15,14 @@ import { SurveyViewModel } from './queries/survey.view-model';
 import { Survey } from './survey.aggregate-root';
 import { SurveyController } from './survey.controller';
 
-const dataClasses = [Survey, CreateSurvey];
+// Is this necessary?
+const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey];
 
 @Module({
   imports: [],
   providers: [
     CreateSurveyCommandHandler,
+    AddQuestionToSurveyCommandHandler,
     SurveyQueryService,
     {
       provide: SURVEY_QUERY_REPOSITORY_PROVIDER_TOKEN,

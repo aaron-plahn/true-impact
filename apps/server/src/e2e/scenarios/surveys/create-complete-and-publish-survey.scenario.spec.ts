@@ -1,18 +1,15 @@
 // TODO export our own HttpStatus from `framework`
 import { HttpStatus } from '@nestjs/common';
 import axios from 'axios';
-import { CommandSuccessAcknowledgement, ICommandFsa } from 'src/libs/cqrs-es';
 import { CreateSurvey } from '../../../features/survey/commands/create-survey.command';
+import {
+  CommandSuccessAcknowledgement,
+  ICommandFsa,
+} from '../../../libs/cqrs-es';
 // Do we really want a barrel export from `libs`??
+import { AddQuestionToSurvey } from '../../../features/survey/commands/add-question-to-survey.command';
+import { SurveyViewModel } from '../../../features/survey/queries/survey.view-model';
 import { TestCommandStream } from '../../../libs/cqrs-es/test-utils';
-
-const surveyName = 'Staff Evaluation';
-
-const surveyId = '123';
-
-const createSurvey = TestCommandStream.first(CreateSurvey, {
-  name: surveyName,
-});
 
 // TODO From env.e2e
 const port = '3001';
@@ -24,6 +21,58 @@ const surveyIndexEndpoint = `${baseEndpoint}/surveys`;
 const commandEndpoint = `${surveyIndexEndpoint}/execute`;
 
 const testSetupEndpoint = `${surveyIndexEndpoint}/test-setup`;
+
+class RestCommandStreamExecutor {
+  constructor(private readonly endpoint: string) {}
+
+  async execute(fsa: ICommandFsa) {
+    const response = await axios
+      .post(this.endpoint, fsa)
+      .catch(
+        (e: {
+          status: HttpStatus;
+          response: { data: { message: string } };
+        }) => {
+          return {
+            status: e.status,
+            data: {
+              message: e.response.data.message,
+            },
+          };
+        },
+      );
+
+    const result = response.data as CommandSuccessAcknowledgement;
+
+    return result;
+  }
+}
+
+const surveyName = 'Staff Evaluation';
+
+const createSurvey = TestCommandStream.first(CreateSurvey, {
+  name: surveyName,
+});
+
+const questionLabels = '1234'.split('');
+
+const questionPrompts = questionLabels.map(
+  (l) => `This is the prompt for test question [${l}].`,
+);
+
+const addFirstQuestionToSurvey = createSurvey.andThen(AddQuestionToSurvey, {
+  label: questionLabels[0],
+  prompt: questionPrompts[0],
+});
+
+const _addRemainingQuestionsToSurvey = questionLabels.slice(1).reduce(
+  (stream, label, index) =>
+    stream.andThen(AddQuestionToSurvey, {
+      label,
+      prompt: questionPrompts[index + 1],
+    }),
+  addFirstQuestionToSurvey,
+);
 
 const buildSurveyDetailEndpoint = (id: string) =>
   `${surveyIndexEndpoint}/${id}`;
@@ -71,50 +120,69 @@ const assertCommandSuccess = async ({
   }
 };
 
+const assertScenarioSuccess = async ({
+  endpoint,
+  stream,
+  // name,
+  assertSuccess: assertSuccessResponse,
+}: {
+  endpoint: string;
+  stream: TestCommandStream;
+  // name: string;
+  assertSuccess?: (acks: CommandSuccessAcknowledgement[]) => Promise<void>;
+}) => {
+  const results: CommandSuccessAcknowledgement[] = [];
+
+  const fsasAndResults = await stream.execute(
+    new RestCommandStreamExecutor(endpoint),
+  );
+
+  fsasAndResults.forEach(([_fsa, result]) => {
+    expect((result as CommandSuccessAcknowledgement).id).toBeTruthy();
+
+    results.push(result as CommandSuccessAcknowledgement);
+  });
+
+  if (typeof assertSuccessResponse == 'function') {
+    await assertSuccessResponse(results);
+  }
+};
+
 type ErrorTestCase = {
   endpoint: string;
-  setupCommandFsaStream?: ICommandFsa[];
-  invalidCommandFsa: ICommandFsa;
+  stream: TestCommandStream;
   assertErrorMessage?: (message: string) => void;
 };
 
-const assertCommandError = async ({
+const assertCommandStreamError = async ({
   endpoint,
-  setupCommandFsaStream: setupCommands,
-  invalidCommandFsa,
+  stream,
   assertErrorMessage,
 }: ErrorTestCase): Promise<void> => {
-  /**
-   * ARRANGE
-   *
-   * We use a command stream to set up the initial state via the API.
-   */
-  for (const fsa of setupCommands || []) {
-    await assertCommandSuccess({ endpoint, commandFsa: fsa });
-  }
+  const results = await stream.execute(new RestCommandStreamExecutor(endpoint));
 
-  /**
-   * ACT
-   */
-  const response = await axios
-    .post(endpoint, invalidCommandFsa)
-    .catch(
-      (e: { status: HttpStatus; response: { data: { message: string } } }) => {
-        return {
-          status: e.status,
-          message: e.response.data.message,
-        };
-      },
-    );
+  const failingCommands: [ICommandFsa, { message: string }][] = results.filter(
+    (
+      next: [ICommandFsa, CommandSuccessAcknowledgement | { message: string }],
+    ): next is [ICommandFsa, { message: string }] => {
+      const [_fsa, result] = next;
 
-  expect(response.status).toBe(HttpStatus.BAD_REQUEST);
+      return typeof (result as { message: string }).message === 'string';
+    },
+  );
 
-  const { message } = response as {
-    message: string;
-  };
+  expect(failingCommands).toHaveLength(1);
 
-  if (typeof assertErrorMessage === 'function') {
-    assertErrorMessage(message);
+  const resultForLastCommand = failingCommands.at(-1)?.[1];
+
+  // TODO Expose a CommandErrorResponseBody type
+  expect((resultForLastCommand as { message: string }).message).toBeTruthy();
+
+  if (
+    typeof resultForLastCommand?.toString === 'function' &&
+    typeof assertErrorMessage === 'function'
+  ) {
+    assertErrorMessage(resultForLastCommand.message);
   }
 };
 
@@ -125,10 +193,20 @@ const assertQueryResponse = async <TBody = Record<string, unknown>>({
   endpoint: string;
   assertResponseBody?: (body: TBody) => Promise<void>;
 }): Promise<void> => {
-  const result = await axios.get(endpoint);
+  const result = await axios
+    .get(endpoint)
+    .catch(
+      (e: { status: HttpStatus; response: { data: { message: string } } }) => {
+        return {
+          status: e.status,
+          message: e.response.data.message,
+        };
+      },
+    );
 
   expect(result.status).toBe(HttpStatus.OK);
 
+  // @ts-expect-error TODO Fix types
   const body = result.data as TBody;
 
   if (typeof assertResponseBody === 'function') {
@@ -138,6 +216,7 @@ const assertQueryResponse = async <TBody = Record<string, unknown>>({
 
 describe(`Survey Management Scenarios`, () => {
   beforeEach(async () => {
+    // TODO Deal with seeding an admin user who has survey management permissions
     await axios.patch(testSetupEndpoint);
   });
 
@@ -147,9 +226,7 @@ describe(`Survey Management Scenarios`, () => {
         it(`should return the expected acknowledgement`, async () => {
           await assertCommandSuccess({
             endpoint: commandEndpoint,
-            commandFsa: createSurvey.as({
-              id: surveyId,
-            })[0],
+            commandFsa: createSurvey.getCreationCommand(),
             assert: async (response) => {
               const {
                 body: { id },
@@ -169,10 +246,14 @@ describe(`Survey Management Scenarios`, () => {
       describe(`when the request is invalid`, () => {
         describe(`when there is already a survey with the given name`, () => {
           it(`should return the expected error message`, async () => {
-            await assertCommandError({
+            await assertScenarioSuccess({
               endpoint: commandEndpoint,
-              setupCommandFsaStream: [createSurvey.as({ id: surveyId })[0]],
-              invalidCommandFsa: createSurvey.as({ id: surveyId })[0],
+              stream: createSurvey,
+            });
+
+            await assertCommandStreamError({
+              endpoint: commandEndpoint,
+              stream: createSurvey,
               assertErrorMessage: (message: string) => {
                 expect(message).toContain(surveyName);
 
@@ -186,6 +267,28 @@ describe(`Survey Management Scenarios`, () => {
       });
     });
 
-    describe(`when adding a first question to a survey`, () => {});
+    describe(`when adding a first question to a survey`, () => {
+      describe(`when the request is valid`, () => {
+        it(`should succeed`, async () => {
+          await assertScenarioSuccess({
+            endpoint: commandEndpoint,
+            stream: addFirstQuestionToSurvey,
+            assertSuccess: async (acks) => {
+              await assertQueryResponse({
+                endpoint: buildSurveyDetailEndpoint(acks[0].id),
+                assertResponseBody: async (body: SurveyViewModel) => {
+                  expect(body.name).toBe(surveyName);
+
+                  expect(body.size).toBe(1);
+
+                  // TODO This shouldn't be necessary
+                  return Promise.resolve();
+                },
+              });
+            },
+          });
+        });
+      });
+    });
   });
 });

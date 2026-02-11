@@ -1,4 +1,4 @@
-import type { ICommandFsa } from '../../libs/cqrs-es';
+import type { IUpdateCommandFsa } from '../../libs/cqrs-es';
 import { CommandHandlerService, CommandResult } from '../../libs/cqrs-es';
 import {
   TrueImpactError,
@@ -33,7 +33,9 @@ export class SurveyController {
 
   @DetailQueryEndpoint()
   // TODO every query should return a `ResultOrError`. This **could** be wrapped in a true `Either`.
-  async fetchById(@IdParam() id: string): Promise<SurveyViewModel | null> {
+  async fetchById(
+    @IdParam() id: string,
+  ): Promise<SurveyViewModel | TrueImpactError> {
     const result = await this.surveyQueryService.fetchById(id);
 
     return result;
@@ -47,7 +49,7 @@ export class SurveyController {
   }
 
   @Post('execute')
-  async executeCommand(@Body() fsa: ICommandFsa): Promise<CommandResult> {
+  async executeCommand(@Body() fsa: IUpdateCommandFsa): Promise<CommandResult> {
     const result = await this.commandHandlerService.execute(fsa);
 
     return result;
@@ -65,7 +67,7 @@ export class SurveyController {
 
     // @ts-expect-error This will only work if the private, concrete dependency has a `clear` method (not for the production implementation)
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-    await this.surveyQueryService.surveyQueryRepository.clear();
+    await this.surveyQueryService.surveyCommandRepository.clear();
 
     return 'OK';
   }
