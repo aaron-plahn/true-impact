@@ -1,7 +1,10 @@
 import { Inject, Injectable } from '../../../libs/framework';
-import { SurveyViewModel } from './survey.view-model';
+import { SurveyViewModel, SurveyViewModelClientDto } from './survey.view-model';
 
-import { TrueImpactBadUserInputError, TrueImpactError } from 'src/libs';
+import {
+  TrueImpactBadUserInputError,
+  TrueImpactError,
+} from '../../../libs/data-types';
 import { SURVEY_COMMAND_REPOSITORY_DEPENDENCY_TOKEN } from '../constants';
 import type { ISurveyCommandRepository } from '../repositories';
 import { Survey } from '../survey.aggregate-root';
@@ -20,7 +23,9 @@ export class SurveyQueryService {
     private readonly surveyCommandRepository: ISurveyCommandRepository,
   ) {}
 
-  async fetchById(id: string): Promise<SurveyViewModel | TrueImpactError> {
+  async fetchById(
+    id: string,
+  ): Promise<SurveyViewModelClientDto | TrueImpactError> {
     const searchResult =
       (await this.surveyCommandRepository.fetchById(id)) ||
       new TrueImpactBadUserInputError([
@@ -36,13 +41,15 @@ export class SurveyQueryService {
     return this.buildViewModel(searchResult);
   }
 
-  async fetchMany(): Promise<SurveyViewModel[] | TrueImpactError> {
+  async fetchMany(): Promise<SurveyViewModelClientDto[] | TrueImpactError> {
     const domainModels = await this.surveyCommandRepository.fetchMany();
 
     return domainModels.map((dm) => this.buildViewModel(dm));
   }
 
-  private buildViewModel(domainModel: Survey): SurveyViewModel {
-    return SurveyViewModel.fromDomainModel(domainModel);
+  private buildViewModel(domainModel: Survey): SurveyViewModelClientDto {
+    const view = SurveyViewModel.fromDomainModel(domainModel);
+
+    return view.toClientDto();
   }
 }

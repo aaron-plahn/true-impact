@@ -142,4 +142,12 @@ export class TestCommandStream {
 
     return new TestCommandStream(creationCommandFsa, []);
   }
+
+  // Can't we use this in place of the global helper?
+  static buildOne<T extends ICommandPayload>(
+    C: Ctor<T> & { type: string },
+    overrides: DeepPartial<T>,
+  ): ICommandFsa {
+    return buildCommandFsaInstance(C, overrides);
+  }
 }

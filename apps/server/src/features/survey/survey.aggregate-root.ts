@@ -295,7 +295,10 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
     const updatedQuestion = targetQuestion.addOption(userRequest);
 
     if (updatedQuestion instanceof TrueImpactError) {
-      return updatedQuestion;
+      return new TrueImpactError(
+        `Failed to add option [${userRequest.optionLabel}] to survey[${this.name}].`,
+        [updatedQuestion],
+      );
     }
 
     this.questionBank.set(questionLabel, updatedQuestion);

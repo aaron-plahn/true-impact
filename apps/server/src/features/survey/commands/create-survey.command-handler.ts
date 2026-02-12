@@ -1,4 +1,4 @@
-import { TrueImpactError } from 'src/libs';
+import { TrueImpactError } from '../../../libs';
 import { CommandResult, ICommandHandler } from '../../../libs/cqrs-es';
 import { Inject } from '../../../libs/framework';
 import { SURVEY_COMMAND_REPOSITORY_DEPENDENCY_TOKEN } from '../constants';

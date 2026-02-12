@@ -19,7 +19,7 @@ import {
   UseInterceptors,
 } from '../../libs/framework';
 import { SurveyQueryService } from './queries/survey-query.service';
-import { SurveyViewModel } from './queries/survey.view-model';
+import { SurveyViewModelClientDto } from './queries/survey.view-model';
 
 // TODO Can we wrap these into @Controller?
 @UseFilters(ResourceNotFoundFilter, BadUserInputFilter)
@@ -35,7 +35,7 @@ export class SurveyController {
   // TODO every query should return a `ResultOrError`. This **could** be wrapped in a true `Either`.
   async fetchById(
     @IdParam() id: string,
-  ): Promise<SurveyViewModel | TrueImpactError> {
+  ): Promise<SurveyViewModelClientDto | TrueImpactError> {
     const result = await this.surveyQueryService.fetchById(id);
 
     return result;

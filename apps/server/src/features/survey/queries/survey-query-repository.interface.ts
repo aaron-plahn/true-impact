@@ -1,4 +1,4 @@
-import { IBaseQueryRepository } from 'src/common/interfaces/persistence/base-query-repository.interface';
+import { IBaseQueryRepository } from '../../../common/interfaces/persistence/base-query-repository.interface';
 import { SurveyViewModel } from './survey.view-model';
 
 export const SURVEY_QUERY_REPOSITORY_PROVIDER_TOKEN =

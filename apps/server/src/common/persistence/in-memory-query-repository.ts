@@ -3,7 +3,7 @@ import {
   TrueImpactBadUserInputError,
   TrueImpactError,
   ViewModel,
-} from 'src/libs';
+} from '../../libs';
 
 export class InMemoryQueryRepository<T extends ViewModel> {
   private _nextId = 0;

@@ -1,9 +1,13 @@
 import {
   InMemoryCommandRepositoryProvider,
   InMemoryQueryRepositoryProvider,
-} from 'src/common/persistence';
+} from '../../common/persistence';
 import { CommandHandlerService } from '../../libs/cqrs-es';
 import { Module, ModuleRef } from '../../libs/framework';
+import { AddFollowUpQuestionForSurveyOption } from './commands/add-follow-up-question-for-survey-option.command';
+import { AddFollowUpQuestionForSurveyOptionCommandHandler } from './commands/add-follow-up-question-for-survey-option.command-handler';
+import { AddOptionToSurveyQuestion } from './commands/add-option-to-survey-question.command';
+import { AddOptionToSurveyQuestionCommandHandler } from './commands/add-option-to-survey.command-handler';
 import { AddQuestionToSurvey } from './commands/add-question-to-survey.command';
 import { AddQuestionToSurveyCommandHandler } from './commands/add-question-to-survey.command-handler';
 import { CreateSurvey } from './commands/create-survey.command';
@@ -23,6 +27,8 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey];
   providers: [
     CreateSurveyCommandHandler,
     AddQuestionToSurveyCommandHandler,
+    AddOptionToSurveyQuestionCommandHandler,
+    AddFollowUpQuestionForSurveyOptionCommandHandler,
     SurveyQueryService,
     {
       provide: SURVEY_QUERY_REPOSITORY_PROVIDER_TOKEN,
@@ -55,6 +61,15 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey];
           .register({
             CommandPayloadCtor: AddQuestionToSurvey,
             CommandHandlerCtor: AddQuestionToSurveyCommandHandler,
+          })
+          .register({
+            CommandHandlerCtor: AddOptionToSurveyQuestionCommandHandler,
+            CommandPayloadCtor: AddOptionToSurveyQuestion,
+          })
+          .register({
+            CommandPayloadCtor: AddFollowUpQuestionForSurveyOption,
+            CommandHandlerCtor:
+              AddFollowUpQuestionForSurveyOptionCommandHandler,
           });
 
         return commandHandlerService;

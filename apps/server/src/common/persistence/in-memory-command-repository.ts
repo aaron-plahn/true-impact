@@ -6,7 +6,7 @@ import {
   TrueImpactBadUserInputError,
   TrueImpactError,
   TrueImpactRuntimeException,
-} from 'src/libs';
+} from '../../libs';
 
 export class InMemoryCommandRepository<T extends AggregateRoot<unknown>> {
   private _nextId = 0;
