@@ -27,6 +27,14 @@ const commandEndpoint = `${surveyIndexEndpoint}/execute`;
 
 const testSetupEndpoint = `${surveyIndexEndpoint}/test-setup`;
 
+const targetOptionLabel = 'A';
+
+const missingSurveyId = '404';
+
+const missingQuestionLabel = 'XIV';
+
+const missingOptionLabel = 'a';
+
 class RestCommandStreamExecutor {
   constructor(private readonly endpoint: string) {}
 
@@ -80,15 +88,6 @@ const addOptionToSurveyQuestion = addFirstQuestionToSurvey.andThen(
     optionLabel: firstOptionLabel,
     questionLabel: questionLabels[0],
   },
-);
-
-const _addRemainingQuestionsToSurvey = questionLabels.slice(1).reduce(
-  (stream, label, index) =>
-    stream.andThen(AddQuestionToSurvey, {
-      label,
-      prompt: questionPrompts[index + 1],
-    }),
-  addFirstQuestionToSurvey,
 );
 
 const followUpQuestion = {
@@ -269,6 +268,38 @@ const assertQueryResponse = async <TBody = Record<string, unknown>>({
   }
 };
 
+const addAllQuestionsToSurvey = questionLabels.reduce(
+  (acc, label) =>
+    acc.andThen(AddQuestionToSurvey, {
+      label,
+      prompt: `This is the prompt for question [${label}]`,
+    }),
+  createSurvey,
+);
+
+const optionLabels = 'abcd'.split('');
+
+const addOptionsToEveryQuestion = questionLabels.reduce(
+  (outerAcc, questionLabel) => {
+    return optionLabels.reduce(
+      (innerAcc, optionLabel) =>
+        innerAcc
+          .andThen(AddOptionToSurveyQuestion, {
+            questionLabel,
+            optionLabel,
+          })
+          // we add 1 follow up (FU) question per option
+          .andThen(AddFollowUpQuestionForSurveyOption, {
+            questionLabel,
+            optionLabel,
+            followUpQuestionLabel: `${questionLabel}.${optionLabel}.FU-1`,
+          }),
+      outerAcc,
+    );
+  },
+  addAllQuestionsToSurvey,
+);
+
 describe(`Survey Management Scenarios`, () => {
   beforeEach(async () => {
     // TODO Deal with seeding an admin user who has survey management permissions
@@ -351,8 +382,6 @@ describe(`Survey Management Scenarios`, () => {
         });
 
         describe(`when the target survey does not exist`, () => {
-          const missingSurveyId = '404';
-
           it(`should return the expected error`, async () => {
             await assertCommandError({
               endpoint: commandEndpoint,
@@ -456,8 +485,6 @@ describe(`Survey Management Scenarios`, () => {
 
           describe(`when the survey does not exist`, () => {
             it(`should return the expected error`, async () => {
-              const missingSurveyId = '404';
-
               await assertCommandError({
                 endpoint: commandEndpoint,
                 commandFsa: TestCommandStream.buildOne(
@@ -487,8 +514,6 @@ describe(`Survey Management Scenarios`, () => {
           });
 
           describe(`when the question does not exist`, () => {
-            const missingQuestionLabel = 'XIV';
-
             it(`should return the expected error`, async () => {
               await assertCommandStreamError({
                 endpoint: commandEndpoint,
@@ -616,8 +641,97 @@ describe(`Survey Management Scenarios`, () => {
       });
 
       describe(`when the request is invalid`, () => {
+        describe(`when the survey does not exist`, () => {
+          it(`should return the expected error response`, async () => {
+            await assertCommandError({
+              endpoint: commandEndpoint,
+              commandFsa: TestCommandStream.buildOne(
+                AddFollowUpQuestionForSurveyOption,
+                {
+                  aggregateCompositeIdentifier: {
+                    id: missingSurveyId,
+                  },
+                  questionLabel: questionLabels[0],
+                  optionLabel: targetOptionLabel,
+                },
+              ),
+              assertErrorMessageAsExpected: (message: string) => {
+                expect(message).toContain(missingSurveyId);
+                expect(message).toContain(questionLabels[0]);
+                expect(message).toContain(targetOptionLabel);
+              },
+            });
+          });
+        });
+
+        describe(`when the question does not exist`, () => {
+          it(`should return the expected error response`, async () => {
+            await assertCommandStreamError({
+              endpoint: commandEndpoint,
+              stream: createSurvey.andThen(AddFollowUpQuestionForSurveyOption, {
+                questionLabel: missingQuestionLabel,
+                optionLabel: targetOptionLabel,
+              }),
+              assertErrorMessage: (message: string) => {
+                expect(message).toContain(surveyName);
+                expect(message).toContain('no such question');
+                expect(message).toContain(missingQuestionLabel);
+                expect(message).toContain(targetOptionLabel);
+              },
+            });
+          });
+        });
+
+        describe(`when the option does not exist`, () => {
+          it(`should return the expected error response`, async () => {
+            await assertCommandStreamError({
+              endpoint: commandEndpoint,
+              stream: addFirstQuestionToSurvey.andThen(
+                AddFollowUpQuestionForSurveyOption,
+                {
+                  questionLabel: questionLabels[0],
+                  optionLabel: missingOptionLabel,
+                },
+              ),
+              assertErrorMessage: (message: string) => {
+                expect(message).toContain(surveyName);
+                expect(message).toContain(questionLabels[0]);
+                expect(message).toContain(missingOptionLabel);
+                expect(message).toContain('no such option');
+              },
+            });
+          });
+        });
+
         describe(`when there is already a question with the given label`, () => {
-          it.todo(`should return the expected error response`);
+          it(`should return the expected error response`, async () => {
+            const existingQuestionLabel = questionLabels[0];
+
+            await assertCommandStreamError({
+              endpoint: commandEndpoint,
+              stream: createSurvey
+                .andThen(AddQuestionToSurvey, {
+                  label: existingQuestionLabel,
+                })
+                .andThen(AddOptionToSurveyQuestion, {
+                  questionLabel: existingQuestionLabel,
+                  optionLabel: targetOptionLabel,
+                })
+                .andThen(AddFollowUpQuestionForSurveyOption, {
+                  // parent question label?
+                  questionLabel: existingQuestionLabel,
+                  followUpQuestionLabel: existingQuestionLabel,
+                  optionLabel: targetOptionLabel,
+                }),
+              assertErrorMessage: (message: string) => {
+                expect(message).toContain('question');
+                expect(message).toContain('with the label');
+                expect(message).toContain(existingQuestionLabel);
+                expect(message).toContain(targetOptionLabel);
+                expect(message).toContain(surveyName);
+              },
+            });
+          });
         });
       });
     });

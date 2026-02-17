@@ -350,6 +350,12 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
     optionLabel: string;
     followUpQuestion: { label: string; prompt: string };
   }): this | TrueImpactError {
+    if (this.questionBank.has(followUpQuestion.label)) {
+      return new TrueImpactError(
+        `You cannot add a follow-up question to option [${optionLabel}] for question [${questionLabel}] in survey [${this.name}] as there is already a question with the label [${followUpQuestion.label}]`,
+      );
+    }
+
     this.questionBank.set(
       followUpQuestion.label,
       SurveyQuestion.buildEmpty(followUpQuestion) as SurveyQuestion,
@@ -365,7 +371,10 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
       );
 
     if (updatedQuestion instanceof TrueImpactError) {
-      return updatedQuestion;
+      return new TrueImpactError(
+        `You cannot add follow-up question [${questionLabel}] to survey [${this.name}]`,
+        [updatedQuestion],
+      );
     }
 
     this.questionBank.set(questionLabel, updatedQuestion);
