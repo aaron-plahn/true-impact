@@ -45,7 +45,7 @@ export class TestCommandStream {
 
   andThen<T extends ICommandPayload>(
     C: Ctor<T> & { type: string },
-    overrides: DeepPartial<T>,
+    overrides: DeepPartial<T> = {} as DeepPartial<T>,
   ) {
     const fsa = buildCommandFsaInstance(C, overrides);
 

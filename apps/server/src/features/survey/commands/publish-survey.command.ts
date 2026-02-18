@@ -1,9 +1,9 @@
-import { TrueImpactDataExample } from 'src/libs';
+import { TrueImpactDataExample } from '../../../libs/data-types';
 import { SurveyCompositeIdentifier } from '../survey.composite-identifier';
 
 @TrueImpactDataExample({
   example: {
-    AGGREGATE_COMPOSITE_IDENTIFIER: {
+    aggregateCompositeIdentifier: {
       type: 'survey',
       id: '1',
     },

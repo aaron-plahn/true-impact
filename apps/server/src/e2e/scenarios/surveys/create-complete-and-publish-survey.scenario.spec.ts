@@ -7,9 +7,11 @@ import {
   ICommandFsa,
 } from '../../../libs/cqrs-es';
 // Do we really want a barrel export from `libs`??
+// Do we want to barrel export the commands?
 import { AddFollowUpQuestionForSurveyOption } from '../../../features/survey/commands/add-follow-up-question-for-survey-option.command';
 import { AddOptionToSurveyQuestion } from '../../../features/survey/commands/add-option-to-survey-question.command';
 import { AddQuestionToSurvey } from '../../../features/survey/commands/add-question-to-survey.command';
+import { PublishSurvey } from '../../../features/survey/commands/publish-survey.command';
 import {
   SurveyViewModel,
   SurveyViewModelClientDto,
@@ -281,24 +283,41 @@ const optionLabels = 'abcd'.split('');
 
 const addOptionsToEveryQuestion = questionLabels.reduce(
   (outerAcc, questionLabel) => {
-    return optionLabels.reduce(
-      (innerAcc, optionLabel) =>
+    return optionLabels.reduce((innerAcc, optionLabel) => {
+      const followUpQuestionLabel = `${questionLabel}.${optionLabel}.FU-1`;
+
+      return (
         innerAcc
           .andThen(AddOptionToSurveyQuestion, {
             questionLabel,
             optionLabel,
+            text: `text for option ${optionLabel}`,
           })
           // we add 1 follow up (FU) question per option
           .andThen(AddFollowUpQuestionForSurveyOption, {
             questionLabel,
             optionLabel,
-            followUpQuestionLabel: `${questionLabel}.${optionLabel}.FU-1`,
-          }),
-      outerAcc,
-    );
+            followUpQuestionLabel,
+            followUpQuestionPrompt: `Follow up question # ${followUpQuestionLabel}`,
+          })
+          // and 2 options for each follow-up question
+          .andThen(AddOptionToSurveyQuestion, {
+            questionLabel: followUpQuestionLabel,
+            optionLabel: `FUOa`,
+            text: `text for option FUOa`,
+          })
+          .andThen(AddOptionToSurveyQuestion, {
+            questionLabel: followUpQuestionLabel,
+            optionLabel: `FUOb`,
+            text: `text for option FUOb`,
+          })
+      );
+    }, outerAcc);
   },
   addAllQuestionsToSurvey,
 );
+
+const publishSurvey = addOptionsToEveryQuestion.andThen(PublishSurvey, {});
 
 describe(`Survey Management Scenarios`, () => {
   beforeEach(async () => {
@@ -378,7 +397,16 @@ describe(`Survey Management Scenarios`, () => {
 
       describe(`when the request is invalid`, () => {
         describe(`when the survey is already published`, () => {
-          it.todo(`should return the expected error response`);
+          it(`should return the expected error response`, async () => {
+            await assertCommandStreamError({
+              endpoint: commandEndpoint,
+              stream: publishSurvey.andThen(AddQuestionToSurvey, {}),
+              assertErrorMessage: (message: string) => {
+                expect(message).toContain(surveyName);
+                expect(message).toContain('has been published');
+              },
+            });
+          });
         });
 
         describe(`when the target survey does not exist`, () => {
@@ -480,7 +508,16 @@ describe(`Survey Management Scenarios`, () => {
 
         describe(`when the request is invalid`, () => {
           describe(`when the survey is already published`, () => {
-            it.todo(`should return the expected error response`);
+            it(`should return the expected error response`, async () => {
+              await assertCommandStreamError({
+                endpoint: commandEndpoint,
+                stream: publishSurvey.andThen(AddOptionToSurveyQuestion, {}),
+                assertErrorMessage: (message: string) => {
+                  expect(message).toContain(surveyName);
+                  expect(message).toContain('has been published');
+                },
+              });
+            });
           });
 
           describe(`when the survey does not exist`, () => {
@@ -538,10 +575,6 @@ describe(`Survey Management Scenarios`, () => {
         // Note that the happy path is covered in the publish test case
 
         describe(`when the request is invalid`, () => {
-          describe(`when the survey is already published`, () => {
-            it.todo(`should return the expected error response`);
-          });
-
           describe(`when there is already a question with the given option`, () => {
             it(`should return the expected error`, async () => {
               await assertCommandStreamError({
@@ -641,6 +674,22 @@ describe(`Survey Management Scenarios`, () => {
       });
 
       describe(`when the request is invalid`, () => {
+        describe(`when the survey is already published`, () => {
+          it(`should return the expected error response`, async () => {
+            await assertCommandStreamError({
+              endpoint: commandEndpoint,
+              stream: publishSurvey.andThen(
+                AddFollowUpQuestionForSurveyOption,
+                {},
+              ),
+              assertErrorMessage: (message: string) => {
+                expect(message).toContain(surveyName);
+                expect(message).toContain('has been published');
+              },
+            });
+          });
+        });
+
         describe(`when the survey does not exist`, () => {
           it(`should return the expected error response`, async () => {
             await assertCommandError({
@@ -754,81 +803,81 @@ describe(`Survey Management Scenarios`, () => {
       });
     });
 
-    // TODO flags should be part of a `SurveyAnalyzer`, not the survey itself
-    describe(`when adding a flag to a question's option`, () => {
-      describe(`when the request is valid`, () => {
-        it.todo(`should add the flag`);
-      });
-
-      describe(`when the request is invalid`, () => {
-        describe(`when the survey does not exist`, () => {
-          it.todo(`should return the expected error response`);
-        });
-
-        describe(`when the question does not exist`, () => {
-          it.todo(`should return the expected error response`);
-        });
-
-        describe(`when the option does not exist`, () => {
-          it.todo(`should return the expected error response`);
-        });
-
-        describe(`when there is no flag with the given ID`, () => {
-          it.todo(`should return the expected error response`);
-        });
-
-        describe(`when the option already has the given flag`, () => {
-          it.todo(`should return the expected error response`);
-        });
-      });
-    });
-
-    describe(`when removing a flag from a question's option`, () => {
-      describe(`when the request is valid`, () => {
-        describe(`when removing the only flag from an option`, () => {
-          it.todo(`should leave the option with an empty list of flags`);
-        });
-
-        describe(`when removing one of several flags from an option`, () => {
-          it.todo(`should remove the target option`);
-        });
-      });
-
-      describe(`when the request is invalid`, () => {
-        describe(`when the survey does not exist`, () => {
-          it.todo(`should return the expected error resposne`);
-        });
-
-        describe(`when the question does not exist`, () => {
-          it.todo(`should return the expected error response`);
-        });
-
-        describe(`when the flag does not exist`, () => {
-          it.todo(`should return the expected error response`);
-        });
-      });
-    });
-
     describe(`when publishing a survey`, () => {
       describe(`when the request is valid`, () => {
-        it.todo(`should publish the survey`);
+        it(`should publish the survey`, async () => {
+          await assertScenarioSuccess({
+            endpoint: commandEndpoint,
+            stream: publishSurvey,
+            assertSuccess: async (acks) => {
+              await assertQueryResponse({
+                endpoint: buildSurveyDetailEndpoint(acks[0].id),
+                assertResponseBody: async (body: SurveyViewModel) => {
+                  expect(body.isPublished).toBe(true);
+
+                  return Promise.resolve();
+                },
+              });
+            },
+          });
+        });
       });
 
       describe(`when the request is invalid`, () => {
         describe(`when the survey is already published`, () => {
-          it.todo(`should return the expected error response`);
+          it(`should return the expected error response`, async () => {
+            await assertCommandStreamError({
+              endpoint: commandEndpoint,
+              stream: publishSurvey.andThen(PublishSurvey, {}),
+              assertErrorMessage: (message: string) => {
+                expect(message).toContain(surveyName);
+                expect(message).toContain('has been published');
+              },
+            });
+          });
         });
 
         describe(`when the survey has no questions`, () => {
-          it.todo(`should return the expected error response`);
+          it(`should return the expected error response`, async () => {
+            await assertCommandStreamError({
+              endpoint: commandEndpoint,
+              // todo second param should be optional here if there are no overrides
+              stream: createSurvey.andThen(PublishSurvey, {}),
+              assertErrorMessage: (message) => {
+                expect(message).toContain(surveyName);
+                expect(message).toContain('publish');
+                expect(message).toContain('must have at least one question');
+              },
+            });
+          });
         });
 
         describe(`when one of the questions has no options`, () => {
-          it.todo(`should return the expected error response`);
+          it(`should return the expected error response`, async () => {
+            await assertCommandStreamError({
+              endpoint: commandEndpoint,
+              stream: addFirstQuestionToSurvey.andThen(PublishSurvey, {}),
+              assertErrorMessage: (message) => {
+                expect(message).toContain(surveyName);
+                expect(message).toContain(questionLabels[0]);
+                expect(message).toContain('at least 2 options');
+              },
+            });
+          });
         });
 
         describe(`when one of the question has an option with an empty follow-up question`, () => {
-          it.todo(`should return the expected error response`);
+          it(`should return the expected error response`, async () => {
+            await assertCommandStreamError({
+              endpoint: commandEndpoint,
+              stream: addFollowUpQuestionForOption.andThen(PublishSurvey),
+              assertErrorMessage: (message) => {
+                expect(message).toContain(surveyName);
+                expect(message).toContain(followUpQuestion.label);
+                expect(message).toContain('at least 2 options');
+              },
+            });
+          });
         });
       });
     });

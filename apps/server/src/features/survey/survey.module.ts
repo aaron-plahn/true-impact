@@ -12,6 +12,8 @@ import { AddQuestionToSurvey } from './commands/add-question-to-survey.command';
 import { AddQuestionToSurveyCommandHandler } from './commands/add-question-to-survey.command-handler';
 import { CreateSurvey } from './commands/create-survey.command';
 import { CreateSurveyCommandHandler } from './commands/create-survey.command-handler';
+import { PublishSurvey } from './commands/publish-survey.command';
+import { PublishSurveyCommandHandler } from './commands/publish-survey.command-handler';
 import { SURVEY_COMMAND_REPOSITORY_DEPENDENCY_TOKEN } from './constants';
 import { SURVEY_QUERY_REPOSITORY_PROVIDER_TOKEN } from './queries/survey-query-repository.interface';
 import { SurveyQueryService } from './queries/survey-query.service';
@@ -20,7 +22,7 @@ import { Survey } from './survey.aggregate-root';
 import { SurveyController } from './survey.controller';
 
 // Is this necessary?
-const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey];
+const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
 
 @Module({
   imports: [],
@@ -29,6 +31,7 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey];
     AddQuestionToSurveyCommandHandler,
     AddOptionToSurveyQuestionCommandHandler,
     AddFollowUpQuestionForSurveyOptionCommandHandler,
+    PublishSurveyCommandHandler,
     SurveyQueryService,
     {
       provide: SURVEY_QUERY_REPOSITORY_PROVIDER_TOKEN,
@@ -70,6 +73,10 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey];
             CommandPayloadCtor: AddFollowUpQuestionForSurveyOption,
             CommandHandlerCtor:
               AddFollowUpQuestionForSurveyOptionCommandHandler,
+          })
+          .register({
+            CommandPayloadCtor: PublishSurvey,
+            CommandHandlerCtor: PublishSurveyCommandHandler,
           });
 
         return commandHandlerService;

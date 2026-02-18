@@ -207,7 +207,7 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
     if (this.size() < 1) {
       allErrors.push(
         new TrueImpactError(
-          `A survey must have at least 1 question in order to be published`,
+          `You cannot publish survey [${this.name}] as a survey must have at least one question in order to be published`,
         ),
       );
     }
@@ -382,6 +382,7 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
     return this;
   }
 
+  // TODO move this to a `SurveyAnalyzer`
   @UpdateMethod()
   addFlagToQuestionOption({
     questionLabel,
@@ -438,9 +439,11 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
   @UpdateMethod()
   publish(): this | TrueImpactError {
     if (this.isPublished) {
-      return new TrueImpactError(
-        `You cannot publish survey [${this.name}], as it is already published`,
-      );
+      return new TrueImpactBadUserInputError([
+        new TrueImpactError(
+          `You cannot publish survey [${this.name}], as it is already published`,
+        ),
+      ]);
     }
 
     this.isPublished = true;

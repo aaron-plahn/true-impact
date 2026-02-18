@@ -13,6 +13,8 @@ import { SurveyQuestionViewModel } from './survey-question.view-model';
 export class SurveyViewModelClientDto {
   id: string;
 
+  isPublished: boolean;
+
   name: string;
 
   size: number;
@@ -48,16 +50,20 @@ export class SurveyViewModel {
   // @NestedViewModel
   questions: SurveyQuestionViewModel[];
 
+  isPublished: boolean;
+
   constructor({
     id,
     name,
     size,
     questions,
+    isPublished,
   }: {
     id: string;
     name: string;
     size: number;
     questions?: SurveyQuestionViewModel[];
+    isPublished: boolean;
   }) {
     this.id = id;
 
@@ -66,11 +72,14 @@ export class SurveyViewModel {
     this.size = size;
 
     this.questions = questions || [];
+
+    this.isPublished = typeof isPublished === 'boolean' ? isPublished : false;
   }
 
   toClientDto(): SurveyViewModelClientDto {
     return {
       id: this.id,
+      isPublished: this.isPublished,
       name: this.name,
       size: this.size,
       questions: this.questions.map((q) => ({
@@ -149,6 +158,7 @@ export class SurveyViewModel {
       name: survey.getName(),
       size: survey.size(),
       questions: Array.from(questionViewsByLabel.values()),
+      isPublished: survey.isPublished,
     });
 
     return result;
