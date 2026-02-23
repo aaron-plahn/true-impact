@@ -1,3 +1,4 @@
+import { NotImplementedException } from '@nestjs/common';
 import {
   AggregateRoot,
   InvariantValidationError,
@@ -265,6 +266,10 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
     this.questionLabels.push(questionBuildResult.label);
 
     return this;
+  }
+
+  getNextQuestionLabel(_questionLabel: string, _optionLabel: string): string {
+    throw new NotImplementedException();
   }
 
   @UpdateMethod()
