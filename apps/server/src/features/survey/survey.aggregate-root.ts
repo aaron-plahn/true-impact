@@ -1,4 +1,3 @@
-import { NotImplementedException } from '@nestjs/common';
 import {
   AggregateRoot,
   InvariantValidationError,
@@ -7,7 +6,8 @@ import {
   TrueImpactError,
   UpdateMethod,
 } from '../../libs/data-types';
-import { SURVEY_AGGREGATE_TYPE } from './constants';
+import { DONE, SURVEY_AGGREGATE_TYPE } from './constants';
+import { SurveyOption } from './survey-option.entity';
 import {
   SurveyQuestion,
   SurveyQuestionPersistenceDto,
@@ -18,7 +18,7 @@ export class SurveyPersistenceDto {
   isPublished: boolean;
   name: string;
   questions: Record<string, SurveyQuestionPersistenceDto>;
-  questionLabels: string[];
+  topLevelQuestionLabels: string[];
   revision: number;
 }
 
@@ -32,7 +32,7 @@ export class SurveyPersistenceDto {
     isPublished: false,
     name: 'test survey',
     questions: {},
-    questionLabels: [],
+    topLevelQuestionLabels: [],
     revision: 12,
     // firstQuestionLabel:
   },
@@ -81,7 +81,7 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
   questionBank: Map<string, SurveyQuestion>;
 
   // See the comment about `questionBank`, which applies here as well.
-  questionLabels: string[] = [];
+  topLevelQuestionLabels: string[] = [];
 
   constructor({
     id,
@@ -114,7 +114,7 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
     // TODO Ensure that you validate the invariant rule that the `firstQuestionLabel` must be the `label` for some question in `questions.values()`
     if (Array.isArray(questionLabels)) {
       // Shallow clone of `string[]` is as good as a deep clone.
-      this.questionLabels = [...questionLabels];
+      this.topLevelQuestionLabels = [...questionLabels];
     }
 
     this.questionBank = new Map(Object.entries(questions || {}));
@@ -152,19 +152,19 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
         },
         {},
       ),
-      questionLabels: this.questionLabels,
       revision: this.revision,
+      topLevelQuestionLabels: this.topLevelQuestionLabels,
     };
 
     return result;
   }
 
   getFirstQuestion(): SurveyQuestion | null {
-    if (this.questionLabels.length === 0) {
+    if (this.topLevelQuestionLabels.length === 0) {
       return null;
     }
 
-    return this.questionBank.get(this.questionLabels[0]) || null;
+    return this.questionBank.get(this.topLevelQuestionLabels[0]) || null;
   }
 
   get(questionLabel: string): SurveyQuestion | null {
@@ -263,13 +263,199 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
 
     this.questionBank.set(questionBuildResult.label, questionBuildResult);
 
-    this.questionLabels.push(questionBuildResult.label);
+    this.topLevelQuestionLabels.push(questionBuildResult.label);
 
     return this;
   }
 
-  getNextQuestionLabel(_questionLabel: string, _optionLabel: string): string {
-    throw new NotImplementedException();
+  find(
+    questionPredicate: (question: SurveyQuestion) => boolean,
+    rootQuestionLabel?: string,
+  ): SurveyQuestion | null | TrueImpactError {
+    if (this.size() === 0) {
+      return null;
+    }
+
+    if (rootQuestionLabel && !this.questionBank.has(rootQuestionLabel)) {
+      return new TrueImpactBadUserInputError([
+        new TrueImpactError(
+          `Failed to search survey [${this.name}], as there is no question [${rootQuestionLabel}]`,
+        ),
+      ]);
+    }
+
+    const firstSearchParentLabel =
+      rootQuestionLabel || this.topLevelQuestionLabels[0];
+
+    // we have already checked that this exists
+    const firstSearchQuestion = this.questionBank.get(
+      firstSearchParentLabel,
+    ) as SurveyQuestion;
+
+    if (questionPredicate(firstSearchQuestion)) {
+      return firstSearchQuestion;
+    }
+
+    const followUpQuestionLabels =
+      firstSearchQuestion.getFollowupQuestionLabels();
+
+    for (const fuql of followUpQuestionLabels) {
+      const childQuestion = this.questionBank.get(fuql);
+
+      const nestedSearchResult = this.find(
+        questionPredicate,
+        childQuestion?.label,
+      );
+
+      if (nestedSearchResult instanceof TrueImpactError) {
+        return nestedSearchResult;
+      }
+
+      if (nestedSearchResult) {
+        return nestedSearchResult;
+      }
+    }
+
+    // We did not find a match in any of the follow up questions for this question's options
+    // now we must continue the search at the next top-level question
+
+    const topLevelIndex = this.topLevelQuestionLabels.indexOf(
+      firstSearchParentLabel,
+    );
+
+    if (topLevelIndex != -1) {
+      // the initial parent question is a top-level question
+
+      const nextTopLevelQuestionLabel =
+        this.topLevelQuestionLabels?.[topLevelIndex + 1];
+
+      if (!nextTopLevelQuestionLabel) {
+        // we are on the last top-level question
+        return null;
+      }
+
+      return this.find(questionPredicate, nextTopLevelQuestionLabel);
+    }
+
+    return null;
+  }
+
+  private getParentQuestion(
+    questionLabel: string,
+  ): SurveyQuestion | null | TrueImpactError {
+    if (!this.questionBank.has(questionLabel)) {
+      return new TrueImpactBadUserInputError([
+        new TrueImpactError(
+          `There is no question [${questionLabel}] in survey [${this.name}]`,
+        ),
+      ]);
+    }
+
+    const targetQuestion = this.find((q) => q.label === questionLabel);
+
+    if (!targetQuestion) {
+      return null;
+    }
+
+    if (targetQuestion instanceof TrueImpactError) {
+      return targetQuestion;
+    }
+
+    /**
+     * TODO We will support this search via a dedicated query
+     * database in the future. We can denormalize at this point to
+     * optimize the queries (i.e., use doubly-linked nodes).
+     */
+    const parentQuestion = this.find((q) => {
+      return Array.from(q.options.values()).some(
+        (o: SurveyOption) => o.followUpQuestionLabel === targetQuestion.label,
+      );
+    });
+
+    if (parentQuestion instanceof TrueImpactError) {
+      return parentQuestion;
+    }
+
+    if (!parentQuestion) {
+      return null;
+    }
+
+    return this.questionBank.get(parentQuestion?.label) || null;
+  }
+
+  /**
+   * TODO Is this a view-layer concern?
+   */
+  getNextQuestionLabel(
+    questionLabel: string,
+    optionLabel: string,
+  ): string | TrueImpactError | DONE {
+    const question = this.questionBank.get(questionLabel) as SurveyQuestion;
+
+    if (!question) {
+      return new TrueImpactError(
+        `There is no question [${questionLabel}] in survey [${this.name}]`,
+      );
+    }
+
+    const option =
+      question.get(optionLabel) ||
+      new TrueImpactBadUserInputError([
+        new TrueImpactError(
+          `There is no option [${optionLabel}] for question [${questionLabel}] in survey [${this.name}]`,
+        ),
+      ]);
+
+    if (option instanceof TrueImpactError) {
+      return option;
+    }
+
+    const { followUpQuestionLabel } = option;
+
+    /**
+     * TODO If we allow multiple follow-up questions per option, we need to back-track to the parent not to top level
+     */
+    if (!followUpQuestionLabel) {
+      // there are no follow-up questions, so we must back-track until we hit the top-level parent question (given that each option has at most 1 follow-up question)
+      let parent: SurveyQuestion = question;
+
+      while (
+        parent !== null &&
+        // We are looking for the top-level parent of the original question
+        !this.topLevelQuestionLabels.includes(parent?.label)
+      ) {
+        const parentSearchResult = this.getParentQuestion(parent.label);
+
+        if (parentSearchResult instanceof TrueImpactError) {
+          return parentSearchResult;
+        }
+
+        if (parentSearchResult !== null) {
+          parent = parentSearchResult;
+        } else {
+          // is there a better pattern?
+          break;
+        }
+      }
+
+      const topLevelIndexOfParent = this.topLevelQuestionLabels.indexOf(
+        parent.label,
+      );
+
+      const nextLabel =
+        this.topLevelQuestionLabels?.[topLevelIndexOfParent + 1];
+
+      if (nextLabel) {
+        return nextLabel;
+      }
+
+      return DONE;
+    }
+
+    return (
+      this.questionBank.get(followUpQuestionLabel)?.label ||
+      new TrueImpactError('oh no!')
+    );
   }
 
   @UpdateMethod()
@@ -471,7 +657,7 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
     isPublished,
     name,
     questions,
-    questionLabels,
+    topLevelQuestionLabels: questionLabels,
     revision,
   }: SurveyPersistenceDto): Survey | TrueImpactError {
     const survey = new Survey({
