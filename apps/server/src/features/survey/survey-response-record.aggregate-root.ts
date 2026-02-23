@@ -100,18 +100,6 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponsePersistenc
     this.responses = new Map(Object.entries(responses));
   }
 
-  // question label
-  /**
-   * This is used for validation. Should the view model \ query service expsose a helper to
-   * tell which question to answer next?
-   */
-  getNext(): string {
-    /**
-     * We can defer to `Survey.getSuccessor(questionLabel,optionLabel)`.
-     */
-    throw new NotImplementedException();
-  }
-
   /**
    * A survey completion record should
    * - carry responses in the correct order
