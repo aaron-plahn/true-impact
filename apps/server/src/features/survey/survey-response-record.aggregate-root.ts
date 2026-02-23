@@ -1,5 +1,5 @@
 import { NotImplementedException } from '@nestjs/common';
-import { AggregateRoot, Entity, TrueImpactError, UpdateMethod } from 'src/libs';
+import { AggregateRoot, Entity, TrueImpactError } from 'src/libs';
 import {
   CLIENT,
   ClientCompositeIdentifier,
@@ -98,11 +98,6 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponsePersistenc
     this.id = id;
 
     this.responses = new Map(Object.entries(responses));
-  }
-
-  @UpdateMethod()
-  respondToQuestion(_questionLabel: string, _optionLabel: string) {
-    throw new NotImplementedException();
   }
 
   // question label
