@@ -18,6 +18,7 @@ export class SurveyPersistenceDto {
   name: string;
   questions: Record<string, SurveyQuestionPersistenceDto>;
   questionLabels: string[];
+  revision: number;
 }
 
 // TODO We need to track schema versions
@@ -31,6 +32,7 @@ export class SurveyPersistenceDto {
     name: 'test survey',
     questions: {},
     questionLabels: [],
+    revision: 12,
     // firstQuestionLabel:
   },
 })
@@ -39,7 +41,7 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
    * This is useful in case we ever want to iterate through a global collection of
    * entities and build instances.
    */
-  readonly type = SURVEY_AGGREGATE_TYPE;
+  static readonly type = SURVEY_AGGREGATE_TYPE;
 
   @NonEmptyString({
     label: 'ID',
@@ -61,11 +63,11 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
   })
   name: string;
 
-  @NonEmptyString({
-    label: 'revision',
-    description:
-      'an increasing sequence number that reflects the current version of this survey',
-  })
+  // @NonNegativeInteger({
+  //   label: 'revision',
+  //   description:
+  //     'an increasing sequence number that reflects the current version of this survey',
+  // })
   revision: number;
 
   /**
@@ -86,14 +88,21 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
     name,
     questions,
     questionLabels,
+    revision,
   }: {
     id: string;
     isPublished: boolean;
     name: string;
+    revision?: number;
     questions?: Record<string, SurveyQuestion>;
     questionLabels?: string[];
   }) {
     super();
+
+    // Why isn't this a type guard?
+    if (Number.isInteger(revision)) {
+      this.revision = revision as number;
+    }
 
     this.id = id;
 
@@ -143,6 +152,7 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
         {},
       ),
       questionLabels: this.questionLabels,
+      revision: this.revision,
     };
 
     return result;
@@ -443,9 +453,12 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
       isPublished: false,
       name,
       questions: {},
+      revision: 0,
     });
 
-    return instance.validateInvariants();
+    const result = instance.validateInvariants();
+
+    return result;
   }
 
   static fromPersistenceDto({
@@ -454,9 +467,11 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
     name,
     questions,
     questionLabels,
+    revision,
   }: SurveyPersistenceDto): Survey | TrueImpactError {
     const survey = new Survey({
       id,
+      revision,
       isPublished,
       name,
       questionLabels,

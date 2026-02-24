@@ -1,13 +1,16 @@
 import {
   BadUserInputFilter,
+  Body,
   Controller,
   DetailQueryEndpoint,
-  Param,
+  IdParam,
+  Post,
   QueryResponseInterceptor,
   ResourceNotFoundFilter,
   UseFilters,
   UseInterceptors,
 } from '../../libs/framework';
+import { CreateClient } from './commands/create-client.command';
 import { CreateClientCommandHandler } from './commands/create-client.command-handler';
 import { ClientQueryService } from './services/client-query.service';
 
@@ -21,7 +24,16 @@ export class ClientController {
   ) {}
 
   @DetailQueryEndpoint()
-  async fetchById(@Param('id') id: string) {
+  async fetchById(@IdParam() id: string) {
     return this.clientsService.fetchById(id);
+  }
+
+  // TODO We want a dedicated /commands endpoint for extensibility
+  @Post('')
+  async create(@Body() creationCommand: CreateClient) {
+    // TODO inject a CommandHandlerService
+    const result = await this.creationCommandHandler.execute(creationCommand);
+
+    return result;
   }
 }

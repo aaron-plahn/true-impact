@@ -126,6 +126,7 @@ describe(`CommandHandlerService`, () => {
         expect(result).toEqual({
           id: testId,
           revision: dummyRevisionId,
+          type: 'WIDGET',
         });
       });
     });

@@ -60,9 +60,11 @@ export function UpdateMethod(): MethodDecorator {
        */
       // TODO why do we still need the assertion after the typeguard? Can we make `this` unknown isntead of any?
       if (isPublishable(this) && (this as IPublishable).isPublished) {
-        return new TrueImpactError(
-          `You cannot edit ${ctor.name.toLowerCase()} [${(this as Entity).getName()}] as it has been published for public use.`,
-        );
+        return new TrueImpactBadUserInputError([
+          new TrueImpactError(
+            `You cannot edit ${ctor.name.toLowerCase()} [${(this as Entity).getName()}] as it has been published for public use.`,
+          ),
+        ]);
       }
 
       const cloned = ctor.fromPersistenceDto(

@@ -49,10 +49,22 @@ export class Client extends Entity implements ValidateInvariants<Client> {
     dateOfBirth,
     isIndigenous,
     community,
-  }: ClientPeristenceDto) {
+  }: {
+    id?: string;
+
+    fullName: FullNameDto;
+
+    dateOfBirth: string; // Date?
+
+    isIndigenous: 'Yes' | 'No' | 'Unknown'; // this is a smell
+
+    community?: string;
+  }) {
     super();
 
-    this.id = id;
+    if (typeof id !== 'undefined') {
+      this.id = id;
+    }
 
     this.fullName = FullName.fromDto(fullName);
 
@@ -108,7 +120,21 @@ export class Client extends Entity implements ValidateInvariants<Client> {
   public static fromCreateClientCommand(
     command: CreateClient,
   ): Client | TrueImpactBadUserInputError {
-    const result = Client.fromCreateClientCommand(command);
+    const { firstName, lastName, dateOfBirth, isIndigenous, community } =
+      command;
+
+    const unverifiedInstance = new Client({
+      fullName: { firstName, lastName },
+      dateOfBirth,
+      isIndigenous,
+      community,
+    });
+
+    const result = unverifiedInstance.validateInvariants();
+
+    if (result instanceof TrueImpactError) {
+      return new TrueImpactBadUserInputError([result]);
+    }
 
     return result;
   }

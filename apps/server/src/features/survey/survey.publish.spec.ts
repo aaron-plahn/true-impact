@@ -94,7 +94,7 @@ describe(`Survey.publish`, () => {
 
           // Do we want this?
           //   expect(message).toContain(emptySurvey.name);
-          expect(message).toContain('at least 1 question');
+          expect(message).toContain('at least one question');
           expect(message).toContain('to be published');
         });
       });

@@ -52,6 +52,10 @@ export class SurveyController {
   async executeCommand(@Body() fsa: IUpdateCommandFsa): Promise<CommandResult> {
     const result = await this.commandHandlerService.execute(fsa);
 
+    if (result instanceof TrueImpactError) {
+      console.log(result);
+    }
+
     return result;
   }
 

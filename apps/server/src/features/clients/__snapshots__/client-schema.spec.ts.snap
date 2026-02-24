@@ -8,6 +8,7 @@ exports[`ClientSchema should match the snapshot 1`] = `
       "isArray": false,
       "isOptional": true,
       "label": "Community",
+      "mustBeUnique": false,
       "type": "NON_EMPTY_STRING",
     },
   },
