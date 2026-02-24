@@ -1,4 +1,4 @@
-import { NonEmptyString } from 'src/libs';
+import { NonEmptyString } from 'src/libs/data-types';
 import { SurveyOption } from '../survey-option.entity';
 import { SurveyQuestion } from '../survey-question.entity';
 import { Survey } from '../survey.aggregate-root';
@@ -40,6 +40,12 @@ export class SurveyViewModel {
     description: 'Name of this survey',
   })
   name: string;
+
+  @NonEmptyString({
+    label: 'revision',
+    description: 'unique ID for the current revision of this survey',
+  })
+  revision: string;
 
   @NonEmptyString({
     label: 'size',

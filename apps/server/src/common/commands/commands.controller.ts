@@ -1,6 +1,6 @@
-import { TrueImpactBadUserInputError } from '../../libs';
 import type { IUpdateCommandFsa } from '../../libs/cqrs-es';
 import { CommandHandlerService, CommandResult } from '../../libs/cqrs-es';
+import { TrueImpactBadUserInputError } from '../../libs/data-types';
 import {
   BadUserInputFilter,
   Body,

@@ -1,6 +1,9 @@
 import { Inject } from '@nestjs/common';
-import { TrueImpactBadUserInputError, TrueImpactError } from 'src/libs';
 import { CommandResult, ICommandHandler } from 'src/libs/cqrs-es';
+import {
+  TrueImpactBadUserInputError,
+  TrueImpactError,
+} from 'src/libs/data-types';
 import { SURVEY_COMMAND_REPOSITORY_DEPENDENCY_TOKEN } from '../constants';
 import type { ISurveyCommandRepository } from '../repositories';
 import { PublishSurvey } from './publish-survey.command';

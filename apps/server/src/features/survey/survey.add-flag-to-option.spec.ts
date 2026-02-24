@@ -1,4 +1,4 @@
-import { TrueImpactError } from '../../libs';
+import { TrueImpactError } from '../../libs/data-types';
 import { Survey } from './survey.aggregate-root';
 
 const emptySurvey = Survey.buildEmpty({ name: 'test survey' }) as Survey;

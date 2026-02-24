@@ -1,6 +1,9 @@
 import { Inject } from '@nestjs/common';
 
-import { TrueImpactBadUserInputError, TrueImpactError } from '../../../libs';
+import {
+  TrueImpactBadUserInputError,
+  TrueImpactError,
+} from '../../../libs/data-types';
 import { Client } from '../client.aggregate-root';
 import { CLIENT_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../constants';
 import type { IClientCommandRepository } from '../repositories';

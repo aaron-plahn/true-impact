@@ -6,20 +6,28 @@ import {
   TrueImpactBadUserInputError,
   TrueImpactError,
   TrueImpactRuntimeException,
-} from '../../libs';
+} from '../../libs/data-types';
+import { IBaseCommandRepository } from '../interfaces/persistence';
 
-export class InMemoryCommandRepository<T extends AggregateRoot<unknown>> {
+export class InMemoryCommandRepository<
+  T extends AggregateRoot<unknown>,
+> implements IBaseCommandRepository<T> {
   private _nextId = 0;
 
-  private instanceCtor: Ctor<T>;
+  private instanceCtor: Ctor<T> & { type: string };
 
   private uniqueFields: Set<string> = new Set();
 
+  // collection ?
+  private type: string;
+
   constructor(
-    C: Ctor<T>,
+    C: Ctor<T> & { type: string },
     private readonly entititesById: Map<string, T> = new Map(),
   ) {
     this.instanceCtor = C;
+
+    this.type = this.instanceCtor.type;
 
     const schema = getDataSchemaFromClassCtor(C);
 
@@ -39,6 +47,7 @@ export class InMemoryCommandRepository<T extends AggregateRoot<unknown>> {
     });
   }
 
+  // @ts-expect-error Funky covariance \ contravariance error?
   async fetchById(id: string): Promise<T | null> {
     const result = this.entititesById.get(id) || null;
 
@@ -135,8 +144,8 @@ export class InMemoryCommandRepository<T extends AggregateRoot<unknown>> {
 
   update(
     instance: T,
-  ): Promise<{ id: string; revision: string } | TrueImpactError> {
-    const { id } = instance;
+  ): Promise<{ id: string; revision: string; type: string } | TrueImpactError> {
+    const { id, revision: revisonNumber } = instance;
 
     if (!this.entititesById.has(id)) {
       return Promise.resolve(
@@ -146,10 +155,26 @@ export class InMemoryCommandRepository<T extends AggregateRoot<unknown>> {
       );
     }
 
+    const existingEntity = this.entititesById.get(id) as T;
+
+    if (existingEntity.revision !== revisonNumber) {
+      const optimisticConcurrencyError = new TrueImpactError(
+        `Failed to update ${this.type}/${existingEntity.getId()} from revision [${existingEntity.revision}] as it was been modified by another user during validation.`,
+      );
+
+      return Promise.resolve(optimisticConcurrencyError);
+    }
+
+    instance.revision++;
+
     this.entititesById.set(id, instance);
 
-    // We need to track revision numbers
-    return Promise.resolve({ id, revision: 'oops' });
+    return Promise.resolve({
+      id,
+      // pull this from the entity?
+      type: this.type,
+      revision: existingEntity.revision.toString(),
+    });
   }
 
   clear() {

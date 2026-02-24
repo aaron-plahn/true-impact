@@ -4,7 +4,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { SuperTokensExceptionFilter } from 'supertokens-nestjs';
 import supertokens from 'supertokens-node';
 import { AppModule } from './app.module';
-import { TrueImpactError, TrueImpactRuntimeException } from './libs';
+import { TrueImpactError, TrueImpactRuntimeException } from './libs/data-types';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);

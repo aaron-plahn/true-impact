@@ -1,4 +1,4 @@
-import { Ctor, ViewModel } from '../../libs';
+import { Ctor, ViewModel } from '../../libs/data-types';
 import { InMemoryQueryRepository } from './in-memory-query-repository';
 
 export class InMemoryQueryRepositoryProvider {

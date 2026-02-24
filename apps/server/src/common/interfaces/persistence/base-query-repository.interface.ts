@@ -1,4 +1,4 @@
-import { TrueImpactError, ViewModel } from '../../../libs';
+import { TrueImpactError, ViewModel } from '../../../libs/data-types';
 
 export interface IBaseQueryRepository<T extends ViewModel = ViewModel> {
   fetchById(id: string): Promise<T> | null; // Maybe<T>

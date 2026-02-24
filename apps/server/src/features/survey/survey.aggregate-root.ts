@@ -7,7 +7,7 @@ import {
   TrueImpactDataExample,
   TrueImpactError,
   UpdateMethod,
-} from '../../libs';
+} from '../../libs/data-types';
 import { SURVEY_AGGREGATE_TYPE } from './constants';
 import {
   SurveyQuestion,
@@ -62,6 +62,13 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
     mustBeUnique: true,
   })
   name: string;
+
+  @NonEmptyString({
+    label: 'revision',
+    description:
+      'an increasing sequence number that reflects the current version of this survey',
+  })
+  revision: number;
 
   /**
    * We may want to store the questions and follow-up questions directly in the graph.

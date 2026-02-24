@@ -1,4 +1,4 @@
-import { NonEmptyString } from '../../../libs';
+import { NonEmptyString } from '../../../libs/data-types';
 
 export class SurveyImportQuestionOptionDto {
   @NonEmptyString({

@@ -1,6 +1,9 @@
 import { Inject } from '@nestjs/common';
-import { TrueImpactBadUserInputError, TrueImpactError } from '../../../libs';
 import { CommandResult, ICommandHandler } from '../../../libs/cqrs-es';
+import {
+  TrueImpactBadUserInputError,
+  TrueImpactError,
+} from '../../../libs/data-types';
 import { SURVEY_COMMAND_REPOSITORY_DEPENDENCY_TOKEN } from '../constants';
 import type { ISurveyCommandRepository } from '../repositories';
 import { AddFollowUpQuestionForSurveyOption } from './add-follow-up-question-for-survey-option.command';
@@ -47,12 +50,8 @@ export class AddFollowUpQuestionForSurveyOptionCommandHandler implements IComman
       return new TrueImpactBadUserInputError([updateResult]);
     }
 
-    await this.surveyRepository.update(updateResult);
+    const result = await this.surveyRepository.update(updateResult);
 
-    return {
-      id: updateResult.id,
-      // TODO fix this
-      revision: 'Ooopsies',
-    };
+    return result;
   }
 }

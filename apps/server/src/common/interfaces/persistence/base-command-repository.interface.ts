@@ -1,8 +1,8 @@
-import { Entity, TrueImpactError } from '../../../libs';
+import { Entity, TrueImpactError } from '../../../libs/data-types';
 
 interface PersistenceAcknowledgement {
+  type: string;
   id: string;
-  // number?
   revision: string;
 }
 

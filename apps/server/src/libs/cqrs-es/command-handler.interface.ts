@@ -2,6 +2,7 @@ import { TrueImpactError } from '../data-types';
 import { ICommandPayload } from './command-flux-standard-action.interface';
 
 export interface CommandSuccessAcknowledgement {
+  type: string;
   id: string;
   revision: string;
 }

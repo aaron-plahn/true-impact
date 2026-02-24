@@ -1,5 +1,5 @@
-import { TrueImpactError } from '../../../libs';
 import { CommandResult, ICommandHandler } from '../../../libs/cqrs-es';
+import { TrueImpactError } from '../../../libs/data-types';
 import { Inject } from '../../../libs/framework';
 import { SURVEY_COMMAND_REPOSITORY_DEPENDENCY_TOKEN } from '../constants';
 import type { ISurveyCommandRepository } from '../repositories';

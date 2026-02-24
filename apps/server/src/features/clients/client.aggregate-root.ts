@@ -6,7 +6,7 @@ import {
   isNonEmptyString,
   NonEmptyString,
   TrueImpactError,
-} from '../../libs';
+} from '../../libs/data-types';
 
 const GENERATE_A_NEW_ID = 'GENERATE_A_NEW_ID';
 

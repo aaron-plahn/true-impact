@@ -1,5 +1,5 @@
-import { buildTestInstance, TrueImpactError } from '../../libs';
-import { Survey, SurveyPersistenceDto } from './survey.aggregate-root';
+import { TrueImpactError } from '../../libs/data-types';
+import { Survey } from './survey.aggregate-root';
 
 const emptySurvey = Survey.buildEmpty({
   name: 'test survey',
