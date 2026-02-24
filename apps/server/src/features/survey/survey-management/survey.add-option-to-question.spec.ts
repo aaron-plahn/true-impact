@@ -1,6 +1,5 @@
-import { buildTestInstance, TrueImpactError } from '../../libs/data-types';
-import { AddOptionToSurveyQuestion } from './commands/add-option-to-survey-question.command';
-import { SurveyQuestion } from './survey-question.entity';
+import { buildTestInstance, TrueImpactError } from '../../../libs/data-types';
+import { SurveyQuestion } from '../survey-management/survey-question.entity';
 import { Survey, SurveyPersistenceDto } from './survey.aggregate-root';
 
 const surveyId = '123';
@@ -15,14 +14,6 @@ const questionLabel = '1';
 const optionLabel = 'a';
 
 const optionText = 'always';
-
-const addOptionCommand = buildTestInstance<
-  AddOptionToSurveyQuestion,
-  AddOptionToSurveyQuestion
->(AddOptionToSurveyQuestion, {
-  questionLabel,
-  optionLabel,
-});
 
 describe(`Survey.addOptionToQuestion`, () => {
   describe(`when the question exists`, () => {
@@ -102,14 +93,11 @@ describe(`Survey.addOptionToQuestion`, () => {
           });
 
           describe(`when there is already an option with the given label`, () => {
-            const invalidRequest = buildTestInstance<
-              AddOptionToSurveyQuestion,
-              AddOptionToSurveyQuestion
-            >(AddOptionToSurveyQuestion, {
-              optionLabel: optionLabel,
-              questionLabel: questionLabel,
-            });
-
+            const invalidRequest = {
+              questionLabel,
+              optionLabel,
+              text: 'text for this option',
+            };
             it(`should return the expected error`, () => {
               const result = existingSurvey.addOptionToQuestion(invalidRequest);
 
@@ -127,16 +115,11 @@ describe(`Survey.addOptionToQuestion`, () => {
             it(`should return the expected error`, () => {
               const labelForOptionWithRepeatedText = 'XII';
 
-              const userRequest = buildTestInstance<
-                AddOptionToSurveyQuestion,
-                AddOptionToSurveyQuestion
-              >(AddOptionToSurveyQuestion, {
+              const userRequest = {
+                questionLabel,
                 optionLabel: labelForOptionWithRepeatedText,
-                // TODO We need type safety here
-                // optionText: existingOptionText,
                 text: existingOptionText,
-                questionLabel: questionLabel,
-              });
+              };
 
               const result = existingSurvey.addOptionToQuestion(userRequest);
 
@@ -158,7 +141,11 @@ describe(`Survey.addOptionToQuestion`, () => {
 
   describe(`when the question does not exist`, () => {
     it(`should return the expected error`, () => {
-      const result = emptySurvey.addOptionToQuestion(addOptionCommand);
+      const result = emptySurvey.addOptionToQuestion({
+        questionLabel,
+        optionLabel,
+        text: 'There is no question for me to call home :(',
+      });
 
       expect(result).toBeInstanceOf(TrueImpactError);
 

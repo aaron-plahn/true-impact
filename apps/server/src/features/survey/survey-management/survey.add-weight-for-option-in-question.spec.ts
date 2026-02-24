@@ -1,4 +1,4 @@
-import { buildTestInstance, TrueImpactError } from '../../libs/data-types';
+import { buildTestInstance, TrueImpactError } from '../../../libs/data-types';
 import { Survey, SurveyPersistenceDto } from './survey.aggregate-root';
 
 const surveyId = '123';

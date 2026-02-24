@@ -4,21 +4,21 @@ import {
 } from '../../common/persistence';
 import { CommandHandlerService } from '../../libs/cqrs-es';
 import { Module, ModuleRef } from '../../libs/framework';
-import { AddFollowUpQuestionForSurveyOption } from './commands/add-follow-up-question-for-survey-option.command';
-import { AddFollowUpQuestionForSurveyOptionCommandHandler } from './commands/add-follow-up-question-for-survey-option.command-handler';
-import { AddOptionToSurveyQuestion } from './commands/add-option-to-survey-question.command';
-import { AddOptionToSurveyQuestionCommandHandler } from './commands/add-option-to-survey.command-handler';
-import { AddQuestionToSurvey } from './commands/add-question-to-survey.command';
-import { AddQuestionToSurveyCommandHandler } from './commands/add-question-to-survey.command-handler';
-import { CreateSurvey } from './commands/create-survey.command';
-import { CreateSurveyCommandHandler } from './commands/create-survey.command-handler';
-import { PublishSurvey } from './commands/publish-survey.command';
-import { PublishSurveyCommandHandler } from './commands/publish-survey.command-handler';
 import { SURVEY_COMMAND_REPOSITORY_DEPENDENCY_TOKEN } from './constants';
 import { SURVEY_QUERY_REPOSITORY_PROVIDER_TOKEN } from './queries/survey-query-repository.interface';
 import { SurveyQueryService } from './queries/survey-query.service';
 import { SurveyViewModel } from './queries/survey.view-model';
-import { Survey } from './survey.aggregate-root';
+import { AddFollowUpQuestionForSurveyOption } from './survey-management/commands/add-follow-up-question-for-survey-option.command';
+import { AddFollowUpQuestionForSurveyOptionCommandHandler } from './survey-management/commands/add-follow-up-question-for-survey-option.command-handler';
+import { AddOptionToSurveyQuestion } from './survey-management/commands/add-option-to-survey-question.command';
+import { AddOptionToSurveyQuestionCommandHandler } from './survey-management/commands/add-option-to-survey.command-handler';
+import { AddQuestionToSurvey } from './survey-management/commands/add-question-to-survey.command';
+import { AddQuestionToSurveyCommandHandler } from './survey-management/commands/add-question-to-survey.command-handler';
+import { CreateSurvey } from './survey-management/commands/create-survey.command';
+import { CreateSurveyCommandHandler } from './survey-management/commands/create-survey.command-handler';
+import { PublishSurvey } from './survey-management/commands/publish-survey.command';
+import { PublishSurveyCommandHandler } from './survey-management/commands/publish-survey.command-handler';
+import { Survey } from './survey-management/survey.aggregate-root';
 import { SurveyController } from './survey.controller';
 
 // Is this necessary?

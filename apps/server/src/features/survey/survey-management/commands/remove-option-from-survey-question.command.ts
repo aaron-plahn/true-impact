@@ -1,5 +1,5 @@
-import { NonEmptyString } from '../../../libs/data-types';
-import { SurveyCompositeIdentifier } from '../survey.composite-identifier';
+import { NonEmptyString } from '../../../../libs/data-types';
+import { SurveyCompositeIdentifier } from '../../survey.composite-identifier';
 
 export class RemoveOptionFromSurveyQuestion {
   aggregateCompositeIdentifier: SurveyCompositeIdentifier;

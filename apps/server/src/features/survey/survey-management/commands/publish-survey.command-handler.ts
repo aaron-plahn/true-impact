@@ -1,9 +1,9 @@
-import { Inject } from '../../../libs/framework';
+import { Inject } from '../../../../libs/framework';
 
 import { CommandResult, ICommandHandler } from 'src/libs/cqrs-es';
 import { TrueImpactError } from 'src/libs/data-types';
-import { SURVEY_COMMAND_REPOSITORY_DEPENDENCY_TOKEN } from '../constants';
-import type { ISurveyCommandRepository } from '../repositories';
+import { SURVEY_COMMAND_REPOSITORY_DEPENDENCY_TOKEN } from '../../constants';
+import type { ISurveyCommandRepository } from '../../repositories';
 import { PublishSurvey } from './publish-survey.command';
 
 export class PublishSurveyCommandHandler implements ICommandHandler {

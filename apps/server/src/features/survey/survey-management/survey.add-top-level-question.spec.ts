@@ -1,5 +1,5 @@
-import { TrueImpactError } from '../../libs/data-types';
-import { SurveyQuestion } from './survey-question.entity';
+import { TrueImpactError } from '../../../libs/data-types';
+import { SurveyQuestion } from '../survey-management/survey-question.entity';
 import { Survey } from './survey.aggregate-root';
 
 const validEmptySurvey = Survey.buildEmpty({ name: 'test survey' }) as Survey;

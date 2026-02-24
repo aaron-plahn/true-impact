@@ -1,5 +1,5 @@
-import { buildTestInstance, TrueImpactError } from '../../libs/data-types';
-import { DONE } from './constants';
+import { buildTestInstance, TrueImpactError } from '../../../libs/data-types';
+import { DONE } from '../constants';
 import { Survey, SurveyPersistenceDto } from './survey.aggregate-root';
 
 describe(`Survey.getNextQuestionLabel`, () => {

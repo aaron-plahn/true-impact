@@ -1,5 +1,5 @@
-import { SurveyOption } from '../survey-option.entity';
-import { SurveyQuestion } from '../survey-question.entity';
+import { SurveyOption } from '../survey-management/survey-option.entity';
+import { SurveyQuestion } from '../survey-management/survey-question.entity';
 import { SurveyOptionViewModel } from './survey-option.view-model';
 
 export class SurveyQuestionViewModel {

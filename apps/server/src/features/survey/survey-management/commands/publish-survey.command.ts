@@ -1,5 +1,5 @@
-import { TrueImpactDataExample } from '../../../libs/data-types';
-import { SurveyCompositeIdentifier } from '../survey.composite-identifier';
+import { TrueImpactDataExample } from '../../../../libs/data-types';
+import { SurveyCompositeIdentifier } from '../../survey.composite-identifier';
 
 @TrueImpactDataExample({
   example: {

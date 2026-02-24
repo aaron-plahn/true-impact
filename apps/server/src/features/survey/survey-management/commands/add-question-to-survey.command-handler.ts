@@ -1,12 +1,12 @@
-import { Inject } from '../../../libs/framework';
+import { Inject } from '../../../../libs/framework';
 
-import { CommandResult, ICommandHandler } from '../../../libs/cqrs-es';
+import { CommandResult, ICommandHandler } from '../../../../libs/cqrs-es';
 import {
   TrueImpactBadUserInputError,
   TrueImpactError,
-} from '../../../libs/data-types';
-import { SURVEY_COMMAND_REPOSITORY_DEPENDENCY_TOKEN } from '../constants';
-import type { ISurveyCommandRepository } from '../repositories';
+} from '../../../../libs/data-types';
+import { SURVEY_COMMAND_REPOSITORY_DEPENDENCY_TOKEN } from '../../constants';
+import type { ISurveyCommandRepository } from '../../repositories';
 import { AddQuestionToSurvey } from './add-question-to-survey.command';
 
 export class AddQuestionToSurveyCommandHandler implements ICommandHandler<AddQuestionToSurvey> {

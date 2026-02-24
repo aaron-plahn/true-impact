@@ -1,11 +1,11 @@
-import { CommandResult, ICommandHandler } from '../../../libs/cqrs-es';
-import { TrueImpactError } from '../../../libs/data-types';
-import { Inject } from '../../../libs/framework';
+import { CommandResult, ICommandHandler } from '../../../../libs/cqrs-es';
+import { TrueImpactError } from '../../../../libs/data-types';
+import { Inject } from '../../../../libs/framework';
 import {
   SURVEY_AGGREGATE_TYPE,
   SURVEY_COMMAND_REPOSITORY_DEPENDENCY_TOKEN,
-} from '../constants';
-import type { ISurveyCommandRepository } from '../repositories';
+} from '../../constants';
+import type { ISurveyCommandRepository } from '../../repositories';
 import { Survey } from '../survey.aggregate-root';
 import { CreateSurvey } from './create-survey.command';
 

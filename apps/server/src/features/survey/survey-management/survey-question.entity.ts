@@ -4,7 +4,7 @@ import {
   TrueImpactDataExample,
   TrueImpactError,
   UpdateMethod,
-} from '../../libs/data-types';
+} from '../../../libs/data-types';
 import {
   SurveyOption,
   SurveyOptionPersistenceDto,

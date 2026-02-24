@@ -1,4 +1,4 @@
-import { TrueImpactError } from '../../libs/data-types';
+import { TrueImpactError } from '../../../libs/data-types';
 import { Survey } from './survey.aggregate-root';
 
 describe(`Survey.addFollowUpQuestion`, () => {

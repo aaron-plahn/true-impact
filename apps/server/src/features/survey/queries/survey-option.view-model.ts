@@ -1,4 +1,4 @@
-import { SurveyOption } from '../survey-option.entity';
+import { SurveyOption } from '../survey-management/survey-option.entity';
 
 class FollowUpQuestionViewModel {
   label: string;

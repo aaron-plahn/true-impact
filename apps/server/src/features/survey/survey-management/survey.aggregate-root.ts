@@ -6,8 +6,8 @@ import {
   TrueImpactDataExample,
   TrueImpactError,
   UpdateMethod,
-} from '../../libs/data-types';
-import { DONE, SURVEY_AGGREGATE_TYPE } from './constants';
+} from '../../../libs/data-types';
+import { DONE, SURVEY_AGGREGATE_TYPE } from '../constants';
 import { SurveyOption } from './survey-option.entity';
 import {
   SurveyQuestion,
