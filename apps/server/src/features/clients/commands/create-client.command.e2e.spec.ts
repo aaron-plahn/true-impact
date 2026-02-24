@@ -1,8 +1,7 @@
-import { HttpStatus, INestApplication } from '@nestjs/common';
-import { Test } from '@nestjs/testing';
 import request from 'supertest';
 import { App } from 'supertest/types';
-import { clonePlainObject } from '../../../libs';
+import { clonePlainObject } from '../../../libs/data-types';
+import { HttpStatus, INestApplication, Test } from '../../../libs/framework';
 import { Client } from '../client.aggregate-root';
 import { ClientModule } from '../client.module';
 import { CreateClient } from './create-client.command';

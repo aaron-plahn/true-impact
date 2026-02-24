@@ -1,16 +1,17 @@
-import { ConfigService } from '@nestjs/config';
-import { NestFactory } from '@nestjs/core';
+// TODO wrap NestJS Swagger?
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { SuperTokensExceptionFilter } from 'supertokens-nestjs';
 import supertokens from 'supertokens-node';
 import { AppModule } from './app.module';
-import { TrueImpactError, TrueImpactRuntimeException } from './libs';
+import { TrueImpactError, TrueImpactRuntimeException } from './libs/data-types';
+import { ConfigService, NestFactory } from './libs/framework';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   const configService = app.get(ConfigService);
 
+  // TODO the config service isn't picking this up from the .env when using the npm script `start`
   const NODE_PORT = configService.get<number>('API_PORT', 3001);
 
   const clientBaseUrl = configService.get<string>(
@@ -43,10 +44,17 @@ async function bootstrap() {
   SwaggerModule.setup('api/docs', app, documentFactory);
 
   await app.listen(NODE_PORT);
+
+  console.log(`Listening on PORT: ${NODE_PORT}`);
 }
 
-bootstrap().catch((_e) => {
+bootstrap().catch((e) => {
   throw new TrueImpactRuntimeException([
-    new TrueImpactError(`Failed to bootstrap the server application`),
+    new TrueImpactError(`Failed to bootstrap the server application`, [
+      new TrueImpactError(
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+        typeof e?.message === 'string' ? e?.message : 'Unknown NestJS error',
+      ),
+    ]),
   ]);
 });

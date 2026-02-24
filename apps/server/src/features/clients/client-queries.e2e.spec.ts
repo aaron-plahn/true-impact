@@ -1,7 +1,6 @@
-import { HttpStatus, INestApplication } from '@nestjs/common';
-import { Test } from '@nestjs/testing';
 import request from 'supertest';
 import { App } from 'supertest/types';
+import { HttpStatus, INestApplication, Test } from '../../libs/framework';
 import { Client } from './client.aggregate-root';
 import { ClientModule } from './client.module';
 import { CLIENT_COMMAND_REPOSITORY_INJECTION_TOKEN } from './constants';

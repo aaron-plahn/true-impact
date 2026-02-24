@@ -1,4 +1,4 @@
-import { clonePlainObject, TrueImpactError } from '../../libs';
+import { clonePlainObject, TrueImpactError } from '../../libs/data-types';
 import { Client, ClientPeristenceDto } from './client.aggregate-root';
 
 // TODO Build test instance

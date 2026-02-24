@@ -1,4 +1,4 @@
-import { TrueImpactError } from '../../../libs';
+import { TrueImpactError } from '../../../libs/data-types';
 
 export class CannotEditLiveSurveyError extends TrueImpactError {
   constructor(surveyName: string) {

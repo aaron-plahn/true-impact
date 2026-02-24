@@ -1,4 +1,8 @@
-import { TrueImpactError, TrueImpactRuntimeException } from '../error-handling';
+import {
+  TrueImpactBadUserInputError,
+  TrueImpactError,
+  TrueImpactRuntimeException,
+} from '../error-handling';
 import { Entity } from './entity';
 
 interface FromPersistenceDto<TDto = unknown, UInstance = unknown> {
@@ -56,9 +60,11 @@ export function UpdateMethod(): MethodDecorator {
        */
       // TODO why do we still need the assertion after the typeguard? Can we make `this` unknown isntead of any?
       if (isPublishable(this) && (this as IPublishable).isPublished) {
-        return new TrueImpactError(
-          `You cannot edit ${ctor.name.toLowerCase()} [${(this as Entity).getName()}] as it has been published for public use.`,
-        );
+        return new TrueImpactBadUserInputError([
+          new TrueImpactError(
+            `You cannot edit ${ctor.name.toLowerCase()} [${(this as Entity).getName()}] as it has been published for public use.`,
+          ),
+        ]);
       }
 
       const cloned = ctor.fromPersistenceDto(
@@ -83,7 +89,13 @@ export function UpdateMethod(): MethodDecorator {
 
       if (updated instanceof TrueImpactError) {
         // The update method returned an error
-        return updated;
+
+        /**
+         * All calls to an update method that fail are the result of a bad
+         * user request. We wrap this here as it is used for determining
+         * the `HttpStatusCode` in the response mapping.
+         */
+        return new TrueImpactBadUserInputError([updated]);
       }
 
       const invariantValidationResult = updated.validateInvariants();

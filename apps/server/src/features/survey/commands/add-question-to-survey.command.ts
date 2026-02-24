@@ -1,4 +1,7 @@
-import { NonEmptyString, TrueImpactDataExample } from '../../../libs';
+import {
+  NonEmptyString,
+  TrueImpactDataExample,
+} from '../../../libs/data-types';
 import { SurveyCompositeIdentifier } from '../survey.composite-identifier';
 
 @TrueImpactDataExample<AddQuestionToSurvey>({
@@ -12,6 +15,8 @@ import { SurveyCompositeIdentifier } from '../survey.composite-identifier';
   },
 })
 export class AddQuestionToSurvey {
+  static readonly type = 'ADD_QUESTION_TO_SURVEY';
+
   aggregateCompositeIdentifier: SurveyCompositeIdentifier;
 
   @NonEmptyString({

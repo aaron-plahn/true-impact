@@ -5,10 +5,9 @@ import {
   Entity,
   isNonEmptyString,
   NonEmptyString,
+  TrueImpactBadUserInputError,
   TrueImpactError,
-} from '../../libs';
-
-const GENERATE_A_NEW_ID = 'GENERATE_A_NEW_ID';
+} from '../../libs/data-types';
 
 interface ValidateInvariants<T> {
   // Should we make this an either?
@@ -50,10 +49,22 @@ export class Client extends Entity implements ValidateInvariants<Client> {
     dateOfBirth,
     isIndigenous,
     community,
-  }: ClientPeristenceDto) {
+  }: {
+    id?: string;
+
+    fullName: FullNameDto;
+
+    dateOfBirth: string; // Date?
+
+    isIndigenous: 'Yes' | 'No' | 'Unknown'; // this is a smell
+
+    community?: string;
+  }) {
     super();
 
-    this.id = id;
+    if (typeof id !== 'undefined') {
+      this.id = id;
+    }
 
     this.fullName = FullName.fromDto(fullName);
 
@@ -94,18 +105,6 @@ export class Client extends Entity implements ValidateInvariants<Client> {
     return allErrors;
   }
 
-  setInitialId(generatedId: string): Client | TrueImpactError {
-    if (this.id !== GENERATE_A_NEW_ID) {
-      return new TrueImpactError(
-        `Cannot overwrite id: ${this.id} with generated ID: ${generatedId}`,
-      );
-    }
-
-    this.id = generatedId;
-
-    return this;
-  }
-
   toPersistenceDto(): ClientPeristenceDto {
     return JSON.parse(JSON.stringify(this)) as ClientPeristenceDto;
   }
@@ -118,23 +117,25 @@ export class Client extends Entity implements ValidateInvariants<Client> {
     return result;
   }
 
-  public static fromCreateClientCommand({
-    // TODO remove this
-    // aggregateComposteIdentifier: { id: clientId },
-    firstName,
-    lastName,
-    dateOfBirth,
-    isIndigenous,
-    community,
-  }: CreateClient): Client | TrueImpactError {
+  public static fromCreateClientCommand(
+    command: CreateClient,
+  ): Client | TrueImpactBadUserInputError {
+    const { firstName, lastName, dateOfBirth, isIndigenous, community } =
+      command;
+
     const unverifiedInstance = new Client({
-      id: GENERATE_A_NEW_ID,
       fullName: { firstName, lastName },
       dateOfBirth,
       isIndigenous,
       community,
     });
 
-    return unverifiedInstance.validateInvariants();
+    const result = unverifiedInstance.validateInvariants();
+
+    if (result instanceof TrueImpactError) {
+      return new TrueImpactBadUserInputError([result]);
+    }
+
+    return result;
   }
 }

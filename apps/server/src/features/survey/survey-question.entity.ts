@@ -4,7 +4,7 @@ import {
   TrueImpactDataExample,
   TrueImpactError,
   UpdateMethod,
-} from '../../libs';
+} from '../../libs/data-types';
 import {
   SurveyOption,
   SurveyOptionPersistenceDto,
@@ -144,6 +144,7 @@ export class SurveyQuestion extends Entity {
     return this;
   }
 
+  @UpdateMethod()
   addFollowUpQuestionForOption({
     optionLabel,
     followUpQuestionLabel,

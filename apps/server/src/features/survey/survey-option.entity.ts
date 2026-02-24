@@ -4,7 +4,7 @@ import {
   TrueImpactDataExample,
   TrueImpactError,
   UpdateMethod,
-} from '../../libs';
+} from '../../libs/data-types';
 
 export class SurveyOptionPersistenceDto {
   flagIds: string[];

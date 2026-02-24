@@ -1,4 +1,4 @@
-import { TrueImpactError } from '../../libs';
+import { TrueImpactError } from '../../libs/data-types';
 import { SurveyQuestion } from './survey-question.entity';
 import { Survey } from './survey.aggregate-root';
 

@@ -1,4 +1,10 @@
-import { Entity, TrueImpactError } from '../../../libs';
+import { Entity, TrueImpactError } from '../../../libs/data-types';
+
+interface PersistenceAcknowledgement {
+  type: string;
+  id: string;
+  revision: string;
+}
 
 export interface IBaseCommandRepository<T extends Entity = Entity> {
   fetchById(id: string): Promise<T> | null; // Maybe<T>
@@ -10,4 +16,6 @@ export interface IBaseCommandRepository<T extends Entity = Entity> {
 
   // Error[] ?
   createMany(instances: T[]): Promise<void>;
+
+  update(instance: T): Promise<PersistenceAcknowledgement | TrueImpactError>;
 }

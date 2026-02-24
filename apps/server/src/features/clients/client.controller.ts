@@ -1,17 +1,15 @@
 import {
+  BadUserInputFilter,
   Body,
   Controller,
-  Get,
-  Param,
+  DetailQueryEndpoint,
+  IdParam,
   Post,
+  QueryResponseInterceptor,
+  ResourceNotFoundFilter,
   UseFilters,
   UseInterceptors,
-} from '@nestjs/common';
-import { QueryResponseInterceptor } from '../../common/framework';
-import {
-  BadUserInputFilter,
-  ResourceNotFoundFilter,
-} from '../../common/framework/exceptions';
+} from '../../libs/framework';
 import { CreateClient } from './commands/create-client.command';
 import { CreateClientCommandHandler } from './commands/create-client.command-handler';
 import { ClientQueryService } from './services/client-query.service';
@@ -25,8 +23,8 @@ export class ClientController {
     private readonly creationCommandHandler: CreateClientCommandHandler,
   ) {}
 
-  @Get('/:id')
-  async fetchById(@Param('id') id: string) {
+  @DetailQueryEndpoint()
+  async fetchById(@IdParam() id: string) {
     return this.clientsService.fetchById(id);
   }
 

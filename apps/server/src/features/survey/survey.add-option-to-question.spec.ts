@@ -1,4 +1,4 @@
-import { buildTestInstance, TrueImpactError } from '../../libs';
+import { buildTestInstance, TrueImpactError } from '../../libs/data-types';
 import { AddOptionToSurveyQuestion } from './commands/add-option-to-survey-question.command';
 import { SurveyQuestion } from './survey-question.entity';
 import { Survey, SurveyPersistenceDto } from './survey.aggregate-root';
