@@ -1,4 +1,5 @@
-import { Inject } from '@nestjs/common';
+import { Inject } from '../../../libs/framework';
+
 import { CommandResult, ICommandHandler } from '../../../libs/cqrs-es';
 import {
   TrueImpactBadUserInputError,
@@ -38,7 +39,7 @@ export class AddQuestionToSurveyCommandHandler implements ICommandHandler<AddQue
     const updatedSurvey = searchResult.addTopLevelQuestion({ label, prompt });
 
     if (updatedSurvey instanceof TrueImpactError) {
-      return new TrueImpactBadUserInputError([updatedSurvey]);
+      return updatedSurvey;
     }
 
     const persistenceResult = await this.surveyRepository.update(updatedSurvey);

@@ -13,7 +13,6 @@ import { SurveyCompositeIdentifier } from '../survey.composite-identifier';
     followUpQuestionPrompt: 'Why would you say such a thing?',
   },
 })
-// do we need a constraint here?
 export class AddFollowUpQuestionForSurveyOption {
   static readonly type = 'ADD_FOLLOW_UP_QUESTION_FOR_SURVEY_OPTION';
 

@@ -1,4 +1,5 @@
-import { Inject } from '@nestjs/common';
+import { Inject } from '../../../libs/framework';
+
 import { CommandResult, ICommandHandler } from '../../../libs/cqrs-es';
 import {
   TrueImpactBadUserInputError,

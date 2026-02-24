@@ -1,7 +1,5 @@
-import { AGGREGATE_COMPOSITE_IDENTIFIER } from './constants';
-
 export interface ICommandPayload {
-  [AGGREGATE_COMPOSITE_IDENTIFIER]: {
+  aggregateCompositeIdentifier: {
     type: string;
     id: string;
   };

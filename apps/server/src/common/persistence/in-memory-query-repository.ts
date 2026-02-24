@@ -63,10 +63,12 @@ export class InMemoryQueryRepository<T extends ViewModel> {
       );
     }
 
+    instance.revision = (parseInt(instance.revision) + 1).toString();
+
     this.entititesById.set(id, instance);
 
     // We need to track revision numbers
-    return Promise.resolve({ id, revision: 'oops' });
+    return Promise.resolve({ id, revision: instance.revision });
   }
 
   private getNextId() {

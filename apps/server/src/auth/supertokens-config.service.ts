@@ -1,5 +1,3 @@
-import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import {
   SuperTokensModuleOptions,
   SuperTokensModuleOptionsFactory,
@@ -7,6 +5,7 @@ import {
 import Dashboard from 'supertokens-node/recipe/dashboard';
 import EmailPassword from 'supertokens-node/recipe/emailpassword';
 import Session from 'supertokens-node/recipe/session';
+import { ConfigService, Injectable } from '../libs/framework';
 
 @Injectable()
 export class SupertokensConfigService implements SuperTokensModuleOptionsFactory {

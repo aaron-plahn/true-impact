@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module } from '../../libs/framework';
 import { ClientController } from './client.controller';
 import { CreateClientCommandHandler } from './commands/create-client.command-handler';
 import { CLIENT_COMMAND_REPOSITORY_INJECTION_TOKEN } from './constants';

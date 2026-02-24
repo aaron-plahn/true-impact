@@ -11,20 +11,6 @@ import {
 } from '../command-flux-standard-action.interface';
 import { CommandSuccessAcknowledgement } from '../command-handler.interface';
 
-const buildCommandFsaInstance = <T>(
-  C: Ctor<T> & { type: string },
-  overrides: DeepPartial<T>,
-) => {
-  const payloadWithOverrides = buildTestInstance(C, overrides);
-
-  const fsa = {
-    type: C.type,
-    payload: payloadWithOverrides,
-  };
-
-  return fsa;
-};
-
 /**
  * This helper manages a stream of commands targetting a single aggregate root (by `aggregateCompositeIdentifier`).
  * The first command provided will be treated as the creation command.
@@ -47,7 +33,7 @@ export class TestCommandStream {
     C: Ctor<T> & { type: string },
     overrides: DeepPartial<T> = {} as DeepPartial<T>,
   ) {
-    const fsa = buildCommandFsaInstance(C, overrides);
+    const fsa = TestCommandStream.buildOne<T>(C, overrides);
 
     /**
      * Cloning on update allows hierarchical composition using
@@ -138,7 +124,7 @@ export class TestCommandStream {
     C: Ctor<T> & { type: string },
     overrides: DeepPartial<T>,
   ): TestCommandStream {
-    const creationCommandFsa = buildCommandFsaInstance(C, overrides);
+    const creationCommandFsa = TestCommandStream.buildOne<T>(C, overrides);
 
     return new TestCommandStream(creationCommandFsa, []);
   }
@@ -147,7 +133,14 @@ export class TestCommandStream {
   static buildOne<T extends ICommandPayload>(
     C: Ctor<T> & { type: string },
     overrides: DeepPartial<T>,
-  ): ICommandFsa {
-    return buildCommandFsaInstance(C, overrides);
+  ): ICommandFsa<T> {
+    const payloadWithOverrides = buildTestInstance(C, overrides);
+
+    const fsa = {
+      type: C.type,
+      payload: payloadWithOverrides,
+    };
+
+    return fsa;
   }
 }

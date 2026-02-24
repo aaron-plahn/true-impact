@@ -1,4 +1,4 @@
-import { Inject } from '@nestjs/common';
+import { Inject } from '../../../libs/framework';
 import { Client } from '../client.aggregate-root';
 import { CLIENT_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../constants';
 import type { IClientCommandRepository } from '../repositories';

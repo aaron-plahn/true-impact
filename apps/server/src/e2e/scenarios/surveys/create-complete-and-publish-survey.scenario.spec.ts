@@ -1,22 +1,19 @@
-// TODO export our own HttpStatus from `framework`
-import { HttpStatus } from '@nestjs/common';
-import axios from 'axios';
-import { CreateSurvey } from '../../../features/survey/commands/create-survey.command';
-import {
-  CommandSuccessAcknowledgement,
-  ICommandFsa,
-} from '../../../libs/cqrs-es';
-// Do we really want a barrel export from `libs`??
-// Do we want to barrel export the commands?
+import axios, { AxiosResponse } from 'axios';
 import { AddFollowUpQuestionForSurveyOption } from '../../../features/survey/commands/add-follow-up-question-for-survey-option.command';
 import { AddOptionToSurveyQuestion } from '../../../features/survey/commands/add-option-to-survey-question.command';
 import { AddQuestionToSurvey } from '../../../features/survey/commands/add-question-to-survey.command';
+import { CreateSurvey } from '../../../features/survey/commands/create-survey.command';
 import { PublishSurvey } from '../../../features/survey/commands/publish-survey.command';
 import {
   SurveyViewModel,
   SurveyViewModelClientDto,
 } from '../../../features/survey/queries/survey.view-model';
+import {
+  CommandSuccessAcknowledgement,
+  ICommandFsa,
+} from '../../../libs/cqrs-es';
 import { TestCommandStream } from '../../../libs/cqrs-es/test-utils';
+import { HttpStatus } from '../../../libs/framework';
 
 // TODO From env.e2e
 const port = '3001';
@@ -37,6 +34,11 @@ const missingQuestionLabel = 'XIV';
 
 const missingOptionLabel = 'a';
 
+type CommandErrorResponseBody = {
+  status: number;
+  message: string;
+};
+
 class RestCommandStreamExecutor {
   constructor(private readonly endpoint: string) {}
 
@@ -46,7 +48,7 @@ class RestCommandStreamExecutor {
       .catch(
         (e: {
           status: HttpStatus;
-          response: { data: { message: string } };
+          response: { data: CommandErrorResponseBody };
         }) => {
           return {
             status: e.status,
@@ -59,7 +61,7 @@ class RestCommandStreamExecutor {
 
     const result = response.data as
       | CommandSuccessAcknowledgement
-      | { message: string };
+      | CommandErrorResponseBody;
 
     return result;
   }
@@ -130,7 +132,10 @@ const assertCommandSuccess = async ({
   const response = await axios
     .post(endpoint, commandFsa)
     .catch(
-      (e: { status: HttpStatus; response: { data: { message: string } } }) => {
+      (e: {
+        status: HttpStatus;
+        response: { data: CommandErrorResponseBody };
+      }) => {
         return {
           status: e.status,
           body: {
@@ -144,8 +149,8 @@ const assertCommandSuccess = async ({
 
   const successResponse = {
     status: response.status,
-    // @ts-expect-error Let's fix this one
-    body: response.data as CommandSuccessAcknowledgement,
+
+    body: (response as AxiosResponse).data as CommandSuccessAcknowledgement,
   } as unknown as SuccessResponse;
 
   if (typeof assertSuccess === 'function') {
@@ -156,7 +161,6 @@ const assertCommandSuccess = async ({
 const assertCommandError = async ({
   endpoint,
   commandFsa,
-  // TODO make the APIs for all helpers mutually consistent
   assertErrorMessageAsExpected,
 }: {
   endpoint: string;
@@ -167,7 +171,7 @@ const assertCommandError = async ({
     commandFsa,
   );
 
-  const { message } = result as { message: string };
+  const { message } = result as CommandErrorResponseBody;
 
   expect(message).toBeTruthy();
 
@@ -185,7 +189,9 @@ const assertScenarioSuccess = async ({
   endpoint: string;
   stream: TestCommandStream;
   // name: string;
-  assertSuccess?: (acks: CommandSuccessAcknowledgement[]) => Promise<void>;
+  assertSuccess?: (
+    acks: CommandSuccessAcknowledgement[],
+  ) => void | Promise<void>;
 }) => {
   const results: CommandSuccessAcknowledgement[] = [];
 
@@ -207,38 +213,43 @@ const assertScenarioSuccess = async ({
 type ErrorTestCase = {
   endpoint: string;
   stream: TestCommandStream;
-  assertErrorMessage?: (message: string) => void;
+  assertErrorMessageAsExpected?: (message: string) => void;
 };
 
 const assertCommandStreamError = async ({
   endpoint,
   stream,
-  assertErrorMessage,
+  assertErrorMessageAsExpected,
 }: ErrorTestCase): Promise<void> => {
   const results = await stream.execute(new RestCommandStreamExecutor(endpoint));
 
-  const failingCommands: [ICommandFsa, { message: string }][] = results.filter(
-    (
-      next: [ICommandFsa, CommandSuccessAcknowledgement | { message: string }],
-    ): next is [ICommandFsa, { message: string }] => {
-      const [_fsa, result] = next;
+  const failingCommands: [ICommandFsa, CommandErrorResponseBody][] =
+    results.filter(
+      (
+        next: [
+          ICommandFsa,
+          CommandSuccessAcknowledgement | CommandErrorResponseBody,
+        ],
+      ): next is [ICommandFsa, CommandErrorResponseBody] => {
+        const [_fsa, result] = next;
 
-      return typeof (result as { message: string }).message === 'string';
-    },
-  );
+        return typeof (result as CommandErrorResponseBody).message === 'string';
+      },
+    );
 
   expect(failingCommands).toHaveLength(1);
 
   const resultForLastCommand = failingCommands.at(-1)?.[1];
 
-  // TODO Expose a CommandErrorResponseBody type
-  expect((resultForLastCommand as { message: string }).message).toBeTruthy();
+  expect(
+    (resultForLastCommand as CommandErrorResponseBody).message,
+  ).toBeTruthy();
 
   if (
     typeof resultForLastCommand?.toString === 'function' &&
-    typeof assertErrorMessage === 'function'
+    typeof assertErrorMessageAsExpected === 'function'
   ) {
-    assertErrorMessage(resultForLastCommand.message);
+    assertErrorMessageAsExpected(resultForLastCommand.message);
   }
 };
 
@@ -247,12 +258,15 @@ const assertQueryResponse = async <TBody = Record<string, unknown>>({
   assertResponseBody,
 }: {
   endpoint: string;
-  assertResponseBody?: (body: TBody) => Promise<void>;
+  assertResponseBody?: (body: TBody) => void | Promise<void>;
 }): Promise<void> => {
   const result = await axios
     .get(endpoint)
     .catch(
-      (e: { status: HttpStatus; response: { data: { message: string } } }) => {
+      (e: {
+        status: HttpStatus;
+        response: { data: CommandErrorResponseBody };
+      }) => {
         return {
           status: e.status,
           message: e.response.data.message,
@@ -262,8 +276,7 @@ const assertQueryResponse = async <TBody = Record<string, unknown>>({
 
   expect(result.status).toBe(HttpStatus.OK);
 
-  // @ts-expect-error TODO Fix types
-  const body = result.data as TBody;
+  const body = (result as AxiosResponse).data as TBody;
 
   if (typeof assertResponseBody === 'function') {
     await assertResponseBody(body);
@@ -359,7 +372,7 @@ describe(`Survey Management Scenarios`, () => {
             await assertCommandStreamError({
               endpoint: commandEndpoint,
               stream: createSurvey,
-              assertErrorMessage: (message: string) => {
+              assertErrorMessageAsExpected: (message: string) => {
                 expect(message).toContain(surveyName);
 
                 expect(message).toContain('already');
@@ -381,13 +394,10 @@ describe(`Survey Management Scenarios`, () => {
             assertSuccess: async (acks) => {
               await assertQueryResponse({
                 endpoint: buildSurveyDetailEndpoint(acks[0].id),
-                assertResponseBody: async (body: SurveyViewModel) => {
+                assertResponseBody: (body: SurveyViewModel) => {
                   expect(body.name).toBe(surveyName);
 
                   expect(body.size).toBe(1);
-
-                  // TODO This shouldn't be necessary
-                  return Promise.resolve();
                 },
               });
             },
@@ -401,7 +411,7 @@ describe(`Survey Management Scenarios`, () => {
             await assertCommandStreamError({
               endpoint: commandEndpoint,
               stream: publishSurvey.andThen(AddQuestionToSurvey, {}),
-              assertErrorMessage: (message: string) => {
+              assertErrorMessageAsExpected: (message: string) => {
                 expect(message).toContain(surveyName);
                 expect(message).toContain('has been published');
               },
@@ -442,7 +452,7 @@ describe(`Survey Management Scenarios`, () => {
                 .andThen(AddQuestionToSurvey, {
                   label: duplicateQuestionLabel,
                 }),
-              assertErrorMessage: (message) => {
+              assertErrorMessageAsExpected: (message) => {
                 expect(message).toContain('already');
                 expect(message).toContain(duplicateQuestionLabel);
               },
@@ -496,9 +506,6 @@ describe(`Survey Management Scenarios`, () => {
                     );
 
                     expect(questionSearchResult).toBeTruthy();
-
-                    // TODO We shouldn't have to do this here
-                    return Promise.resolve();
                   },
                 });
               },
@@ -512,7 +519,7 @@ describe(`Survey Management Scenarios`, () => {
               await assertCommandStreamError({
                 endpoint: commandEndpoint,
                 stream: publishSurvey.andThen(AddOptionToSurveyQuestion, {}),
-                assertErrorMessage: (message: string) => {
+                assertErrorMessageAsExpected: (message: string) => {
                   expect(message).toContain(surveyName);
                   expect(message).toContain('has been published');
                 },
@@ -558,7 +565,7 @@ describe(`Survey Management Scenarios`, () => {
                   questionLabel: missingQuestionLabel,
                 }),
                 // TODO rename this `assertErrorMessageAsExpected`
-                assertErrorMessage: (message: string) => {
+                assertErrorMessageAsExpected: (message: string) => {
                   expect(message).toContain(surveyName);
 
                   expect(message).toContain(missingQuestionLabel);
@@ -587,7 +594,7 @@ describe(`Survey Management Scenarios`, () => {
                     optionLabel: firstOptionLabel,
                   },
                 ),
-                assertErrorMessage: (message: string) => {
+                assertErrorMessageAsExpected: (message: string) => {
                   expect(message).toContain(surveyName);
                   expect(message).toContain('question');
                   expect(message).toContain(questionLabels[0]);
@@ -682,7 +689,7 @@ describe(`Survey Management Scenarios`, () => {
                 AddFollowUpQuestionForSurveyOption,
                 {},
               ),
-              assertErrorMessage: (message: string) => {
+              assertErrorMessageAsExpected: (message: string) => {
                 expect(message).toContain(surveyName);
                 expect(message).toContain('has been published');
               },
@@ -721,7 +728,7 @@ describe(`Survey Management Scenarios`, () => {
                 questionLabel: missingQuestionLabel,
                 optionLabel: targetOptionLabel,
               }),
-              assertErrorMessage: (message: string) => {
+              assertErrorMessageAsExpected: (message: string) => {
                 expect(message).toContain(surveyName);
                 expect(message).toContain('no such question');
                 expect(message).toContain(missingQuestionLabel);
@@ -742,7 +749,7 @@ describe(`Survey Management Scenarios`, () => {
                   optionLabel: missingOptionLabel,
                 },
               ),
-              assertErrorMessage: (message: string) => {
+              assertErrorMessageAsExpected: (message: string) => {
                 expect(message).toContain(surveyName);
                 expect(message).toContain(questionLabels[0]);
                 expect(message).toContain(missingOptionLabel);
@@ -772,7 +779,7 @@ describe(`Survey Management Scenarios`, () => {
                   followUpQuestionLabel: existingQuestionLabel,
                   optionLabel: targetOptionLabel,
                 }),
-              assertErrorMessage: (message: string) => {
+              assertErrorMessageAsExpected: (message: string) => {
                 expect(message).toContain('question');
                 expect(message).toContain('with the label');
                 expect(message).toContain(existingQuestionLabel);
@@ -829,7 +836,7 @@ describe(`Survey Management Scenarios`, () => {
             await assertCommandStreamError({
               endpoint: commandEndpoint,
               stream: publishSurvey.andThen(PublishSurvey, {}),
-              assertErrorMessage: (message: string) => {
+              assertErrorMessageAsExpected: (message: string) => {
                 expect(message).toContain(surveyName);
                 expect(message).toContain('has been published');
               },
@@ -841,9 +848,8 @@ describe(`Survey Management Scenarios`, () => {
           it(`should return the expected error response`, async () => {
             await assertCommandStreamError({
               endpoint: commandEndpoint,
-              // todo second param should be optional here if there are no overrides
-              stream: createSurvey.andThen(PublishSurvey, {}),
-              assertErrorMessage: (message) => {
+              stream: createSurvey.andThen(PublishSurvey),
+              assertErrorMessageAsExpected: (message) => {
                 expect(message).toContain(surveyName);
                 expect(message).toContain('publish');
                 expect(message).toContain('must have at least one question');
@@ -857,7 +863,7 @@ describe(`Survey Management Scenarios`, () => {
             await assertCommandStreamError({
               endpoint: commandEndpoint,
               stream: addFirstQuestionToSurvey.andThen(PublishSurvey, {}),
-              assertErrorMessage: (message) => {
+              assertErrorMessageAsExpected: (message) => {
                 expect(message).toContain(surveyName);
                 expect(message).toContain(questionLabels[0]);
                 expect(message).toContain('at least 2 options');
@@ -871,7 +877,7 @@ describe(`Survey Management Scenarios`, () => {
             await assertCommandStreamError({
               endpoint: commandEndpoint,
               stream: addFollowUpQuestionForOption.andThen(PublishSurvey),
-              assertErrorMessage: (message) => {
+              assertErrorMessageAsExpected: (message) => {
                 expect(message).toContain(surveyName);
                 expect(message).toContain(followUpQuestion.label);
                 expect(message).toContain('at least 2 options');

@@ -52,20 +52,8 @@ export class AddOptionToSurveyQuestionCommandHandler implements ICommandHandler<
       return new TrueImpactBadUserInputError([updateResult]);
     }
 
-    /**
-     * TODO We need to increment the revision number. A good pattern would be for the repository's
-     * `update` method to return either an error (db writes can always fail!) or an acknowledgement with
-     * the ID and revision number that we can bubble up. This ensures that the revision number is atomic
-     * and consistent.
-     *
-     */
-    // TODO The persistence layer should fail if the revision number on the update request does not match what is currently in the db (optimistic concurrency)
-    await this.surveyRepository.update(updateResult);
+    const persistenceResult = await this.surveyRepository.update(updateResult);
 
-    return {
-      id: updateResult.id,
-      // TODO track the revision number
-      revision: 'oops',
-    };
+    return persistenceResult;
   }
 }

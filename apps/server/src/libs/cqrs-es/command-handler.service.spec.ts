@@ -11,7 +11,6 @@ import {
   CommandHandlerService,
   ICommandHandlerResolver,
 } from './command-handler.service';
-import { AGGREGATE_COMPOSITE_IDENTIFIER } from './constants';
 
 describe(`CommandHandlerService`, () => {
   let commandHandlerService: CommandHandlerService;
@@ -41,6 +40,7 @@ describe(`CommandHandlerService`, () => {
       return Promise.resolve({
         id,
         revision: dummyRevisionId,
+        type: 'WIDGET',
       });
     }
   }
@@ -100,7 +100,6 @@ describe(`CommandHandlerService`, () => {
         commandHandlerService
           .register({
             CommandPayloadCtor: HappyCommand,
-            // TODO we have to make this a class Ctor now
             CommandHandlerCtor: HappyHandler,
           })
           .register({
@@ -115,7 +114,7 @@ describe(`CommandHandlerService`, () => {
         const testCommandFsa: IUpdateCommandFsa = {
           type: happyCommandType,
           payload: {
-            [AGGREGATE_COMPOSITE_IDENTIFIER]: {
+            aggregateCompositeIdentifier: {
               type: 'WIDGET',
               id: testId,
             },
@@ -147,7 +146,7 @@ describe(`CommandHandlerService`, () => {
         const testCommandFsa: IUpdateCommandFsa = {
           type: sadCommandType,
           payload: {
-            [AGGREGATE_COMPOSITE_IDENTIFIER]: {
+            aggregateCompositeIdentifier: {
               type: 'widget',
               id: targetId,
             },
@@ -171,8 +170,7 @@ describe(`CommandHandlerService`, () => {
     const badFsa = {
       type: unknownCommandType,
       payload: {
-        // do we really want this? can't we get intellisence without the constant?
-        [AGGREGATE_COMPOSITE_IDENTIFIER]: {
+        aggregateCompositeIdentifier: {
           type: 'widget',
           id: '123',
         },

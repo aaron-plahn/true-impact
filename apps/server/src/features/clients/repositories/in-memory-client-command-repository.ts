@@ -29,11 +29,7 @@ export class InMemoryClientCommandRepository implements IClientCommandRepository
       );
     }
 
-    const idSetResult = instance.setInitialId(id);
-
-    if (idSetResult instanceof TrueImpactError) {
-      return idSetResult;
-    }
+    instance.id = id;
 
     this.entititesById.set(id, instance);
 

@@ -1,9 +1,7 @@
-import { Inject } from '@nestjs/common';
+import { Inject } from '../../../libs/framework';
+
 import { CommandResult, ICommandHandler } from 'src/libs/cqrs-es';
-import {
-  TrueImpactBadUserInputError,
-  TrueImpactError,
-} from 'src/libs/data-types';
+import { TrueImpactError } from 'src/libs/data-types';
 import { SURVEY_COMMAND_REPOSITORY_DEPENDENCY_TOKEN } from '../constants';
 import type { ISurveyCommandRepository } from '../repositories';
 import { PublishSurvey } from './publish-survey.command';
@@ -31,14 +29,11 @@ export class PublishSurveyCommandHandler implements ICommandHandler {
 
     // TODO wrap this somewhere else
     if (updatedInstance instanceof TrueImpactError) {
-      return new TrueImpactBadUserInputError([updatedInstance]);
+      return updatedInstance;
     }
 
-    await this.surveyRepository.update(updatedInstance);
+    const result = await this.surveyRepository.update(updatedInstance);
 
-    return {
-      id,
-      revision: 'fix this now',
-    };
+    return result;
   }
 }

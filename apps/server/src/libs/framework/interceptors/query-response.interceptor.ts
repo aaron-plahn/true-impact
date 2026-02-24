@@ -6,6 +6,11 @@ import {
 } from '../../../libs/data-types';
 import { ResourceNotFoundException } from '../exceptions';
 
+/**
+ * TODO We should either use a symbol or an internal error class
+ * (e.g. `AggregateRootNotFoundError`) to represent "not found" instead
+ * of the built-ins.
+ */
 const isNotFound = (input: unknown) =>
   input === null || typeof input === 'undefined';
 

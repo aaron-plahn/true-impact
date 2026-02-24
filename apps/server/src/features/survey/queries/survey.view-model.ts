@@ -104,7 +104,6 @@ export class SurveyViewModel {
 
     const surveyOptionsAsArray: SurveyOption[] = Array.from(options.values());
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const optionViews: Map<string, SurveyOptionViewModel> =
       surveyOptionsAsArray.reduce(
         (
@@ -129,7 +128,7 @@ export class SurveyViewModel {
 
           return acc;
         },
-        new Map(),
+        new Map<string, SurveyOptionViewModel>(),
       );
 
     return {

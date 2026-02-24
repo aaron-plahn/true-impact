@@ -99,19 +99,15 @@ export class InMemoryCommandRepository<
       ]);
     }
 
-    const idSetResult = instance.setInitialId(id);
-
-    if (idSetResult instanceof TrueImpactError) {
-      return idSetResult;
-    }
+    instance.id = id;
 
     const uniqueFieldViolations = Array.from(this.uniqueFields).flatMap(
       (field: string): TrueImpactError[] => {
-        const newValue = idSetResult[field];
+        const newValue = instance[field];
 
         const collisions = this.fetchWhere({
           field,
-          value: idSetResult[field],
+          value: instance[field],
         });
 
         return collisions.length > 0
@@ -133,7 +129,7 @@ export class InMemoryCommandRepository<
       ]);
     }
 
-    this.entititesById.set(id, idSetResult as T);
+    this.entititesById.set(id, instance);
 
     return Promise.resolve(id);
   }

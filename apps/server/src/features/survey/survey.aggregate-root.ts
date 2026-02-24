@@ -1,9 +1,7 @@
 import {
   AggregateRoot,
   InvariantValidationError,
-  isNonEmptyString,
   NonEmptyString,
-  TrueImpactBadUserInputError,
   TrueImpactDataExample,
   TrueImpactError,
   UpdateMethod,
@@ -97,7 +95,7 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
   }) {
     super();
 
-    this.id = isNonEmptyString(id) ? id : 'GENERATE_A_NEW_ID';
+    this.id = id;
 
     this.isPublished = typeof isPublished === 'boolean' ? isPublished : false;
 
@@ -113,16 +111,6 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
   }
 
   getId(): string {
-    /**
-     * This shouldn't happen, but we want to be safe.
-     * The problem is that an initial instance doesn't have an ID until it is persisted to the database
-     * unless we introduce an explicit ID generation service, which complicates the work flow.
-     */
-    if (this.id === 'GENERATE_A_NEW_ID') {
-      // This ensures attempts to persist will fail without any need for type checking upstream
-      return '';
-    }
-
     return this.id;
   }
 
@@ -187,18 +175,6 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
     }
 
     return this.get(followUpQuestionLabel);
-  }
-
-  setInitialId(generatedId: string): Survey | TrueImpactError {
-    if (this.id !== 'GENERATE_A_NEW_ID') {
-      return new TrueImpactError(
-        `Cannot overwrite id: ${this.id} with generated ID: ${generatedId}`,
-      );
-    }
-
-    this.id = generatedId;
-
-    return this;
   }
 
   validatePublicationStatus(): TrueImpactError[] {
@@ -271,7 +247,7 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
     });
 
     if (questionBuildResult instanceof TrueImpactError) {
-      return new TrueImpactBadUserInputError([questionBuildResult]);
+      return questionBuildResult;
     }
 
     this.questionBank.set(questionBuildResult.label, questionBuildResult);
@@ -446,11 +422,9 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
   @UpdateMethod()
   publish(): this | TrueImpactError {
     if (this.isPublished) {
-      return new TrueImpactBadUserInputError([
-        new TrueImpactError(
-          `You cannot publish survey [${this.name}], as it is already published`,
-        ),
-      ]);
+      new TrueImpactError(
+        `You cannot publish survey [${this.name}], as it is already published`,
+      );
     }
 
     this.isPublished = true;
@@ -481,7 +455,7 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
     questions,
     questionLabels,
   }: SurveyPersistenceDto): Survey | TrueImpactError {
-    return new Survey({
+    const survey = new Survey({
       id,
       isPublished,
       name,
@@ -495,5 +469,7 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
         {},
       ),
     });
+
+    return survey.validateInvariants();
   }
 }

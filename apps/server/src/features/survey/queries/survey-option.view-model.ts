@@ -31,7 +31,6 @@ export class SurveyOptionViewModel {
     this.followUpQuestions = followUpQuestions || [];
   }
 
-  // follow-up question OR follow-up question IDs
   static fromDomainModel(
     surveyOption: SurveyOption,
     questionsByLabel: Map<string, FollowUpQuestionViewModel>,

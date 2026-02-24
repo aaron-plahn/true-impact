@@ -1,4 +1,3 @@
-import { Injectable } from '@nestjs/common';
 import {
   Ctor,
   getDataSchemaFromClassCtor,
@@ -7,6 +6,7 @@ import {
   TrueImpactRuntimeException,
   validateObjectAgainstSchema,
 } from '../data-types';
+import { Injectable } from '../framework';
 import {
   ICommandPayload,
   IUpdateCommandFsa,
@@ -46,10 +46,6 @@ export class CommandHandlerService {
    */
   constructor(private readonly resolver: ICommandHandlerResolver) {}
 
-  /**
-   * It's possible that we want the `CommandHandlerService` to inject the repository so we can
-   * have a "DryRun" option without needing request-scoped dependencies (and possible performance issues).
-   */
   register({
     CommandPayloadCtor,
     CommandHandlerCtor,
@@ -72,7 +68,6 @@ export class CommandHandlerService {
 
     this.commandTypeToPayloads.set(type, CommandPayloadCtor);
 
-    // fluent chaining
     return this;
   }
 
@@ -135,9 +130,7 @@ export class CommandHandlerService {
     const handler = await this.resolver.resolve(TargetHandlerCtor);
 
     const executionResult =
-      (await handler
-        // Or do we just want the payload here?
-        ?.handle(userRequest)) ||
+      (await handler?.handle(userRequest)) ||
       new TrueImpactBadUserInputError([
         new TrueImpactError(
           `Failed to execute command of unknown type [${commandType}]`,

@@ -8,3 +8,4 @@ export * from './injectable.decorator';
 export * from './params';
 export * from './patch.decorator';
 export * from './post.decorator';
+export * from './use-guards.decorator';

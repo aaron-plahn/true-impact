@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
-import { Injectable, NestMiddleware } from '@nestjs/common';
 import { middleware as supertokensMiddleware } from 'supertokens-node/framework/express';
+import { Injectable, NestMiddleware } from '../libs/framework';
 
 @Injectable()
 export class SupertokensMiddleware implements NestMiddleware {

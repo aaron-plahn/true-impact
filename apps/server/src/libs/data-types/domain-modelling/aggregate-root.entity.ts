@@ -1,10 +1,5 @@
 import { Entity } from './entity';
 
-/**
- * TODO Can we constrain the class to have a static `fromPersistenceDto` and an instance method `toPersistenceDto`
- * with this type or maybe even infer the DTO type?
- *
- */
 export abstract class AggregateRoot<
   TPersistenceDto,
 > extends Entity<TPersistenceDto> {

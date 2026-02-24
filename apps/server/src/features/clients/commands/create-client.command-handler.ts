@@ -1,9 +1,8 @@
-import { Inject } from '@nestjs/common';
-
 import {
   TrueImpactBadUserInputError,
   TrueImpactError,
 } from '../../../libs/data-types';
+import { Inject } from '../../../libs/framework';
 import { Client } from '../client.aggregate-root';
 import { CLIENT_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../constants';
 import type { IClientCommandRepository } from '../repositories';
@@ -21,7 +20,7 @@ export class CreateClientCommandHandler {
     const buildResult = Client.fromCreateClientCommand(command);
 
     if (buildResult instanceof TrueImpactError) {
-      return new TrueImpactBadUserInputError([buildResult]);
+      return buildResult;
     }
 
     const persistenceResult =

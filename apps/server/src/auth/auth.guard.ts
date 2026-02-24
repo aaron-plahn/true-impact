@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import * as supertokensRecipeSession from 'supertokens-node/recipe/session';
+import { CanActivate, ExecutionContext, Injectable } from '../libs/framework';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
