@@ -1,4 +1,4 @@
-import { buildTestInstance, TrueImpactError } from '../../libs';
+import { buildTestInstance, TrueImpactError } from '../../libs/data-types';
 import { DONE } from './constants';
 import { Survey, SurveyPersistenceDto } from './survey.aggregate-root';
 
@@ -7,7 +7,7 @@ describe(`Survey.getNextQuestionLabel`, () => {
     const testSurvey: Survey = buildTestInstance<SurveyPersistenceDto, Survey>(
       Survey,
       {
-        questionLabels: '123'.split(''),
+        topLevelQuestionLabels: '123'.split(''),
         /**
          * 1
          * 2
@@ -111,7 +111,7 @@ describe(`Survey.getNextQuestionLabel`, () => {
     const testSurvey: Survey = buildTestInstance<SurveyPersistenceDto, Survey>(
       Survey,
       {
-        questionLabels: '1237'.split(''),
+        topLevelQuestionLabels: '1237'.split(''),
         /**
          * 1 - 4
          * 2
