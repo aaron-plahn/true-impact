@@ -171,6 +171,13 @@ export class SurveyQuestion extends Entity {
     return this.options.get(optionLabel) || null;
   }
 
+  getFollowupQuestionLabels(): string[] {
+    return Array.from(this.options.values()).flatMap(
+      (o: SurveyOption): string[] =>
+        o.followUpQuestionLabel ? [o?.followUpQuestionLabel] : [],
+    );
+  }
+
   toPersistenceDto(): SurveyQuestionPersistenceDto {
     const result: SurveyQuestionPersistenceDto = {
       label: this.label,
@@ -209,7 +216,7 @@ export class SurveyQuestion extends Entity {
     options,
     prompt,
   }: SurveyQuestionPersistenceDto): SurveyQuestion {
-    const optionsBuildResult = Object.entries(options).reduce(
+    const optionsBuildResult = Object.entries(options || {}).reduce(
       (acc: Record<string, SurveyOption>, [label, option]) => {
         const optionBuildResult = SurveyOption.fromPersistenceDto(option);
 
