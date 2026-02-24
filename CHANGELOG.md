@@ -2,6 +2,11 @@
 
 This first release of the True Impact platform introduces a working model for user management, client management, and survey creation and completion.
 
+## #6
+
+In this commit, we introduce a helper for finding the next question that should be asked based on
+a user's response to the current question.
+
 ## #5
 
 In this commit, we introduce a comprehensive work flow for survey management, include commands to

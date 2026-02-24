@@ -146,7 +146,7 @@ export class SurveyViewModel {
     const questionViewsByLabel: Map<string, SurveyQuestionViewModel> =
       new Map();
 
-    survey.questionLabels.forEach((ql) => {
+    survey.topLevelQuestionLabels.forEach((ql) => {
       const surveyQuestion = survey.questionBank.get(ql) as SurveyQuestion;
 
       const questionView: SurveyQuestionViewModel =
