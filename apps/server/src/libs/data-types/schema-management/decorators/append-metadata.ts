@@ -5,6 +5,7 @@ export type SimpleSchemaPropertyMetadata = {
   type: string;
   isOptional: boolean;
   isArray: boolean;
+  mustBeUnique: boolean;
   label: string;
   description: string;
 };

@@ -7,7 +7,19 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "Jest test Server",
+      "name": "Node debug server locally",
+      "cwd": "${workspaceFolder}/apps/server",
+      "runtimeExecutable": "yarn",
+      "runtimeArgs": ["run", "start:debug"],
+      "autoAttachChildProcesses": true,
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Jest test server",
       "cwd": "${workspaceFolder}/apps/server",
       "runtimeExecutable": "yarn",
       "runtimeArgs": [

@@ -1,13 +1,11 @@
 import {
-  Entity,
+  AggregateRoot,
   InvariantValidationError,
-  isNonEmptyString,
   NonEmptyString,
-  TrueImpactBadUserInputError,
   TrueImpactDataExample,
   TrueImpactError,
   UpdateMethod,
-} from '../../libs';
+} from '../../libs/data-types';
 import { SURVEY_AGGREGATE_TYPE } from './constants';
 import {
   SurveyQuestion,
@@ -20,6 +18,7 @@ export class SurveyPersistenceDto {
   name: string;
   questions: Record<string, SurveyQuestionPersistenceDto>;
   questionLabels: string[];
+  revision: number;
 }
 
 // TODO We need to track schema versions
@@ -33,21 +32,21 @@ export class SurveyPersistenceDto {
     name: 'test survey',
     questions: {},
     questionLabels: [],
+    revision: 12,
     // firstQuestionLabel:
   },
 })
-export class Survey extends Entity {
+export class Survey extends AggregateRoot<SurveyPersistenceDto> {
   /**
    * This is useful in case we ever want to iterate through a global collection of
    * entities and build instances.
    */
-  readonly type = SURVEY_AGGREGATE_TYPE;
+  static readonly type = SURVEY_AGGREGATE_TYPE;
 
   @NonEmptyString({
     label: 'ID',
     description: 'Unique identifier for this survey',
-    isArray: false,
-    isOptional: false,
+    mustBeUnique: true,
   })
   id: string;
 
@@ -56,13 +55,20 @@ export class Survey extends Entity {
   isPublished: boolean;
 
   // TODO support translations?
+  // @Unique
   @NonEmptyString({
     label: 'Name',
     description: 'the name of this survey to display in lists',
-    isArray: false,
-    isOptional: false,
+    mustBeUnique: true,
   })
   name: string;
+
+  // @NonNegativeInteger({
+  //   label: 'revision',
+  //   description:
+  //     'an increasing sequence number that reflects the current version of this survey',
+  // })
+  revision: number;
 
   /**
    * We may want to store the questions and follow-up questions directly in the graph.
@@ -82,16 +88,23 @@ export class Survey extends Entity {
     name,
     questions,
     questionLabels,
+    revision,
   }: {
     id: string;
     isPublished: boolean;
     name: string;
+    revision?: number;
     questions?: Record<string, SurveyQuestion>;
     questionLabels?: string[];
   }) {
     super();
 
-    this.id = isNonEmptyString(id) ? id : 'GENERATE_A_NEW_ID';
+    // Why isn't this a type guard?
+    if (Number.isInteger(revision)) {
+      this.revision = revision as number;
+    }
+
+    this.id = id;
 
     this.isPublished = typeof isPublished === 'boolean' ? isPublished : false;
 
@@ -107,16 +120,6 @@ export class Survey extends Entity {
   }
 
   getId(): string {
-    /**
-     * This shouldn't happen, but we want to be safe.
-     * The problem is that an initial instance doesn't have an ID until it is persisted to the database
-     * unless we introduce an explicit ID generation service, which complicates the work flow.
-     */
-    if (this.id === 'GENERATE_A_NEW_ID') {
-      // This ensures attempts to persist will fail without any need for type checking upstream
-      return '';
-    }
-
     return this.id;
   }
 
@@ -149,6 +152,7 @@ export class Survey extends Entity {
         {},
       ),
       questionLabels: this.questionLabels,
+      revision: this.revision,
     };
 
     return result;
@@ -183,18 +187,6 @@ export class Survey extends Entity {
     return this.get(followUpQuestionLabel);
   }
 
-  setInitialId(generatedId: string): Survey | TrueImpactError {
-    if (this.id !== 'GENERATE_A_NEW_ID') {
-      return new TrueImpactError(
-        `Cannot overwrite id: ${this.id} with generated ID: ${generatedId}`,
-      );
-    }
-
-    this.id = generatedId;
-
-    return this;
-  }
-
   validatePublicationStatus(): TrueImpactError[] {
     const allErrors: TrueImpactError[] = [];
 
@@ -208,7 +200,7 @@ export class Survey extends Entity {
     if (this.size() < 1) {
       allErrors.push(
         new TrueImpactError(
-          `A survey must have at least 1 question in order to be published`,
+          `You cannot publish survey [${this.name}] as a survey must have at least one question in order to be published`,
         ),
       );
     }
@@ -265,7 +257,7 @@ export class Survey extends Entity {
     });
 
     if (questionBuildResult instanceof TrueImpactError) {
-      return new TrueImpactBadUserInputError([questionBuildResult]);
+      return questionBuildResult;
     }
 
     this.questionBank.set(questionBuildResult.label, questionBuildResult);
@@ -296,7 +288,10 @@ export class Survey extends Entity {
     const updatedQuestion = targetQuestion.addOption(userRequest);
 
     if (updatedQuestion instanceof TrueImpactError) {
-      return updatedQuestion;
+      return new TrueImpactError(
+        `Failed to add option [${userRequest.optionLabel}] to survey[${this.name}].`,
+        [updatedQuestion],
+      );
     }
 
     this.questionBank.set(questionLabel, updatedQuestion);
@@ -348,6 +343,12 @@ export class Survey extends Entity {
     optionLabel: string;
     followUpQuestion: { label: string; prompt: string };
   }): this | TrueImpactError {
+    if (this.questionBank.has(followUpQuestion.label)) {
+      return new TrueImpactError(
+        `You cannot add a follow-up question to option [${optionLabel}] for question [${questionLabel}] in survey [${this.name}] as there is already a question with the label [${followUpQuestion.label}]`,
+      );
+    }
+
     this.questionBank.set(
       followUpQuestion.label,
       SurveyQuestion.buildEmpty(followUpQuestion) as SurveyQuestion,
@@ -363,7 +364,10 @@ export class Survey extends Entity {
       );
 
     if (updatedQuestion instanceof TrueImpactError) {
-      return updatedQuestion;
+      return new TrueImpactError(
+        `You cannot add follow-up question [${questionLabel}] to survey [${this.name}]`,
+        [updatedQuestion],
+      );
     }
 
     this.questionBank.set(questionLabel, updatedQuestion);
@@ -371,6 +375,7 @@ export class Survey extends Entity {
     return this;
   }
 
+  // TODO move this to a `SurveyAnalyzer`
   @UpdateMethod()
   addFlagToQuestionOption({
     questionLabel,
@@ -427,7 +432,7 @@ export class Survey extends Entity {
   @UpdateMethod()
   publish(): this | TrueImpactError {
     if (this.isPublished) {
-      return new TrueImpactError(
+      new TrueImpactError(
         `You cannot publish survey [${this.name}], as it is already published`,
       );
     }
@@ -448,9 +453,12 @@ export class Survey extends Entity {
       isPublished: false,
       name,
       questions: {},
+      revision: 0,
     });
 
-    return instance.validateInvariants();
+    const result = instance.validateInvariants();
+
+    return result;
   }
 
   static fromPersistenceDto({
@@ -459,9 +467,11 @@ export class Survey extends Entity {
     name,
     questions,
     questionLabels,
+    revision,
   }: SurveyPersistenceDto): Survey | TrueImpactError {
-    return new Survey({
+    const survey = new Survey({
       id,
+      revision,
       isPublished,
       name,
       questionLabels,
@@ -474,5 +484,7 @@ export class Survey extends Entity {
         {},
       ),
     });
+
+    return survey.validateInvariants();
   }
 }

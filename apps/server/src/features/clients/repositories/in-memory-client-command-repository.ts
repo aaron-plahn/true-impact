@@ -1,4 +1,4 @@
-import { TrueImpactError } from '../../../libs';
+import { TrueImpactError } from '../../../libs/data-types';
 import { Client } from '../client.aggregate-root';
 import { IClientCommandRepository } from './client-command-repository.interface';
 
@@ -29,11 +29,7 @@ export class InMemoryClientCommandRepository implements IClientCommandRepository
       );
     }
 
-    const idSetResult = instance.setInitialId(id);
-
-    if (idSetResult instanceof TrueImpactError) {
-      return idSetResult;
-    }
+    instance.id = id;
 
     this.entititesById.set(id, instance);
 

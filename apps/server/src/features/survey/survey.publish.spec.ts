@@ -1,5 +1,5 @@
-import { buildTestInstance, TrueImpactError } from '../../libs';
-import { Survey, SurveyPersistenceDto } from './survey.aggregate-root';
+import { TrueImpactError } from '../../libs/data-types';
+import { Survey } from './survey.aggregate-root';
 
 const emptySurvey = Survey.buildEmpty({
   name: 'test survey',
@@ -94,7 +94,7 @@ describe(`Survey.publish`, () => {
 
           // Do we want this?
           //   expect(message).toContain(emptySurvey.name);
-          expect(message).toContain('at least 1 question');
+          expect(message).toContain('at least one question');
           expect(message).toContain('to be published');
         });
       });
