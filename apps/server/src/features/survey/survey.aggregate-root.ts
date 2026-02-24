@@ -2,6 +2,7 @@ import {
   AggregateRoot,
   InvariantValidationError,
   NonEmptyString,
+  TrueImpactBadUserInputError,
   TrueImpactDataExample,
   TrueImpactError,
   UpdateMethod,
