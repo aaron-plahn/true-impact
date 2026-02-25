@@ -82,6 +82,7 @@ describe(`Survey.addOptionToQuestion`, () => {
           >(Survey, {
             questions: {
               [questionLabel]: {
+                prompt: 'What do you think?',
                 options: {
                   [optionLabel]: {
                     text: existingOptionText,

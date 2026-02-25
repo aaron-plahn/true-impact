@@ -17,6 +17,7 @@ const testSurvey = buildTestInstance<SurveyPersistenceDto>(Survey, {
   topLevelQuestionLabels: ['1', '3'],
   questions: {
     '1': {
+      prompt: 'Do you like this survey',
       options: {
         a: {
           text: 'yes',
@@ -28,6 +29,7 @@ const testSurvey = buildTestInstance<SurveyPersistenceDto>(Survey, {
       },
     },
     '2': {
+      prompt: 'Could you possibly change your opinion?',
       options: {
         a: {
           text: 'yes',
@@ -41,6 +43,7 @@ const testSurvey = buildTestInstance<SurveyPersistenceDto>(Survey, {
       },
     },
     '3': {
+      prompt: 'Do you sleep on the job?',
       options: {
         a: {
           text: 'often',
@@ -53,10 +56,12 @@ const testSurvey = buildTestInstance<SurveyPersistenceDto>(Survey, {
   },
 }) as Survey;
 
+const testSurveyDto = testSurvey.toPersistenceDto();
+
 const completedSurvey = buildTestInstance<SurveyResponseRecordPersistenceDto>(
   SurveyResponseRecord,
   {
-    survey: testSurvey.toPersistenceDto(),
+    survey: testSurveyDto,
     responses: [
       {
         questionLabel: '1',

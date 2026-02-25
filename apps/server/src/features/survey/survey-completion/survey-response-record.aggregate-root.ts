@@ -1,8 +1,11 @@
 import {
   AggregateRoot,
+  BooleanDataType,
   buildTestInstance,
   Entity,
   InvariantValidationError,
+  NonEmptyString,
+  NonNegativeInteger,
   TrueImpactBadUserInputError,
   TrueImpactDataExample,
   TrueImpactError,
@@ -20,6 +23,10 @@ import { SurveyParticipantCompositeIdentifier } from './survey-participant.compo
 export class SurveyResponseCompositeIdentifier {
   readonly type = SURVEY_RESPONSE_AGGREAGTE_TYPE;
 
+  @NonEmptyString({
+    label: 'ID',
+    description: `unique system identifier for this survey attempt`,
+  })
   id: string;
 }
 
@@ -116,8 +123,17 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
   static readonly type = SURVEY_RESPONSE_AGGREAGTE_TYPE;
 
   // This is required in the persistence DTO, but optional here because it is generated upon creation in the database
+  @NonEmptyString({
+    label: 'ID',
+    description: 'unique system identifier for a survey attempt',
+  })
   id?: string;
 
+  @NonNegativeInteger({
+    label: 'revision number',
+    description:
+      'a version number that tracks the changes to this survey attempt',
+  })
   revision: number;
 
   /**
@@ -136,10 +152,19 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
    */
   responses: SurveyQuestionResponse[];
 
+  @BooleanDataType({
+    label: 'has been abandoned',
+    description: 'has this survey been abandoned?',
+  })
   hasBeenAbandoned: boolean;
 
+  // TODO union type
   nextQuestionLabel: string | DONE;
 
+  @BooleanDataType({
+    label: 'has been submitted',
+    description: 'has this survey been submitted?',
+  })
   hasBeenSubmitted = false;
 
   constructor({

@@ -2,6 +2,7 @@ import {
   AggregateRoot,
   InvariantValidationError,
   NonEmptyString,
+  NonNegativeInteger,
   TrueImpactBadUserInputError,
   TrueImpactDataExample,
   TrueImpactError,
@@ -57,8 +58,6 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
   // TODO We need a draft \ publication \ versioning work-flow
   isPublished: boolean;
 
-  // TODO support translations?
-  // @Unique
   @NonEmptyString({
     label: 'Name',
     description: 'the name of this survey to display in lists',
@@ -66,11 +65,11 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
   })
   name: string;
 
-  // @NonNegativeInteger({
-  //   label: 'revision',
-  //   description:
-  //     'an increasing sequence number that reflects the current version of this survey',
-  // })
+  @NonNegativeInteger({
+    label: 'revision',
+    description:
+      'an increasing sequence number that reflects the current version of this survey',
+  })
   revision: number;
 
   /**

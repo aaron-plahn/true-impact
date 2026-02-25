@@ -3,7 +3,9 @@ export type TypeDecoratorOptions = {
 
   description: string;
 
-  isOptional: boolean;
+  isOptional?: boolean;
 
-  isArray: boolean;
+  isArray?: boolean;
+
+  mustBeUnique?: boolean;
 };

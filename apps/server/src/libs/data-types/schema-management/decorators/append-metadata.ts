@@ -1,5 +1,6 @@
 const SCHEMA_PROPERTY_METADATA_KEY = '__SCHEMA_PROPERTY_METADATA_KEY__';
 import { Ctor, DataKeys } from '../../utility-types';
+import { TypeDecoratorOptions } from './type-decorator-options';
 
 export type SimpleSchemaPropertyMetadata = {
   type: string;
@@ -45,8 +46,15 @@ export const getDataSchemaFromClassCtor = <T>(
 export const appendMetadata = (
   target: object,
   propertyKey: string | symbol,
-  propertyMetadata: SimpleSchemaPropertyMetadata,
+  userOptions: TypeDecoratorOptions & { type: string },
 ) => {
+  const propertyMetadata: SimpleSchemaPropertyMetadata = {
+    ...userOptions,
+    isArray: userOptions.isArray || false,
+    isOptional: userOptions.isOptional || false,
+    mustBeUnique: userOptions.mustBeUnique || false,
+  };
+
   const existingMeta = getDataSchemaFromPrototype(target) || {
     properties: {},
   };

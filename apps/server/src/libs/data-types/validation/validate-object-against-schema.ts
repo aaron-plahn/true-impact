@@ -1,10 +1,19 @@
-import { TrueImpactError } from '../error-handling';
-import { NON_EMPTY_STRING } from '../schema-management';
+import { TrueImpactError, TrueImpactRuntimeException } from '../error-handling';
+import {
+  BOOLEAN,
+  NON_EMPTY_STRING,
+  NON_NEGATIVE_INTEGER,
+} from '../schema-management';
 import {
   DataSchema,
   SimpleSchemaPropertyMetadata,
 } from '../schema-management/decorators/append-metadata';
-import { isNonEmptyString } from './predicates';
+import {
+  isBoolean,
+  isInteger,
+  isNegativeNumber,
+  isNonEmptyString,
+} from './predicates';
 
 export const validateObjectAgainstSchema = <T = object>(
   o: T,
@@ -18,11 +27,13 @@ export const validateObjectAgainstSchema = <T = object>(
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const value = o[k];
 
-      if (propertySchema.type === NON_EMPTY_STRING) {
+      if (propertySchema.isOptional) {
         if (value === null || typeof value === 'undefined') {
           return acc;
         }
+      }
 
+      if (propertySchema.type === NON_EMPTY_STRING) {
         if (!isNonEmptyString(value)) {
           acc.push(
             new TrueImpactError(
@@ -30,9 +41,40 @@ export const validateObjectAgainstSchema = <T = object>(
             ),
           );
         }
+
+        return acc;
       }
 
-      return acc;
+      if (propertySchema.type === NON_NEGATIVE_INTEGER) {
+        if (isNegativeNumber(value) || !isInteger(value)) {
+          acc.push(
+            // TODO inject error factory
+            new TrueImpactError(
+              `Invalid value for property [${k}]. Expected non-negative integer. Received: ${value}`,
+            ),
+          );
+        }
+
+        return acc;
+      }
+
+      if (propertySchema.type === BOOLEAN) {
+        if (!isBoolean(value)) {
+          acc.push(
+            new TrueImpactError(
+              `Invalid value for property [${k}]. Expected non-negative integer. Received: ${value}`,
+            ),
+          );
+        }
+
+        return acc;
+      }
+
+      throw new TrueImpactRuntimeException([
+        new TrueImpactError(
+          `Failed to validate property of unknown type: ${propertySchema.type}`,
+        ),
+      ]);
     },
     [],
   );

@@ -1,16 +1,19 @@
 import { appendMetadata } from './append-metadata';
 import { TypeDecoratorOptions } from './type-decorator-options';
 
-// TODO Do we want an enum?
-export const NON_EMPTY_STRING = 'NON_EMPTY_STRING';
+export const BOOLEAN = 'BOOLEAN';
 
-export function NonEmptyString(
+/**
+ * We call this decorator factory `BooleanDataType` because `Boolean` is already
+ * taken (wrapper class for `boolean` primitive type).
+ */
+export function BooleanDataType(
   userOptions: TypeDecoratorOptions,
 ): PropertyDecorator {
   return (target: object, propertyKey: string | symbol) => {
     appendMetadata(target, propertyKey, {
       ...userOptions,
-      type: NON_EMPTY_STRING,
+      type: BOOLEAN,
     });
   };
 }
