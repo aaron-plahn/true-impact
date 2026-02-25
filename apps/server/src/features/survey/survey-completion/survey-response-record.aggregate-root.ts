@@ -3,6 +3,7 @@ import {
   AggregateRoot,
   buildTestInstance,
   Entity,
+  InvariantValidationError,
   TrueImpactDataExample,
   TrueImpactError,
   UpdateMethod,
@@ -16,14 +17,58 @@ import {
 } from '../survey-management/survey.aggregate-root';
 import { SurveyParticipantCompositeIdentifier } from './survey-participant.composite-identifier';
 
-// this is for clarity in local `Map`s \ `Record`s
-type QuestionLabel = string;
-type OptionLabel = string;
-
 export class SurveyResponseCompositeIdentifier {
   readonly type = SURVEY_RESPONSE_AGGREAGTE_TYPE;
 
   id: string;
+}
+
+class SurveyQuestionResponse extends Entity {
+  questionLabel: string;
+  optionLabel: string;
+
+  constructor({
+    questionLabel,
+    optionLabel,
+  }: {
+    questionLabel: string;
+    optionLabel: string;
+  }) {
+    super();
+
+    this.questionLabel = questionLabel;
+
+    this.optionLabel = optionLabel;
+  }
+
+  validateComplexInvariants(): TrueImpactError[] {
+    return [];
+  }
+
+  getId(): string {
+    return `${this.questionLabel}:${this.optionLabel}`;
+  }
+
+  getName(): string {
+    return this.getId();
+  }
+
+  toPersistenceDto(): unknown {
+    throw new Error('Method not implemented.');
+  }
+
+  static fromPersistenceDto({
+    questionLabel,
+    optionLabel,
+  }: {
+    questionLabel: string;
+    optionLabel: string;
+  }): SurveyQuestionResponse | TrueImpactError {
+    return new SurveyQuestionResponse({
+      questionLabel,
+      optionLabel,
+    });
+  }
 }
 
 export class SurveyResponseRecordPersistenceDto {
@@ -43,7 +88,7 @@ export class SurveyResponseRecordPersistenceDto {
   // TODO Should we attach the survey completion records to the participant (in this case, the Client) instead? This makes it easy to inherit permissions.
   participantCompositeIdentifier?: SurveyParticipantCompositeIdentifier;
 
-  responses: Record<QuestionLabel, OptionLabel>;
+  responses: SurveyQuestionResponse[];
 }
 
 @TrueImpactDataExample<SurveyResponseRecordPersistenceDto>({
@@ -57,7 +102,7 @@ export class SurveyResponseRecordPersistenceDto {
       id: '55',
     },
     // empty by default
-    responses: {},
+    responses: [],
   },
 })
 export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPersistenceDto> {
@@ -77,12 +122,15 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
   // Surveys may be anonymous in the future
   participant?: SurveyParticipantCompositeIdentifier;
 
-  // questionLabel -> response optionLabel
-  responses: Map<string, string> = new Map();
+  /**
+   * We store these in an array to also track the order
+   * in which questions have been answered for easier validation.
+   */
+  responses: SurveyQuestionResponse[];
 
   hasBeenAbandoned: boolean;
 
-  nextQuestionLabel: string;
+  nextQuestionLabel: string | DONE;
 
   constructor({
     id,
@@ -95,7 +143,8 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
     revision: number;
     hasBeenAbandoned: boolean;
     survey: Survey;
-    responses: Record<string, string>;
+    // FROM DTO?
+    responses: SurveyQuestionResponse[];
   }) {
     super();
 
@@ -105,14 +154,14 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
 
     this.revision = revision;
 
-    this.responses = new Map(Object.entries(responses));
+    this.responses = responses;
 
     this.hasBeenAbandoned =
       typeof hasBeenAbandoned === 'boolean' ? hasBeenAbandoned : false;
 
-    // There is an invariant validation rule that guarentees this will exist
-    if (survey.size() > 0) {
-      this.nextQuestionLabel = survey.topLevelQuestionLabels[0];
+    // do we want to set the `nextQuestionLabel` to `DONE` otherwise?
+    if (responses.length < survey.size()) {
+      this.nextQuestionLabel = survey.topLevelQuestionLabels[responses.length];
     }
   }
 
@@ -135,19 +184,29 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
       );
     }
 
-    if (this.responses.has(questionLabel)) {
+    if (this.hasResponseFor(questionLabel)) {
+      const optionLabelForExistingQuestionAnswer = this.responses.find(
+        (r) => r.questionLabel === questionLabel,
+      )?.optionLabel as string;
+
       return new TrueImpactError(
-        `You cannot answer question [${questionLabel}] in survey [${this.survey.name}] with option [${chosenOptionLabel}], as it already has been answered with option [${this.responses.get(questionLabel)}]`,
+        `You cannot answer question [${questionLabel}] in survey [${this.survey.name}] with option [${chosenOptionLabel}], as it already has been answered with option [${optionLabelForExistingQuestionAnswer}]`,
       );
     }
 
     if (questionLabel !== this.nextQuestionLabel) {
       return new TrueImpactError(
-        `You cannot answer question [${questionLabel}] in survey [${this.survey.name}], as it is not the next question ([${this.nextQuestionLabel}])`,
+        `You cannot answer question [${questionLabel}] in survey [${this.survey.name}], as it is not the next question ([${this.nextQuestionLabel as string}])`,
       );
     }
 
-    this.responses.set(questionLabel, chosenOptionLabel);
+    this.responses.push(
+      // can't this just be a value object?
+      SurveyQuestionResponse.fromPersistenceDto({
+        questionLabel,
+        optionLabel: chosenOptionLabel,
+      }) as SurveyQuestionResponse,
+    );
 
     if (!this.isComplete()) {
       // should we allow this.nextQuestionLabel to be `DONE`
@@ -155,6 +214,8 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
         questionLabel,
         chosenOptionLabel,
       ) as string;
+    } else {
+      this.nextQuestionLabel = DONE;
     }
 
     return this;
@@ -178,6 +239,10 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
     return this;
   }
 
+  hasResponseFor(questionLabel: string) {
+    return this.responses.some((r) => r.questionLabel === questionLabel);
+  }
+
   /**
    * A survey completion record should
    * - carry responses in the correct order
@@ -199,18 +264,13 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
     return allErrors;
   }
 
-  // TODO remove this
-  setInitialId(_id: string): Entity | TrueImpactError {
-    throw new Error('Method not implemented.');
-  }
-
   getName(): string {
     // append completion date?
     return this.survey.getName();
   }
 
   progress(): { completed: number; count: number } {
-    const completed = this.responses.size;
+    const completed = this.responses.length;
 
     return {
       completed,
@@ -239,7 +299,7 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
       survey: this.survey.toPersistenceDto(),
       hasBeenAbandoned: this.hasBeenAbandoned,
       participantCompositeIdentifier: this.participant,
-      responses: Object.fromEntries(this.responses.entries()),
+      responses: this.responses,
     };
   }
 
@@ -258,12 +318,27 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
       return surveyBuildResult;
     }
 
+    const questionResponses = responses.map((r) =>
+      SurveyQuestionResponse.fromPersistenceDto(r),
+    );
+
+    const questionResponseErrors = questionResponses.filter(
+      (qr): qr is TrueImpactError => qr instanceof TrueImpactError,
+    );
+
+    if (questionResponseErrors.length > 0) {
+      return new InvariantValidationError(
+        SurveyResponseRecord,
+        questionResponseErrors,
+      );
+    }
+
     return new SurveyResponseRecord({
       id,
       revision: revision,
       hasBeenAbandoned,
       survey: surveyBuildResult,
-      responses,
+      responses: questionResponses as SurveyQuestionResponse[],
     });
   }
 

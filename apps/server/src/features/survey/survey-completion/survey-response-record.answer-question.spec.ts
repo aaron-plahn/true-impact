@@ -1,4 +1,5 @@
 import { buildTestInstance, TrueImpactError } from '../../../libs/data-types';
+import { DONE } from '../constants';
 import {
   Survey,
   SurveyPersistenceDto,
@@ -83,40 +84,88 @@ const survey = buildTestInstance<SurveyPersistenceDto>(Survey, {
 const surveyResponseRecord =
   buildTestInstance<SurveyResponseRecordPersistenceDto>(SurveyResponseRecord, {
     survey: survey.toPersistenceDto(),
-    // TODO The factory must calculate the next question. As such, it's best to validate the order as the instance is built.
-    responses: {
-      '1': 'd', // requires 2 to be asked
-    },
+    responses: [
+      {
+        questionLabel: '1',
+        optionLabel: 'd',
+      },
+    ],
   }) as SurveyResponseRecord;
 
 describe(`SurveyResponseRecord.answerQuestion`, () => {
   describe(`when the target question exists`, () => {
     describe(`when the target option exists`, () => {
       describe(`when there is not yet an answer for this question`, () => {
-        it(`should update the responses`, () => {
-          const result = surveyResponseRecord.answerQuestion(
-            targetQuestionLabel,
-            targetOptionLabel,
-          );
+        const emptySurvey =
+          buildTestInstance<SurveyResponseRecordPersistenceDto>(
+            SurveyResponseRecord,
+            {
+              survey: survey.toPersistenceDto(),
+              responses: [],
+            },
+          ) as SurveyResponseRecord;
 
-          expect(result).not.toBeInstanceOf(TrueImpactError);
+        describe(`when answering the first question in a survey`, () => {
+          it(`should update the responses`, () => {
+            const result = emptySurvey.answerQuestion('1', 'a');
 
-          const updatedRecord = result as SurveyResponseRecord;
+            expect(result).not.toBeInstanceOf(TrueImpactError);
 
-          expect(updatedRecord.progress()).toEqual({
-            completed: 2,
-            count: 3,
+            const updatedSurveyRecord = result as SurveyResponseRecord;
+
+            expect(updatedSurveyRecord.isComplete()).toBe(false);
+            expect(updatedSurveyRecord.nextQuestionLabel).toBe('2');
+            expect(updatedSurveyRecord.progress()).toEqual({
+              completed: 1,
+              count: 3,
+            });
           });
+        });
 
-          expect(updatedRecord.isComplete()).toBe(false);
-
-          expect(
-            // TODO updatedRecord.getNextQuestionLabel()
-            updatedRecord.survey.getNextQuestionLabel(
+        describe(`when answering the second question in a survey`, () => {
+          it(`should update the responses`, () => {
+            const result = surveyResponseRecord.answerQuestion(
               targetQuestionLabel,
               targetOptionLabel,
-            ),
-          ).toBe('3');
+            );
+
+            expect(result).not.toBeInstanceOf(TrueImpactError);
+
+            const updatedRecord = result as SurveyResponseRecord;
+
+            expect(updatedRecord.progress()).toEqual({
+              completed: 2,
+              count: 3,
+            });
+
+            expect(updatedRecord.isComplete()).toBe(false);
+
+            expect(updatedRecord.getNextQuestionLabel()).toBe('3');
+          });
+        });
+
+        describe(`when answering the last question in a survey`, () => {
+          it(`should update the responses`, () => {
+            const preliminaryResult = surveyResponseRecord.answerQuestion(
+              '2',
+              'c',
+            ) as SurveyResponseRecord;
+
+            const result = preliminaryResult.answerQuestion('3', 'a');
+
+            expect(result).not.toBeInstanceOf(TrueImpactError);
+
+            const updatedSurveyRecord = result as SurveyResponseRecord;
+
+            expect(updatedSurveyRecord.isComplete()).toBe(true);
+
+            expect(updatedSurveyRecord.nextQuestionLabel).toBe(DONE);
+
+            expect(updatedSurveyRecord.progress()).toEqual({
+              completed: 3,
+              count: 3,
+            });
+          });
         });
       });
 
