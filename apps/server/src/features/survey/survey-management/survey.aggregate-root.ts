@@ -19,7 +19,7 @@ export class SurveyPersistenceDto {
   id: string;
   isPublished: boolean;
   name: string;
-  questions: Record<string, SurveyQuestionPersistenceDto>;
+  questions: Record<string, Omit<SurveyQuestionPersistenceDto, 'label'>>;
   topLevelQuestionLabels: string[];
   revision: number;
 }
@@ -481,6 +481,30 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
     );
   }
 
+  getNextQuestion(
+    questionLabel: string,
+    optionLabel: string,
+  ): SurveyQuestion | null | TrueImpactError | DONE {
+    const nextQuestionLabel = this.getNextQuestionLabel(
+      questionLabel,
+      optionLabel,
+    );
+
+    if (nextQuestionLabel instanceof TrueImpactError) {
+      return nextQuestionLabel;
+    }
+
+    if (!nextQuestionLabel) {
+      return null;
+    }
+
+    if (nextQuestionLabel === DONE) {
+      return nextQuestionLabel;
+    }
+
+    return this.questionBank.get(nextQuestionLabel) || null;
+  }
+
   @UpdateMethod()
   addOptionToQuestion(userRequest: {
     questionLabel: string;
@@ -683,8 +707,12 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
     topLevelQuestionLabels: questionLabels,
     revision,
   }: SurveyPersistenceDto): Survey | TrueImpactError {
-    const allQuestions = Object.values(questions).map((questionDto) =>
-      SurveyQuestion.fromPersistenceDto(questionDto),
+    const allQuestions = Object.entries(questions).map(
+      ([label, questionDtoWithoutLabel]) =>
+        SurveyQuestion.fromPersistenceDto({
+          ...questionDtoWithoutLabel,
+          label,
+        }),
     );
 
     const questionBuildErrors = allQuestions.filter(

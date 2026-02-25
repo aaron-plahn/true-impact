@@ -15,7 +15,7 @@ type SurveyLabel = string;
 export class SurveyQuestionPersistenceDto {
   label: string;
   prompt: string;
-  options: Record<SurveyLabel, SurveyOptionPersistenceDto>;
+  options: Record<SurveyLabel, Omit<SurveyOptionPersistenceDto, 'label'>>;
 }
 
 @TrueImpactDataExample<SurveyQuestionPersistenceDto>({
@@ -225,7 +225,10 @@ export class SurveyQuestion extends Entity {
   }: SurveyQuestionPersistenceDto): SurveyQuestion | TrueImpactError {
     const optionsBuildResult = Object.entries(options || {}).reduce(
       (acc: Record<string, SurveyOption>, [label, option]) => {
-        const optionBuildResult = SurveyOption.fromPersistenceDto(option);
+        const optionBuildResult = SurveyOption.fromPersistenceDto({
+          ...option,
+          label,
+        });
 
         acc[label] = optionBuildResult;
 

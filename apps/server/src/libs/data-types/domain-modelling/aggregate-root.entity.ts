@@ -1,7 +1,12 @@
 import { Entity } from './entity';
 
+interface BasePersistenceDto {
+  id: string; // required
+  revision: number;
+}
+
 export abstract class AggregateRoot<
-  TPersistenceDto,
+  TPersistenceDto extends BasePersistenceDto = BasePersistenceDto,
 > extends Entity<TPersistenceDto> {
   abstract id?: string;
 

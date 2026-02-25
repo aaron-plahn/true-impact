@@ -9,19 +9,43 @@ import {
 } from './survey-response-record.aggregate-root';
 
 const surveyWithOneQuestion = buildTestInstance<SurveyPersistenceDto>(Survey, {
-  topLevelQuestionLabels: ['1'],
+  isPublished: true,
+  // This is a bit painful- can we use a different format?
+  topLevelQuestionLabels: ['1', '3'],
+  // TODO ensure the prompts are unique amongst all questions in a single survey
   questions: {
     '1': {
-      label: '1',
       prompt: 'What do you think of my survey?',
       options: {
         a: {
-          label: 'a',
           text: 'it is good',
         },
         b: {
-          label: 'b',
           text: 'it is bad',
+          nextQuestionLabel: '2',
+        },
+      },
+    },
+    '2': {
+      prompt: 'Why do you think it is bad?',
+      options: {
+        a: {
+          text: 'because it is',
+        },
+        b: {
+          text: 'because I woke up on the wrong side of the bed',
+        },
+      },
+    },
+    '3': {
+      prompt: 'Will you have a nice day?',
+      options: {
+        // TODO Ensure the text is unique amongst all options for a single question
+        a: {
+          text: 'yes',
+        },
+        b: {
+          text: 'no',
         },
       },
     },
@@ -34,22 +58,45 @@ const emptyResponseRecordWithOneQuestion =
     survey: surveyWithOneQuestion.toPersistenceDto(),
   }) as SurveyResponseRecord;
 
-const completedSurvey = emptyResponseRecordWithOneQuestion.answerQuestion(
-  '1',
-  'a',
-) as SurveyResponseRecord;
+const completedSurveyWithEveryOptionalQuestionCompleted = [
+  ['1', 'b'],
+  ['2', 'b'],
+  ['3', 'a'],
+].reduce((acc, [questionLabel, optionLabel]) => {
+  return acc.answerQuestion(questionLabel, optionLabel) as SurveyResponseRecord;
+}, emptyResponseRecordWithOneQuestion);
+
+const completedSurveyWithEmptyOptionalQuestions = [
+  ['1', 'a'],
+  ['3', 'b'],
+].reduce((acc, [questionLabel, optionLabel]) => {
+  return acc.answerQuestion(questionLabel, optionLabel) as SurveyResponseRecord;
+}, emptyResponseRecordWithOneQuestion);
+
+const assertSuccessfulSubmission = (result: unknown) => {
+  expect(result).not.toBeInstanceOf(TrueImpactError);
+
+  const updatedRecord = result as SurveyResponseRecord;
+
+  expect(updatedRecord.hasBeenSubmitted).toBe(true);
+};
 
 describe(`SurveyResponseRecord.submit`, () => {
   describe(`when the survey has not yet been submitted`, () => {
     describe(`when the survey has responses for all questions`, () => {
       it(`should update the survey's status to submitted`, () => {
-        const result = completedSurvey.submit();
+        const result =
+          completedSurveyWithEveryOptionalQuestionCompleted.submit();
 
-        expect(result).not.toBeInstanceOf(TrueImpactError);
+        assertSuccessfulSubmission(result);
+      });
+    });
 
-        const updatedRecord = result as SurveyResponseRecord;
+    describe(`when the survey has responses for all required questions, but some questions were not required`, () => {
+      it(`should have a test`, () => {
+        const result = completedSurveyWithEmptyOptionalQuestions.submit();
 
-        expect(updatedRecord.hasBeenSubmitted).toBe(true);
+        assertSuccessfulSubmission(result);
       });
     });
 
@@ -72,7 +119,8 @@ describe(`SurveyResponseRecord.submit`, () => {
 
   describe(`when the survey has already been submitted`, () => {
     it(`should return the expected error message`, () => {
-      const submittedSurvey = completedSurvey.submit() as SurveyResponseRecord;
+      const submittedSurvey =
+        completedSurveyWithEveryOptionalQuestionCompleted.submit() as SurveyResponseRecord;
 
       const result = submittedSurvey.submit();
 
@@ -80,7 +128,9 @@ describe(`SurveyResponseRecord.submit`, () => {
 
       const message = (result as TrueImpactError).toString();
 
-      expect(message).toContain(completedSurvey.survey.name);
+      expect(message).toContain(
+        completedSurveyWithEveryOptionalQuestionCompleted.survey.name,
+      );
       expect(message).toContain('cannot submit');
       expect(message).toContain('has already been submitted');
     });

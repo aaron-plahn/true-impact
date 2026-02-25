@@ -30,6 +30,7 @@ const weightsToAdd = {
   black: 0,
 };
 
+// TODO remove these \ move to analyzer
 describe(`Survey.addCategoryValueForOptionInQuestion`, () => {
   describe(`when the target question exists`, () => {
     describe(`when the target option exists`, () => {

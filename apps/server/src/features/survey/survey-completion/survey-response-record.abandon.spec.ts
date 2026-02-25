@@ -13,49 +13,39 @@ import {
  * 3
  */
 const testSurvey = buildTestInstance<SurveyPersistenceDto>(Survey, {
+  isPublished: true,
   topLevelQuestionLabels: ['1', '3'],
   questions: {
     '1': {
-      // TODO Use keys as labels in factory
-      label: '1',
       options: {
         a: {
-          label: 'a',
           text: 'yes',
         },
         b: {
-          label: 'b',
           text: 'no',
           nextQuestionLabel: '2',
         },
       },
     },
     '2': {
-      label: '2',
       options: {
         a: {
-          label: 'a',
           text: 'yes',
         },
         b: {
-          label: 'b',
           text: 'no',
         },
         c: {
-          label: 'c',
           text: 'maybe',
         },
       },
     },
     '3': {
-      label: '3',
       options: {
         a: {
-          label: 'a',
           text: 'often',
         },
         b: {
-          label: 'b',
           text: 'never',
         },
       },

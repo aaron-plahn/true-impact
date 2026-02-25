@@ -13,6 +13,7 @@ const targetQuestionLabel = '2';
 const targetOptionLabel = 'c';
 
 const survey = buildTestInstance<SurveyPersistenceDto>(Survey, {
+  isPublished: true,
   /**
    * It's awkward that there is overlap between this and the questions.
    * Can we find a more graph-like DTO structure?
@@ -20,60 +21,47 @@ const survey = buildTestInstance<SurveyPersistenceDto>(Survey, {
   topLevelQuestionLabels: '123'.split(''),
   questions: {
     '1': {
-      label: '1',
       prompt: 'How good is my survey?',
       options: {
         a: {
-          label: 'a',
           text: 'good',
         },
         b: {
-          label: 'b',
           text: 'real good',
         },
         c: {
-          label: 'c',
           text: 'great!',
         },
         d: {
-          label: 'd',
           text: 'boo!',
           nextQuestionLabel: '2',
         },
       },
     },
     [targetQuestionLabel]: {
-      label: targetQuestionLabel,
       prompt: 'What is wrong with you?',
       options: {
         a: {
-          label: 'a',
           text: 'I am mean',
         },
         b: {
-          label: 'b',
           text: 'I have high standards',
         },
         [targetOptionLabel]: {
-          label: targetOptionLabel,
           text: 'Your survey is not as good as you think :(',
         },
       },
     },
     '3': {
-      label: '3',
       prompt: 'Will you answer my survey again?',
       options: {
         a: {
-          label: 'a',
           text: 'yes',
         },
         b: {
-          label: 'b',
           text: 'no',
         },
         c: {
-          label: 'c',
           text: 'maybe so',
         },
       },

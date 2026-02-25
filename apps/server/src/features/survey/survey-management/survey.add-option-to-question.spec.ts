@@ -82,11 +82,8 @@ describe(`Survey.addOptionToQuestion`, () => {
           >(Survey, {
             questions: {
               [questionLabel]: {
-                // TODO this is a big gotcha- infer these from the keys!!!!
-                label: questionLabel,
                 options: {
                   [optionLabel]: {
-                    label: optionLabel,
                     text: existingOptionText,
                   },
                 },

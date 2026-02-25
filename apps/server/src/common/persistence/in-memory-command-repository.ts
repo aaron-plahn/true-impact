@@ -9,8 +9,14 @@ import {
 } from '../../libs/data-types';
 import { IBaseCommandRepository } from '../interfaces/persistence';
 
+interface BasePersistenceDto {
+  id: string;
+  revision: number;
+}
+
 export class InMemoryCommandRepository<
-  T extends AggregateRoot<unknown>,
+  TDto extends BasePersistenceDto,
+  T extends AggregateRoot<TDto>,
 > implements IBaseCommandRepository<T> {
   private _nextId = 0;
 
@@ -141,7 +147,7 @@ export class InMemoryCommandRepository<
   update(
     instance: T,
   ): Promise<{ id: string; revision: string; type: string } | TrueImpactError> {
-    const { id, revision: revisonNumber } = instance;
+    const { id, revision: revisonNumber } = instance.toPersistenceDto();
 
     if (!this.entititesById.has(id)) {
       return Promise.resolve(

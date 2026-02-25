@@ -357,23 +357,11 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
     };
   }
 
-  /**
-   * TODO This logic is not quite right. There are optional
-   * questions. We need to do a graph traversal based on
-   * the responses to determine if all required questions
-   * have been completed.
-   */
   isComplete(): boolean {
-    const { completed, count } = this.progress();
-
-    return completed === count;
+    return this.nextQuestionLabel === DONE;
   }
 
   getNextQuestionLabel(): string | DONE {
-    if (this.isComplete()) {
-      return DONE;
-    }
-
     return this.nextQuestionLabel;
   }
 
