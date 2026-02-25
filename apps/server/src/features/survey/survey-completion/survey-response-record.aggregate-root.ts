@@ -1,9 +1,9 @@
-import { NotImplementedException } from '@nestjs/common';
 import {
   AggregateRoot,
   buildTestInstance,
   Entity,
   InvariantValidationError,
+  TrueImpactBadUserInputError,
   TrueImpactDataExample,
   TrueImpactError,
   UpdateMethod,
@@ -42,7 +42,9 @@ class SurveyQuestionResponse extends Entity {
   }
 
   validateComplexInvariants(): TrueImpactError[] {
-    return [];
+    const allErrors: TrueImpactError[] = [];
+
+    return allErrors;
   }
 
   getId(): string {
@@ -80,6 +82,8 @@ export class SurveyResponseRecordPersistenceDto {
 
   hasBeenAbandoned: boolean;
 
+  hasBeenSubmitted: boolean;
+
   /**
    * In the future, participants may be an `Employee`, `CommunityEmployee`, etc. We don't want
    * to assume that surveys can only be completed by a client.
@@ -91,12 +95,15 @@ export class SurveyResponseRecordPersistenceDto {
   responses: SurveyQuestionResponse[];
 }
 
+const testSurveyExample = buildTestInstance(Survey).toPersistenceDto();
+
 @TrueImpactDataExample<SurveyResponseRecordPersistenceDto>({
   example: {
     id: '123',
     revision: 5,
-    survey: buildTestInstance(Survey).toPersistenceDto(),
+    survey: testSurveyExample,
     hasBeenAbandoned: false,
+    hasBeenSubmitted: false,
     participantCompositeIdentifier: {
       type: CLIENT_AGGREGATE_TYPE,
       id: '55',
@@ -108,7 +115,8 @@ export class SurveyResponseRecordPersistenceDto {
 export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPersistenceDto> {
   static readonly type = SURVEY_RESPONSE_AGGREAGTE_TYPE;
 
-  id: string;
+  // This is required in the persistence DTO, but optional here because it is generated upon creation in the database
+  id?: string;
 
   revision: number;
 
@@ -132,23 +140,32 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
 
   nextQuestionLabel: string | DONE;
 
+  hasBeenSubmitted = false;
+
   constructor({
     id,
     revision,
     hasBeenAbandoned,
     survey,
     responses,
+    hasBeenSubmitted,
+    participant,
   }: {
-    id: string;
+    id?: string;
     revision: number;
     hasBeenAbandoned: boolean;
     survey: Survey;
+    // surveys may be anonymous
+    participant?: SurveyParticipantCompositeIdentifier;
     // FROM DTO?
     responses: SurveyQuestionResponse[];
+    hasBeenSubmitted?: boolean;
   }) {
     super();
 
-    this.id = id;
+    if (typeof id === 'string') {
+      this.id = id;
+    }
 
     this.survey = survey;
 
@@ -158,6 +175,16 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
 
     this.hasBeenAbandoned =
       typeof hasBeenAbandoned === 'boolean' ? hasBeenAbandoned : false;
+
+    this.hasBeenSubmitted =
+      typeof hasBeenSubmitted === 'boolean' ? hasBeenSubmitted : false;
+
+    if (participant) {
+      this.participant = {
+        type: participant.type,
+        id: participant.id,
+      };
+    }
 
     if (responses.length < survey.size()) {
       if (responses.length > 0) {
@@ -234,7 +261,27 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
 
   @UpdateMethod()
   submit(): SurveyResponseRecord | TrueImpactError {
-    throw new NotImplementedException();
+    if (this.hasBeenAbandoned) {
+      return new TrueImpactError(
+        `You cannot submit survey [${this.survey.name}], as it has been abandoned`,
+      );
+    }
+
+    if (!this.isComplete()) {
+      return new TrueImpactError(
+        `You cannot submit survey [${this.survey.name}], as it has not been fully completed`,
+      );
+    }
+
+    if (this.hasBeenSubmitted) {
+      return new TrueImpactError(
+        `You cannot submit survey [${this.survey.name}], as it has already been submitted`,
+      );
+    }
+
+    this.hasBeenSubmitted = true;
+
+    return this;
   }
 
   @UpdateMethod()
@@ -242,6 +289,12 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
     if (this.hasBeenAbandoned) {
       return new TrueImpactError(
         `You cannot abandon survey [${this.survey.name}], as it has already been abandoned`,
+      );
+    }
+
+    if (this.hasBeenSubmitted) {
+      return new TrueImpactError(
+        `You cannot abandon survey [${this.survey.name}], as it has already been submitted`,
       );
     }
 
@@ -272,11 +325,26 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
       );
     }
 
+    if (!this.survey.isPublished) {
+      allErrors.push(
+        new TrueImpactError(
+          `You cannot respond to survey [${this.survey.name}] as it has not been published`,
+        ),
+      );
+    }
+
+    if (this.hasBeenAbandoned && this.hasBeenSubmitted) {
+      allErrors.push(
+        new TrueImpactError(
+          `Survey [${this.survey.name}] cannot be marked as submitted and abandoned`,
+        ),
+      );
+    }
+
     return allErrors;
   }
 
   getName(): string {
-    // append completion date?
     return this.survey.getName();
   }
 
@@ -289,6 +357,12 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
     };
   }
 
+  /**
+   * TODO This logic is not quite right. There are optional
+   * questions. We need to do a graph traversal based on
+   * the responses to determine if all required questions
+   * have been completed.
+   */
   isComplete(): boolean {
     const { completed, count } = this.progress();
 
@@ -305,10 +379,12 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
 
   toPersistenceDto(): SurveyResponseRecordPersistenceDto {
     return {
+      // @ts-expect-error We want this to be required, except on the first persistence. Is there a way to achieve this?
       id: this.id,
       revision: this.revision,
       survey: this.survey.toPersistenceDto(),
       hasBeenAbandoned: this.hasBeenAbandoned,
+      hasBeenSubmitted: this.hasBeenSubmitted,
       participantCompositeIdentifier: this.participant,
       responses: this.responses,
     };
@@ -318,6 +394,7 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
     id,
     revision,
     hasBeenAbandoned,
+    hasBeenSubmitted,
     survey,
     responses,
   }: SurveyResponseRecordPersistenceDto):
@@ -348,15 +425,42 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
       id,
       revision: revision,
       hasBeenAbandoned,
+      hasBeenSubmitted,
       survey: surveyBuildResult,
       responses: questionResponses as SurveyQuestionResponse[],
     });
   }
 
   static begin(
-    _survey: Survey,
-    _participantId: SurveyParticipantCompositeIdentifier,
-  ): Survey | TrueImpactError {
-    throw new NotImplementedException();
+    survey: Survey,
+    participantCompositeIdentifier?: SurveyParticipantCompositeIdentifier,
+  ): SurveyResponseRecord | TrueImpactError {
+    const allowedParticipantTypes = [CLIENT_AGGREGATE_TYPE];
+
+    if (
+      participantCompositeIdentifier &&
+      !allowedParticipantTypes.includes(participantCompositeIdentifier.type)
+    ) {
+      return new TrueImpactError(
+        `You cannot begin survey [${survey.name}], as you have provided an invalid participant type [${participantCompositeIdentifier.type}]`,
+      );
+    }
+
+    if (!survey.isPublished) {
+      return new TrueImpactBadUserInputError([
+        new TrueImpactError(
+          `You cannot begin survey [${survey.name}], as it has not been published`,
+        ),
+      ]);
+    }
+
+    return new SurveyResponseRecord({
+      survey,
+      responses: [],
+      revision: 0,
+      hasBeenAbandoned: false,
+      hasBeenSubmitted: false,
+      participant: participantCompositeIdentifier,
+    });
   }
 }

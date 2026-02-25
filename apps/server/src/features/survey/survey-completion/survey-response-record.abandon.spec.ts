@@ -13,6 +13,7 @@ import {
  * 3
  */
 const testSurvey = buildTestInstance<SurveyPersistenceDto>(Survey, {
+  topLevelQuestionLabels: ['1', '3'],
   questions: {
     '1': {
       // TODO Use keys as labels in factory
@@ -62,6 +63,27 @@ const testSurvey = buildTestInstance<SurveyPersistenceDto>(Survey, {
   },
 }) as Survey;
 
+const completedSurvey = buildTestInstance<SurveyResponseRecordPersistenceDto>(
+  SurveyResponseRecord,
+  {
+    survey: testSurvey.toPersistenceDto(),
+    responses: [
+      {
+        questionLabel: '1',
+        optionLabel: 'b',
+      },
+      {
+        questionLabel: '2',
+        optionLabel: 'c',
+      },
+      {
+        questionLabel: '3',
+        optionLabel: 'a',
+      },
+    ],
+  },
+) as SurveyResponseRecord;
+
 describe(`SurveyResponseRecord.abandon`, () => {
   describe(`when the survey completion is still in progress`, () => {
     const surveyResponseInProgress =
@@ -70,10 +92,16 @@ describe(`SurveyResponseRecord.abandon`, () => {
         SurveyResponseRecord,
         {
           survey: testSurvey.toPersistenceDto(),
-          responses: {
-            '1': 'b',
-            '2': 'c',
-          },
+          responses: [
+            {
+              questionLabel: '1',
+              optionLabel: 'b',
+            },
+            {
+              questionLabel: '2',
+              optionLabel: 'c',
+            },
+          ],
         },
       ) as SurveyResponseRecord;
 
@@ -85,6 +113,22 @@ describe(`SurveyResponseRecord.abandon`, () => {
       const updatedResponseRecord = result as SurveyResponseRecord;
 
       expect(updatedResponseRecord.hasBeenAbandoned).toEqual(true);
+    });
+  });
+
+  describe(`when this survey attempt has already been submitted`, () => {
+    const submittedSurvey = completedSurvey.submit() as SurveyResponseRecord;
+
+    it(`should return the expected error`, () => {
+      const result = submittedSurvey.abandon();
+
+      expect(result).toBeInstanceOf(TrueImpactError);
+
+      const message = (result as TrueImpactError).toString();
+
+      expect(message).toContain(completedSurvey.survey.name);
+      expect(message).toContain('cannot abandon');
+      expect(message).toContain('has already been submitted');
     });
   });
 
