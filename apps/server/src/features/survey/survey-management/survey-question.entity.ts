@@ -26,7 +26,10 @@ export class SurveyQuestionPersistenceDto {
   },
 })
 export class SurveyQuestion extends Entity {
-  // e.g. 1, 2, 3
+  @NonEmptyString({
+    label: 'label',
+    description: 'user-facing identifier for this question',
+  })
   label: string;
 
   @NonEmptyString({
@@ -167,6 +170,10 @@ export class SurveyQuestion extends Entity {
     return this;
   }
 
+  has(optionLabel: string): boolean {
+    return this.options.has(optionLabel);
+  }
+
   get(optionLabel: string): SurveyOption | null {
     return this.options.get(optionLabel) || null;
   }
@@ -215,7 +222,7 @@ export class SurveyQuestion extends Entity {
     label,
     options,
     prompt,
-  }: SurveyQuestionPersistenceDto): SurveyQuestion {
+  }: SurveyQuestionPersistenceDto): SurveyQuestion | TrueImpactError {
     const optionsBuildResult = Object.entries(options || {}).reduce(
       (acc: Record<string, SurveyOption>, [label, option]) => {
         const optionBuildResult = SurveyOption.fromPersistenceDto(option);
@@ -227,10 +234,12 @@ export class SurveyQuestion extends Entity {
       {},
     );
 
-    return new SurveyQuestion({
+    const result = new SurveyQuestion({
       label,
       prompt,
       options: optionsBuildResult,
     });
+
+    return result.validateInvariants();
   }
 }

@@ -5,6 +5,7 @@ import {
   TrueImpactBadUserInputError,
   TrueImpactDataExample,
   TrueImpactError,
+  TrueImpactRuntimeException,
   UpdateMethod,
 } from '../../../libs/data-types';
 import { DONE, SURVEY_AGGREGATE_TYPE } from '../constants';
@@ -233,9 +234,20 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
    * - A Survey must constitute an acyclic graph via its questions. That is, no `SurveyOption.next` should point to a previous
    * question in the survey.
    * - A published survey's questions must offer at least 2 options each
+   *
+   * TODO Finalize this and add a dedicated unit test
    */
   validateComplexInvariants(): TrueImpactError[] {
-    return [...this.validatePublicationStatus()];
+    const allErrors = [...this.validatePublicationStatus()];
+
+    /**
+     * We need to walk the graph with a depth-first search and confirm that
+     * every question label encountered has a corresponding question in the question bank.
+     * We also need to confirm that the top level questions are indeed top level
+     * questions.
+     */
+
+    return allErrors;
   }
 
   // should this be a bad user input error?
@@ -352,7 +364,17 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
       ]);
     }
 
-    const targetQuestion = this.find((q) => q.label === questionLabel);
+    const targetQuestion = this.find((q) => {
+      if (!q.label) {
+        throw new TrueImpactRuntimeException([
+          new TrueImpactError(
+            `Encountered a question without a label. This should not happen.`,
+          ),
+        ]);
+      }
+
+      return q.label === questionLabel;
+    });
 
     if (!targetQuestion) {
       return null;
@@ -661,19 +683,29 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
     topLevelQuestionLabels: questionLabels,
     revision,
   }: SurveyPersistenceDto): Survey | TrueImpactError {
+    const allQuestions = Object.values(questions).map((questionDto) =>
+      SurveyQuestion.fromPersistenceDto(questionDto),
+    );
+
+    const questionBuildErrors = allQuestions.filter(
+      (r): r is TrueImpactError => r instanceof TrueImpactError,
+    );
+
+    if (questionBuildErrors.length > 0) {
+      return new InvariantValidationError(Survey, questionBuildErrors);
+    }
+
     const survey = new Survey({
       id,
       revision,
       isPublished,
       name,
       questionLabels,
-      questions: Object.entries(questions).reduce(
-        (acc: Record<string, SurveyQuestion>, [label, questionDto]) => {
-          acc[label] = SurveyQuestion.fromPersistenceDto(questionDto);
-
-          return acc;
-        },
-        {},
+      questions: Object.fromEntries(
+        allQuestions.map((q: SurveyQuestion): [string, SurveyQuestion] => [
+          q.label,
+          q,
+        ]),
       ),
     });
 

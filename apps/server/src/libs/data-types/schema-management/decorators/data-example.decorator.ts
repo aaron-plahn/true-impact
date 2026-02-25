@@ -28,7 +28,7 @@ export const buildTestInstance = <
   UInstance = unknown,
 >(
   ctor: Ctor<UInstance>,
-  overrides: DeepPartial<TPersistenceDto>,
+  overrides?: DeepPartial<TPersistenceDto>,
 ): UInstance => {
   const dataExampleMetadata = Reflect.get(
     ctor,
@@ -48,7 +48,7 @@ export const buildTestInstance = <
   const dtoWithOverridesApplied = JSON.parse(
     JSON.stringify({
       ...defaultDto,
-      ...overrides,
+      ...(overrides || {}),
     }),
   ) as TPersistenceDto;
 
