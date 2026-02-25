@@ -159,9 +159,20 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
     this.hasBeenAbandoned =
       typeof hasBeenAbandoned === 'boolean' ? hasBeenAbandoned : false;
 
-    // do we want to set the `nextQuestionLabel` to `DONE` otherwise?
     if (responses.length < survey.size()) {
-      this.nextQuestionLabel = survey.topLevelQuestionLabels[responses.length];
+      if (responses.length > 0) {
+        const { questionLabel, optionLabel } = responses[responses.length - 1];
+
+        this.nextQuestionLabel = survey.getNextQuestionLabel(
+          questionLabel,
+          optionLabel,
+        ) as string;
+      } else {
+        // We have no responses, so the next question is the first one in the survey
+        this.nextQuestionLabel = survey.topLevelQuestionLabels[0];
+      }
+    } else {
+      this.nextQuestionLabel = DONE;
     }
   }
 
