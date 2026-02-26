@@ -12,4 +12,12 @@ export class TrueImpactRuntimeException extends TrueImpactError {
       innerErrors,
     );
   }
+
+  toString(): string {
+    const nestedErrorMessages = this.innerErrors
+      .map((ie) => ie.toString())
+      .join('\n');
+
+    return `${this.message}\n${nestedErrorMessages}`;
+  }
 }

@@ -1,5 +1,5 @@
-import { appendMetadata } from './append-metadata';
-import { TypeDecoratorOptions } from './type-decorator-options';
+import { appendSimplePropertyMetadata } from './append-metadata';
+import { SimpleDataTypeDecoratorOptions } from './type-decorator-options';
 
 export const BOOLEAN = 'BOOLEAN';
 
@@ -8,10 +8,10 @@ export const BOOLEAN = 'BOOLEAN';
  * taken (wrapper class for `boolean` primitive type).
  */
 export function BooleanDataType(
-  userOptions: TypeDecoratorOptions,
+  userOptions: SimpleDataTypeDecoratorOptions,
 ): PropertyDecorator {
   return (target: object, propertyKey: string | symbol) => {
-    appendMetadata(target, propertyKey, {
+    appendSimplePropertyMetadata(target, propertyKey, {
       ...userOptions,
       type: BOOLEAN,
     });

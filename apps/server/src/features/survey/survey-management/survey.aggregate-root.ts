@@ -1,5 +1,6 @@
 import {
   AggregateRoot,
+  BooleanDataType,
   InvariantValidationError,
   NonEmptyString,
   NonNegativeInteger,
@@ -54,8 +55,11 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
   })
   id: string;
 
-  // @BooleanDataType
   // TODO We need a draft \ publication \ versioning work-flow
+  @BooleanDataType({
+    label: 'is published',
+    description: 'should this survey be available for completion?',
+  })
   isPublished: boolean;
 
   @NonEmptyString({
@@ -82,6 +86,12 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
   questionBank: Map<string, SurveyQuestion>;
 
   // See the comment about `questionBank`, which applies here as well.
+  @NonEmptyString({
+    label: 'top-level question labels',
+    description:
+      'an ordered list of the top-level (strictly required) questions, which may have additional follow up questions',
+    isArray: true,
+  })
   topLevelQuestionLabels: string[] = [];
 
   constructor({
@@ -202,7 +212,7 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
     if (this.size() < 1) {
       allErrors.push(
         new TrueImpactError(
-          `You cannot publish survey [${this.name}] as a survey must have at least one question in order to be published`,
+          `Survey [${this.name}] cannot be published, as a survey must have at least one question in order to be published`,
         ),
       );
     }

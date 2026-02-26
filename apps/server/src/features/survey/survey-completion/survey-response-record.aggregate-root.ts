@@ -4,6 +4,7 @@ import {
   buildTestInstance,
   Entity,
   InvariantValidationError,
+  NestedDataType,
   NonEmptyString,
   NonNegativeInteger,
   TrueImpactBadUserInputError,
@@ -141,15 +142,31 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
    * as a value object. Surveys are currently immutable and in the future will be fully
    * versioned.
    */
+  @NestedDataType(() => Survey, {
+    label: 'survey',
+    // TODO ensure we track a `version` number here, even if it is `1.0.0` for now.
+    description: 'a copy of the survey the user is completing',
+  })
   survey: Survey;
 
   // Surveys may be anonymous in the future
+  @NestedDataType(() => SurveyParticipantCompositeIdentifier, {
+    label: 'participant identifier',
+    description:
+      'unique system-wide identifier for the subject completing this survey',
+    isOptional: true,
+  })
   participant?: SurveyParticipantCompositeIdentifier;
 
   /**
    * We store these in an array to also track the order
    * in which questions have been answered for easier validation.
    */
+  @NestedDataType(() => SurveyQuestionResponse, {
+    label: 'responses',
+    description: `an ordered list of the participant's answers to survey questions`,
+    isArray: true,
+  })
   responses: SurveyQuestionResponse[];
 
   @BooleanDataType({

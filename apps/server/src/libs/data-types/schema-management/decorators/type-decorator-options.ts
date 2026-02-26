@@ -1,4 +1,4 @@
-export type TypeDecoratorOptions = {
+export type CoreDataTypeDecoratorOptions = {
   label: string;
 
   description: string;
@@ -6,6 +6,8 @@ export type TypeDecoratorOptions = {
   isOptional?: boolean;
 
   isArray?: boolean;
+};
 
+export type SimpleDataTypeDecoratorOptions = CoreDataTypeDecoratorOptions & {
   mustBeUnique?: boolean;
 };
