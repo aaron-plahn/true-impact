@@ -130,7 +130,13 @@ export const validateObjectAgainstSchema = <T = object>(
           return acc;
         }
 
-        // TODO if the array cannot be empty, but is, return an error
+        if (!propertySchema.canBeEmpty && value.length === 0) {
+          acc.push(
+            new TrueImpactError(
+              `Invalid value for property [${k}]. Array must not be empty.`,
+            ),
+          );
+        }
 
         const nestedErrors = value.flatMap((item, index) => {
           if (propertySchema.items.type === 'object') {

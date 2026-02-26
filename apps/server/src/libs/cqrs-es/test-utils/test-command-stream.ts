@@ -30,7 +30,7 @@ export class TestCommandStream {
   }
 
   andThen<T extends ICommandPayload>(
-    C: Ctor<T> & { type: string },
+    C: Ctor<T> & { type: string } & { fromPersistenceDto(dto: unknown): T },
     overrides: DeepPartial<T> = {} as DeepPartial<T>,
   ) {
     const fsa = TestCommandStream.buildOne<T>(C, overrides);
@@ -121,7 +121,7 @@ export class TestCommandStream {
   }
 
   static first<T extends ICommandPayload>(
-    C: Ctor<T> & { type: string },
+    C: Ctor<T> & { type: string } & { fromPersistenceDto(dto: unknown): T },
     overrides: DeepPartial<T>,
   ): TestCommandStream {
     const creationCommandFsa = TestCommandStream.buildOne<T>(C, overrides);
@@ -131,7 +131,7 @@ export class TestCommandStream {
 
   // Can't we use this in place of the global helper?
   static buildOne<T extends ICommandPayload>(
-    C: Ctor<T> & { type: string },
+    C: Ctor<T> & { type: string } & { fromPersistenceDto(dto: unknown): T },
     overrides: DeepPartial<T>,
   ): ICommandFsa<T> {
     const payloadWithOverrides = buildTestInstance(C, overrides);

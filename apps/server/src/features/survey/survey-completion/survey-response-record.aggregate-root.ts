@@ -32,7 +32,16 @@ export class SurveyResponseCompositeIdentifier {
 }
 
 class SurveyQuestionResponse extends Entity {
+  @NonEmptyString({
+    label: 'question label',
+    description: 'label for the question being answered',
+  })
   questionLabel: string;
+
+  @NonEmptyString({
+    label: 'option label',
+    description: 'label for the option the participant has chosen',
+  })
   optionLabel: string;
 
   constructor({
@@ -97,18 +106,31 @@ export class SurveyResponseRecordPersistenceDto {
    * to assume that surveys can only be completed by a client.
    */
 
-  // TODO Should we attach the survey completion records to the participant (in this case, the Client) instead? This makes it easy to inherit permissions.
+  /**
+   * We have decided not to do this because we may end up having only read-only access to the SSTO for client management (possibly external).
+   * Also, surveys can potentially be completed anonymously, so their response records need to be persisted independent of a subject in at least
+   * some cases.
+   *
+   * Note that we can attach survey responses to their subjects in the view layer.
+   */
   participantCompositeIdentifier?: SurveyParticipantCompositeIdentifier;
 
   responses: SurveyQuestionResponse[];
 }
 
-const testSurveyExample = buildTestInstance(Survey).toPersistenceDto();
+const testSurveyExample = (
+  buildTestInstance(Survey, {
+    isPublished: false,
+  }) as Survey
+).toPersistenceDto();
 
 @TrueImpactDataExample<SurveyResponseRecordPersistenceDto>({
   example: {
     id: '123',
     revision: 5,
+    /**
+     * TODO Can `buildTestInstance` use the schema to recurse on missing nested properties?
+     */
     survey: testSurveyExample,
     hasBeenAbandoned: false,
     hasBeenSubmitted: false,
@@ -144,10 +166,23 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
    */
   @NestedDataType(() => Survey, {
     label: 'survey',
-    // TODO ensure we track a `version` number here, even if it is `1.0.0` for now.
     description: 'a copy of the survey the user is completing',
   })
   survey: Survey;
+
+  @NonEmptyString({
+    label: 'survey version',
+    description:
+      'tracks whether an older version of the given survey was completed',
+  })
+  surveyVersion = '1';
+
+  @NonEmptyString({
+    label: 'survey schema version',
+    description:
+      'tracks whether the internal format of the survey schema has been changed since this survey was started',
+  })
+  surveySchemaVersion = '1.0.0';
 
   // Surveys may be anonymous in the future
   @NestedDataType(() => SurveyParticipantCompositeIdentifier, {
@@ -175,7 +210,12 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
   })
   hasBeenAbandoned: boolean;
 
-  // TODO union type
+  /**
+   * Note that there is no need for schema-based validation of this. It
+   * is calculated and could be a getter, except for the fact that it is easier
+   * to cache this each time a new question is answered. We do not
+   * persist this to the database.
+   */
   nextQuestionLabel: string | DONE;
 
   @BooleanDataType({
@@ -199,7 +239,6 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
     survey: Survey;
     // surveys may be anonymous
     participant?: SurveyParticipantCompositeIdentifier;
-    // FROM DTO?
     responses: SurveyQuestionResponse[];
     hasBeenSubmitted?: boolean;
   }) {
@@ -232,13 +271,18 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
       if (responses.length > 0) {
         const { questionLabel, optionLabel } = responses[responses.length - 1];
 
+        /**
+         * This assumes that the incoming DTO is valid.
+         */
         this.nextQuestionLabel = survey.getNextQuestionLabel(
           questionLabel,
           optionLabel,
         ) as string;
       } else {
         // We have no responses, so the next question is the first one in the survey
-        this.nextQuestionLabel = survey.topLevelQuestionLabels[0];
+        this.nextQuestionLabel = (
+          survey.getFirstQuestion() as SurveyQuestion
+        ).label;
       }
     } else {
       this.nextQuestionLabel = DONE;
@@ -250,7 +294,19 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
     questionLabel: string,
     chosenOptionLabel: string,
   ): SurveyResponseRecord | TrueImpactError {
-    if (!this.survey.questionBank.has(questionLabel)) {
+    if (this.hasBeenSubmitted) {
+      return new TrueImpactError(
+        `You cannot answer question [${questionLabel}] in survey [${this.survey.name}], as the survey has already been submitted.`,
+      );
+    }
+
+    if (this.hasBeenAbandoned) {
+      return new TrueImpactError(
+        `You cannot answer question [${questionLabel}] in survey [${this.survey.name}], as the survey has been abandoned.`,
+      );
+    }
+
+    if (!this.survey.has(questionLabel)) {
       return new TrueImpactError(
         `You cannot answer question [${questionLabel}] in survey [${this.survey.name}], as there is no such question.`,
       );
@@ -281,7 +337,6 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
     }
 
     this.responses.push(
-      // can't this just be a value object?
       SurveyQuestionResponse.fromPersistenceDto({
         questionLabel,
         optionLabel: chosenOptionLabel,
@@ -289,7 +344,6 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
     );
 
     if (!this.isComplete()) {
-      // should we allow this.nextQuestionLabel to be `DONE`
       this.nextQuestionLabel = this.survey.getNextQuestionLabel(
         questionLabel,
         chosenOptionLabel,
@@ -349,6 +403,11 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
     return this.responses.some((r) => r.questionLabel === questionLabel);
   }
 
+  getResponseFor(questionLabel: string): string | undefined {
+    return this.responses.find((r) => r.questionLabel === questionLabel)
+      ?.optionLabel;
+  }
+
   /**
    * A survey completion record should
    * - carry responses in the correct order
@@ -375,12 +434,67 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
       );
     }
 
-    if (this.hasBeenAbandoned && this.hasBeenSubmitted) {
-      allErrors.push(
-        new TrueImpactError(
-          `Survey [${this.survey.name}] cannot be marked as submitted and abandoned`,
-        ),
-      );
+    if (this.hasBeenSubmitted) {
+      if (this.hasBeenAbandoned) {
+        allErrors.push(
+          new TrueImpactError(
+            `Survey [${this.survey.name}] cannot be marked as submitted and abandoned`,
+          ),
+        );
+      }
+
+      const isComplete = this.isComplete();
+
+      if (isComplete) {
+        if (this.survey.size() === 0) {
+          allErrors.push(
+            new TrueImpactError(
+              `You cannot complete survey [${this.survey.name}], as it has no questions.`,
+            ),
+          );
+        }
+
+        const firstQuestion = this.survey.getFirstQuestion() as SurveyQuestion;
+
+        let currentQuestionLabel: string | DONE = firstQuestion.label;
+
+        let currentResponse: string | undefined;
+
+        while (currentQuestionLabel !== DONE) {
+          currentResponse = this.getResponseFor(currentQuestionLabel);
+
+          if (!currentResponse) {
+            allErrors.push(
+              new TrueImpactError(
+                `Response for survey [${this.survey.name}] is missing an answer for required question [${currentQuestionLabel}]`,
+              ),
+            );
+
+            break;
+          }
+
+          currentQuestionLabel = this.survey.getNextQuestionLabel(
+            currentQuestionLabel,
+            currentResponse,
+          ) as string | DONE;
+        }
+
+        if (currentQuestionLabel !== DONE && currentResponse) {
+          allErrors.push(
+            new TrueImpactError(
+              `Response for survey [${this.survey.name}] is missing an answer for required question [${this.survey.getNextQuestionLabel(currentQuestionLabel, currentResponse) as string}]`,
+            ),
+          );
+        }
+      }
+
+      if (!isComplete) {
+        allErrors.push(
+          new TrueImpactError(
+            `Survey [${this.survey.name}] cannot be marked as submitted as it is not complete.`,
+          ),
+        );
+      }
     }
 
     return allErrors;

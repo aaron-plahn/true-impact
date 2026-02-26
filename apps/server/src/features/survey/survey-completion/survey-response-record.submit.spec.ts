@@ -40,7 +40,6 @@ const surveyWithOneQuestion = buildTestInstance<SurveyPersistenceDto>(Survey, {
     '3': {
       prompt: 'Will you have a nice day?',
       options: {
-        // TODO Ensure the text is unique amongst all options for a single question
         a: {
           text: 'yes',
         },

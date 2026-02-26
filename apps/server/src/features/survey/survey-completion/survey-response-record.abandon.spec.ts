@@ -81,24 +81,19 @@ const completedSurvey = buildTestInstance<SurveyResponseRecordPersistenceDto>(
 
 describe(`SurveyResponseRecord.abandon`, () => {
   describe(`when the survey completion is still in progress`, () => {
-    const surveyResponseInProgress =
-      // TODO why do we need the generic here?
-      buildTestInstance<SurveyResponseRecordPersistenceDto>(
-        SurveyResponseRecord,
+    const surveyResponseInProgress = buildTestInstance(SurveyResponseRecord, {
+      survey: testSurvey.toPersistenceDto(),
+      responses: [
         {
-          survey: testSurvey.toPersistenceDto(),
-          responses: [
-            {
-              questionLabel: '1',
-              optionLabel: 'b',
-            },
-            {
-              questionLabel: '2',
-              optionLabel: 'c',
-            },
-          ],
+          questionLabel: '1',
+          optionLabel: 'b',
         },
-      ) as SurveyResponseRecord;
+        {
+          questionLabel: '2',
+          optionLabel: 'c',
+        },
+      ],
+    }) as SurveyResponseRecord;
 
     it(`should update the survey response record`, () => {
       const result = surveyResponseInProgress.abandon();

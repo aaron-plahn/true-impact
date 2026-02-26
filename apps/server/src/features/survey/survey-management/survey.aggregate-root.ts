@@ -178,6 +178,10 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
     return this.questionBank.get(this.topLevelQuestionLabels[0]) || null;
   }
 
+  has(questionLabel: string): boolean {
+    return this.questionBank.has(questionLabel);
+  }
+
   get(questionLabel: string): SurveyQuestion | null {
     return this.questionBank.get(questionLabel) || null;
   }
@@ -249,12 +253,61 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
   validateComplexInvariants(): TrueImpactError[] {
     const allErrors = [...this.validatePublicationStatus()];
 
+    const topLevelFollowUpQuestionErrors = Array.from(
+      this.questionBank.values(),
+    ).flatMap((q: SurveyQuestion) => {
+      return Array.from(q.options.values()).flatMap((o: SurveyOption) => {
+        if (
+          o.followUpQuestionLabel &&
+          this.topLevelQuestionLabels.includes(o.followUpQuestionLabel)
+        ) {
+          return [
+            new TrueImpactError(
+              `Survey [${this.name}] contains a loop: ${o.followUpQuestionLabel} -> ${o.label} -> ${o.followUpQuestionLabel}`,
+            ),
+          ];
+        }
+
+        return [];
+      });
+    });
+
+    const seen = new Set<string>(this.topLevelQuestionLabels);
+
     /**
-     * We need to walk the graph with a depth-first search and confirm that
-     * every question label encountered has a corresponding question in the question bank.
-     * We also need to confirm that the top level questions are indeed top level
-     * questions.
+     * The weaker restriction is that a survey should have no loops. To avoid complex scenarios, we have decided
+     * to require that any question appears at most once in a survey (i.e., the survey forms a tree).
      */
+    Array.from(this.questionBank.values()).forEach((q) =>
+      Array.from(q.options.values()).forEach((o) => {
+        if (o.followUpQuestionLabel) {
+          if (seen.has(o.followUpQuestionLabel)) {
+            allErrors.push(
+              new TrueImpactError(
+                `Survey [${this.name}] has a repeated question [${o.followUpQuestionLabel}]`,
+              ),
+            );
+          }
+
+          seen.add(o.followUpQuestionLabel);
+        }
+      }),
+    );
+
+    allErrors.push(...topLevelFollowUpQuestionErrors);
+
+    const missingQuestionErrors = this.topLevelQuestionLabels.flatMap(
+      (questionLabel) =>
+        this.has(questionLabel)
+          ? []
+          : [
+              new TrueImpactError(
+                `Survey [${this.name}] is missing question [${questionLabel}]`,
+              ),
+            ],
+    );
+
+    allErrors.push(...missingQuestionErrors);
 
     return allErrors;
   }
@@ -746,6 +799,7 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
       ),
     });
 
+    // TODO Do we want a flag for this in case we intentionally wish to build invalid data for tests?
     return survey.validateInvariants();
   }
 }

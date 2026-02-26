@@ -27,7 +27,7 @@ export const buildTestInstance = <
   TPersistenceDto = unknown,
   UInstance = unknown,
 >(
-  ctor: Ctor<UInstance>,
+  ctor: Ctor<UInstance> & FromPersistenceDto<TPersistenceDto, UInstance>,
   overrides?: DeepPartial<TPersistenceDto>,
 ): UInstance => {
   const dataExampleMetadata = Reflect.get(
@@ -60,7 +60,7 @@ export const buildTestInstance = <
     return plainToClass(ctor, dtoWithOverridesApplied);
   }
 
-  const result = ctor.fromPersistenceDto(dtoWithOverridesApplied) as UInstance;
+  const result = ctor.fromPersistenceDto(dtoWithOverridesApplied);
 
   return result;
 };
