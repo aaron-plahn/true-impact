@@ -76,17 +76,26 @@ class SurveyQuestionResponse extends Entity {
     throw new Error('Method not implemented.');
   }
 
-  static fromPersistenceDto({
-    questionLabel,
-    optionLabel,
-  }: {
-    questionLabel: string;
-    optionLabel: string;
-  }): SurveyQuestionResponse | TrueImpactError {
-    return new SurveyQuestionResponse({
+  static fromPersistenceDto(
+    {
+      questionLabel,
+      optionLabel,
+    }: {
+      questionLabel: string;
+      optionLabel: string;
+    },
+    shouldValidate = false,
+  ): SurveyQuestionResponse | TrueImpactError {
+    const result = new SurveyQuestionResponse({
       questionLabel,
       optionLabel,
     });
+
+    if (shouldValidate) {
+      return result.validateInvariants();
+    }
+
+    return result;
   }
 }
 
@@ -118,11 +127,9 @@ export class SurveyResponseRecordPersistenceDto {
   responses: SurveyQuestionResponse[];
 }
 
-const testSurveyExample = (
-  buildTestInstance(Survey, {
-    isPublished: false,
-  }) as Survey
-).toPersistenceDto();
+const testSurveyExample = buildTestInstance(Survey, {
+  isPublished: false,
+}).toPersistenceDto();
 
 @TrueImpactDataExample<SurveyResponseRecordPersistenceDto>({
   example: {
@@ -201,6 +208,7 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
     label: 'responses',
     description: `an ordered list of the participant's answers to survey questions`,
     isArray: true,
+    isOptional: true, // i.e., can be empty
   })
   responses: SurveyQuestionResponse[];
 
@@ -534,24 +542,25 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
     };
   }
 
-  static fromPersistenceDto({
-    id,
-    revision,
-    hasBeenAbandoned,
-    hasBeenSubmitted,
-    survey,
-    responses,
-  }: SurveyResponseRecordPersistenceDto):
-    | SurveyResponseRecord
-    | TrueImpactError {
-    const surveyBuildResult = Survey.fromPersistenceDto(survey);
+  static fromPersistenceDto(
+    {
+      id,
+      revision,
+      hasBeenAbandoned,
+      hasBeenSubmitted,
+      survey,
+      responses,
+    }: SurveyResponseRecordPersistenceDto,
+    shouldValidate: boolean,
+  ): SurveyResponseRecord | TrueImpactError {
+    const surveyBuildResult = Survey.fromPersistenceDto(survey, shouldValidate);
 
     if (surveyBuildResult instanceof TrueImpactError) {
       return surveyBuildResult;
     }
 
     const questionResponses = responses.map((r) =>
-      SurveyQuestionResponse.fromPersistenceDto(r),
+      SurveyQuestionResponse.fromPersistenceDto(r, shouldValidate),
     );
 
     const questionResponseErrors = questionResponses.filter(

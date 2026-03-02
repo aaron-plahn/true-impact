@@ -55,7 +55,10 @@ export abstract class Entity<TEntityPersistenceDto = unknown> {
 
   abstract toPersistenceDto(): TEntityPersistenceDto;
 
-  static fromPersistenceDto(_dto: any): Entity | TrueImpactError {
+  static fromPersistenceDto(
+    _dto: any,
+    _shouldValidate?: boolean,
+  ): Entity | TrueImpactError {
     throw new TrueImpactRuntimeException([
       new TrueImpactError(
         'fromPersistenceDto must be implemented on any child class of Entity',

@@ -15,7 +15,7 @@ const survey = buildTestInstance<SurveyPersistenceDto>(Survey, {
    * It's awkward that there is overlap between this and the questions.
    * Can we find a more graph-like DTO structure?
    */
-  topLevelQuestionLabels: '123'.split(''),
+  topLevelQuestionLabels: '13'.split(''),
   questions: {
     '1': {
       prompt: 'How good is my survey?',
@@ -74,7 +74,7 @@ const surveyResponseRecord = buildTestInstance(SurveyResponseRecord, {
       optionLabel: 'd',
     },
   ],
-}) as SurveyResponseRecord;
+});
 
 describe(`SurveyResponseRecord.answerQuestion`, () => {
   describe(`when the survey has not yet been submitted`, () => {
@@ -84,7 +84,7 @@ describe(`SurveyResponseRecord.answerQuestion`, () => {
           const emptySurvey = buildTestInstance(SurveyResponseRecord, {
             survey: survey.toPersistenceDto(),
             responses: [],
-          }) as SurveyResponseRecord;
+          });
 
           describe(`when answering the first question in a survey`, () => {
             it(`should update the responses`, () => {
@@ -95,7 +95,9 @@ describe(`SurveyResponseRecord.answerQuestion`, () => {
               const updatedSurveyRecord = result as SurveyResponseRecord;
 
               expect(updatedSurveyRecord.isComplete()).toBe(false);
-              expect(updatedSurveyRecord.nextQuestionLabel).toBe('2');
+
+              // note that question 2 is a follow-up question for 1.d
+              expect(updatedSurveyRecord.nextQuestionLabel).toBe('3');
               expect(updatedSurveyRecord.progress()).toEqual({
                 completed: 1,
                 count: 3,
@@ -251,7 +253,7 @@ describe(`SurveyResponseRecord.answerQuestion`, () => {
             optionLabel: 'b',
           },
         ],
-      }) as SurveyResponseRecord;
+      });
 
       it(`should fail with the expected error`, () => {
         const result = submittedSurveyResponse.answerQuestion('2', 'a');
@@ -279,7 +281,7 @@ describe(`SurveyResponseRecord.answerQuestion`, () => {
           optionLabel: 'a',
         },
       ],
-    }) as SurveyResponseRecord;
+    });
 
     it(`should fail with the expected error`, () => {
       const result = submittedSurveyResponse.answerQuestion('3', 'a');

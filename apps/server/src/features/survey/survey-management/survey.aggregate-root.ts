@@ -278,21 +278,30 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
      * The weaker restriction is that a survey should have no loops. To avoid complex scenarios, we have decided
      * to require that any question appears at most once in a survey (i.e., the survey forms a tree).
      */
-    Array.from(this.questionBank.values()).forEach((q) =>
+    Array.from(this.questionBank.values()).forEach((q) => {
+      /**
+       * It's ok for sibling options to have the same follow-up question.
+       */
+      const followUpQuestionLabelsForThisOption = new Set<string>();
+
       Array.from(q.options.values()).forEach((o) => {
         if (o.followUpQuestionLabel) {
-          if (seen.has(o.followUpQuestionLabel)) {
-            allErrors.push(
-              new TrueImpactError(
-                `Survey [${this.name}] has a repeated question [${o.followUpQuestionLabel}]`,
-              ),
-            );
-          }
-
-          seen.add(o.followUpQuestionLabel);
+          followUpQuestionLabelsForThisOption.add(o.followUpQuestionLabel);
         }
-      }),
-    );
+      });
+
+      followUpQuestionLabelsForThisOption.forEach((ql) => {
+        if (seen.has(ql)) {
+          allErrors.push(
+            new TrueImpactError(
+              `Survey [${this.name}] has a repeated question [${ql}]`,
+            ),
+          );
+        }
+
+        seen.add(ql);
+      });
+    });
 
     allErrors.push(...topLevelFollowUpQuestionErrors);
 
@@ -761,14 +770,17 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
     return result;
   }
 
-  static fromPersistenceDto({
-    id,
-    isPublished,
-    name,
-    questions,
-    topLevelQuestionLabels: questionLabels,
-    revision,
-  }: SurveyPersistenceDto): Survey | TrueImpactError {
+  static fromPersistenceDto(
+    {
+      id,
+      isPublished,
+      name,
+      questions,
+      topLevelQuestionLabels: questionLabels,
+      revision,
+    }: SurveyPersistenceDto,
+    shouldValidate = false,
+  ): Survey | TrueImpactError {
     const allQuestions = Object.entries(questions).map(
       ([label, questionDtoWithoutLabel]) =>
         SurveyQuestion.fromPersistenceDto({
@@ -799,7 +811,10 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
       ),
     });
 
-    // TODO Do we want a flag for this in case we intentionally wish to build invalid data for tests?
-    return survey.validateInvariants();
+    if (shouldValidate) {
+      return survey.validateInvariants();
+    }
+
+    return survey;
   }
 }

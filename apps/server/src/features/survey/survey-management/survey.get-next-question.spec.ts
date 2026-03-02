@@ -15,65 +15,51 @@ describe(`Survey.getNextQuestionLabel`, () => {
          */
         questions: {
           '1': {
-            label: '1',
             prompt: 'How hard do you work?',
             options: {
               a: {
-                label: 'a',
                 text: '6-6-12',
               },
               b: {
-                label: 'b',
                 text: 'hard enough',
               },
               c: {
-                label: 'c',
                 text: 'when I feel like it',
               },
               d: {
-                label: 'd',
                 text: `who's asking?`,
               },
             },
           },
           '2': {
-            label: '2',
             prompt: 'I often take my breaks.',
             options: {
               a: {
-                label: 'a',
                 text: 'I mostly agree',
               },
               b: {
-                label: 'b',
                 text: 'I dunno...',
               },
               c: {
-                label: 'c',
                 text: 'I disagree',
               },
             },
           },
           '3': {
-            label: '3',
             prompt: 'I fall asleep at my desk',
             options: {
               a: {
-                label: 'a',
                 text: 'Often',
                 nextQuestionLabel: '5',
               },
               b: {
-                label: 'b',
                 text: 'Occasionally',
                 nextQuestionLabel: '5',
               },
               c: {
-                label: 'c',
                 text: 'Rarely',
               },
               d: {
-                label: 'd',
                 text: 'Never',
               },
             },
@@ -108,150 +94,119 @@ describe(`Survey.getNextQuestionLabel`, () => {
   });
 
   describe(`when the survey has a deeply nested structure`, () => {
-    const testSurvey: Survey = buildTestInstance<SurveyPersistenceDto, Survey>(
-      Survey,
-      {
-        topLevelQuestionLabels: '1237'.split(''),
-        /**
-         * 1 - 4
-         * 2
-         * 3 - 5 - 6
-         * 7
-         */
-        questions: {
-          '1': {
-            label: '1',
-            prompt: 'How hard do you work?',
-            options: {
-              a: {
-                label: 'a',
-                text: '6-6-12',
-              },
-              b: {
-                label: 'b',
-                text: 'hard enough',
-              },
-              c: {
-                label: 'c',
-                text: 'when I feel like it',
-              },
-              d: {
-                label: 'd',
-                text: `who's asking?`,
-                nextQuestionLabel: '4',
-              },
+    const testSurvey: Survey = buildTestInstance(Survey, {
+      topLevelQuestionLabels: '1237'.split(''),
+      /**
+       * 1 - 4
+       * 2
+       * 3 - 5 - 6
+       * 7
+       */
+      questions: {
+        '1': {
+          prompt: 'How hard do you work?',
+          options: {
+            a: {
+              text: '6-6-12',
+            },
+            b: {
+              text: 'hard enough',
+            },
+            c: {
+              text: 'when I feel like it',
+            },
+            d: {
+              text: `who's asking?`,
+              nextQuestionLabel: '4',
             },
           },
-          '2': {
-            label: '2',
-            prompt: 'I often take my breaks.',
-            options: {
-              a: {
-                label: 'a',
-                text: 'I mostly agree',
-              },
-              b: {
-                label: 'b',
-                text: 'I dunno...',
-              },
-              c: {
-                label: 'c',
-                text: 'I disagree',
-              },
+        },
+        '2': {
+          prompt: 'I often take my breaks.',
+          options: {
+            a: {
+              text: 'I mostly agree',
+            },
+            b: {
+              text: 'I dunno...',
+            },
+            c: {
+              text: 'I disagree',
             },
           },
-          '3': {
-            label: '3',
-            prompt: 'I fall asleep at my desk',
-            options: {
-              a: {
-                label: 'a',
-                text: 'Often',
-                nextQuestionLabel: '5',
-              },
-              b: {
-                label: 'b',
-                text: 'Occasionally',
-                nextQuestionLabel: '5',
-              },
-              c: {
-                label: 'c',
-                text: 'Rarely',
-              },
-              d: {
-                label: 'd',
-                text: 'Never',
-              },
+        },
+        '3': {
+          prompt: 'I fall asleep at my desk',
+          options: {
+            a: {
+              text: 'Often',
+              nextQuestionLabel: '5',
+            },
+            b: {
+              text: 'Occasionally',
+              nextQuestionLabel: '5',
+            },
+            c: {
+              text: 'Rarely',
+            },
+            d: {
+              text: 'Never',
             },
           },
-          '4': {
-            label: '4',
-            prompt: 'What in the world is wrong with you?',
-            options: {
-              a: {
-                label: 'a',
-                text: `The doctors have been unable to determine that`,
-              },
-              b: {
-                label: 'b',
-                text: `I'll be honest- I'm lazy!`,
-              },
-              c: {
-                label: 'c',
-                text: `I'll try harder, boss, I promise.`,
-              },
+        },
+        '4': {
+          prompt: 'What in the world is wrong with you?',
+          options: {
+            a: {
+              text: `The doctors have been unable to determine that`,
+            },
+            b: {
+              text: `I'll be honest- I'm lazy!`,
+            },
+            c: {
+              text: `I'll try harder, boss, I promise.`,
             },
           },
-          '5': {
-            label: '5',
-            prompt: `Do you sleep 7-8 hours each night?`,
-            options: {
-              a: {
-                label: 'a',
-                text: 'Yes',
-              },
-              b: {
-                label: 'a',
-                text: 'No',
-                nextQuestionLabel: '6',
-              },
+        },
+        '5': {
+          prompt: `Do you sleep 7-8 hours each night?`,
+          options: {
+            a: {
+              text: 'Yes',
+            },
+            b: {
+              text: 'No',
+              nextQuestionLabel: '6',
             },
           },
-          '6': {
-            label: '6',
-            prompt: 'Are you a vampire',
-            options: {
-              a: {
-                label: 'a',
-                text: 'Yes',
-              },
-              b: {
-                label: 'b',
-                text: 'No',
-              },
-              c: {
-                label: 'c',
-                text: `I've not been assessed`,
-              },
+        },
+        '6': {
+          prompt: 'Are you a vampire',
+          options: {
+            a: {
+              text: 'Yes',
+            },
+            b: {
+              text: 'No',
+            },
+            c: {
+              text: `I've not been assessed`,
             },
           },
-          7: {
-            label: '7',
-            prompt: 'Has this been an enjoyable',
-            options: {
-              a: {
-                label: '1',
-                text: 'Yes',
-              },
-              b: {
-                label: '2',
-                text: 'No',
-              },
+        },
+        7: {
+          prompt: 'Has this been an enjoyable',
+          options: {
+            a: {
+              text: 'Yes',
+            },
+            b: {
+              text: 'No',
             },
           },
         },
       },
-    );
+    });
 
     describe(`when the request is invalid`, () => {
       describe(`when there is no such question`, () => {

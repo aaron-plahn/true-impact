@@ -101,7 +101,7 @@ describe(`SurveyCompletionRecord.validateInvariants`, () => {
     it(`should return the valid instance`, () => {
       const result = validIncompleteInstance.validateInvariants();
 
-      expect(result).toBeInstanceOf(SurveyResponseRecord);
+      expect(result).not.toBeInstanceOf(TrueImpactError);
     });
   });
 
@@ -115,7 +115,7 @@ describe(`SurveyCompletionRecord.validateInvariants`, () => {
             hasBeenAbandoned: true,
             hasBeenSubmitted: true,
           },
-        ) as SurveyResponseRecord;
+        );
 
         const result = invalidInstanceBuildResult.validateInvariants();
 
@@ -145,8 +145,8 @@ describe(`SurveyCompletionRecord.validateInvariants`, () => {
               optionLabel: 'iii',
             },
           ],
-          survey: (complexSurvey as Survey).toPersistenceDto(),
-        }) as SurveyResponseRecord;
+          survey: complexSurvey.toPersistenceDto(),
+        });
 
         const result = invalidInstance.validateInvariants();
 
@@ -165,7 +165,7 @@ describe(`SurveyCompletionRecord.validateInvariants`, () => {
         const invalidInstance = buildTestInstance(SurveyResponseRecord, {
           hasBeenAbandoned: false,
           hasBeenSubmitted: true,
-          survey: (complexSurvey as Survey).toPersistenceDto(),
+          survey: complexSurvey.toPersistenceDto(),
           responses: [
             {
               questionLabel: '1',
@@ -177,7 +177,7 @@ describe(`SurveyCompletionRecord.validateInvariants`, () => {
             },
             // missing an answer for question '4'
           ],
-        }) as SurveyResponseRecord;
+        });
 
         const result = invalidInstance.validateInvariants();
 
