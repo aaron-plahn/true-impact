@@ -1,8 +1,15 @@
 import { plainToClass } from 'class-transformer';
+import {
+  TrueImpactError,
+  TrueImpactRuntimeException,
+} from '../../error-handling';
 import { Ctor, DeepPartial } from '../../utility-types';
 
 interface FromPersistenceDto<TDto = unknown, UInstance = unknown> {
-  fromPersistenceDto(dto: TDto): UInstance;
+  fromPersistenceDto(
+    dto: TDto,
+    shouldValidate?: boolean,
+  ): UInstance | TrueImpactError;
 }
 
 const isFromPersistenceDto = <T = unknown>(
@@ -27,8 +34,9 @@ export const buildTestInstance = <
   TPersistenceDto = unknown,
   UInstance = unknown,
 >(
-  ctor: Ctor<UInstance>,
-  overrides: DeepPartial<TPersistenceDto>,
+  ctor: Ctor<UInstance> & FromPersistenceDto<TPersistenceDto, UInstance>,
+  overrides?: DeepPartial<TPersistenceDto>,
+  shouldValidate = true,
 ): UInstance => {
   const dataExampleMetadata = Reflect.get(
     ctor,
@@ -48,7 +56,7 @@ export const buildTestInstance = <
   const dtoWithOverridesApplied = JSON.parse(
     JSON.stringify({
       ...defaultDto,
-      ...overrides,
+      ...(overrides || {}),
     }),
   ) as TPersistenceDto;
 
@@ -60,7 +68,16 @@ export const buildTestInstance = <
     return plainToClass(ctor, dtoWithOverridesApplied);
   }
 
-  const result = ctor.fromPersistenceDto(dtoWithOverridesApplied) as UInstance;
+  const result = ctor.fromPersistenceDto(
+    dtoWithOverridesApplied,
+    shouldValidate,
+  );
+
+  if (result instanceof TrueImpactError) {
+    throw new TrueImpactRuntimeException([
+      new TrueImpactError(`Failed to build an instance of ${ctor.name}`),
+    ]);
+  }
 
   return result;
 };
