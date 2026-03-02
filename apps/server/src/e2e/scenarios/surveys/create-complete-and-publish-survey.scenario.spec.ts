@@ -1,13 +1,13 @@
 import axios, { AxiosResponse } from 'axios';
-import { AddFollowUpQuestionForSurveyOption } from '../../../features/survey/commands/add-follow-up-question-for-survey-option.command';
-import { AddOptionToSurveyQuestion } from '../../../features/survey/commands/add-option-to-survey-question.command';
-import { AddQuestionToSurvey } from '../../../features/survey/commands/add-question-to-survey.command';
-import { CreateSurvey } from '../../../features/survey/commands/create-survey.command';
-import { PublishSurvey } from '../../../features/survey/commands/publish-survey.command';
 import {
   SurveyViewModel,
   SurveyViewModelClientDto,
 } from '../../../features/survey/queries/survey.view-model';
+import { AddFollowUpQuestionForSurveyOption } from '../../../features/survey/survey-management/commands/add-follow-up-question-for-survey-option.command';
+import { AddOptionToSurveyQuestion } from '../../../features/survey/survey-management/commands/add-option-to-survey-question.command';
+import { AddQuestionToSurvey } from '../../../features/survey/survey-management/commands/add-question-to-survey.command';
+import { CreateSurvey } from '../../../features/survey/survey-management/commands/create-survey.command';
+import { PublishSurvey } from '../../../features/survey/survey-management/commands/publish-survey.command';
 import {
   CommandSuccessAcknowledgement,
   ICommandFsa,

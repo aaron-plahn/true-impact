@@ -1,7 +1,7 @@
 import { NonEmptyString } from 'src/libs/data-types';
-import { SurveyOption } from '../survey-option.entity';
-import { SurveyQuestion } from '../survey-question.entity';
-import { Survey } from '../survey.aggregate-root';
+import { SurveyOption } from '../survey-management/survey-option.entity';
+import { SurveyQuestion } from '../survey-management/survey-question.entity';
+import { Survey } from '../survey-management/survey.aggregate-root';
 import { SurveyOptionViewModel } from './survey-option.view-model';
 import { SurveyQuestionViewModel } from './survey-question.view-model';
 

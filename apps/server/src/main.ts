@@ -49,12 +49,23 @@ async function bootstrap() {
 }
 
 bootstrap().catch((e) => {
+  let message = 'Unknown NestJS error';
+
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+  if (e && typeof e.toString === 'function') {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+    message = e.toString();
+  } else {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    if (typeof e?.message === 'string') {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+      message = e.message;
+    }
+  }
+
   throw new TrueImpactRuntimeException([
     new TrueImpactError(`Failed to bootstrap the server application`, [
-      new TrueImpactError(
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
-        typeof e?.message === 'string' ? e?.message : 'Unknown NestJS error',
-      ),
+      new TrueImpactError(message),
     ]),
   ]);
 });
