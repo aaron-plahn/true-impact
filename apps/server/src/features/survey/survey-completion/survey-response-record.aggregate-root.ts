@@ -13,7 +13,7 @@ import {
   UpdateMethod,
 } from '../../../libs/data-types';
 import { CLIENT_AGGREGATE_TYPE } from '../../clients/client.composite-identifier';
-import { DONE, SURVEY_RESPONSE_AGGREAGTE_TYPE } from '../constants';
+import { DONE, SURVEY_RESPONSE_AGGREGATE_TYPE } from '../constants';
 import { SurveyQuestion } from '../survey-management/survey-question.entity';
 import {
   Survey,
@@ -22,7 +22,7 @@ import {
 import { SurveyParticipantCompositeIdentifier } from './survey-participant.composite-identifier';
 
 export class SurveyResponseCompositeIdentifier {
-  readonly type = SURVEY_RESPONSE_AGGREAGTE_TYPE;
+  readonly type = SURVEY_RESPONSE_AGGREGATE_TYPE;
 
   @NonEmptyString({
     label: 'ID',
@@ -150,7 +150,7 @@ const testSurveyExample = buildTestInstance(Survey, {
   },
 })
 export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPersistenceDto> {
-  static readonly type = SURVEY_RESPONSE_AGGREAGTE_TYPE;
+  static readonly type = SURVEY_RESPONSE_AGGREGATE_TYPE;
 
   // This is required in the persistence DTO, but optional here because it is generated upon creation in the database
   @NonEmptyString({
@@ -550,6 +550,7 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
       hasBeenSubmitted,
       survey,
       responses,
+      participantCompositeIdentifier,
     }: SurveyResponseRecordPersistenceDto,
     shouldValidate: boolean,
   ): SurveyResponseRecord | TrueImpactError {
@@ -581,6 +582,7 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
       hasBeenSubmitted,
       survey: surveyBuildResult,
       responses: questionResponses as SurveyQuestionResponse[],
+      participant: participantCompositeIdentifier,
     });
   }
 

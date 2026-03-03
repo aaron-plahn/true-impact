@@ -1,4 +1,8 @@
-import { NestedDataType, NonEmptyString } from '../../../../libs/data-types';
+import {
+  BooleanDataType,
+  NestedDataType,
+  NonEmptyString,
+} from '../../../../libs/data-types';
 import { SurveyParticipantCompositeIdentifier } from '../survey-participant.composite-identifier';
 import { SurveyResponseRecord } from '../survey-response-record.aggregate-root';
 
@@ -65,6 +69,12 @@ export class SurveyCompletionRecordViewModel {
   })
   dateCompleted?: string;
 
+  @BooleanDataType({
+    label: 'has been submitted',
+    description: 'has this survey been submitted by the participant?',
+  })
+  hasBeenSubmitted: boolean;
+
   @NonEmptyString({
     label: 'participant identifier',
     description:
@@ -94,11 +104,13 @@ export class SurveyCompletionRecordViewModel {
     dateStarted,
     dateCompleted,
     participantCompositeIdentifier,
+    hasBeenSubmitted,
   }: {
     id: string;
     name: string;
     revision: string;
     dateStarted: string;
+    hasBeenSubmitted: boolean;
     dateCompleted: string;
     participantCompositeIdentifier: {
       type: string;
@@ -125,6 +137,8 @@ export class SurveyCompletionRecordViewModel {
     this.responses = []; // TODO set this
 
     this.nextQuestion = null; // TODO Set this
+
+    this.hasBeenSubmitted = hasBeenSubmitted;
   }
 
   static fromDomainModel(
@@ -137,6 +151,7 @@ export class SurveyCompletionRecordViewModel {
       dateCompleted: '',
       name: `${domainModel.survey.getName()}`, // TODO - participant name - attempt # or date started
       participantCompositeIdentifier: domainModel.participant || null,
+      hasBeenSubmitted: domainModel.hasBeenSubmitted,
     });
   }
 }

@@ -2,14 +2,14 @@ import {
   NestedDataType,
   TrueImpactDataExample,
 } from '../../../../libs/data-types';
-import { SURVEY_RESPONSE_AGGREAGTE_TYPE } from '../../constants';
+import { SURVEY_RESPONSE_AGGREGATE_TYPE } from '../../constants';
 import { SurveyResponseCompositeIdentifier } from '../survey-response-record.aggregate-root';
 
 @TrueImpactDataExample<AbandonSurveyCompletion>({
   example: {
     aggregateCompositeIdentifier: {
       id: '123',
-      type: SURVEY_RESPONSE_AGGREAGTE_TYPE,
+      type: SURVEY_RESPONSE_AGGREGATE_TYPE,
     },
   },
 })

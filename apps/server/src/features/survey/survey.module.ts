@@ -21,7 +21,8 @@ import {
   AnswerSurveyQuestion,
   AnswerSurveyQuestionCommandHandler,
   BeginSurvey,
-  SurveyResponseRecord,
+  SubmitSurvey,
+  SubmitSurveyCommandHandler,
 } from './survey-completion';
 import { SurveyCompletionController } from './survey-completion.controller';
 import {
@@ -34,6 +35,7 @@ import {
 } from './survey-completion/queries';
 import { SurveyCompletionRecordViewModel } from './survey-completion/queries/survey-completion-record.view-model';
 import { SURVEY_COMPLETION_COMMAND_REPOSITORY_INJECTION_TOKEN } from './survey-completion/repositories';
+import { InMemorySurveyCompletionCommandRepository } from './survey-completion/repositories/in-memory-survey-completion.command-repository';
 import { AddFollowUpQuestionForSurveyOption } from './survey-management/commands/add-follow-up-question-for-survey-option.command';
 import { AddFollowUpQuestionForSurveyOptionCommandHandler } from './survey-management/commands/add-follow-up-question-for-survey-option.command-handler';
 import { AddOptionToSurveyQuestion } from './survey-management/commands/add-option-to-survey-question.command';
@@ -62,6 +64,7 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
     BeginSurveyCommandHandler,
     AnswerSurveyQuestionCommandHandler,
     AbandonSurveyCompletionCommandHandler,
+    SubmitSurveyCommandHandler,
     // services
     SurveyQueryService,
     SurveyCompletionQueryService,
@@ -128,6 +131,10 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
           .register({
             CommandHandlerCtor: AbandonSurveyCompletionCommandHandler,
             CommandPayloadCtor: AbandonSurveyCompletion,
+          })
+          .register({
+            CommandHandlerCtor: SubmitSurveyCommandHandler,
+            CommandPayloadCtor: SubmitSurvey,
           });
 
         return commandHandlerService;
@@ -141,10 +148,11 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
     },
     {
       provide: SURVEY_COMPLETION_COMMAND_REPOSITORY_INJECTION_TOKEN,
-      useFactory: () =>
-        new InMemoryCommandRepositoryProvider().forFeature(
-          SurveyResponseRecord,
-        ),
+      useFactory: () => {
+        return new InMemorySurveyCompletionCommandRepository(
+          new InMemoryCommandRepositoryProvider(),
+        );
+      },
     },
     {
       provide: SURVEY_PARTICIPANT_MANAGEMENT_SERVICE_PROVIDER_INJECTION_TOKEN,

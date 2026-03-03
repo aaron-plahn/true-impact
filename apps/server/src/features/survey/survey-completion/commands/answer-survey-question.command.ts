@@ -3,13 +3,13 @@ import {
   NonEmptyString,
   TrueImpactDataExample,
 } from '../../../../libs/data-types';
-import { SURVEY_RESPONSE_AGGREAGTE_TYPE } from '../../constants';
+import { SURVEY_RESPONSE_AGGREGATE_TYPE } from '../../constants';
 import { SurveyResponseCompositeIdentifier } from '../survey-response-record.aggregate-root';
 
 @TrueImpactDataExample<AnswerSurveyQuestion>({
   example: {
     aggregateCompositeIdentifier: {
-      type: SURVEY_RESPONSE_AGGREAGTE_TYPE,
+      type: SURVEY_RESPONSE_AGGREGATE_TYPE,
       id: '123',
     },
     questionLabel: '1',

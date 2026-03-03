@@ -1,6 +1,6 @@
 import { Entity, TrueImpactError } from '../../../libs/data-types';
 
-interface PersistenceAcknowledgement {
+export interface PersistenceAcknowledgement {
   type: string;
   id: string;
   revision: string;

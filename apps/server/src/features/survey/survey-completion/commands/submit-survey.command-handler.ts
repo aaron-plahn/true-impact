@@ -4,13 +4,11 @@ import {
   TrueImpactBadUserInputError,
   TrueImpactError,
 } from '../../../../libs/data-types';
-import {
-  SURVEY_COMPLETION_COMMAND_REPOSITORY_INJECTION_TOKEN,
-  type ISurveyCompletionCommandRepository,
-} from '../repositories';
-import { AbandonSurveyCompletion } from './abandon-survey-completion.command';
+import type { ISurveyCompletionCommandRepository } from '../repositories';
+import { SURVEY_COMPLETION_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../repositories';
+import { SubmitSurvey } from './submit-survey.command';
 
-export class AbandonSurveyCompletionCommandHandler implements ICommandHandler<AbandonSurveyCompletion> {
+export class SubmitSurveyCommandHandler implements ICommandHandler<SubmitSurvey> {
   constructor(
     @Inject(SURVEY_COMPLETION_COMMAND_REPOSITORY_INJECTION_TOKEN)
     private readonly repository: ISurveyCompletionCommandRepository,
@@ -21,19 +19,19 @@ export class AbandonSurveyCompletionCommandHandler implements ICommandHandler<Ab
       aggregateCompositeIdentifier: { id },
     },
   }: {
-    payload: AbandonSurveyCompletion;
+    payload: SubmitSurvey;
   }): Promise<CommandResult> {
     const existing = await this.repository.fetchById(id);
 
     if (!existing) {
       return new TrueImpactBadUserInputError([
         new TrueImpactError(
-          `You cannot abandon survey attempt [${id}], as there is no such attempt in progress.`,
+          `You cannot submit survey attempt [${id}] as there is no such attempt.`,
         ),
       ]);
     }
 
-    const updated = existing.abandon();
+    const updated = existing.submit();
 
     if (updated instanceof TrueImpactError) {
       return updated;

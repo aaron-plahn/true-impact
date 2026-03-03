@@ -4,10 +4,7 @@ import {
   TrueImpactBadUserInputError,
   TrueImpactError,
 } from '../../../../libs/data-types';
-import {
-  SURVEY_COMMAND_REPOSITORY_DEPENDENCY_TOKEN,
-  SURVEY_RESPONSE_AGGREAGTE_TYPE,
-} from '../../constants';
+import { SURVEY_COMMAND_REPOSITORY_DEPENDENCY_TOKEN } from '../../constants';
 import type { ISurveyCommandRepository } from '../../repositories';
 import type { ISurveyCompletionCommandRepository } from '../repositories';
 import { SURVEY_COMPLETION_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../repositories';
@@ -85,19 +82,10 @@ export class BeginSurveyCommandHandler implements ICommandHandler<BeginSurvey> {
       return emptyCompletionRecord;
     }
 
-    const result = await this.surveyCompletionRepository.create(
+    const persistenceResult = await this.surveyCompletionRepository.begin(
       emptyCompletionRecord,
     );
 
-    if (result instanceof TrueImpactError) {
-      return result;
-    }
-
-    return {
-      id: result,
-      revision: '1',
-      // be sure to make this consistent with the eventual naming convention
-      type: SURVEY_RESPONSE_AGGREAGTE_TYPE,
-    };
+    return persistenceResult;
   }
 }
