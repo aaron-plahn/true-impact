@@ -53,6 +53,10 @@ export class InMemoryCommandRepository<
     });
   }
 
+  async exists(id: string): Promise<boolean> {
+    return Promise.resolve(this.entititesById.has(id));
+  }
+
   // @ts-expect-error Funky covariance \ contravariance error?
   async fetchById(id: string): Promise<T | null> {
     const result = this.entititesById.get(id) || null;

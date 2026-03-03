@@ -1,16 +1,23 @@
 import axios from 'axios';
-import { SurveyViewModel } from 'src/features/survey/queries/survey.view-model';
+import { Client } from '../../../features/clients/client.aggregate-root';
 import { CLIENT_AGGREGATE_TYPE } from '../../../features/clients/client.composite-identifier';
 import { CreateClient } from '../../../features/clients/commands/create-client.command';
-import { BeginSurvey } from '../../../features/survey/survey-completion';
+import { SurveyViewModel } from '../../../features/survey/queries/survey.view-model';
+import {
+  AbandonSurveyCompletion,
+  AnswerSurveyQuestion,
+  BeginSurvey,
+} from '../../../features/survey/survey-completion';
+import { AddFollowUpQuestionForSurveyOption } from '../../../features/survey/survey-management/commands/add-follow-up-question-for-survey-option.command';
 import { AddOptionToSurveyQuestion } from '../../../features/survey/survey-management/commands/add-option-to-survey-question.command';
 import { AddQuestionToSurvey } from '../../../features/survey/survey-management/commands/add-question-to-survey.command';
 import { CreateSurvey } from '../../../features/survey/survey-management/commands/create-survey.command';
 import { PublishSurvey } from '../../../features/survey/survey-management/commands/publish-survey.command';
 import { TestCommandStream } from '../../../libs/cqrs-es';
+import { assertTextMatchesAll } from '../../../libs/test-utils';
 import {
+  assertCommandError,
   assertCommandStreamError,
-  assertQueryResponse,
   assertScenarioSuccess,
 } from '../utils';
 
@@ -22,9 +29,9 @@ const baseEndpoint = `http://localhost:${port}`;
 // TODO use this where applicable
 const surveyIndexEndpoint = `${baseEndpoint}/surveys`;
 
-const surveyResponseRecordIndexEndpoint = `${baseEndpoint}/surveys/responses`;
+const surveyResponseRecordIndexEndpoint = `${surveyIndexEndpoint}/responses`;
 
-const surveyCompletionCommandsEndpoint = `${baseEndpoint}/surveys/commands`;
+const surveyCompletionCommandsEndpoint = `${surveyIndexEndpoint}/commands`;
 
 const clientBaseEndpoint = `${baseEndpoint}/clients`;
 
@@ -32,7 +39,7 @@ const clientCommandsEndpoint = `${clientBaseEndpoint}/commands`;
 
 const clientTestSetupEndpoint = `${clientBaseEndpoint}/test-setup`;
 
-const surveyTestSetupEndpoint = `${baseEndpoint}/surveys/test-setup`;
+const surveyTestSetupEndpoint = `${surveyIndexEndpoint}/test-setup`;
 
 const surveyCompletionTestSetupEndpoint = `${surveyResponseRecordIndexEndpoint}/test-setup`;
 
@@ -43,23 +50,80 @@ let clientId: string;
 // Do we ensure this is unique?
 const surveyName = 'My Questionnaire';
 
-const publishSurvey = TestCommandStream.first(CreateSurvey, {
+const targetQuestionLabel = 'q1';
+
+const targetOptionLabel = 'b';
+
+const buildFullSurveyBeforePublishing = TestCommandStream.first(CreateSurvey, {
   name: surveyName,
 })
   .andThen(AddQuestionToSurvey, {
-    label: 'q1',
+    label: targetQuestionLabel,
   })
   .andThen(AddOptionToSurveyQuestion, {
-    questionLabel: 'q1',
+    questionLabel: targetQuestionLabel,
     optionLabel: 'a',
     text: 'yes',
   })
   .andThen(AddOptionToSurveyQuestion, {
-    questionLabel: 'q1',
-    optionLabel: 'b',
+    questionLabel: targetQuestionLabel,
+    optionLabel: targetOptionLabel,
     text: 'no',
   })
-  .andThen(PublishSurvey);
+  .andThen(AddQuestionToSurvey, {
+    label: 'q2',
+  })
+  .andThen(AddOptionToSurveyQuestion, {
+    questionLabel: 'q2',
+    optionLabel: 'a',
+    text: 'likely',
+  })
+  .andThen(AddOptionToSurveyQuestion, {
+    questionLabel: 'q2',
+    optionLabel: 'b',
+    text: 'unlikely',
+  })
+  .andThen(AddOptionToSurveyQuestion, {
+    questionLabel: 'q2',
+    optionLabel: 'c',
+    text: 'never',
+  })
+  .andThen(AddFollowUpQuestionForSurveyOption, {
+    questionLabel: 'q2',
+    optionLabel: 'b',
+    followUpQuestionPrompt: 'Why do you say so?',
+    followUpQuestionLabel: 'q2.a',
+  })
+  .andThen(AddOptionToSurveyQuestion, {
+    questionLabel: 'q2.a',
+    optionLabel: 'a',
+    text: 'because',
+  })
+  .andThen(AddOptionToSurveyQuestion, {
+    questionLabel: 'q2.a',
+    optionLabel: 'b',
+    text: 'just, because!',
+  })
+  .andThen(AddQuestionToSurvey, {
+    label: 'q3',
+  })
+  .andThen(AddOptionToSurveyQuestion, {
+    questionLabel: 'q3',
+    optionLabel: 'a',
+    text: 'good',
+  })
+  .andThen(AddOptionToSurveyQuestion, {
+    questionLabel: 'q3',
+    optionLabel: 'b',
+    text: 'bad',
+  })
+  .andThen(AddOptionToSurveyQuestion, {
+    questionLabel: 'q3',
+    optionLabel: 'c',
+    text: 'ugly',
+  });
+
+const publishSurvey = buildFullSurveyBeforePublishing.andThen(PublishSurvey);
 
 const seedTestClient = async () => {
   // TODO rename helpers and params
@@ -75,13 +139,10 @@ const seedTestClient = async () => {
   });
 };
 
-const seedTestSurvey = async () => {
+const seedPublishedSurvey = async () => {
   await assertScenarioSuccess({
     endpoint: surveyCompletionCommandsEndpoint,
     stream: publishSurvey,
-    assertSuccess: (acks) => {
-      expect(acks).toHaveLength(publishSurvey.size());
-    },
   });
 };
 
@@ -96,8 +157,6 @@ describe(`Survey Completion Scenarios`, () => {
     await axios.patch(surveyTestSetupEndpoint);
 
     await seedTestClient();
-
-    await seedTestSurvey();
   });
 
   describe(`when executing a scenario`, () => {
@@ -115,53 +174,156 @@ describe(`Survey Completion Scenarios`, () => {
       describe(`when beginning a survey`, () => {
         describe(`when the target survey does not exist`, () => {
           it(`should return the expected error response`, async () => {
-            let surveyId: string;
-
-            await assertQueryResponse({
-              endpoint: surveyIndexEndpoint,
-              assertResponseBody: (body: SurveyViewModel[]) => {
-                surveyId = body[0].id;
-              },
-            });
+            const missingSurveyId = '404';
 
             const beginSurvey = TestCommandStream.first(BeginSurvey, {
               participantCompositeIdentifier: {
                 type: CLIENT_AGGREGATE_TYPE,
                 id: clientId,
               },
-              // @ts-expect-error there's gotta be a better way to handle this
-              surveyId,
+              surveyId: missingSurveyId,
             });
 
             await assertCommandStreamError({
               endpoint: surveyCompletionCommandsEndpoint,
               stream: beginSurvey,
               assertErrorMessageAsExpected: (message: string) => {
-                // TODO assertTextIncludesAllPatterns
-                expect(message).toContain('fiddlesticks bobbio!');
+                assertTextMatchesAll(
+                  message,
+                  missingSurveyId,
+                  'cannot begin survey',
+                );
               },
             });
           });
         });
 
         describe(`when the target survey is not published`, () => {
-          it.todo(`should return the expected error response`);
+          it(`should return the expected error response`, async () => {
+            await assertScenarioSuccess({
+              endpoint: surveyCompletionCommandsEndpoint,
+              stream: buildFullSurveyBeforePublishing,
+            });
+
+            /**
+             * A better way to do this is to expose a `fetchOneByName` endpoint.
+             */
+            // Do we want a helper to hide the cast- or can we use a generic on the .get?
+            const response = await axios.get(surveyIndexEndpoint);
+
+            const body = response.data as SurveyViewModel[];
+
+            const { id: surveyId } = body[0];
+
+            const beginSurvey = TestCommandStream.first(BeginSurvey, {
+              participantCompositeIdentifier: {
+                type: CLIENT_AGGREGATE_TYPE,
+                id: clientId,
+              },
+              surveyId,
+            });
+
+            await assertCommandStreamError({
+              endpoint: surveyCompletionCommandsEndpoint,
+              stream: beginSurvey,
+            });
+          });
         });
 
         describe(`when the survey participant is not of type client`, () => {
-          it.todo(`should fail with the expected error response`);
+          const invalidParticipantType = 'reporter';
+
+          const invalidParticipantId = '456';
+
+          it(`should fail with the expected error response`, async () => {
+            let surveyId: string;
+
+            await assertScenarioSuccess({
+              endpoint: surveyCompletionCommandsEndpoint,
+              stream: publishSurvey,
+              assertSuccess: (acks) => {
+                surveyId = acks[0].id;
+              },
+            });
+
+            await assertCommandStreamError({
+              endpoint: surveyCompletionCommandsEndpoint,
+              stream: TestCommandStream.first(BeginSurvey, {
+                // @ts-expect-error The compiler doesn't realize our callback has a side effect
+                surveyId,
+                participantCompositeIdentifier: {
+                  type: invalidParticipantType,
+                  id: invalidParticipantId,
+                },
+              }),
+            });
+          });
         });
 
         describe(`when the survey participant is a client`, () => {
           describe(`when the client does not exist`, () => {
-            it.todo(`should fail with the expected error response`);
+            it(`should fail with the expected error response`, async () => {
+              await assertScenarioSuccess({
+                endpoint: surveyCompletionCommandsEndpoint,
+                stream: publishSurvey,
+              });
+
+              const surveySearchResult = await axios.get(surveyIndexEndpoint);
+
+              const { id: surveyId } = (
+                surveySearchResult.data as SurveyViewModel[]
+              )[0];
+
+              // const clientSearchResult = await axios.get(clientBaseEndpoint);
+
+              // const { id: clientId } = (clientSearchResult.data as Client[])[0];
+
+              const missingClientId = 'c404';
+
+              const beginSurvey = TestCommandStream.first(BeginSurvey, {
+                surveyId,
+                participantCompositeIdentifier: {
+                  type: CLIENT_AGGREGATE_TYPE,
+                  id: missingClientId,
+                },
+              });
+
+              await assertCommandStreamError({
+                endpoint: surveyCompletionCommandsEndpoint,
+                stream: beginSurvey,
+                assertErrorMessageAsExpected: (message) => {
+                  assertTextMatchesAll(
+                    message,
+                    CLIENT_AGGREGATE_TYPE,
+                    'participant does not exist',
+                    missingClientId,
+                    surveyName,
+                  );
+                },
+              });
+            });
           });
         });
       });
 
-      describe(`when responding to a top-level survey question`, () => {
+      describe(`when answering a top-level survey question`, () => {
         describe(`when the survey completion record does not exist`, () => {
-          it.todo(`should return the expected error response`);
+          it(`should return the expected error response`, async () => {
+            const bogusSurveyAttemptId = 'sa404';
+
+            await assertCommandError({
+              endpoint: surveyCompletionCommandsEndpoint,
+              commandFsa: TestCommandStream.buildOne(AnswerSurveyQuestion, {
+                aggregateCompositeIdentifier: {
+                  id: bogusSurveyAttemptId,
+                },
+              }),
+              assertErrorMessageAsExpected: (message) => {
+                assertTextMatchesAll(bogusSurveyAttemptId);
+                assertTextMatchesAll(message, 'no such attempt in progress');
+              },
+            });
+          });
         });
 
         describe(`when there is no question with the given label`, () => {
@@ -169,7 +331,55 @@ describe(`Survey Completion Scenarios`, () => {
         });
 
         describe(`when the question already has a response`, () => {
-          it.todo(`should return the expected error response`);
+          beforeEach(async () => {
+            // TODO why is this necessary?
+            await axios.patch(surveyTestSetupEndpoint);
+
+            await seedPublishedSurvey();
+
+            console.log('why me worry');
+          });
+
+          it(`should return the expected error response`, async () => {
+            const repeatedQuestion = targetQuestionLabel;
+
+            const { id: clientId } = (
+              (await axios.get(clientBaseEndpoint)).data as Client[]
+            )[0];
+
+            const { id: surveyId } = (
+              (await axios.get(surveyIndexEndpoint)).data as SurveyViewModel[]
+            )[0];
+
+            await assertCommandStreamError({
+              endpoint: surveyCompletionCommandsEndpoint,
+              stream: TestCommandStream.first(BeginSurvey, {
+                surveyId,
+                participantCompositeIdentifier: {
+                  id: clientId,
+                  type: CLIENT_AGGREGATE_TYPE,
+                },
+              })
+                // Shouldn't this be targetting a follow-up question?
+                .andThen(AnswerSurveyQuestion, {
+                  questionLabel: repeatedQuestion,
+                  chosenOptionLabel: targetOptionLabel,
+                })
+                // repeated attempt to answer this question
+                .andThen(AnswerSurveyQuestion, {
+                  questionLabel: repeatedQuestion,
+                  chosenOptionLabel: targetOptionLabel,
+                }),
+              assertErrorMessageAsExpected: (message) => {
+                assertTextMatchesAll(
+                  message,
+                  repeatedQuestion,
+                  'been answered',
+                  surveyName,
+                );
+              },
+            });
+          });
         });
 
         describe(`when the question is not next in line`, () => {
@@ -178,30 +388,179 @@ describe(`Survey Completion Scenarios`, () => {
       });
 
       describe(`when responding to a follow-up survey question`, () => {
-        describe(`when the survey completion record does not exist`, () => {
-          it.todo(`should return the expected error response`);
-        });
-
         describe(`when there is no question with the given label`, () => {
-          it.todo(`should return the expected error response`);
+          beforeEach(async () => {
+            await seedPublishedSurvey();
+          });
+
+          it(`should return the expected error response`, async () => {
+            const bogusQuestionLabel = '4.';
+
+            const { id: clientId } = (
+              (await axios.get(clientBaseEndpoint)).data as Client[]
+            )[0];
+
+            const { id: surveyId } = (
+              (await axios.get(surveyIndexEndpoint)).data as SurveyViewModel[]
+            )[0];
+
+            await assertCommandStreamError({
+              endpoint: surveyCompletionCommandsEndpoint,
+              stream: TestCommandStream.first(BeginSurvey, {
+                surveyId,
+
+                participantCompositeIdentifier: {
+                  id: clientId,
+                  type: CLIENT_AGGREGATE_TYPE,
+                },
+              }).andThen(AnswerSurveyQuestion, {
+                questionLabel: bogusQuestionLabel,
+              }),
+              assertErrorMessageAsExpected: (message) => {
+                assertTextMatchesAll(
+                  message,
+                  bogusQuestionLabel,
+                  surveyName,
+                  'cannot answer',
+                  'no such question',
+                );
+              },
+            });
+          });
         });
 
         describe(`when the question already has a response`, () => {
-          it.todo(`should return the expected error response`);
-        });
+          beforeEach(async () => {
+            // TODO why is this necessary?
+            await axios.patch(surveyTestSetupEndpoint);
 
-        describe(`when the question is not next in line`, () => {
-          it.todo(`should return the expected error resposne`);
+            await seedPublishedSurvey();
+
+            console.log('why me worry');
+          });
+
+          it(`should return the expected error response`, async () => {
+            const repeatedQuestion = 'q2.a';
+
+            const { id: clientId } = (
+              (await axios.get(clientBaseEndpoint)).data as Client[]
+            )[0];
+
+            const { id: surveyId } = (
+              (await axios.get(surveyIndexEndpoint)).data as SurveyViewModel[]
+            )[0];
+
+            await assertCommandStreamError({
+              endpoint: surveyCompletionCommandsEndpoint,
+              stream: TestCommandStream.first(BeginSurvey, {
+                surveyId,
+                participantCompositeIdentifier: {
+                  id: clientId,
+                  type: CLIENT_AGGREGATE_TYPE,
+                },
+              })
+                .andThen(AnswerSurveyQuestion, {
+                  questionLabel: 'q1',
+                  chosenOptionLabel: 'a',
+                })
+                .andThen(AnswerSurveyQuestion, {
+                  questionLabel: 'q2',
+                  chosenOptionLabel: 'b', // this activates the follow-up question
+                })
+                // Shouldn't this be targetting a follow-up question?
+                .andThen(AnswerSurveyQuestion, {
+                  questionLabel: repeatedQuestion,
+                  chosenOptionLabel: targetOptionLabel,
+                })
+                // repeated attempt to answer this question
+                .andThen(AnswerSurveyQuestion, {
+                  questionLabel: repeatedQuestion,
+                  chosenOptionLabel: targetOptionLabel,
+                }),
+              assertErrorMessageAsExpected: (message) => {
+                assertTextMatchesAll(
+                  message,
+                  repeatedQuestion,
+                  'been answered',
+                  surveyName,
+                );
+              },
+            });
+          });
         });
 
         describe(`when the follow-up question should not have been asked based on the parent question's response`, () => {
-          it.todo(`should return the expected error response`);
+          beforeEach(async () => {
+            await seedPublishedSurvey();
+          });
+
+          it(`should return the expected error resposne`, async () => {
+            const conditionallyOmittedQuestionLabel = 'q2.a';
+
+            const { id: clientId } = (
+              (await axios.get(clientBaseEndpoint)).data as Client[]
+            )[0];
+
+            const { id: surveyId } = (
+              (await axios.get(surveyIndexEndpoint)).data as SurveyViewModel[]
+            )[0];
+
+            await assertCommandStreamError({
+              endpoint: surveyCompletionCommandsEndpoint,
+              stream: TestCommandStream.first(BeginSurvey, {
+                surveyId,
+                participantCompositeIdentifier: {
+                  id: clientId,
+                  type: CLIENT_AGGREGATE_TYPE,
+                },
+              })
+                .andThen(AnswerSurveyQuestion, {
+                  questionLabel: targetQuestionLabel,
+                  chosenOptionLabel: targetOptionLabel,
+                })
+                .andThen(AnswerSurveyQuestion, {
+                  questionLabel: 'q2',
+                  chosenOptionLabel: 'a', // this has no follow-up
+                })
+                .andThen(AnswerSurveyQuestion, {
+                  questionLabel: conditionallyOmittedQuestionLabel, // this question should be omitted based on the previous response
+                  chosenOptionLabel: 'a',
+                }),
+              assertErrorMessageAsExpected: (message) => {
+                assertTextMatchesAll(
+                  message,
+                  surveyName,
+                  conditionallyOmittedQuestionLabel,
+                  'not the next question',
+                );
+              },
+            });
+          });
         });
       });
 
       describe(`when abandoning a survey`, () => {
         describe(`when the survey completion record does not exist`, () => {
-          it.todo(`should return the expected error response`);
+          it.only(`should return the expected error response`, async () => {
+            const missingSurveyAttemptId = 'sa404-123';
+
+            await assertCommandError({
+              endpoint: surveyCompletionCommandsEndpoint,
+              commandFsa: TestCommandStream.buildOne(AbandonSurveyCompletion, {
+                aggregateCompositeIdentifier: {
+                  id: missingSurveyAttemptId,
+                },
+              }),
+              assertErrorMessageAsExpected: (message) => {
+                assertTextMatchesAll(
+                  message,
+                  'cannot abandon',
+                  missingSurveyAttemptId,
+                  'no such attempt',
+                );
+              },
+            });
+          });
         });
 
         // TODO survey response instead of completion record?
@@ -211,6 +570,20 @@ describe(`Survey Completion Scenarios`, () => {
 
         describe(`when the survey completion record has already been submitted`, () => {
           it.todo(`should return the expected error response`);
+        });
+      });
+
+      describe(`when submitting a survey`, () => {
+        describe(`when the survey attempt does not exist`, () => {
+          it.todo(`should return the expected error response`);
+        });
+
+        describe(`when the survey attempt is incomplete`, () => {
+          it.todo(`should return the expected error response`);
+        });
+
+        describe(`when the survey attempt has already been abandoned`, () => {
+          it.todo(`shoudl return the expected error response`);
         });
       });
     });

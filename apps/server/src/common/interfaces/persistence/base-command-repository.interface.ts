@@ -7,6 +7,8 @@ interface PersistenceAcknowledgement {
 }
 
 export interface IBaseCommandRepository<T extends Entity = Entity> {
+  exists(id: string): Promise<boolean>;
+
   fetchById(id: string): Promise<T> | null; // Maybe<T>
 
   fetchMany(): Promise<T[]>;

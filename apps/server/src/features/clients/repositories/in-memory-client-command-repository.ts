@@ -1,11 +1,20 @@
+import { IBaseCommandRepository } from 'src/common/interfaces/persistence';
 import { TrueImpactError } from '../../../libs/data-types';
 import { Client } from '../client.aggregate-root';
 import { IClientCommandRepository } from './client-command-repository.interface';
 
-export class InMemoryClientCommandRepository implements IClientCommandRepository {
+export class InMemoryClientCommandRepository
+  implements IClientCommandRepository, IBaseCommandRepository
+{
   private _nextId = 0;
 
   constructor(private entititesById: Map<string, Client> = new Map()) {}
+
+  async exists(id: string): Promise<boolean> {
+    const result = this.entititesById.has(id);
+
+    return Promise.resolve(result);
+  }
 
   //   @ts-expect-error Is TS broken here?
   async fetchById(id: string): Promise<Client | null> {
@@ -15,7 +24,7 @@ export class InMemoryClientCommandRepository implements IClientCommandRepository
   }
 
   fetchMany(): Promise<Client[]> {
-    throw new Error('Method not implemented.');
+    return Promise.resolve(Array.from(this.entititesById.values()));
   }
 
   async create(instance: Client): Promise<string | TrueImpactError> {

@@ -14,4 +14,9 @@ export class ClientQueryService {
   fetchById(id: string): Promise<Client | null> {
     return this.repository.fetchById(id) as Promise<Client | null>;
   }
+
+  // TODO inject `user` and user filter \ pagination options
+  fetchMany(): Promise<Client[] | null> {
+    return this.repository.fetchMany();
+  }
 }

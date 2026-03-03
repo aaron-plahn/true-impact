@@ -3,14 +3,31 @@ import {
   InMemoryQueryRepositoryProvider,
 } from '../../common/persistence';
 import { CommandHandlerService } from '../../libs/cqrs-es';
+import {
+  TrueImpactBadUserInputError,
+  TrueImpactError,
+} from '../../libs/data-types';
 import { Module, ModuleRef } from '../../libs/framework';
+import { CLIENT_AGGREGATE_TYPE } from '../clients/client.composite-identifier';
+import { ClientModule } from '../clients/client.module';
+import { ClientValidationService } from '../clients/services';
 import { SURVEY_COMMAND_REPOSITORY_DEPENDENCY_TOKEN } from './constants';
 import { SURVEY_QUERY_REPOSITORY_PROVIDER_TOKEN } from './queries/survey-query-repository.interface';
 import { SurveyQueryService } from './queries/survey-query.service';
 import { SurveyViewModel } from './queries/survey.view-model';
-import { BeginSurvey, SurveyResponseRecord } from './survey-completion';
+import {
+  AbandonSurveyCompletion,
+  AbandonSurveyCompletionCommandHandler,
+  AnswerSurveyQuestion,
+  AnswerSurveyQuestionCommandHandler,
+  BeginSurvey,
+  SurveyResponseRecord,
+} from './survey-completion';
 import { SurveyCompletionController } from './survey-completion.controller';
-import { BeginSurveyCommandHandler } from './survey-completion/commands/begin-survey.command-handler';
+import {
+  BeginSurveyCommandHandler,
+  SURVEY_PARTICIPANT_MANAGEMENT_SERVICE_PROVIDER_INJECTION_TOKEN,
+} from './survey-completion/commands/begin-survey.command-handler';
 import {
   SURVEY_COMPLETION_QUERY_REPOSITORY_INJECTION_TOKEN,
   SurveyCompletionQueryService,
@@ -34,7 +51,7 @@ import { SurveyController } from './survey.controller';
 const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
 
 @Module({
-  imports: [],
+  imports: [ClientModule],
   providers: [
     CreateSurveyCommandHandler,
     AddQuestionToSurveyCommandHandler,
@@ -43,6 +60,9 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
     PublishSurveyCommandHandler,
     // Survey Completion Commands
     BeginSurveyCommandHandler,
+    AnswerSurveyQuestionCommandHandler,
+    AbandonSurveyCompletionCommandHandler,
+    // services
     SurveyQueryService,
     SurveyCompletionQueryService,
     {
@@ -100,6 +120,14 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
           .register({
             CommandHandlerCtor: BeginSurveyCommandHandler,
             CommandPayloadCtor: BeginSurvey,
+          })
+          .register({
+            CommandHandlerCtor: AnswerSurveyQuestionCommandHandler,
+            CommandPayloadCtor: AnswerSurveyQuestion,
+          })
+          .register({
+            CommandHandlerCtor: AbandonSurveyCompletionCommandHandler,
+            CommandPayloadCtor: AbandonSurveyCompletion,
           });
 
         return commandHandlerService;
@@ -117,6 +145,25 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
         new InMemoryCommandRepositoryProvider().forFeature(
           SurveyResponseRecord,
         ),
+    },
+    {
+      provide: SURVEY_PARTICIPANT_MANAGEMENT_SERVICE_PROVIDER_INJECTION_TOKEN,
+      useFactory: (clientValidationService: ClientValidationService) => {
+        return {
+          forEntity(entityType: string) {
+            if (entityType === CLIENT_AGGREGATE_TYPE) {
+              return clientValidationService;
+            }
+
+            return new TrueImpactBadUserInputError([
+              new TrueImpactError(
+                `Failed to validate survey participant of unknown type: ${entityType}`,
+              ),
+            ]);
+          },
+        };
+      },
+      inject: [ClientValidationService],
     },
   ],
   // Exposing data classes allows us to drive them via repl

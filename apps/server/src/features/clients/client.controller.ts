@@ -4,13 +4,14 @@ import { CommandHandlerService } from '../../libs/cqrs-es';
 import {
   TrueImpactError,
   TrueImpactRuntimeException,
-} from 'src/libs/data-types';
+} from '../../libs/data-types';
 import {
   BadUserInputFilter,
   Body,
   Controller,
   DetailQueryEndpoint,
   IdParam,
+  IndexQueryEndpoint,
   Patch,
   Post,
   QueryResponseInterceptor,
@@ -32,7 +33,14 @@ export class ClientController {
 
   @DetailQueryEndpoint()
   async fetchById(@IdParam() id: string) {
+    // TODO we need a client view model
     return this.clientsService.fetchById(id);
+  }
+
+  @IndexQueryEndpoint()
+  async fetchMany() {
+    // TODO We need a client view model
+    return this.clientsService.fetchMany();
   }
 
   @Post('commands')

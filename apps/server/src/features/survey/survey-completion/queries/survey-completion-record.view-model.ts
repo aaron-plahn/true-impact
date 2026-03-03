@@ -1,4 +1,4 @@
-import { NestedDataType, NonEmptyString } from 'src/libs/data-types';
+import { NestedDataType, NonEmptyString } from '../../../../libs/data-types';
 import { SurveyParticipantCompositeIdentifier } from '../survey-participant.composite-identifier';
 import { SurveyResponseRecord } from '../survey-response-record.aggregate-root';
 

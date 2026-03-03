@@ -5,6 +5,7 @@ import { CreateClient } from './commands/create-client.command';
 import { CreateClientCommandHandler } from './commands/create-client.command-handler';
 import { CLIENT_COMMAND_REPOSITORY_INJECTION_TOKEN } from './constants';
 import { InMemoryClientCommandRepository } from './repositories';
+import { ClientValidationService } from './services';
 import { ClientQueryService } from './services/client-query.service';
 
 @Module({
@@ -34,7 +35,9 @@ import { ClientQueryService } from './services/client-query.service';
       },
       inject: [ModuleRef],
     },
+    ClientValidationService,
   ],
+  exports: [ClientValidationService],
   controllers: [ClientController],
 })
 export class ClientModule {}

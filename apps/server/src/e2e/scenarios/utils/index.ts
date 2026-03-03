@@ -4,7 +4,13 @@ import {
   ICommandFsa,
   TestCommandStream,
 } from '../../../libs/cqrs-es';
+import {
+  TrueImpactError,
+  TrueImpactRuntimeException,
+} from '../../../libs/data-types';
 import { HttpStatus } from '../../../libs/framework';
+
+// TODO break out each helper into its own file
 
 type CommandErrorResponseBody = {
   status: number;
@@ -127,6 +133,10 @@ export const assertScenarioSuccess = async ({
   );
 
   fsasAndResults.forEach(([_fsa, result]) => {
+    if (!(result as CommandSuccessAcknowledgement).id) {
+      console.log('oops');
+    }
+
     expect((result as CommandSuccessAcknowledgement).id).toBeTruthy();
 
     results.push(result as CommandSuccessAcknowledgement);
@@ -159,6 +169,16 @@ export const assertCommandStreamError = async ({
         ],
       ): next is [ICommandFsa, CommandErrorResponseBody] => {
         const [_fsa, result] = next;
+
+        if (
+          (result as unknown as { innerErrors: TrueImpactError[] }).innerErrors
+        ) {
+          throw new TrueImpactRuntimeException([
+            new TrueImpactError(
+              `Invalid format for an error response. Are you missing a response interceptor?`,
+            ),
+          ]);
+        }
 
         return typeof (result as CommandErrorResponseBody).message === 'string';
       },
