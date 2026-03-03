@@ -61,7 +61,7 @@ export class InMemoryCommandRepository<
   }
 
   fetchMany(): Promise<T[]> {
-    throw new Error('Method not implemented.');
+    return Promise.resolve(Array.from(this.entititesById.values()));
   }
 
   /**

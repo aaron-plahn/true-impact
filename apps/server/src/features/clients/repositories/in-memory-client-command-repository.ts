@@ -5,9 +5,7 @@ import { IClientCommandRepository } from './client-command-repository.interface'
 export class InMemoryClientCommandRepository implements IClientCommandRepository {
   private _nextId = 0;
 
-  constructor(
-    private readonly entititesById: Map<string, Client> = new Map(),
-  ) {}
+  constructor(private entititesById: Map<string, Client> = new Map()) {}
 
   //   @ts-expect-error Is TS broken here?
   async fetchById(id: string): Promise<Client | null> {
@@ -38,6 +36,10 @@ export class InMemoryClientCommandRepository implements IClientCommandRepository
 
   createMany(_instances: Client[]): Promise<void> {
     throw new Error('Method not implemented.');
+  }
+
+  clear() {
+    this.entititesById = new Map();
   }
 
   private getNextId() {

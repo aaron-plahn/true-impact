@@ -1,9 +1,5 @@
-export interface ICommandPayload {
-  aggregateCompositeIdentifier: {
-    type: string;
-    id: string;
-  };
-}
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface ICommandPayload {}
 
 /**
  * A creation command is not assumed to have an `aggregateCompositeIdentifier`.

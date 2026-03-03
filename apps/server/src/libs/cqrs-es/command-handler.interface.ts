@@ -10,6 +10,7 @@ export interface CommandSuccessAcknowledgement {
 export type CommandResult = TrueImpactError | CommandSuccessAcknowledgement;
 
 export interface ICommandHandler<
+  // we shouldn't require an `aggregateCompositeIdentifier` here
   TPayload extends ICommandPayload = ICommandPayload,
 > {
   handle(fsa: { payload: TPayload }): Promise<CommandResult>;

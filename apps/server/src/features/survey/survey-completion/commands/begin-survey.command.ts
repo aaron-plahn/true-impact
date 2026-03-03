@@ -1,7 +1,23 @@
-import { NestedDataType, NonEmptyString } from '../../../../libs/data-types';
+import { CLIENT_AGGREGATE_TYPE } from '../../../../features/clients/client.composite-identifier';
+import {
+  NestedDataType,
+  NonEmptyString,
+  TrueImpactDataExample,
+} from '../../../../libs/data-types';
 import { SurveyParticipantCompositeIdentifier } from '../survey-participant.composite-identifier';
 
+@TrueImpactDataExample<BeginSurvey>({
+  example: {
+    surveyId: '303',
+    participantCompositeIdentifier: {
+      type: CLIENT_AGGREGATE_TYPE,
+      id: '55',
+    },
+  },
+})
 export class BeginSurvey {
+  static readonly type = 'BEGIN_SURVEY';
+
   // TODO @ReferenceTo or @OneToMany
   @NonEmptyString({
     label: 'survey ID',

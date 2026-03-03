@@ -8,6 +8,15 @@ import { SURVEY_COMMAND_REPOSITORY_DEPENDENCY_TOKEN } from './constants';
 import { SURVEY_QUERY_REPOSITORY_PROVIDER_TOKEN } from './queries/survey-query-repository.interface';
 import { SurveyQueryService } from './queries/survey-query.service';
 import { SurveyViewModel } from './queries/survey.view-model';
+import { BeginSurvey, SurveyResponseRecord } from './survey-completion';
+import { SurveyCompletionController } from './survey-completion.controller';
+import { BeginSurveyCommandHandler } from './survey-completion/commands/begin-survey.command-handler';
+import {
+  SURVEY_COMPLETION_QUERY_REPOSITORY_INJECTION_TOKEN,
+  SurveyCompletionQueryService,
+} from './survey-completion/queries';
+import { SurveyCompletionRecordViewModel } from './survey-completion/queries/survey-completion-record.view-model';
+import { SURVEY_COMPLETION_COMMAND_REPOSITORY_INJECTION_TOKEN } from './survey-completion/repositories';
 import { AddFollowUpQuestionForSurveyOption } from './survey-management/commands/add-follow-up-question-for-survey-option.command';
 import { AddFollowUpQuestionForSurveyOptionCommandHandler } from './survey-management/commands/add-follow-up-question-for-survey-option.command-handler';
 import { AddOptionToSurveyQuestion } from './survey-management/commands/add-option-to-survey-question.command';
@@ -32,11 +41,20 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
     AddOptionToSurveyQuestionCommandHandler,
     AddFollowUpQuestionForSurveyOptionCommandHandler,
     PublishSurveyCommandHandler,
+    // Survey Completion Commands
+    BeginSurveyCommandHandler,
     SurveyQueryService,
+    SurveyCompletionQueryService,
     {
       provide: SURVEY_QUERY_REPOSITORY_PROVIDER_TOKEN,
       useValue: new InMemoryQueryRepositoryProvider().forFeature(
         SurveyViewModel,
+      ),
+    },
+    {
+      provide: SURVEY_COMPLETION_QUERY_REPOSITORY_INJECTION_TOKEN,
+      useValue: new InMemoryQueryRepositoryProvider().forFeature(
+        SurveyCompletionRecordViewModel,
       ),
     },
     /**
@@ -77,6 +95,11 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
           .register({
             CommandPayloadCtor: PublishSurvey,
             CommandHandlerCtor: PublishSurveyCommandHandler,
+          })
+          // Survey Completion
+          .register({
+            CommandHandlerCtor: BeginSurveyCommandHandler,
+            CommandPayloadCtor: BeginSurvey,
           });
 
         return commandHandlerService;
@@ -88,9 +111,16 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
       useFactory: () =>
         new InMemoryCommandRepositoryProvider().forFeature(Survey),
     },
+    {
+      provide: SURVEY_COMPLETION_COMMAND_REPOSITORY_INJECTION_TOKEN,
+      useFactory: () =>
+        new InMemoryCommandRepositoryProvider().forFeature(
+          SurveyResponseRecord,
+        ),
+    },
   ],
   // Exposing data classes allows us to drive them via repl
   exports: [...dataClasses],
-  controllers: [SurveyController],
+  controllers: [SurveyController, SurveyCompletionController],
 })
 export class SurveyModule {}

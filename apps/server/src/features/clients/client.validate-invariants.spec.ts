@@ -1,8 +1,8 @@
 import { clonePlainObject, TrueImpactError } from '../../libs/data-types';
-import { Client, ClientPeristenceDto } from './client.aggregate-root';
+import { Client, ClientPersistenceDto } from './client.aggregate-root';
 
 // TODO Build test instance
-const validDtoWihtoutOptionalProperties: ClientPeristenceDto = {
+const validDtoWihtoutOptionalProperties: ClientPersistenceDto = {
   id: '1',
   fullName: {
     firstName: 'Ronald',
@@ -52,7 +52,7 @@ describe(`Client.validateInvariants`, () => {
         });
 
         const result = Client.fromPersistenceDto(
-          invalidDto as ClientPeristenceDto,
+          invalidDto as ClientPersistenceDto,
         );
 
         assertTrueImpactError(result);
@@ -73,7 +73,7 @@ describe(`Client.validateInvariants`, () => {
         });
 
         const result = Client.fromPersistenceDto(
-          invalidDto as ClientPeristenceDto,
+          invalidDto as ClientPersistenceDto,
         );
 
         assertTrueImpactError(result);
@@ -96,7 +96,7 @@ describe(`Client.validateInvariants`, () => {
 
       it(`should return the expected error`, () => {
         const result = Client.fromPersistenceDto(
-          invalidInstance as unknown as ClientPeristenceDto,
+          invalidInstance as unknown as ClientPersistenceDto,
         );
 
         assertTrueImpactError(result);

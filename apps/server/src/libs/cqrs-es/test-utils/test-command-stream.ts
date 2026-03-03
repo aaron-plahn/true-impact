@@ -3,6 +3,7 @@ import {
   clonePlainObject,
   Ctor,
   DeepPartial,
+  isNonEmptyString,
 } from '../../../libs/data-types';
 import {
   ICommandFsa,
@@ -10,6 +11,30 @@ import {
   IUpdateCommandFsa,
 } from '../command-flux-standard-action.interface';
 import { CommandSuccessAcknowledgement } from '../command-handler.interface';
+
+type HasAggregateCompositeIdentifier = {
+  aggregateCompositeIdentifier: {
+    type: string;
+    id: string;
+  };
+};
+
+const hasAggregateCompositeIdentifier = (
+  input: unknown,
+): input is HasAggregateCompositeIdentifier => {
+  if (!input) return false;
+
+  const { aggregateCompositeIdentifier } =
+    input as HasAggregateCompositeIdentifier;
+
+  if (!aggregateCompositeIdentifier) return false;
+
+  const { type, id } = aggregateCompositeIdentifier;
+
+  if (!isNonEmptyString(type)) return false;
+
+  return isNonEmptyString(id);
+};
 
 /**
  * This helper manages a stream of commands targetting a single aggregate root (by `aggregateCompositeIdentifier`).
@@ -30,7 +55,7 @@ export class TestCommandStream {
   }
 
   andThen<T extends ICommandPayload>(
-    C: Ctor<T> & { type: string } & { fromPersistenceDto(dto: unknown): T },
+    C: Ctor<T> & { type: string },
     overrides: DeepPartial<T> = {} as DeepPartial<T>,
   ) {
     const fsa = TestCommandStream.buildOne<T>(C, overrides);
@@ -86,6 +111,10 @@ export class TestCommandStream {
     return this.updateCommandFsas.at(-1) || null;
   }
 
+  size(): number {
+    return this.updateCommandFsas.length + 1;
+  }
+
   /**
    *
    * @param compositeIdOverrides Note that it is only necessary to override the `type` (aggregate type) property if testing a generic command that can target more than one aggregate type
@@ -93,25 +122,34 @@ export class TestCommandStream {
    */
   as(compositeIdOverrides: { type?: string; id: string }): IUpdateCommandFsa[] {
     return this.updateCommandFsas.map(({ type, payload }) => {
-      const aggregateCompositeIdentifierWithOverridesApplied = {
-        type:
-          compositeIdOverrides.type ||
-          payload.aggregateCompositeIdentifier.type,
-        id: compositeIdOverrides.id,
-      };
+      if (hasAggregateCompositeIdentifier(payload)) {
+        const aggregateCompositeIdentifierWithOverridesApplied = {
+          type:
+            compositeIdOverrides.type ||
+            payload.aggregateCompositeIdentifier.type,
+          id: compositeIdOverrides.id,
+        };
 
-      const payloadWithOverrides = clonePlainObject(
-        payload,
-        {
-          aggregateCompositeIdentifier:
-            aggregateCompositeIdentifierWithOverridesApplied,
-        },
-        [],
-      );
+        const payloadWithOverrides = clonePlainObject(
+          payload,
+          {
+            aggregateCompositeIdentifier:
+              aggregateCompositeIdentifierWithOverridesApplied,
+          },
+          [],
+        );
 
+        return {
+          type,
+          payload: payloadWithOverrides,
+        };
+      }
+      /**
+       * For create commands, there is no composite identifier to override.
+       */
       return {
         type,
-        payload: payloadWithOverrides,
+        payload: clonePlainObject(payload, {}),
       };
     });
   }
@@ -120,8 +158,8 @@ export class TestCommandStream {
     return clonePlainObject(this.creationCommandFsa, {}, []);
   }
 
-  static first<T extends ICommandPayload>(
-    C: Ctor<T> & { type: string } & { fromPersistenceDto(dto: unknown): T },
+  static first<T = unknown>(
+    C: Ctor<T> & { type: string },
     overrides: DeepPartial<T>,
   ): TestCommandStream {
     const creationCommandFsa = TestCommandStream.buildOne<T>(C, overrides);
@@ -129,12 +167,11 @@ export class TestCommandStream {
     return new TestCommandStream(creationCommandFsa, []);
   }
 
-  // Can't we use this in place of the global helper?
-  static buildOne<T extends ICommandPayload>(
-    C: Ctor<T> & { type: string } & { fromPersistenceDto(dto: unknown): T },
+  static buildOne<T = unknown>(
+    C: Ctor<T> & { type: string },
     overrides: DeepPartial<T>,
   ): ICommandFsa<T> {
-    const payloadWithOverrides = buildTestInstance(C, overrides);
+    const payloadWithOverrides = buildTestInstance(C, overrides, true);
 
     const fsa = {
       type: C.type,

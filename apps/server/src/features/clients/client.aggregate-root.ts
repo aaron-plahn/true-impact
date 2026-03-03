@@ -14,7 +14,7 @@ interface ValidateInvariants<T> {
   validateInvariants(): T | TrueImpactError;
 }
 
-export class ClientPeristenceDto {
+export class ClientPersistenceDto {
   id: string;
 
   fullName: FullNameDto;
@@ -105,12 +105,12 @@ export class Client extends Entity implements ValidateInvariants<Client> {
     return allErrors;
   }
 
-  toPersistenceDto(): ClientPeristenceDto {
-    return JSON.parse(JSON.stringify(this)) as ClientPeristenceDto;
+  toPersistenceDto(): ClientPersistenceDto {
+    return JSON.parse(JSON.stringify(this)) as ClientPersistenceDto;
   }
 
   public static fromPersistenceDto(
-    dto: ClientPeristenceDto,
+    dto: ClientPersistenceDto,
   ): Client | TrueImpactError {
     const result = new Client(dto).validateInvariants();
 
