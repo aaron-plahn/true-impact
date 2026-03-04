@@ -1,11 +1,10 @@
-import { CommandResult, ICommandHandler } from 'src/libs/cqrs-es';
+import { CommandResult, ICommandHandler } from '../../../libs/cqrs-es';
 import {
   TrueImpactBadUserInputError,
   TrueImpactError,
 } from '../../../libs/data-types';
 import { Inject } from '../../../libs/framework';
 import { Client } from '../client.aggregate-root';
-import { CLIENT_AGGREGATE_TYPE } from '../client.composite-identifier';
 import { CLIENT_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../constants';
 import type { IClientCommandRepository } from '../repositories';
 import { CreateClient } from './create-client.command';
@@ -34,10 +33,6 @@ export class CreateClientCommandHandler implements ICommandHandler {
       return new TrueImpactBadUserInputError([persistenceResult]);
     }
 
-    return {
-      id: persistenceResult,
-      revision: 'oops',
-      type: CLIENT_AGGREGATE_TYPE,
-    };
+    return persistenceResult;
   }
 }

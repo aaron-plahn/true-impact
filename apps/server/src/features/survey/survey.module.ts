@@ -1,5 +1,5 @@
 import {
-  InMemoryCommandRepositoryProvider,
+  InMemoryCommandRepository,
   InMemoryQueryRepositoryProvider,
 } from '../../common/persistence';
 import { CommandHandlerService } from '../../libs/cqrs-es';
@@ -27,7 +27,7 @@ import {
 import { SurveyCompletionController } from './survey-completion.controller';
 import {
   BeginSurveyCommandHandler,
-  SURVEY_PARTICIPANT_MANAGEMENT_SERVICE_PROVIDER_INJECTION_TOKEN,
+  SURVEY_PARTICIPANT_VALIDATION_SERVICE_PROVIDER_INJECTION_TOKEN,
 } from './survey-completion/commands/begin-survey.command-handler';
 import {
   SURVEY_COMPLETION_QUERY_REPOSITORY_INJECTION_TOKEN,
@@ -143,19 +143,16 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
     },
     {
       provide: SURVEY_COMMAND_REPOSITORY_DEPENDENCY_TOKEN,
-      useFactory: () =>
-        new InMemoryCommandRepositoryProvider().forFeature(Survey),
+      useFactory: () => new InMemoryCommandRepository(Survey),
     },
     {
       provide: SURVEY_COMPLETION_COMMAND_REPOSITORY_INJECTION_TOKEN,
       useFactory: () => {
-        return new InMemorySurveyCompletionCommandRepository(
-          new InMemoryCommandRepositoryProvider(),
-        );
+        return new InMemorySurveyCompletionCommandRepository();
       },
     },
     {
-      provide: SURVEY_PARTICIPANT_MANAGEMENT_SERVICE_PROVIDER_INJECTION_TOKEN,
+      provide: SURVEY_PARTICIPANT_VALIDATION_SERVICE_PROVIDER_INJECTION_TOKEN,
       useFactory: (clientValidationService: ClientValidationService) => {
         return {
           forEntity(entityType: string) {

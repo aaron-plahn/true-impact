@@ -18,7 +18,7 @@ import { SurveyParticipantCompositeIdentifier } from '../survey-participant.comp
 export class BeginSurvey {
   static readonly type = 'BEGIN_SURVEY';
 
-  // TODO @ReferenceTo or @OneToMany
+  // TODO @ReferenceTo or @OneToMany for schema (not validation) purposes?
   @NonEmptyString({
     label: 'survey ID',
     description: 'system identifier for the survey you are completing',

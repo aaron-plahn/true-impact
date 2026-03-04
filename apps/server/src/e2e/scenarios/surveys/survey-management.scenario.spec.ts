@@ -18,8 +18,6 @@ import {
   assertScenarioSuccess,
 } from '../utils';
 
-// TODO take 'complete' out of this filename
-
 // TODO From env.e2e
 const port = '3001';
 

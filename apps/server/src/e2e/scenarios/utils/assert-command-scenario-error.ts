@@ -1,0 +1,64 @@
+import {
+  ICommandFsa,
+  PersistenceAcknowledgement,
+  TestCommandStream,
+} from '../../../libs/cqrs-es';
+import {
+  TrueImpactError,
+  TrueImpactRuntimeException,
+} from '../../../libs/data-types';
+import { CommandErrorResponseBody } from './command-responses';
+import { RestCommandStreamExecutor } from './rest-command-executor';
+
+type ErrorTestCase = {
+  endpoint: string;
+  stream: TestCommandStream;
+  assertErrorMessageAsExpected?: (message: string) => void;
+};
+
+export const assertCommandStreamError = async ({
+  endpoint,
+  stream,
+  assertErrorMessageAsExpected,
+}: ErrorTestCase): Promise<void> => {
+  const results = await stream.execute(new RestCommandStreamExecutor(endpoint));
+
+  const failingCommands: [ICommandFsa, CommandErrorResponseBody][] =
+    results.filter(
+      (
+        next: [
+          ICommandFsa,
+          PersistenceAcknowledgement | CommandErrorResponseBody,
+        ],
+      ): next is [ICommandFsa, CommandErrorResponseBody] => {
+        const [_fsa, result] = next;
+
+        if (
+          (result as unknown as { innerErrors: TrueImpactError[] }).innerErrors
+        ) {
+          throw new TrueImpactRuntimeException([
+            new TrueImpactError(
+              `Invalid format for an error response. Are you missing a response interceptor?`,
+            ),
+          ]);
+        }
+
+        return typeof (result as CommandErrorResponseBody).message === 'string';
+      },
+    );
+
+  expect(failingCommands).toHaveLength(1);
+
+  const resultForLastCommand = failingCommands.at(-1)?.[1];
+
+  expect(
+    (resultForLastCommand as CommandErrorResponseBody).message,
+  ).toBeTruthy();
+
+  if (
+    typeof resultForLastCommand?.toString === 'function' &&
+    typeof assertErrorMessageAsExpected === 'function'
+  ) {
+    assertErrorMessageAsExpected(resultForLastCommand.message);
+  }
+};

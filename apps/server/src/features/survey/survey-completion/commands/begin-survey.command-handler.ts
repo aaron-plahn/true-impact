@@ -1,5 +1,5 @@
 import { Inject } from '@nestjs/common';
-import { CommandResult, ICommandHandler } from 'src/libs/cqrs-es';
+import { CommandResult, ICommandHandler } from '../../../../libs/cqrs-es';
 import {
   TrueImpactBadUserInputError,
   TrueImpactError,
@@ -15,8 +15,8 @@ interface ISurveyParticipantManagementService {
   exists(id: string): Promise<boolean>;
 }
 
-export const SURVEY_PARTICIPANT_MANAGEMENT_SERVICE_PROVIDER_INJECTION_TOKEN =
-  'SURVEY_PARTICIPANT_MANAGEMENT_SERVICE_PROVIDER_INJECTION_TOKEN';
+export const SURVEY_PARTICIPANT_VALIDATION_SERVICE_PROVIDER_INJECTION_TOKEN =
+  'SURVEY_PARTICIPANT_VALIDATION_SERVICE_PROVIDER_INJECTION_TOKEN';
 
 interface ISurveyParticipantManagementServiceProvider {
   forEntity(
@@ -30,8 +30,8 @@ export class BeginSurveyCommandHandler implements ICommandHandler<BeginSurvey> {
     private readonly surveyCompletionRepository: ISurveyCompletionCommandRepository,
     @Inject(SURVEY_COMMAND_REPOSITORY_DEPENDENCY_TOKEN)
     private readonly surveyCommandRepository: ISurveyCommandRepository,
-    @Inject('SURVEY_PARTICIPANT_MANAGEMENT_SERVICE_PROVIDER_INJECTION_TOKEN')
-    private readonly participantManagementProvider: ISurveyParticipantManagementServiceProvider,
+    @Inject('SURVEY_PARTICIPANT_VALIDATION_SERVICE_PROVIDER_INJECTION_TOKEN')
+    private readonly participantValidationServiceProvider: ISurveyParticipantManagementServiceProvider,
   ) {}
 
   async handle({
@@ -57,9 +57,10 @@ export class BeginSurveyCommandHandler implements ICommandHandler<BeginSurvey> {
       ]);
     }
 
-    const participantManager = this.participantManagementProvider.forEntity(
-      participantCompositeIdentifier.type,
-    );
+    const participantManager =
+      this.participantValidationServiceProvider.forEntity(
+        participantCompositeIdentifier.type,
+      );
 
     if (participantManager instanceof TrueImpactError) {
       return participantManager;

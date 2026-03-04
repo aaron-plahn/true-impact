@@ -8,9 +8,9 @@ import {
   Controller,
   DetailQueryEndpoint,
   IdParam,
-  Patch,
   QueryResponseInterceptor,
   ResourceNotFoundFilter,
+  TestSetupEndpoint,
   UseFilters,
   UseInterceptors,
 } from '../../libs/framework';
@@ -32,11 +32,9 @@ export class SurveyCompletionController {
     return this.surveyCompletionQueryService.fetchById(id);
   }
 
-  // fetch all completion attempts
+  // TODO support filters to fetch completion attempts for participant of a given type, for a given survey, etc.
 
-  // fetch completion attempts for participant of type
-
-  @Patch('test-setup')
+  @TestSetupEndpoint()
   async testSetup(): Promise<'OK'> {
     if (process.env.NODE_ENV !== 'test') {
       throw new TrueImpactRuntimeException([

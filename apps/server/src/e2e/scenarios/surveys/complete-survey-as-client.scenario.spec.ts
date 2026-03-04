@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { SurveyCompletionRecordViewModel } from 'src/features/survey/survey-completion/queries/survey-completion-record.view-model';
 import { Client } from '../../../features/clients/client.aggregate-root';
 import { CLIENT_AGGREGATE_TYPE } from '../../../features/clients/client.composite-identifier';
 import { CreateClient } from '../../../features/clients/commands/create-client.command';
@@ -10,6 +9,7 @@ import {
   BeginSurvey,
   SubmitSurvey,
 } from '../../../features/survey/survey-completion';
+import { SurveyCompletionRecordViewModel } from '../../../features/survey/survey-completion/queries/survey-completion-record.view-model';
 import { AddFollowUpQuestionForSurveyOption } from '../../../features/survey/survey-management/commands/add-follow-up-question-for-survey-option.command';
 import { AddOptionToSurveyQuestion } from '../../../features/survey/survey-management/commands/add-option-to-survey-question.command';
 import { AddQuestionToSurvey } from '../../../features/survey/survey-management/commands/add-question-to-survey.command';
@@ -29,7 +29,6 @@ const port = '3001';
 
 const baseEndpoint = `http://localhost:${port}`;
 
-// TODO use this where applicable
 const surveyIndexEndpoint = `${baseEndpoint}/surveys`;
 
 const surveyResponseRecordIndexEndpoint = `${surveyIndexEndpoint}/responses`;
@@ -50,7 +49,6 @@ const createClient = TestCommandStream.first(CreateClient, {});
 
 let clientId: string;
 
-// Do we ensure this is unique?
 const surveyName = 'My Questionnaire';
 
 const targetQuestionLabel = 'q1';
@@ -129,7 +127,6 @@ const buildFullSurveyBeforePublishing = TestCommandStream.first(CreateSurvey, {
 const publishSurvey = buildFullSurveyBeforePublishing.andThen(PublishSurvey);
 
 const seedTestClient = async () => {
-  // TODO rename helpers and params
   await assertScenarioSuccess({
     endpoint: clientCommandsEndpoint,
     stream: createClient,
@@ -150,14 +147,13 @@ const seedPublishedSurvey = async () => {
 };
 
 describe(`Survey Completion Scenarios`, () => {
-  beforeAll(async () => {
-    await axios.patch(clientTestSetupEndpoint);
-  });
-
   beforeEach(async () => {
+    // clear all test data between runs
     await axios.patch(surveyCompletionTestSetupEndpoint);
 
     await axios.patch(surveyTestSetupEndpoint);
+
+    await axios.patch(clientTestSetupEndpoint);
 
     await seedTestClient();
   });
@@ -169,7 +165,7 @@ describe(`Survey Completion Scenarios`, () => {
           await seedPublishedSurvey();
         });
 
-        it(`should have a comprehensive survey completion scenario`, async () => {
+        it(`should submit the survey completion attempt`, async () => {
           const { id: clientId } = (
             (await axios.get(clientBaseEndpoint)).data as Client[]
           )[0];
@@ -548,12 +544,7 @@ describe(`Survey Completion Scenarios`, () => {
 
         describe(`when the question already has a response`, () => {
           beforeEach(async () => {
-            // TODO why is this necessary?
-            await axios.patch(surveyTestSetupEndpoint);
-
             await seedPublishedSurvey();
-
-            console.log('why me worry');
           });
 
           it(`should return the expected error response`, async () => {
@@ -576,7 +567,6 @@ describe(`Survey Completion Scenarios`, () => {
                   type: CLIENT_AGGREGATE_TYPE,
                 },
               })
-                // Shouldn't this be targetting a follow-up question?
                 .andThen(AnswerSurveyQuestion, {
                   questionLabel: repeatedQuestion,
                   chosenOptionLabel: targetOptionLabel,
@@ -674,12 +664,7 @@ describe(`Survey Completion Scenarios`, () => {
 
         describe(`when the question already has a response`, () => {
           beforeEach(async () => {
-            // TODO why is this necessary?
-            await axios.patch(surveyTestSetupEndpoint);
-
             await seedPublishedSurvey();
-
-            console.log('why me worry');
           });
 
           it(`should return the expected error response`, async () => {
@@ -710,7 +695,6 @@ describe(`Survey Completion Scenarios`, () => {
                   questionLabel: 'q2',
                   chosenOptionLabel: 'b', // this activates the follow-up question
                 })
-                // Shouldn't this be targetting a follow-up question?
                 .andThen(AnswerSurveyQuestion, {
                   questionLabel: repeatedQuestion,
                   chosenOptionLabel: targetOptionLabel,

@@ -1,4 +1,4 @@
-import type { IUpdateCommandFsa } from '../../libs/cqrs-es';
+import type { ICommandFsa } from '../../libs/cqrs-es';
 import { CommandHandlerService, CommandResult } from '../../libs/cqrs-es';
 import {
   TrueImpactError,
@@ -11,10 +11,10 @@ import {
   DetailQueryEndpoint,
   IdParam,
   IndexQueryEndpoint,
-  Patch,
   Post,
   QueryResponseInterceptor,
   ResourceNotFoundFilter,
+  TestSetupEndpoint,
   UseFilters,
   UseInterceptors,
 } from '../../libs/framework';
@@ -49,13 +49,13 @@ export class SurveyController {
   }
 
   @Post('commands')
-  async executeCommand(@Body() fsa: IUpdateCommandFsa): Promise<CommandResult> {
+  async executeCommand(@Body() fsa: ICommandFsa): Promise<CommandResult> {
     const result = await this.commandHandlerService.execute(fsa);
 
     return result;
   }
 
-  @Patch('test-setup')
+  @TestSetupEndpoint()
   async testSetup(): Promise<'OK'> {
     if (process.env.NODE_ENV !== 'test') {
       throw new TrueImpactRuntimeException([

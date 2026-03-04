@@ -3,38 +3,19 @@ import {
   clonePlainObject,
   Ctor,
   DeepPartial,
-  isNonEmptyString,
 } from '../../../libs/data-types';
 import {
   ICommandFsa,
   ICommandPayload,
-  IUpdateCommandFsa,
 } from '../command-flux-standard-action.interface';
-import { CommandSuccessAcknowledgement } from '../command-handler.interface';
+import { PersistenceAcknowledgement } from '../command-handler.interface';
 
-type HasAggregateCompositeIdentifier = {
+interface IUpdateCommandPayload {
   aggregateCompositeIdentifier: {
     type: string;
     id: string;
   };
-};
-
-const hasAggregateCompositeIdentifier = (
-  input: unknown,
-): input is HasAggregateCompositeIdentifier => {
-  if (!input) return false;
-
-  const { aggregateCompositeIdentifier } =
-    input as HasAggregateCompositeIdentifier;
-
-  if (!aggregateCompositeIdentifier) return false;
-
-  const { type, id } = aggregateCompositeIdentifier;
-
-  if (!isNonEmptyString(type)) return false;
-
-  return isNonEmptyString(id);
-};
+}
 
 /**
  * This helper manages a stream of commands targetting a single aggregate root (by `aggregateCompositeIdentifier`).
@@ -43,18 +24,18 @@ const hasAggregateCompositeIdentifier = (
 export class TestCommandStream {
   private creationCommandFsa: ICommandFsa;
 
-  private updateCommandFsas: IUpdateCommandFsa[] = [];
+  private updateCommandFsas: ICommandFsa<IUpdateCommandPayload>[] = [];
 
   constructor(
     creationCommandFsa: ICommandFsa,
-    updateCommandFsas: IUpdateCommandFsa[],
+    updateCommandFsas: ICommandFsa<IUpdateCommandPayload>[],
   ) {
     this.creationCommandFsa = creationCommandFsa;
 
     this.updateCommandFsas = updateCommandFsas;
   }
 
-  andThen<T extends ICommandPayload>(
+  andThen<T extends IUpdateCommandPayload = IUpdateCommandPayload>(
     C: Ctor<T> & { type: string },
     overrides: DeepPartial<T> = {} as DeepPartial<T>,
   ) {
@@ -67,8 +48,8 @@ export class TestCommandStream {
      * want to easily tack on the 6th in a separate test case.
      */
     const existing = this.updateCommandFsas.map((fsa) =>
-      clonePlainObject(fsa, {}),
-    ) as IUpdateCommandFsa[];
+      clonePlainObject(fsa, {}, []),
+    );
 
     existing.push(fsa);
 
@@ -78,11 +59,11 @@ export class TestCommandStream {
   async execute(executor: {
     execute(
       fsa: ICommandFsa,
-    ): Promise<CommandSuccessAcknowledgement | { message: string }>;
+    ): Promise<PersistenceAcknowledgement | { message: string }>;
   }) {
     const allResults: [
       ICommandFsa,
-      CommandSuccessAcknowledgement | { message: string },
+      PersistenceAcknowledgement | { message: string },
     ][] = [];
 
     const creationResult = await executor.execute(this.creationCommandFsa);
@@ -94,7 +75,7 @@ export class TestCommandStream {
     }
 
     const updateCommandFsasToExecute = this.as({
-      id: (creationResult as CommandSuccessAcknowledgement).id,
+      id: (creationResult as PersistenceAcknowledgement).id,
       // type (on the ack?)
     });
 
@@ -120,36 +101,27 @@ export class TestCommandStream {
    * @param compositeIdOverrides Note that it is only necessary to override the `type` (aggregate type) property if testing a generic command that can target more than one aggregate type
    * @returns a command FSA stream where each command targets the given aggregate root by composite identifier
    */
-  as(compositeIdOverrides: { type?: string; id: string }): IUpdateCommandFsa[] {
+  as(compositeIdOverrides: { type?: string; id: string }): ICommandFsa[] {
     return this.updateCommandFsas.map(({ type, payload }) => {
-      if (hasAggregateCompositeIdentifier(payload)) {
-        const aggregateCompositeIdentifierWithOverridesApplied = {
-          type:
-            compositeIdOverrides.type ||
-            payload.aggregateCompositeIdentifier.type,
-          id: compositeIdOverrides.id,
-        };
+      const aggregateCompositeIdentifierWithOverridesApplied = {
+        type:
+          compositeIdOverrides.type ||
+          payload.aggregateCompositeIdentifier.type,
+        id: compositeIdOverrides.id,
+      };
 
-        const payloadWithOverrides = clonePlainObject(
-          payload,
-          {
-            aggregateCompositeIdentifier:
-              aggregateCompositeIdentifierWithOverridesApplied,
-          },
-          [],
-        );
+      const payloadWithOverrides = clonePlainObject(
+        payload,
+        {
+          aggregateCompositeIdentifier:
+            aggregateCompositeIdentifierWithOverridesApplied,
+        },
+        [],
+      );
 
-        return {
-          type,
-          payload: payloadWithOverrides,
-        };
-      }
-      /**
-       * For create commands, there is no composite identifier to override.
-       */
       return {
         type,
-        payload: clonePlainObject(payload, {}),
+        payload: payloadWithOverrides,
       };
     });
   }
@@ -158,7 +130,7 @@ export class TestCommandStream {
     return clonePlainObject(this.creationCommandFsa, {}, []);
   }
 
-  static first<T = unknown>(
+  static first<T extends ICommandFsa = ICommandFsa>(
     C: Ctor<T> & { type: string },
     overrides: DeepPartial<T>,
   ): TestCommandStream {
@@ -167,7 +139,7 @@ export class TestCommandStream {
     return new TestCommandStream(creationCommandFsa, []);
   }
 
-  static buildOne<T = unknown>(
+  static buildOne<T extends ICommandPayload = ICommandPayload>(
     C: Ctor<T> & { type: string },
     overrides: DeepPartial<T>,
   ): ICommandFsa<T> {

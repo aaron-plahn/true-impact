@@ -23,7 +23,7 @@ export class SurveyCompletionQueryService {
 
   // TODO stick to completion record **or** response record in all naming
   private buildViewModelFromDomainModel(domainModel: SurveyResponseRecord) {
-    // TODO inject client and survey state
+    // TODO inject client state
     return SurveyCompletionRecordViewModel.fromDomainModel(domainModel);
   }
 }

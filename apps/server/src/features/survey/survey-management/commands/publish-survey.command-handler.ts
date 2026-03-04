@@ -1,6 +1,6 @@
 import { Inject } from '../../../../libs/framework';
 
-import { CommandResult, ICommandHandler } from 'src/libs/cqrs-es';
+import { CommandResult, ICommandHandler } from '../../../../libs/cqrs-es';
 import { TrueImpactError } from '../../../../libs/data-types';
 import { SURVEY_COMMAND_REPOSITORY_DEPENDENCY_TOKEN } from '../../constants';
 import type { ISurveyCommandRepository } from '../../repositories';

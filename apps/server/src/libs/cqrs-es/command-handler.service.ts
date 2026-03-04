@@ -8,8 +8,8 @@ import {
 } from '../data-types';
 import { Injectable } from '../framework';
 import {
+  ICommandFsa,
   ICommandPayload,
-  IUpdateCommandFsa,
 } from './command-flux-standard-action.interface';
 import { CommandResult, ICommandHandler } from './command-handler.interface';
 
@@ -71,7 +71,7 @@ export class CommandHandlerService {
     return this;
   }
 
-  validate(userRequest: IUpdateCommandFsa): TrueImpactError[] {
+  validate(userRequest: ICommandFsa): TrueImpactError[] {
     if (!userRequest) {
       return [
         new TrueImpactError(
@@ -110,7 +110,7 @@ export class CommandHandlerService {
     return validationResult;
   }
 
-  async execute(userRequest: IUpdateCommandFsa): Promise<CommandResult> {
+  async execute(userRequest: ICommandFsa): Promise<CommandResult> {
     const { type: commandType } = userRequest;
 
     const validationResult = this.validate(userRequest);

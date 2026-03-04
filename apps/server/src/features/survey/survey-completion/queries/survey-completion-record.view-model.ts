@@ -3,6 +3,8 @@ import {
   NestedDataType,
   NonEmptyString,
 } from '../../../../libs/data-types';
+import { DONE } from '../../constants';
+import { SurveyQuestion } from '../../survey-management/survey-question.entity';
 import { SurveyParticipantCompositeIdentifier } from '../survey-participant.composite-identifier';
 import { SurveyResponseRecord } from '../survey-response-record.aggregate-root';
 
@@ -10,6 +12,12 @@ export class ActiveSurveyOptionViewModel {
   label: string;
   text: string;
   // do we want the follow-up question here?
+
+  constructor({ label, text }: { label: string; text: string }) {
+    this.label = label;
+
+    this.text = text;
+  }
 }
 
 export class ActiveSurveyQuestionViewModel {
@@ -17,6 +25,22 @@ export class ActiveSurveyQuestionViewModel {
   text: string;
   // ordered
   options: ActiveSurveyOptionViewModel[];
+
+  constructor({
+    label,
+    text,
+    options,
+  }: {
+    label: string;
+    text: string;
+    options: ActiveSurveyOptionViewModel[];
+  }) {
+    this.label = label;
+
+    this.text = text;
+
+    this.options = options;
+  }
 }
 
 /**
@@ -29,12 +53,34 @@ export class ActiveSurveyQuestionViewModel {
 export class SurveyResponseOptionViewModel {
   text: string;
   wasChosen: boolean;
-  chosenAt: string; // timestamp
+  // chosenAt: string; // timestamp
+
+  constructor({ text, wasChosen }: { text: string; wasChosen: boolean }) {
+    this.text = text;
+
+    this.wasChosen = wasChosen;
+  }
 }
 
 export class SurveyQuestionResponseViewModel {
   questionLabel: string;
+
   options: Map<string, SurveyResponseOptionViewModel>;
+
+  constructor({
+    questionLabel,
+    options,
+  }: {
+    questionLabel: string;
+    options: Map<string, SurveyResponseOptionViewModel>;
+  }) {
+    this.questionLabel = questionLabel;
+
+    // clone
+    this.options = new Map(options.entries());
+  }
+
+  // Once we have a dedicated query DB, we may want a `fromPersistenceDto`
 }
 
 export class SurveyCompletionRecordViewModel {
@@ -56,18 +102,21 @@ export class SurveyCompletionRecordViewModel {
   })
   revision: string;
 
-  @NonEmptyString({
-    label: 'date started',
-    description:
-      'the date and time at which the user began completing the survey',
-  })
-  dateStarted: string; // UNIX timestamp ?
+  /**
+   * TODO Support time stamps \ auditable completion history
+   */
+  // @NonEmptyString({
+  //   label: 'date started',
+  //   description:
+  //     'the date and time at which the user began completing the survey',
+  // })
+  // dateStarted: string;
 
-  @NonEmptyString({
-    label: 'date completed',
-    description: 'the date and time at which the user submitted the survey',
-  })
-  dateCompleted?: string;
+  // @NonEmptyString({
+  //   label: 'date completed',
+  //   description: 'the date and time at which the user submitted the survey',
+  // })
+  // dateCompleted?: string;
 
   @BooleanDataType({
     label: 'has been submitted',
@@ -101,31 +150,27 @@ export class SurveyCompletionRecordViewModel {
     id,
     name,
     revision,
-    dateStarted,
-    dateCompleted,
     participantCompositeIdentifier,
     hasBeenSubmitted,
+    responses,
+    nextQuestion,
   }: {
     id: string;
     name: string;
     revision: string;
-    dateStarted: string;
     hasBeenSubmitted: boolean;
-    dateCompleted: string;
     participantCompositeIdentifier: {
       type: string;
       id: string;
     } | null;
+    responses: SurveyQuestionResponseViewModel[];
+    nextQuestion: ActiveSurveyQuestionViewModel | null;
   }) {
     this.name = name;
 
     this.id = id;
 
     this.revision = revision;
-
-    this.dateStarted = dateStarted;
-
-    this.dateCompleted = dateCompleted;
 
     if (participantCompositeIdentifier) {
       this.participantCompositeIdentifier = {
@@ -134,9 +179,13 @@ export class SurveyCompletionRecordViewModel {
       };
     }
 
-    this.responses = []; // TODO set this
+    this.responses = responses.map(
+      (r) => new SurveyQuestionResponseViewModel(r),
+    );
 
-    this.nextQuestion = null; // TODO Set this
+    this.nextQuestion = nextQuestion
+      ? new ActiveSurveyQuestionViewModel(nextQuestion)
+      : null;
 
     this.hasBeenSubmitted = hasBeenSubmitted;
   }
@@ -144,14 +193,62 @@ export class SurveyCompletionRecordViewModel {
   static fromDomainModel(
     domainModel: SurveyResponseRecord,
   ): SurveyCompletionRecordViewModel {
+    let nextQuestionViewModel: ActiveSurveyQuestionViewModel | null = null;
+
+    const nextQuestionLabel = domainModel.getNextQuestionLabel();
+
+    if (nextQuestionLabel && nextQuestionLabel !== DONE) {
+      const nextQuestionDomainModel = domainModel.survey.get(nextQuestionLabel);
+
+      if (nextQuestionDomainModel) {
+        const options: ActiveSurveyOptionViewModel[] = Array.from(
+          nextQuestionDomainModel.options.entries(),
+        ).map(
+          ([label, { text }]) =>
+            new ActiveSurveyOptionViewModel({
+              label,
+              text,
+            }),
+        );
+
+        nextQuestionViewModel = {
+          label: nextQuestionDomainModel.label,
+          text: nextQuestionDomainModel.prompt,
+          options,
+        };
+      }
+    }
+
     return new SurveyCompletionRecordViewModel({
       id: domainModel.id as string,
       revision: domainModel.revision.toString(),
-      dateStarted: '', // TODO we need an event history or else we need to put these on the domain model
-      dateCompleted: '',
       name: `${domainModel.survey.getName()}`, // TODO - participant name - attempt # or date started
       participantCompositeIdentifier: domainModel.participant || null,
       hasBeenSubmitted: domainModel.hasBeenSubmitted,
+      nextQuestion: nextQuestionViewModel,
+      responses: domainModel.responses.map((r) => {
+        const targetQuestion = domainModel.survey.get(
+          r.questionLabel,
+        ) as SurveyQuestion; // TODO how can we fail gracefully? It would be a system error for the question not to exist
+
+        const options = new Map<string, SurveyResponseOptionViewModel>();
+
+        targetQuestion.options.forEach((o) => {
+          const view = new SurveyResponseOptionViewModel({
+            text: o.text,
+            wasChosen: o.label === r.optionLabel,
+          });
+
+          options.set(o.label, view);
+        });
+
+        const view: SurveyQuestionResponseViewModel = {
+          questionLabel: r.questionLabel,
+          options,
+        };
+
+        return view;
+      }),
     });
   }
 }

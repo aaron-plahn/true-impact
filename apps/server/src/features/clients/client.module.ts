@@ -1,4 +1,4 @@
-import { CommandHandlerService } from 'src/libs/cqrs-es';
+import { CommandHandlerService } from '../../libs/cqrs-es';
 import { Module, ModuleRef } from '../../libs/framework';
 import { ClientController } from './client.controller';
 import { CreateClient } from './commands/create-client.command';

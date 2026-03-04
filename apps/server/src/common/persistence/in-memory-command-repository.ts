@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
+import { PersistenceAcknowledgement } from 'src/libs/cqrs-es';
 import {
   AggregateRoot,
   Ctor,
@@ -7,7 +8,6 @@ import {
   TrueImpactError,
   TrueImpactRuntimeException,
 } from '../../libs/data-types';
-import { IBaseCommandRepository } from '../interfaces/persistence';
 
 interface BasePersistenceDto {
   id: string;
@@ -17,7 +17,7 @@ interface BasePersistenceDto {
 export class InMemoryCommandRepository<
   TDto extends BasePersistenceDto,
   T extends AggregateRoot<TDto>,
-> implements IBaseCommandRepository<T> {
+> {
   private _nextId = 0;
 
   private instanceCtor: Ctor<T> & { type: string };
@@ -57,7 +57,6 @@ export class InMemoryCommandRepository<
     return Promise.resolve(this.entititesById.has(id));
   }
 
-  // @ts-expect-error Funky covariance \ contravariance error?
   async fetchById(id: string): Promise<T | null> {
     const result = this.entititesById.get(id) || null;
 
@@ -97,7 +96,9 @@ export class InMemoryCommandRepository<
     });
   }
 
-  async create(instance: T): Promise<string | TrueImpactError> {
+  async create(
+    instance: T,
+  ): Promise<PersistenceAcknowledgement | TrueImpactError> {
     // How should we handle this?
     const id = this.getNextId();
 
@@ -141,7 +142,11 @@ export class InMemoryCommandRepository<
 
     this.entititesById.set(id, instance);
 
-    return Promise.resolve(id);
+    return Promise.resolve({
+      id,
+      revision: instance.revision.toString(),
+      type: this.type,
+    });
   }
 
   createMany(_instances: T[]): Promise<void> {

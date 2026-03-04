@@ -1,35 +1,21 @@
-import {
-  IBaseCommandRepository,
-  PersistenceAcknowledgement,
-} from 'src/common/interfaces/persistence';
-import { InMemoryCommandRepositoryProvider } from 'src/common/persistence';
+import { isDeepStrictEqual } from 'util';
+import { InMemoryCommandRepository } from '../../../../common/persistence';
+import { PersistenceAcknowledgement } from '../../../../libs/cqrs-es';
 import {
   TrueImpactBadUserInputError,
   TrueImpactError,
-} from 'src/libs/data-types';
-import { isDeepStrictEqual } from 'util';
-import { SURVEY_RESPONSE_AGGREGATE_TYPE } from '../../constants';
-import {
-  SurveyResponseRecord,
-  SurveyResponseRecordPersistenceDto,
-} from '../survey-response-record.aggregate-root';
+} from '../../../../libs/data-types';
+import { SurveyResponseRecord } from '../survey-response-record.aggregate-root';
 import { ISurveyCompletionCommandRepository } from './survey-completion-command-repository.interface';
 
 export class InMemorySurveyCompletionCommandRepository implements ISurveyCompletionCommandRepository {
-  private readonly base: IBaseCommandRepository<SurveyResponseRecord>;
-
-  constructor(inMemoryRepositoryProvider: InMemoryCommandRepositoryProvider) {
-    this.base = inMemoryRepositoryProvider.forFeature<
-      SurveyResponseRecordPersistenceDto,
-      SurveyResponseRecord
-    >(SurveyResponseRecord);
-  }
+  private readonly base = new InMemoryCommandRepository(SurveyResponseRecord);
 
   exists(id: string): Promise<boolean> {
     return this.base.exists(id);
   }
 
-  fetchById(id: string): Promise<SurveyResponseRecord> | null {
+  fetchById(id: string): Promise<SurveyResponseRecord | null> {
     return this.base.fetchById(id);
   }
 
@@ -37,7 +23,9 @@ export class InMemorySurveyCompletionCommandRepository implements ISurveyComplet
     throw new Error('Method not implemented.');
   }
 
-  create(instance: SurveyResponseRecord): Promise<string | TrueImpactError> {
+  create(
+    instance: SurveyResponseRecord,
+  ): Promise<PersistenceAcknowledgement | TrueImpactError> {
     return this.base.create(instance);
   }
 
@@ -74,11 +62,7 @@ export class InMemorySurveyCompletionCommandRepository implements ISurveyComplet
       return result;
     }
 
-    return {
-      id: result,
-      revision: '1',
-      type: SURVEY_RESPONSE_AGGREGATE_TYPE,
-    };
+    return result;
   }
 
   createMany(instances: SurveyResponseRecord[]): Promise<void> {
@@ -92,8 +76,6 @@ export class InMemorySurveyCompletionCommandRepository implements ISurveyComplet
   }
 
   clear() {
-    // @ts-expect-error TODO fix this
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
     return this.base.clear();
   }
 }

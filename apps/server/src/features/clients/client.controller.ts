@@ -1,4 +1,4 @@
-import type { CommandResult, IUpdateCommandFsa } from '../../libs/cqrs-es';
+import type { CommandResult, ICommandFsa } from '../../libs/cqrs-es';
 import { CommandHandlerService } from '../../libs/cqrs-es';
 
 import {
@@ -12,10 +12,10 @@ import {
   DetailQueryEndpoint,
   IdParam,
   IndexQueryEndpoint,
-  Patch,
   Post,
   QueryResponseInterceptor,
   ResourceNotFoundFilter,
+  TestSetupEndpoint,
   UseFilters,
   UseInterceptors,
 } from '../../libs/framework';
@@ -44,7 +44,7 @@ export class ClientController {
   }
 
   @Post('commands')
-  async executeCommand(@Body() fsa: IUpdateCommandFsa): Promise<CommandResult> {
+  async executeCommand(@Body() fsa: ICommandFsa): Promise<CommandResult> {
     const result = await this.commandHandlerService.execute(fsa);
 
     return result;
@@ -56,13 +56,13 @@ export class ClientController {
     // TODO inject a CommandHandlerService
     const result = await this.commandHandlerService.execute({
       type: 'CREATE_CLIENT',
-      payload: creationCommand as unknown as IUpdateCommandFsa['payload'],
+      payload: creationCommand,
     });
 
     return result;
   }
 
-  @Patch('test-setup')
+  @TestSetupEndpoint()
   async testSetup(): Promise<'OK'> {
     if (process.env.NODE_ENV !== 'test') {
       throw new TrueImpactRuntimeException([
