@@ -1,8 +1,11 @@
-import { buildTestInstance, TrueImpactError } from '../../../libs/data-types';
+import {
+  buildTestInstance,
+  TrueImpactError,
+} from '../../../../libs/data-types';
 import {
   Survey,
   SurveyPersistenceDto,
-} from '../survey-management/survey.aggregate-root';
+} from '../../survey-management/survey.aggregate-root';
 import {
   SurveyResponseRecord,
   SurveyResponseRecordPersistenceDto,
@@ -93,7 +96,7 @@ describe(`SurveyResponseRecord.abandon`, () => {
           optionLabel: 'c',
         },
       ],
-    }) as SurveyResponseRecord;
+    });
 
     it(`should update the survey response record`, () => {
       const result = surveyResponseInProgress.abandon();

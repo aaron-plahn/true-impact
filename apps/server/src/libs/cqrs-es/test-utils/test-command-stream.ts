@@ -7,9 +7,15 @@ import {
 import {
   ICommandFsa,
   ICommandPayload,
-  IUpdateCommandFsa,
 } from '../command-flux-standard-action.interface';
-import { CommandSuccessAcknowledgement } from '../command-handler.interface';
+import { PersistenceAcknowledgement } from '../command-handler.interface';
+
+interface IUpdateCommandPayload {
+  aggregateCompositeIdentifier: {
+    type: string;
+    id: string;
+  };
+}
 
 /**
  * This helper manages a stream of commands targetting a single aggregate root (by `aggregateCompositeIdentifier`).
@@ -18,19 +24,19 @@ import { CommandSuccessAcknowledgement } from '../command-handler.interface';
 export class TestCommandStream {
   private creationCommandFsa: ICommandFsa;
 
-  private updateCommandFsas: IUpdateCommandFsa[] = [];
+  private updateCommandFsas: ICommandFsa<IUpdateCommandPayload>[] = [];
 
   constructor(
     creationCommandFsa: ICommandFsa,
-    updateCommandFsas: IUpdateCommandFsa[],
+    updateCommandFsas: ICommandFsa<IUpdateCommandPayload>[],
   ) {
     this.creationCommandFsa = creationCommandFsa;
 
     this.updateCommandFsas = updateCommandFsas;
   }
 
-  andThen<T extends ICommandPayload>(
-    C: Ctor<T> & { type: string } & { fromPersistenceDto(dto: unknown): T },
+  andThen<T extends IUpdateCommandPayload = IUpdateCommandPayload>(
+    C: Ctor<T> & { type: string },
     overrides: DeepPartial<T> = {} as DeepPartial<T>,
   ) {
     const fsa = TestCommandStream.buildOne<T>(C, overrides);
@@ -42,8 +48,8 @@ export class TestCommandStream {
      * want to easily tack on the 6th in a separate test case.
      */
     const existing = this.updateCommandFsas.map((fsa) =>
-      clonePlainObject(fsa, {}),
-    ) as IUpdateCommandFsa[];
+      clonePlainObject(fsa, {}, []),
+    );
 
     existing.push(fsa);
 
@@ -53,11 +59,11 @@ export class TestCommandStream {
   async execute(executor: {
     execute(
       fsa: ICommandFsa,
-    ): Promise<CommandSuccessAcknowledgement | { message: string }>;
+    ): Promise<PersistenceAcknowledgement | { message: string }>;
   }) {
     const allResults: [
       ICommandFsa,
-      CommandSuccessAcknowledgement | { message: string },
+      PersistenceAcknowledgement | { message: string },
     ][] = [];
 
     const creationResult = await executor.execute(this.creationCommandFsa);
@@ -69,7 +75,7 @@ export class TestCommandStream {
     }
 
     const updateCommandFsasToExecute = this.as({
-      id: (creationResult as CommandSuccessAcknowledgement).id,
+      id: (creationResult as PersistenceAcknowledgement).id,
       // type (on the ack?)
     });
 
@@ -86,12 +92,16 @@ export class TestCommandStream {
     return this.updateCommandFsas.at(-1) || null;
   }
 
+  size(): number {
+    return this.updateCommandFsas.length + 1;
+  }
+
   /**
    *
    * @param compositeIdOverrides Note that it is only necessary to override the `type` (aggregate type) property if testing a generic command that can target more than one aggregate type
    * @returns a command FSA stream where each command targets the given aggregate root by composite identifier
    */
-  as(compositeIdOverrides: { type?: string; id: string }): IUpdateCommandFsa[] {
+  as(compositeIdOverrides: { type?: string; id: string }): ICommandFsa[] {
     return this.updateCommandFsas.map(({ type, payload }) => {
       const aggregateCompositeIdentifierWithOverridesApplied = {
         type:
@@ -120,8 +130,8 @@ export class TestCommandStream {
     return clonePlainObject(this.creationCommandFsa, {}, []);
   }
 
-  static first<T extends ICommandPayload>(
-    C: Ctor<T> & { type: string } & { fromPersistenceDto(dto: unknown): T },
+  static first<T extends ICommandPayload = ICommandPayload>(
+    C: Ctor<T> & { type: string },
     overrides: DeepPartial<T>,
   ): TestCommandStream {
     const creationCommandFsa = TestCommandStream.buildOne<T>(C, overrides);
@@ -129,12 +139,11 @@ export class TestCommandStream {
     return new TestCommandStream(creationCommandFsa, []);
   }
 
-  // Can't we use this in place of the global helper?
-  static buildOne<T extends ICommandPayload>(
-    C: Ctor<T> & { type: string } & { fromPersistenceDto(dto: unknown): T },
+  static buildOne<T extends ICommandPayload = ICommandPayload>(
+    C: Ctor<T> & { type: string },
     overrides: DeepPartial<T>,
   ): ICommandFsa<T> {
-    const payloadWithOverrides = buildTestInstance(C, overrides);
+    const payloadWithOverrides = buildTestInstance(C, overrides, true);
 
     const fsa = {
       type: C.type,

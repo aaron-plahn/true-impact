@@ -34,7 +34,8 @@ export const buildTestInstance = <
   TPersistenceDto = unknown,
   UInstance = unknown,
 >(
-  ctor: Ctor<UInstance> & FromPersistenceDto<TPersistenceDto, UInstance>,
+  ctor: Ctor<UInstance> &
+    Partial<FromPersistenceDto<TPersistenceDto, UInstance>>,
   overrides?: DeepPartial<TPersistenceDto>,
   shouldValidate = true,
 ): UInstance => {
@@ -61,10 +62,6 @@ export const buildTestInstance = <
   ) as TPersistenceDto;
 
   if (!isFromPersistenceDto(ctor)) {
-    // throw new Error(
-    //   `You need to add a static factory method as follows.\nclass ${ctor.name}{\nstatic fromPersistenceDto(dto: YourDtoType): ${ctor.name} | TrueImpactError{...}\n}`,
-    // );
-
     return plainToClass(ctor, dtoWithOverridesApplied);
   }
 

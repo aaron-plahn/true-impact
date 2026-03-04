@@ -1,13 +1,13 @@
 import { TrueImpactError } from '../data-types';
 import { ICommandPayload } from './command-flux-standard-action.interface';
 
-export interface CommandSuccessAcknowledgement {
+export interface PersistenceAcknowledgement {
   type: string;
   id: string;
   revision: string;
 }
 
-export type CommandResult = TrueImpactError | CommandSuccessAcknowledgement;
+export type CommandResult = TrueImpactError | PersistenceAcknowledgement;
 
 export interface ICommandHandler<
   TPayload extends ICommandPayload = ICommandPayload,
