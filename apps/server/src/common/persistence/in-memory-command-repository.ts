@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { PersistenceAcknowledgement } from 'src/libs/cqrs-es';
+import { PersistenceAcknowledgement } from '../../libs/cqrs-es';
 import {
   AggregateRoot,
   Ctor,

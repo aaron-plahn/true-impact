@@ -1,11 +1,11 @@
 import { PersistenceAcknowledgement } from '../../../../libs/cqrs-es';
 import { TrueImpactError } from '../../../../libs/data-types';
-import { SurveyResponseRecord } from '../survey-response-record.aggregate-root';
+import { SurveyResponseRecord } from '../models/survey-response-record.aggregate-root';
 
-export const SURVEY_COMPLETION_COMMAND_REPOSITORY_INJECTION_TOKEN =
-  'SURVEY_COMPLETION_COMMAND_REPOSITORY_INJECTION_TOKEN';
+export const SURVEY_RESPONSE_COMMAND_REPOSITORY_INJECTION_TOKEN =
+  'SURVEY_RESPONSE_COMMAND_REPOSITORY_INJECTION_TOKEN';
 
-export interface ISurveyCompletionCommandRepository {
+export interface ISurveyResponseCommandRepository {
   exists(id: string): Promise<boolean>;
 
   fetchById(id: string): Promise<SurveyResponseRecord | null>; // Maybe<SurveyResponseRecord>

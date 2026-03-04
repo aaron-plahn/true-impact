@@ -4,14 +4,14 @@ import {
   TrueImpactBadUserInputError,
   TrueImpactError,
 } from '../../../../libs/data-types';
-import type { ISurveyCompletionCommandRepository } from '../repositories';
-import { SURVEY_COMPLETION_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../repositories';
+import type { ISurveyResponseCommandRepository } from '../repositories';
+import { SURVEY_RESPONSE_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../repositories';
 import { SubmitSurvey } from './submit-survey.command';
 
 export class SubmitSurveyCommandHandler implements ICommandHandler<SubmitSurvey> {
   constructor(
-    @Inject(SURVEY_COMPLETION_COMMAND_REPOSITORY_INJECTION_TOKEN)
-    private readonly repository: ISurveyCompletionCommandRepository,
+    @Inject(SURVEY_RESPONSE_COMMAND_REPOSITORY_INJECTION_TOKEN)
+    private readonly repository: ISurveyResponseCommandRepository,
   ) {}
 
   async handle({

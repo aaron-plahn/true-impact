@@ -5,10 +5,10 @@ import {
   TrueImpactBadUserInputError,
   TrueImpactError,
 } from '../../../../libs/data-types';
-import { SurveyResponseRecord } from '../survey-response-record.aggregate-root';
-import { ISurveyCompletionCommandRepository } from './survey-completion-command-repository.interface';
+import { SurveyResponseRecord } from '../models/survey-response-record.aggregate-root';
+import { ISurveyResponseCommandRepository } from './survey-response-command-repository.interface';
 
-export class InMemorySurveyCompletionCommandRepository implements ISurveyCompletionCommandRepository {
+export class InMemorySurveyResponseCommandRepository implements ISurveyResponseCommandRepository {
   private readonly base = new InMemoryCommandRepository(SurveyResponseRecord);
 
   exists(id: string): Promise<boolean> {

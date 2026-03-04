@@ -1,8 +1,11 @@
-import { buildTestInstance, TrueImpactError } from '../../../libs/data-types';
+import {
+  buildTestInstance,
+  TrueImpactError,
+} from '../../../../libs/data-types';
 import {
   Survey,
   SurveyPersistenceDto,
-} from '../survey-management/survey.aggregate-root';
+} from '../../survey-management/survey.aggregate-root';
 import {
   SurveyResponseRecord,
   SurveyResponseRecordPersistenceDto,

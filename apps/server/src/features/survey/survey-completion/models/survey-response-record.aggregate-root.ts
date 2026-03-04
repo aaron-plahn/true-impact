@@ -11,14 +11,14 @@ import {
   TrueImpactDataExample,
   TrueImpactError,
   UpdateMethod,
-} from '../../../libs/data-types';
-import { CLIENT_AGGREGATE_TYPE } from '../../clients/client.composite-identifier';
-import { DONE, SURVEY_RESPONSE_AGGREGATE_TYPE } from '../constants';
-import { SurveyQuestion } from '../survey-management/survey-question.entity';
+} from '../../../../libs/data-types';
+import { CLIENT_AGGREGATE_TYPE } from '../../../clients/client.composite-identifier';
+import { DONE, SURVEY_RESPONSE_AGGREGATE_TYPE } from '../../constants';
+import { SurveyQuestion } from '../../survey-management/survey-question.entity';
 import {
   Survey,
   SurveyPersistenceDto,
-} from '../survey-management/survey.aggregate-root';
+} from '../../survey-management/survey.aggregate-root';
 import { SurveyParticipantCompositeIdentifier } from './survey-participant.composite-identifier';
 
 export class SurveyResponseCompositeIdentifier {

@@ -6,9 +6,9 @@ import {
 } from '../../../../libs/data-types';
 import { SURVEY_COMMAND_REPOSITORY_DEPENDENCY_TOKEN } from '../../constants';
 import type { ISurveyCommandRepository } from '../../repositories';
-import type { ISurveyCompletionCommandRepository } from '../repositories';
-import { SURVEY_COMPLETION_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../repositories';
-import { SurveyResponseRecord } from '../survey-response-record.aggregate-root';
+import { SurveyResponseRecord } from '../models/survey-response-record.aggregate-root';
+import type { ISurveyResponseCommandRepository } from '../repositories';
+import { SURVEY_RESPONSE_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../repositories';
 import { BeginSurvey } from './begin-survey.command';
 
 interface ISurveyParticipantManagementService {
@@ -26,8 +26,8 @@ interface ISurveyParticipantManagementServiceProvider {
 
 export class BeginSurveyCommandHandler implements ICommandHandler<BeginSurvey> {
   constructor(
-    @Inject(SURVEY_COMPLETION_COMMAND_REPOSITORY_INJECTION_TOKEN)
-    private readonly surveyCompletionRepository: ISurveyCompletionCommandRepository,
+    @Inject(SURVEY_RESPONSE_COMMAND_REPOSITORY_INJECTION_TOKEN)
+    private readonly surveyCompletionRepository: ISurveyResponseCommandRepository,
     @Inject(SURVEY_COMMAND_REPOSITORY_DEPENDENCY_TOKEN)
     private readonly surveyCommandRepository: ISurveyCommandRepository,
     @Inject('SURVEY_PARTICIPANT_VALIDATION_SERVICE_PROVIDER_INJECTION_TOKEN')

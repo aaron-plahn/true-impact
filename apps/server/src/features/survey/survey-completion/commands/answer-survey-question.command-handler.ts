@@ -1,18 +1,18 @@
 import { Inject } from '@nestjs/common';
 import { CommandResult, ICommandHandler } from '../../../../libs/cqrs-es';
-import { SURVEY_COMPLETION_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../repositories';
+import { SURVEY_RESPONSE_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../repositories';
 
 import {
   TrueImpactBadUserInputError,
   TrueImpactError,
 } from '../../../../libs/data-types';
-import type { ISurveyCompletionCommandRepository } from '../repositories';
+import type { ISurveyResponseCommandRepository } from '../repositories';
 import { AnswerSurveyQuestion } from './answer-survey-question.command';
 
 export class AnswerSurveyQuestionCommandHandler implements ICommandHandler<AnswerSurveyQuestion> {
   constructor(
-    @Inject(SURVEY_COMPLETION_COMMAND_REPOSITORY_INJECTION_TOKEN)
-    private readonly repository: ISurveyCompletionCommandRepository,
+    @Inject(SURVEY_RESPONSE_COMMAND_REPOSITORY_INJECTION_TOKEN)
+    private readonly repository: ISurveyResponseCommandRepository,
   ) {}
 
   async handle({

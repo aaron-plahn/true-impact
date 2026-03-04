@@ -1,2 +1,2 @@
-export * from './survey-completion-query-repository.interface';
-export * from './survey-completion-query.service';
+export * from './survey-response-query-repository.interface';
+export * from './survey-response-query.service';

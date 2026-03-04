@@ -130,7 +130,7 @@ export class TestCommandStream {
     return clonePlainObject(this.creationCommandFsa, {}, []);
   }
 
-  static first<T extends ICommandFsa = ICommandFsa>(
+  static first<T extends ICommandPayload = ICommandPayload>(
     C: Ctor<T> & { type: string },
     overrides: DeepPartial<T>,
   ): TestCommandStream {

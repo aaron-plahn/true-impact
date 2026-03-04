@@ -5,15 +5,15 @@ import {
   TrueImpactError,
 } from '../../../../libs/data-types';
 import {
-  SURVEY_COMPLETION_COMMAND_REPOSITORY_INJECTION_TOKEN,
-  type ISurveyCompletionCommandRepository,
+  SURVEY_RESPONSE_COMMAND_REPOSITORY_INJECTION_TOKEN,
+  type ISurveyResponseCommandRepository,
 } from '../repositories';
 import { AbandonSurveyCompletion } from './abandon-survey-completion.command';
 
 export class AbandonSurveyCompletionCommandHandler implements ICommandHandler<AbandonSurveyCompletion> {
   constructor(
-    @Inject(SURVEY_COMPLETION_COMMAND_REPOSITORY_INJECTION_TOKEN)
-    private readonly repository: ISurveyCompletionCommandRepository,
+    @Inject(SURVEY_RESPONSE_COMMAND_REPOSITORY_INJECTION_TOKEN)
+    private readonly repository: ISurveyResponseCommandRepository,
   ) {}
 
   async handle({

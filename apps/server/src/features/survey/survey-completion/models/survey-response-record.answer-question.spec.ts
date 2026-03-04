@@ -1,9 +1,12 @@
-import { buildTestInstance, TrueImpactError } from '../../../libs/data-types';
-import { DONE } from '../constants';
+import {
+  buildTestInstance,
+  TrueImpactError,
+} from '../../../../libs/data-types';
+import { DONE } from '../../constants';
 import {
   Survey,
   SurveyPersistenceDto,
-} from '../survey-management/survey.aggregate-root';
+} from '../../survey-management/survey.aggregate-root';
 import { SurveyResponseRecord } from './survey-response-record.aggregate-root';
 
 const targetQuestionLabel = '2';

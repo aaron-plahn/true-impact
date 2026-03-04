@@ -14,14 +14,14 @@ import {
   UseFilters,
   UseInterceptors,
 } from '../../libs/framework';
-import { SurveyCompletionQueryService } from './survey-completion/queries';
+import { SurveyResponseQueryService } from './survey-completion/queries';
 
 @UseFilters(ResourceNotFoundFilter, BadUserInputFilter)
 @UseInterceptors(QueryResponseInterceptor)
 @Controller('surveys/responses')
-export class SurveyCompletionController {
+export class SurveyResponseController {
   constructor(
-    private readonly surveyCompletionQueryService: SurveyCompletionQueryService,
+    private readonly surveyCompletionQueryService: SurveyResponseQueryService,
     private readonly commandHandlerService: CommandHandlerService,
   ) {}
 

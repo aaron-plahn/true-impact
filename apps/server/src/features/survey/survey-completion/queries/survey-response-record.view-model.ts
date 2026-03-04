@@ -5,8 +5,8 @@ import {
 } from '../../../../libs/data-types';
 import { DONE } from '../../constants';
 import { SurveyQuestion } from '../../survey-management/survey-question.entity';
-import { SurveyParticipantCompositeIdentifier } from '../survey-participant.composite-identifier';
-import { SurveyResponseRecord } from '../survey-response-record.aggregate-root';
+import { SurveyResponseRecord } from '../models';
+import { SurveyParticipantCompositeIdentifier } from '../models/survey-participant.composite-identifier';
 
 export class ActiveSurveyOptionViewModel {
   label: string;
@@ -83,7 +83,7 @@ export class SurveyQuestionResponseViewModel {
   // Once we have a dedicated query DB, we may want a `fromPersistenceDto`
 }
 
-export class SurveyCompletionRecordViewModel {
+export class SurveyResponseRecordViewModel {
   @NonEmptyString({
     label: 'id',
     description: `a unique identifier for this survey attempt`,
@@ -192,7 +192,7 @@ export class SurveyCompletionRecordViewModel {
 
   static fromDomainModel(
     domainModel: SurveyResponseRecord,
-  ): SurveyCompletionRecordViewModel {
+  ): SurveyResponseRecordViewModel {
     let nextQuestionViewModel: ActiveSurveyQuestionViewModel | null = null;
 
     const nextQuestionLabel = domainModel.getNextQuestionLabel();
@@ -219,7 +219,7 @@ export class SurveyCompletionRecordViewModel {
       }
     }
 
-    return new SurveyCompletionRecordViewModel({
+    return new SurveyResponseRecordViewModel({
       id: domainModel.id as string,
       revision: domainModel.revision.toString(),
       name: `${domainModel.survey.getName()}`, // TODO - participant name - attempt # or date started

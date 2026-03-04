@@ -4,7 +4,7 @@ import {
   NonEmptyString,
   TrueImpactDataExample,
 } from '../../../../libs/data-types';
-import { SurveyParticipantCompositeIdentifier } from '../survey-participant.composite-identifier';
+import { SurveyParticipantCompositeIdentifier } from '../models';
 
 @TrueImpactDataExample<BeginSurvey>({
   example: {

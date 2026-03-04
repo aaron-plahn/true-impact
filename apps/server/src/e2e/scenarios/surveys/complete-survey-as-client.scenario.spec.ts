@@ -9,7 +9,7 @@ import {
   BeginSurvey,
   SubmitSurvey,
 } from '../../../features/survey/survey-completion';
-import { SurveyCompletionRecordViewModel } from '../../../features/survey/survey-completion/queries/survey-completion-record.view-model';
+import { SurveyResponseRecordViewModel } from '../../../features/survey/survey-completion/queries/survey-response-record.view-model';
 import { AddFollowUpQuestionForSurveyOption } from '../../../features/survey/survey-management/commands/add-follow-up-question-for-survey-option.command';
 import { AddOptionToSurveyQuestion } from '../../../features/survey/survey-management/commands/add-option-to-survey-question.command';
 import { AddQuestionToSurvey } from '../../../features/survey/survey-management/commands/add-question-to-survey.command';
@@ -203,7 +203,7 @@ describe(`Survey Completion Scenarios`, () => {
             assertSuccess: async (acks) => {
               await assertQueryResponse({
                 endpoint: `${surveyResponseRecordIndexEndpoint}/${acks[0].id}`,
-                assertResponseBody: (body: SurveyCompletionRecordViewModel) => {
+                assertResponseBody: (body: SurveyResponseRecordViewModel) => {
                   expect(body.hasBeenSubmitted).toBe(true);
                 },
               });
@@ -255,7 +255,7 @@ describe(`Survey Completion Scenarios`, () => {
             assertSuccess: async (acks) => {
               await assertQueryResponse({
                 endpoint: `${surveyResponseRecordIndexEndpoint}/${acks[0].id}`,
-                assertResponseBody: (body: SurveyCompletionRecordViewModel) => {
+                assertResponseBody: (body: SurveyResponseRecordViewModel) => {
                   expect(body.hasBeenSubmitted).toBe(true);
                 },
               });
@@ -287,7 +287,7 @@ describe(`Survey Completion Scenarios`, () => {
             assertSuccess: async (acks) => {
               await assertQueryResponse({
                 endpoint: `${surveyResponseRecordIndexEndpoint}/${acks[0].id}`,
-                assertResponseBody: (body: SurveyCompletionRecordViewModel) => {
+                assertResponseBody: (body: SurveyResponseRecordViewModel) => {
                   expect(body.hasBeenSubmitted).toBe(true);
                 },
               });

@@ -24,18 +24,17 @@ import {
   SubmitSurvey,
   SubmitSurveyCommandHandler,
 } from './survey-completion';
-import { SurveyCompletionController } from './survey-completion.controller';
 import {
   BeginSurveyCommandHandler,
   SURVEY_PARTICIPANT_VALIDATION_SERVICE_PROVIDER_INJECTION_TOKEN,
 } from './survey-completion/commands/begin-survey.command-handler';
 import {
-  SURVEY_COMPLETION_QUERY_REPOSITORY_INJECTION_TOKEN,
-  SurveyCompletionQueryService,
+  SURVEY_RESPONSE_QUERY_REPOSITORY_INJECTION_TOKEN,
+  SurveyResponseQueryService,
 } from './survey-completion/queries';
-import { SurveyCompletionRecordViewModel } from './survey-completion/queries/survey-completion-record.view-model';
-import { SURVEY_COMPLETION_COMMAND_REPOSITORY_INJECTION_TOKEN } from './survey-completion/repositories';
-import { InMemorySurveyCompletionCommandRepository } from './survey-completion/repositories/in-memory-survey-completion.command-repository';
+import { SurveyResponseRecordViewModel } from './survey-completion/queries/survey-response-record.view-model';
+import { SURVEY_RESPONSE_COMMAND_REPOSITORY_INJECTION_TOKEN } from './survey-completion/repositories';
+import { InMemorySurveyResponseCommandRepository } from './survey-completion/repositories/in-memory-survey-response.command-repository';
 import { AddFollowUpQuestionForSurveyOption } from './survey-management/commands/add-follow-up-question-for-survey-option.command';
 import { AddFollowUpQuestionForSurveyOptionCommandHandler } from './survey-management/commands/add-follow-up-question-for-survey-option.command-handler';
 import { AddOptionToSurveyQuestion } from './survey-management/commands/add-option-to-survey-question.command';
@@ -47,6 +46,7 @@ import { CreateSurveyCommandHandler } from './survey-management/commands/create-
 import { PublishSurvey } from './survey-management/commands/publish-survey.command';
 import { PublishSurveyCommandHandler } from './survey-management/commands/publish-survey.command-handler';
 import { Survey } from './survey-management/survey.aggregate-root';
+import { SurveyResponseController } from './survey-response.controller';
 import { SurveyController } from './survey.controller';
 
 // Is this necessary?
@@ -67,7 +67,7 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
     SubmitSurveyCommandHandler,
     // services
     SurveyQueryService,
-    SurveyCompletionQueryService,
+    SurveyResponseQueryService,
     {
       provide: SURVEY_QUERY_REPOSITORY_PROVIDER_TOKEN,
       useValue: new InMemoryQueryRepositoryProvider().forFeature(
@@ -75,9 +75,9 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
       ),
     },
     {
-      provide: SURVEY_COMPLETION_QUERY_REPOSITORY_INJECTION_TOKEN,
+      provide: SURVEY_RESPONSE_QUERY_REPOSITORY_INJECTION_TOKEN,
       useValue: new InMemoryQueryRepositoryProvider().forFeature(
-        SurveyCompletionRecordViewModel,
+        SurveyResponseRecordViewModel,
       ),
     },
     /**
@@ -146,9 +146,9 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
       useFactory: () => new InMemoryCommandRepository(Survey),
     },
     {
-      provide: SURVEY_COMPLETION_COMMAND_REPOSITORY_INJECTION_TOKEN,
+      provide: SURVEY_RESPONSE_COMMAND_REPOSITORY_INJECTION_TOKEN,
       useFactory: () => {
-        return new InMemorySurveyCompletionCommandRepository();
+        return new InMemorySurveyResponseCommandRepository();
       },
     },
     {
@@ -173,6 +173,6 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
   ],
   // Exposing data classes allows us to drive them via repl
   exports: [...dataClasses],
-  controllers: [SurveyController, SurveyCompletionController],
+  controllers: [SurveyController, SurveyResponseController],
 })
 export class SurveyModule {}

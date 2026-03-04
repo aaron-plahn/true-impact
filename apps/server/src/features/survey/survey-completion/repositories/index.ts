@@ -1,1 +1,1 @@
-export * from './survey-completion-command-repository.interface';
+export * from './survey-response-command-repository.interface';
