@@ -4,7 +4,7 @@ import {
   TrueImpactError,
   TrueImpactRuntimeException,
 } from '../data-types';
-import { IUpdateCommandFsa } from './command-flux-standard-action.interface';
+import { ICommandFsa } from './command-flux-standard-action.interface';
 import { ICommandHandler } from './command-handler.interface';
 import {
   COMMAND_EXECUTION_SCOPE,
@@ -36,7 +36,7 @@ describe(`CommandHandlerService`, () => {
       payload: {
         aggregateCompositeIdentifier: { id },
       },
-    }: IUpdateCommandFsa) {
+    }: ICommandFsa) {
       return Promise.resolve({
         id,
         revision: dummyRevisionId,
@@ -54,7 +54,7 @@ describe(`CommandHandlerService`, () => {
       payload: {
         aggregateCompositeIdentifier: { type, id },
       },
-    }: IUpdateCommandFsa) {
+    }: ICommandFsa) {
       return Promise.resolve(
         new TrueImpactError(
           `Failed as usual when attempting to update [${type}/${id}]`,
@@ -111,7 +111,7 @@ describe(`CommandHandlerService`, () => {
       it(`should return the expected acknowledgement`, async () => {
         const testId = '555';
 
-        const testCommandFsa: IUpdateCommandFsa = {
+        const testCommandFsa: ICommandFsa = {
           type: happyCommandType,
           payload: {
             aggregateCompositeIdentifier: {
@@ -144,7 +144,7 @@ describe(`CommandHandlerService`, () => {
       it(`should bubble up the command error`, async () => {
         const targetId = '555';
 
-        const testCommandFsa: IUpdateCommandFsa = {
+        const testCommandFsa: ICommandFsa = {
           type: sadCommandType,
           payload: {
             aggregateCompositeIdentifier: {

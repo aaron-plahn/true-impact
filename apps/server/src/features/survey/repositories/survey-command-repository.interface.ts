@@ -1,5 +1,23 @@
-import { IBaseCommandRepository } from '../../../common/interfaces/persistence';
+import { PersistenceAcknowledgement } from '../../../libs/cqrs-es';
+import { TrueImpactError } from '../../../libs/data-types';
 import { Survey } from '../survey-management/survey.aggregate-root';
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface ISurveyCommandRepository extends IBaseCommandRepository<Survey> {}
+export interface ISurveyCommandRepository {
+  exists(id: string): Promise<boolean>;
+
+  fetchById(id: string): Promise<Survey | null>; // Maybe<T>
+
+  fetchMany(): Promise<Survey[]>;
+
+  // Error || Ack
+  create(
+    instance: Survey,
+  ): Promise<PersistenceAcknowledgement | TrueImpactError>;
+
+  // Error[] ?
+  createMany(instances: Survey[]): Promise<void>;
+
+  update(
+    instance: Survey,
+  ): Promise<PersistenceAcknowledgement | TrueImpactError>;
+}

@@ -2,7 +2,7 @@ import { CreateClient } from './commands/create-client.command';
 // TODO Barrel export?
 import { FullName, FullNameDto } from '../../common/full-name';
 import {
-  Entity,
+  AggregateRoot,
   isNonEmptyString,
   NonEmptyString,
   TrueImpactBadUserInputError,
@@ -14,8 +14,10 @@ interface ValidateInvariants<T> {
   validateInvariants(): T | TrueImpactError;
 }
 
-export class ClientPeristenceDto {
+export class ClientPersistenceDto {
   id: string;
+
+  revision: number;
 
   fullName: FullNameDto;
 
@@ -26,14 +28,19 @@ export class ClientPeristenceDto {
   community?: string;
 }
 
-export class Client extends Entity implements ValidateInvariants<Client> {
+export class Client
+  extends AggregateRoot
+  implements ValidateInvariants<Client>
+{
   id: string;
+
+  revision: number;
 
   fullName: FullName;
 
   dateOfBirth: string; // Date?
 
-  isIndigenous: 'Yes' | 'No' | 'Unknown'; // this is a smell
+  isIndigenous: 'Yes' | 'No' | 'Unknown'; // Is there a better way to represent this?
 
   @NonEmptyString({
     label: 'Community',
@@ -45,12 +52,15 @@ export class Client extends Entity implements ValidateInvariants<Client> {
 
   constructor({
     id,
+    revision,
     fullName,
     dateOfBirth,
     isIndigenous,
     community,
   }: {
     id?: string;
+
+    revision: number;
 
     fullName: FullNameDto;
 
@@ -64,6 +74,10 @@ export class Client extends Entity implements ValidateInvariants<Client> {
 
     if (typeof id !== 'undefined') {
       this.id = id;
+    }
+
+    if (typeof revision === 'number') {
+      this.revision = revision;
     }
 
     this.fullName = FullName.fromDto(fullName);
@@ -105,12 +119,12 @@ export class Client extends Entity implements ValidateInvariants<Client> {
     return allErrors;
   }
 
-  toPersistenceDto(): ClientPeristenceDto {
-    return JSON.parse(JSON.stringify(this)) as ClientPeristenceDto;
+  toPersistenceDto(): ClientPersistenceDto {
+    return JSON.parse(JSON.stringify(this)) as ClientPersistenceDto;
   }
 
   public static fromPersistenceDto(
-    dto: ClientPeristenceDto,
+    dto: ClientPersistenceDto,
   ): Client | TrueImpactError {
     const result = new Client(dto).validateInvariants();
 
@@ -128,6 +142,7 @@ export class Client extends Entity implements ValidateInvariants<Client> {
       dateOfBirth,
       isIndigenous,
       community,
+      revision: 1,
     });
 
     const result = unverifiedInstance.validateInvariants();

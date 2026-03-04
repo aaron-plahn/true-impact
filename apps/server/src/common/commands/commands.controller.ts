@@ -1,4 +1,4 @@
-import type { IUpdateCommandFsa } from '../../libs/cqrs-es';
+import type { ICommandFsa } from '../../libs/cqrs-es';
 import { CommandHandlerService, CommandResult } from '../../libs/cqrs-es';
 import {
   TrueImpactBadUserInputError,
@@ -22,7 +22,7 @@ export class CommandsController {
   constructor(private readonly commandHandlerService: CommandHandlerService) {}
 
   @Post('')
-  async execute(@Body() fsa: IUpdateCommandFsa): Promise<CommandResult> {
+  async execute(@Body() fsa: ICommandFsa): Promise<CommandResult> {
     const typeValidationResult = this.commandHandlerService.validate(fsa);
 
     if (typeValidationResult.length > 0) {

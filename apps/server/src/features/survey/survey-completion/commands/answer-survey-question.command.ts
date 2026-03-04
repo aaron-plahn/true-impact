@@ -1,7 +1,24 @@
-import { NestedDataType, NonEmptyString } from '../../../../libs/data-types';
-import { SurveyResponseCompositeIdentifier } from '../survey-response-record.aggregate-root';
+import {
+  NestedDataType,
+  NonEmptyString,
+  TrueImpactDataExample,
+} from '../../../../libs/data-types';
+import { SURVEY_RESPONSE_AGGREGATE_TYPE } from '../../constants';
+import { SurveyResponseCompositeIdentifier } from '../models/survey-response-record.aggregate-root';
 
+@TrueImpactDataExample<AnswerSurveyQuestion>({
+  example: {
+    aggregateCompositeIdentifier: {
+      type: SURVEY_RESPONSE_AGGREGATE_TYPE,
+      id: '123',
+    },
+    questionLabel: '1',
+    chosenOptionLabel: 'b',
+  },
+})
 export class AnswerSurveyQuestion {
+  static readonly type = 'ANSWER_SURVEY_QUESTION';
+
   @NestedDataType(() => SurveyResponseCompositeIdentifier, {
     label: 'composite identifier',
     description: 'a system-wide unique identifier for this survey attempt',
