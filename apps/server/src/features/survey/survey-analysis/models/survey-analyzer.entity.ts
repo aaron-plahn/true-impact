@@ -1,6 +1,7 @@
 import {
   Entity,
   InvariantValidationError,
+  isPositiveNumber,
   NonEmptyString,
   TrueImpactError,
 } from '../../../../libs/data-types';
@@ -60,7 +61,43 @@ export class SurveyAnalyzer extends Entity {
   }
 
   validateComplexInvariants(): TrueImpactError[] {
-    throw new Error('Method not implemented.');
+    const allErrors: TrueImpactError[] = [];
+
+    Array.from(this.values.valuesByQuestion.entries()).forEach(
+      ([questionLabel, valuesByOption]) => {
+        // we have to validate the questionLabel against the survey's questions at a higher level
+
+        const knownCategoryLabels = new Set(
+          this.categories.map(({ label }) => label),
+        );
+
+        Array.from(valuesByOption.entries()).forEach(
+          ([optionLabel, valuesByOptionLabel]) => {
+            Array.from(valuesByOptionLabel.entries()).forEach(
+              ([categoryLabel, value]) => {
+                if (!isPositiveNumber(value)) {
+                  allErrors.push(
+                    new TrueImpactError(
+                      `Invalid value [${value as unknown as string}] assigned to category [${categoryLabel}] for option [${optionLabel}] of question [${questionLabel}]. Expected a positive integer.`,
+                    ),
+                  );
+                }
+
+                if (!knownCategoryLabels.has(categoryLabel)) {
+                  allErrors.push(
+                    new TrueImpactError(
+                      `Encountered an unknown category [${categoryLabel}] (value [${value}]) for question [${questionLabel}] \\ option [${optionLabel}]`,
+                    ),
+                  );
+                }
+              },
+            );
+          },
+        );
+      },
+    );
+
+    return allErrors;
   }
 
   getId(): string {
@@ -83,7 +120,7 @@ export class SurveyAnalyzer extends Entity {
   static fromPersistenceDto(
     { name, categories, values }: SurveyAnalyzerPersistenceDto,
     shouldValidate?: boolean,
-  ): Entity | TrueImpactError {
+  ): SurveyAnalyzer | TrueImpactError {
     const categoryBuildResults = categories.map((c) =>
       SurveyAnalysisCategory.fromPersistenceDto(c, shouldValidate),
     );
@@ -93,7 +130,7 @@ export class SurveyAnalyzer extends Entity {
     );
 
     if (failures.length > 0) {
-      return new InvariantValidationError(SurveyAnalyzer, failures);
+      return new InvariantValidationError(SurveyAnalyzer, name, failures);
     }
 
     const valuesBuildResult =

@@ -11,6 +11,10 @@ import {
   UpdateMethod,
 } from '../../../libs/data-types';
 import { DONE, SURVEY_AGGREGATE_TYPE } from '../constants';
+import {
+  SurveyAnalyzer,
+  SurveyAnalyzerPersistenceDto,
+} from '../survey-analysis';
 import { SurveyOption } from './survey-option.entity';
 import {
   SurveyQuestion,
@@ -24,6 +28,7 @@ export class SurveyPersistenceDto {
   questions: Record<string, Omit<SurveyQuestionPersistenceDto, 'label'>>;
   topLevelQuestionLabels: string[];
   revision: number;
+  analyzers: Record<string, SurveyAnalyzerPersistenceDto>;
 }
 
 // TODO We need to track schema versions
@@ -38,6 +43,7 @@ export class SurveyPersistenceDto {
     questions: {},
     topLevelQuestionLabels: [],
     revision: 12,
+    analyzers: {},
     // firstQuestionLabel:
   },
 })
@@ -94,6 +100,11 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
   })
   topLevelQuestionLabels: string[] = [];
 
+  // We might want this in the future
+  // defaultAnalyzerName?: string;
+
+  analyzersByName: Map<string, SurveyAnalyzer> = new Map();
+
   constructor({
     id,
     isPublished,
@@ -101,6 +112,7 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
     questions,
     questionLabels,
     revision,
+    analyzersByName,
   }: {
     id: string;
     isPublished: boolean;
@@ -108,6 +120,7 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
     revision?: number;
     questions?: Record<string, SurveyQuestion>;
     questionLabels?: string[];
+    analyzersByName: Map<string, SurveyAnalyzer>;
   }) {
     super();
 
@@ -129,6 +142,8 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
     }
 
     this.questionBank = new Map(Object.entries(questions || {}));
+
+    this.analyzersByName = new Map(analyzersByName.entries());
   }
 
   getId(): string {
@@ -165,6 +180,14 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
       ),
       revision: this.revision,
       topLevelQuestionLabels: this.topLevelQuestionLabels,
+      analyzers: Object.fromEntries(
+        Array.from(this.analyzersByName.entries()).map(
+          ([analyzerName, analyzer]): [
+            string,
+            SurveyAnalyzerPersistenceDto,
+          ] => [analyzerName, analyzer.toPersistenceDto()],
+        ),
+      ),
     };
 
     return result;
@@ -249,6 +272,7 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
    * - A published survey's questions must offer at least 2 options each
    *
    * TODO Finalize this and add a dedicated unit test
+   *
    */
   validateComplexInvariants(): TrueImpactError[] {
     const allErrors = [...this.validatePublicationStatus()];
@@ -317,6 +341,20 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
     );
 
     allErrors.push(...missingQuestionErrors);
+
+    /**
+     * TODO Can't we use the schema to ensure that nested entities automatically have their
+     * `validateInvariants` called without needing to explicitly write this logic?
+     */
+    const analyzerErrors = Array.from(this.analyzersByName.values()).flatMap(
+      (analyzer) => {
+        const errorsForThisAnalyzer = analyzer.validateComplexInvariants();
+
+        return errorsForThisAnalyzer;
+      },
+    );
+
+    allErrors.push(...analyzerErrors);
 
     return allErrors;
   }
@@ -763,6 +801,7 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
       name,
       questions: {},
       revision: 0,
+      analyzersByName: new Map(),
     });
 
     const result = instance.validateInvariants();
@@ -778,15 +817,19 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
       questions,
       topLevelQuestionLabels: questionLabels,
       revision,
+      analyzers,
     }: SurveyPersistenceDto,
     shouldValidate = false,
   ): Survey | TrueImpactError {
     const allQuestions = Object.entries(questions).map(
       ([label, questionDtoWithoutLabel]) =>
-        SurveyQuestion.fromPersistenceDto({
-          ...questionDtoWithoutLabel,
-          label,
-        }),
+        SurveyQuestion.fromPersistenceDto(
+          {
+            ...questionDtoWithoutLabel,
+            label,
+          },
+          shouldValidate,
+        ),
     );
 
     const questionBuildErrors = allQuestions.filter(
@@ -794,7 +837,38 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
     );
 
     if (questionBuildErrors.length > 0) {
-      return new InvariantValidationError(Survey, questionBuildErrors);
+      return new InvariantValidationError(Survey, name, questionBuildErrors);
+    }
+
+    const analyzersBuildResult = new Map<string, SurveyAnalyzer>();
+
+    const analyzerInvariantErrors: TrueImpactError[] = [];
+
+    Object.entries(analyzers).forEach(([analyzerName, analyzerDto]) => {
+      const buildResult = SurveyAnalyzer.fromPersistenceDto(
+        {
+          // TODO remove name from the lookup table DTO as it's redundant
+          ...analyzerDto,
+          name: analyzerName,
+        },
+        shouldValidate,
+      );
+
+      if (buildResult instanceof TrueImpactError) {
+        analyzerInvariantErrors.push(buildResult);
+
+        return;
+      }
+
+      analyzersBuildResult.set(analyzerName, buildResult);
+    });
+
+    if (analyzerInvariantErrors.length > 0) {
+      return new InvariantValidationError(
+        Survey,
+        name,
+        analyzerInvariantErrors,
+      );
     }
 
     const survey = new Survey({
@@ -809,6 +883,7 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
           q,
         ]),
       ),
+      analyzersByName: analyzersBuildResult,
     });
 
     if (shouldValidate) {

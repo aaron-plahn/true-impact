@@ -1,7 +1,16 @@
 import { buildTestInstance, TrueImpactError } from '../../../libs/data-types';
+import { assertTextMatchesAll } from '../../../libs/test-utils';
+import { SurveyAnalysisCategoryPersistenceDto } from '../survey-analysis/models/survey-analysis-category';
 import { Survey } from './survey.aggregate-root';
 
 const surveyName = 'my survey';
+
+const testCategories = ['white', 'yellow', 'red', 'black'].map(
+  (category, index): SurveyAnalysisCategoryPersistenceDto => ({
+    label: category,
+    number: index,
+  }),
+);
 
 describe(`Survey.validateInvariants`, () => {
   describe(`when the survey is valid`, () => {
@@ -66,6 +75,102 @@ describe(`Survey.validateInvariants`, () => {
   });
 
   describe(`when the survey is invalid`, () => {
+    describe(`when the analyzers are invalid`, () => {
+      describe(`when one of the analyzers is invalid`, () => {
+        describe(`when one of its option values is negative`, () => {
+          const invalidCategory = 'yellow';
+
+          const invalidValue = -10;
+
+          const invalidSurvey = buildTestInstance(
+            Survey,
+            {
+              name: surveyName,
+              analyzers: {
+                'medicine-wheel': {
+                  categories: testCategories,
+                  values: {
+                    valuesByQuestion: {
+                      q1: {
+                        a: {
+                          white: 1,
+                        },
+                        b: {
+                          [invalidCategory]: invalidValue,
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            false,
+          );
+
+          it(`should return the expected error`, () => {
+            const result = invalidSurvey.validateInvariants();
+
+            expect(result).toBeInstanceOf(TrueImpactError);
+
+            assertTextMatchesAll(
+              (result as TrueImpactError).toString(),
+              surveyName,
+              'positive integer',
+              invalidCategory,
+              invalidValue.toString(),
+            );
+          });
+        });
+
+        describe(`when one of its option values references a missing category`, () => {
+          const invalidSurvey = buildTestInstance(
+            Survey,
+            {
+              name: surveyName,
+              analyzers: {
+                'medicine-wheel': {
+                  categories: testCategories,
+                  values: {
+                    // do we want this repeated key?
+                    valuesByQuestion: {
+                      q1: {
+                        // do we want numbers or labels here?
+                        a: { orange: 2 },
+                        b: { yellow: 1 },
+                      },
+                      q2: {
+                        a: {
+                          white: 1,
+                        },
+                        b: {
+                          red: 1,
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            // TODO can't we make this part of a named options object?
+            false,
+          );
+
+          it(`should return the expected error`, () => {
+            const result = invalidSurvey.validateInvariants();
+
+            expect(result).toBeInstanceOf(TrueImpactError);
+
+            assertTextMatchesAll(
+              (result as TrueImpactError).toString(),
+              surveyName,
+              'unknown category',
+              'orange',
+            );
+          });
+        });
+      });
+    });
+
     describe(`when one of the top-level question labels has no corresponding question`, () => {
       const invalidSurvey = buildTestInstance(
         Survey,

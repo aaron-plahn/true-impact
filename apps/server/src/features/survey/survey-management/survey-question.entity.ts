@@ -1,5 +1,6 @@
 import {
   Entity,
+  InvariantValidationError,
   NonEmptyString,
   TrueImpactDataExample,
   TrueImpactError,
@@ -10,12 +11,15 @@ import {
   SurveyOptionPersistenceDto,
 } from './survey-option.entity';
 
-type SurveyLabel = string;
+type SurveyQuestionLabel = string;
 
 export class SurveyQuestionPersistenceDto {
   label: string;
   prompt: string;
-  options: Record<SurveyLabel, Omit<SurveyOptionPersistenceDto, 'label'>>;
+  options: Record<
+    SurveyQuestionLabel,
+    Omit<SurveyOptionPersistenceDto, 'label'>
+  >;
 }
 
 @TrueImpactDataExample<SurveyQuestionPersistenceDto>({
@@ -41,7 +45,7 @@ export class SurveyQuestion extends Entity {
   prompt: string;
 
   // @LookupTable(SurveyOption,{...})
-  options: Map<SurveyLabel, SurveyOption>;
+  options: Map<SurveyQuestionLabel, SurveyOption>;
 
   constructor({
     label,
@@ -50,7 +54,7 @@ export class SurveyQuestion extends Entity {
   }: {
     label: string;
     prompt: string;
-    options?: Record<SurveyLabel, SurveyOption>;
+    options?: Map<SurveyQuestionLabel, SurveyOption>;
   }) {
     super();
 
@@ -58,7 +62,9 @@ export class SurveyQuestion extends Entity {
 
     this.prompt = prompt;
 
-    this.options = new Map(Object.entries(options || {}));
+    this.options = options
+      ? new Map(options.entries())
+      : new Map<SurveyQuestionLabel, SurveyOption>();
   }
 
   validateComplexInvariants(): TrueImpactError[] {
@@ -218,31 +224,40 @@ export class SurveyQuestion extends Entity {
     return instance.validateInvariants();
   }
 
-  static fromPersistenceDto({
-    label,
-    options,
-    prompt,
-  }: SurveyQuestionPersistenceDto): SurveyQuestion | TrueImpactError {
-    const optionsBuildResult = Object.entries(options || {}).reduce(
-      (acc: Record<string, SurveyOption>, [label, option]) => {
-        const optionBuildResult = SurveyOption.fromPersistenceDto({
-          ...option,
-          label,
-        });
+  static fromPersistenceDto(
+    { label, options, prompt }: SurveyQuestionPersistenceDto,
+    // todo `options: { shouldValidate: boolean}`
+    shouldValidate: boolean,
+  ): SurveyQuestion | TrueImpactError {
+    const optionErrors: TrueImpactError[] = [];
 
-        acc[label] = optionBuildResult;
+    const surveyOptionsBuildResult = new Map<string, SurveyOption>();
 
-        return acc;
-      },
-      {},
-    );
+    Object.entries(options || {}).forEach(([optionLabel, option]) => {
+      const optionBuildResult = SurveyOption.fromPersistenceDto({
+        ...option,
+        label: optionLabel,
+      });
+
+      if (optionBuildResult instanceof TrueImpactError) {
+        optionErrors.push(optionBuildResult);
+
+        return;
+      }
+
+      surveyOptionsBuildResult.set(optionLabel, optionBuildResult);
+    });
+
+    if (optionErrors.length > 0) {
+      return new InvariantValidationError(SurveyQuestion, optionErrors);
+    }
 
     const result = new SurveyQuestion({
       label,
       prompt,
-      options: optionsBuildResult,
+      options: surveyOptionsBuildResult,
     });
 
-    return result.validateInvariants();
+    return shouldValidate ? result.validateInvariants() : result;
   }
 }

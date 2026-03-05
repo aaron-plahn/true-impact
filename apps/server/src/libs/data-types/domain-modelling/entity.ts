@@ -71,6 +71,7 @@ export abstract class Entity<TEntityPersistenceDto = unknown> {
   ): InvariantValidationError {
     return new InvariantValidationError(
       Object.getPrototypeOf(this).constructor,
+      this.getName(),
       innerErrors,
     );
   }

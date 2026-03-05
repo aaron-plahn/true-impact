@@ -1,4 +1,20 @@
-import { Entity, TrueImpactError } from '../../../../libs/data-types';
+import {
+  deepConvertMapToObject,
+  DeepMapToRecord,
+  Entity,
+  TrueImpactError,
+} from '../../../../libs/data-types';
+
+type QuestionLabel = string;
+type OptionLabel = string;
+type CategoryLabel = string;
+
+type ValuesByQuestion = Map<
+  QuestionLabel,
+  Map<OptionLabel, Map<CategoryLabel, number>>
+>;
+
+type RawValuesByQuestion = DeepMapToRecord<ValuesByQuestion>;
 
 /**
  * All we really need is a lookup table
@@ -13,25 +29,38 @@ import { Entity, TrueImpactError } from '../../../../libs/data-types';
  * - Each value must be a positive integer. -> this may change
  */
 export class SurveyOptionValueTrackerPersistenceDto {
-  valuesByQuestion: Record<string, Record<string, number>>;
+  valuesByQuestion: RawValuesByQuestion;
 }
 
 export class SurveyOptionValueTracker extends Entity {
   // This is awkward to constrain using decorator based validation
-  valuesByQuestion: Map<string, Map<string, number>> = new Map();
+  valuesByQuestion: ValuesByQuestion = new Map();
 
-  constructor({
-    valuesByQuestion,
-  }: {
-    valuesByQuestion: Record<string, Record<string, number>>;
-  }) {
+  constructor({ valuesByQuestion }: { valuesByQuestion: RawValuesByQuestion }) {
     super();
 
     Object.entries(valuesByQuestion).forEach(
       ([questionLabel, valuesByOption]) => {
         this.valuesByQuestion.set(
           questionLabel,
-          new Map(Object.entries(valuesByOption)),
+          new Map<string, Map<string, number>>(),
+        );
+
+        Object.entries(valuesByOption).forEach(
+          ([optionLabel, valuesByCategoryForThisOption]) => {
+            this.valuesByQuestion
+              .get(questionLabel)
+              ?.set(optionLabel, new Map<string, number>());
+
+            Object.entries(valuesByCategoryForThisOption).forEach(
+              ([categoryLabel, value]) => {
+                this.valuesByQuestion
+                  .get(questionLabel)
+                  ?.get(optionLabel)
+                  ?.set(categoryLabel, value);
+              },
+            );
+          },
         );
       },
     );
@@ -52,16 +81,7 @@ export class SurveyOptionValueTracker extends Entity {
   }
 
   toPersistenceDto(): SurveyOptionValueTrackerPersistenceDto {
-    const values = Array.from(this.valuesByQuestion.keys()).reduce(
-      (acc: Record<string, Record<string, number>>, questionLabel: string) => {
-        acc[questionLabel] = Object.fromEntries(
-          this.valuesByQuestion.get(questionLabel)?.entries() || [],
-        );
-
-        return acc;
-      },
-      {} as Record<string, Record<string, number>>,
-    );
+    const values = deepConvertMapToObject(this.valuesByQuestion);
 
     return {
       valuesByQuestion: values,

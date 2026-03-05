@@ -223,13 +223,16 @@ export class SurveyOption extends Entity {
     return this;
   }
 
-  static fromPersistenceDto({
-    label,
-    text,
-    nextQuestionLabel,
-    values,
-    flagIds,
-  }: SurveyOptionPersistenceDto): SurveyOption {
+  static fromPersistenceDto(
+    {
+      label,
+      text,
+      nextQuestionLabel,
+      values,
+      flagIds,
+    }: SurveyOptionPersistenceDto,
+    shouldValidate = false,
+  ): SurveyOption | TrueImpactError {
     const result = new SurveyOption({
       label,
       text,
@@ -238,7 +241,7 @@ export class SurveyOption extends Entity {
       flagIds,
     });
 
-    return result;
+    return shouldValidate ? result.validateInvariants() : result;
   }
 
   // an "empty" option has no flags or category values
