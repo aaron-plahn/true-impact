@@ -350,6 +350,34 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
       (analyzer) => {
         const errorsForThisAnalyzer = analyzer.validateComplexInvariants();
 
+        analyzer.values.valuesByQuestion.forEach(
+          (valuesByOption, questionLabel) => {
+            if (!this.questionBank.has(questionLabel)) {
+              errorsForThisAnalyzer.push(
+                new TrueImpactError(
+                  `Encountered an invalid question [${questionLabel}] in analyzer [${analyzer.name}] for survey [${this.name}]. There is no such question in the survey.`,
+                ),
+              );
+            } else {
+              const targetQuestion = this.questionBank.get(
+                questionLabel,
+              ) as SurveyQuestion;
+
+              valuesByOption.forEach((_valuesByCategory, optionLabel) => {
+                if (!targetQuestion.has(optionLabel)) {
+                  errorsForThisAnalyzer.push(
+                    new TrueImpactError(
+                      `Encountered an invalid option [${optionLabel}] for question [${questionLabel}] in analyzer [${analyzer.name} for survey [${this.name}]. The given question has no such option.`,
+                    ),
+                  );
+                }
+
+                // TODO why not validate the categories while we are here?
+              });
+            }
+          },
+        );
+
         return errorsForThisAnalyzer;
       },
     );

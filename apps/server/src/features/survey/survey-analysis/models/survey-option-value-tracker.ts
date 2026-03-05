@@ -66,6 +66,7 @@ export class SurveyOptionValueTracker extends Entity {
     );
   }
 
+  // TODO move validation logic here?
   validateComplexInvariants(): TrueImpactError[] {
     // TODO add unit test for this or else test it via the `Survey.invalidateInvariants` test
     throw new Error('Method not implemented.');
