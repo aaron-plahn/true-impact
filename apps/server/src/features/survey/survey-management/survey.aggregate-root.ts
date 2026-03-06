@@ -2,6 +2,7 @@ import {
   AggregateRoot,
   BooleanDataType,
   InvariantValidationError,
+  isPositiveNumber,
   NonEmptyString,
   NonNegativeInteger,
   TrueImpactBadUserInputError,
@@ -367,7 +368,7 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
                 if (!targetQuestion.has(optionLabel)) {
                   errorsForThisAnalyzer.push(
                     new TrueImpactError(
-                      `Encountered an invalid option [${optionLabel}] for question [${questionLabel}] in analyzer [${analyzer.name} for survey [${this.name}]. The given question has no such option.`,
+                      `Encountered an invalid option [${optionLabel}] for question [${questionLabel}] in analyzer [${analyzer.name}] for survey [${this.name}]. The given question has no such option.`,
                     ),
                   );
                 }
@@ -675,40 +676,6 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
   }
 
   @UpdateMethod()
-  addCategoryValueForOptionInQuestion({
-    questionLabel,
-    optionLabel,
-    valuesByCategory,
-  }: {
-    questionLabel: string;
-    optionLabel: string;
-    valuesByCategory: Record<string, number>;
-  }): this | TrueImpactError {
-    const targetQuestion =
-      this.get(questionLabel) ||
-      new TrueImpactError(
-        `You cannot add weights to question [${questionLabel}] as there is no such question in survey [${this.name}]`,
-      );
-
-    if (targetQuestion instanceof TrueImpactError) {
-      return targetQuestion;
-    }
-
-    const updatedQuestion = targetQuestion?.addWeightsForOption({
-      optionLabel,
-      weights: valuesByCategory,
-    });
-
-    if (updatedQuestion instanceof TrueImpactError) {
-      return updatedQuestion;
-    }
-
-    this.questionBank.set(questionLabel, updatedQuestion);
-
-    return this;
-  }
-
-  @UpdateMethod()
   addFollowUpQuestion({
     optionLabel,
     questionLabel,
@@ -813,6 +780,82 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
     }
 
     this.isPublished = true;
+
+    return this;
+  }
+
+  /**
+   * Survey Analysis Workflow
+   */
+  @UpdateMethod()
+  addCategoryValueForOptionInQuestion({
+    analyzerName,
+    questionLabel,
+    optionLabel,
+    valuesByCategory,
+  }: {
+    analyzerName: string;
+    questionLabel: string;
+    optionLabel: string;
+    valuesByCategory: Record<string, number>;
+  }): this | TrueImpactError {
+    const invalidValueErrors = Object.entries(valuesByCategory).flatMap(
+      ([category, value]) =>
+        // TODO this should **not** be a typeguard in itself
+        !isPositiveNumber(value)
+          ? [
+              new TrueImpactError(
+                `You cannot assign the value [${value as string}] to category [${category}]. All values must be positive integers.`,
+              ),
+            ]
+          : [],
+    );
+
+    if (invalidValueErrors.length > 0) {
+      return new TrueImpactError(
+        `Failed to update values for for option [${optionLabel}] of question [${questionLabel}] in survey [${this.name}] (analyzer [${analyzerName}])`,
+        invalidValueErrors,
+      );
+    }
+
+    if (!this.has(questionLabel)) {
+      // we can't go further
+      return new TrueImpactError(
+        `You cannot add values for question [${questionLabel}] in survey [${this.name}] (analyzer [${analyzerName}]), as there is no such question.`,
+      );
+    }
+
+    if (!this.get(questionLabel)?.has(optionLabel)) {
+      return new TrueImpactError(
+        `You cannot add values for option [${optionLabel}] of question [${questionLabel}] in survey [${this.name} (analyzer [${analyzerName}])], as there is no such option`,
+      );
+    }
+
+    if (!this.analyzersByName.has(analyzerName)) {
+      return new TrueImpactError(
+        `You cannot add values for option [${optionLabel}] of question [${questionLabel}] in survey [${this.name}], as the target analyzer [${analyzerName}] does not exist. Perhaps you forgot to create it?`,
+      );
+    }
+
+    const targetAnalyzer = this.analyzersByName.get(
+      analyzerName,
+    ) as SurveyAnalyzer;
+
+    const updatedAnalyzer = targetAnalyzer.addValuesForOption(
+      questionLabel,
+      optionLabel,
+      valuesByCategory,
+    );
+
+    if (updatedAnalyzer instanceof TrueImpactError) {
+      return new TrueImpactError(
+        // Here we ensure the survey name is available to the user
+        `Failed to add values for an option in survey [${this.name}] (analyzer [${analyzerName}])`,
+        [updatedAnalyzer],
+      );
+    }
+
+    this.analyzersByName.set(analyzerName, updatedAnalyzer);
 
     return this;
   }

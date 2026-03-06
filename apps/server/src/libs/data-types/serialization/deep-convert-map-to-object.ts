@@ -22,6 +22,8 @@ export const deepConvertMapToObject = <
       if (v instanceof Map) {
         // recurse
         acc[k] = deepConvertMapToObject(v) as DeepMapToRecord<T>[K];
+
+        return acc;
       }
 
       acc[k] = v as DeepMapToRecord<T>[K];

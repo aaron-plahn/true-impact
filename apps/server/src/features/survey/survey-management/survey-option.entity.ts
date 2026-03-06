@@ -54,7 +54,7 @@ export class SurveyOption extends Entity {
     description:
       'a local ID referring to the question that should be presented if the user has chosen this option',
     isArray: false,
-    isOptional: false,
+    isOptional: true,
   })
   followUpQuestionLabel?: string;
 

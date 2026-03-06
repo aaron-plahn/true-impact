@@ -4,6 +4,7 @@ import {
   isPositiveNumber,
   NonEmptyString,
   TrueImpactError,
+  UpdateMethod,
 } from '../../../../libs/data-types';
 import {
   SurveyAnalysisCategory,
@@ -100,6 +101,71 @@ export class SurveyAnalyzer extends Entity {
     return allErrors;
   }
 
+  @UpdateMethod()
+  addValuesForOption(
+    questionLabel: string,
+    optionLabel: string,
+    values: Record<string, number>,
+  ): SurveyAnalyzer | TrueImpactError {
+    const missingCategoryErrors = Object.entries(values).flatMap(
+      ([categoryLabel, value]) =>
+        !this.categories.some((c) => c.label === categoryLabel)
+          ? new TrueImpactError(
+              `You cannot add value [${value}] for category [${categoryLabel}], as there is no such category.`,
+            )
+          : [],
+    );
+
+    if (missingCategoryErrors.length > 0) {
+      return new TrueImpactError(
+        `Failed to add values for option [${optionLabel}] of question [${questionLabel}]`,
+        missingCategoryErrors,
+      );
+    }
+
+    const valuesByOption =
+      this.values.valuesByQuestion.get(questionLabel) ||
+      new Map<string, Map<string, number>>();
+
+    const valuesByCategory =
+      valuesByOption.get(optionLabel) || new Map<string, number>();
+
+    /**
+     * TODO We may want to allow this in the future. We'll need to see
+     * what the workflow looks like in the UX in practice.
+     */
+    const failedOverwriteErrors: TrueImpactError[] = Object.entries(
+      values,
+    ).flatMap(([category, newValue]) => {
+      if (valuesByCategory.has(category)) {
+        return [
+          new TrueImpactError(
+            `You cannot overwrite the value [${valuesByCategory.get(category)}] of category [${category}] with the new value [${newValue}]`,
+          ),
+        ];
+      }
+
+      return [];
+    });
+
+    if (failedOverwriteErrors.length > 0) {
+      return new TrueImpactError(
+        `Failed to add one or more values to option [${optionLabel}] of question [${questionLabel}]`,
+        failedOverwriteErrors,
+      );
+    }
+
+    Object.entries(values).forEach(([k, v]) => {
+      valuesByCategory.set(k, v);
+    });
+
+    this.values.valuesByQuestion
+      .get(questionLabel)
+      ?.set(optionLabel, valuesByCategory);
+
+    return this;
+  }
+
   getId(): string {
     // the name is unique amongst all analyzers for this survey
     return this.getName();
@@ -107,6 +173,19 @@ export class SurveyAnalyzer extends Entity {
 
   getName(): string {
     return this.name;
+  }
+
+  getValueFor(
+    questionLabel: string,
+    optionLabel: string,
+    category: string,
+  ): number | undefined {
+    return (
+      this.values.valuesByQuestion
+        .get(questionLabel)
+        ?.get(optionLabel)
+        ?.get(category) || undefined
+    );
   }
 
   toPersistenceDto(): SurveyAnalyzerPersistenceDto {
