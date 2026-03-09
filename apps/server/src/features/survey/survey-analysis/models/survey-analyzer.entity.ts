@@ -106,6 +106,26 @@ export class SurveyAnalyzer extends Entity {
   }
 
   @UpdateMethod()
+  addCategory(category: string): SurveyAnalyzer | TrueImpactError {
+    if (this.categories.some((c) => c.label === category)) {
+      return new TrueImpactError(
+        `You cannot add category [${category}] to analyzer [${this.name}], as it already has the given category.`,
+      );
+    }
+
+    this.categories.push(
+      // TODO Should we have a separate SFM for this use case?
+      SurveyAnalysisCategory.fromPersistenceDto({
+        // we use the array index as a local identifier
+        number: this.categories.length,
+        label: category,
+      }) as SurveyAnalysisCategory,
+    );
+
+    return this;
+  }
+
+  @UpdateMethod()
   addValuesForOption(
     questionLabel: string,
     optionLabel: string,
@@ -177,6 +197,14 @@ export class SurveyAnalyzer extends Entity {
 
   getName(): string {
     return this.name;
+  }
+
+  hasCategory(category: string) {
+    return this.categories.some(({ label }) => label === category);
+  }
+
+  countCategories(): number {
+    return this.categories.length;
   }
 
   getValueFor(

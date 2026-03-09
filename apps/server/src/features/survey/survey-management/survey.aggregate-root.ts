@@ -800,6 +800,34 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
   }
 
   @UpdateMethod()
+  addCategoryForAnalyzer({
+    analyzerName,
+    category,
+  }: {
+    analyzerName: string;
+    category: string;
+  }): Survey | TrueImpactError {
+    const targetAnalyzer = this.analyzersByName.get(analyzerName);
+
+    const updatedAnalyzer =
+      targetAnalyzer?.addCategory(category) ||
+      new TrueImpactError(
+        `You cannot add category [${category}] to analyzer [${analyzerName}] in survey [${this.name}], as there is no such analyzer in the target survey.`,
+      );
+
+    if (updatedAnalyzer instanceof TrueImpactError) {
+      return new TrueImpactError(
+        `Failed to add category [${category}] for analyzer [${analyzerName}] in survey [${this.name}]`,
+        [updatedAnalyzer],
+      );
+    }
+
+    this.analyzersByName.set(analyzerName, updatedAnalyzer);
+
+    return this;
+  }
+
+  @UpdateMethod()
   addCategoryValueForOptionInQuestion({
     analyzerName,
     questionLabel,
