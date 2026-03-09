@@ -163,6 +163,15 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
   }
 
   toPersistenceDto(): SurveyPersistenceDto {
+    const analyzers = Object.fromEntries(
+      Array.from(this.analyzersByName.entries()).map(
+        ([analyzerName, analyzer]): [string, SurveyAnalyzerPersistenceDto] => [
+          analyzerName,
+          analyzer.toPersistenceDto(),
+        ],
+      ),
+    );
+
     const result: SurveyPersistenceDto = {
       id: this.id,
       name: this.name,
@@ -181,14 +190,7 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
       ),
       revision: this.revision,
       topLevelQuestionLabels: this.topLevelQuestionLabels,
-      analyzers: Object.fromEntries(
-        Array.from(this.analyzersByName.entries()).map(
-          ([analyzerName, analyzer]): [
-            string,
-            SurveyAnalyzerPersistenceDto,
-          ] => [analyzerName, analyzer.toPersistenceDto()],
-        ),
-      ),
+      analyzers,
     };
 
     return result;
@@ -416,7 +418,7 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
 
     this.topLevelQuestionLabels.push(questionBuildResult.label);
 
-    return this;
+    return this.preventEditIfPublished();
   }
 
   find(
@@ -672,7 +674,7 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
 
     this.questionBank.set(questionLabel, updatedQuestion);
 
-    return this;
+    return this.preventEditIfPublished();
   }
 
   @UpdateMethod()
@@ -714,7 +716,7 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
 
     this.questionBank.set(questionLabel, updatedQuestion);
 
-    return this;
+    return this.preventEditIfPublished();
   }
 
   @UpdateMethod()
@@ -766,6 +768,16 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
     updatedQuestion.options.set(optionLabel, updatedOption);
 
     this.questionBank.set(questionLabel, updatedQuestion);
+
+    return this.preventEditIfPublished();
+  }
+
+  private preventEditIfPublished(): this | TrueImpactError {
+    if (this.isPublished) {
+      return new TrueImpactError(
+        `You cannot edit Survey [${this.name}] as it has been published for public use.`,
+      );
+    }
 
     return this;
   }

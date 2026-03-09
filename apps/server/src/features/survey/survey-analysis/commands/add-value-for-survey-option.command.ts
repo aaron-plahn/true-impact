@@ -1,6 +1,22 @@
-import { NestedDataType, NonEmptyString } from '../../../../libs/data-types';
+import {
+  NestedDataType,
+  NonEmptyString,
+  TrueImpactDataExample,
+} from '../../../../libs/data-types';
 import { SurveyCompositeIdentifier } from '../../survey.composite-identifier';
 
+@TrueImpactDataExample<AddValueForSurveyOption>({
+  example: {
+    aggregateCompositeIdentifier: {
+      type: 'survey',
+      id: '123',
+    },
+    analyzerName: 'balance check',
+    questionLabel: '1',
+    optionLabel: 'c',
+    valuesByCategory: {},
+  },
+})
 export class AddValueForSurveyOption {
   static readonly type = 'ADD_VALUE_FOR_SURVEY_OPTION';
 

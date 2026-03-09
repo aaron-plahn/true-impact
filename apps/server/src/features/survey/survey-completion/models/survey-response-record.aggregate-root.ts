@@ -571,6 +571,7 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
     if (questionResponseErrors.length > 0) {
       return new InvariantValidationError(
         SurveyResponseRecord,
+        `response for: ${survey.name}`,
         questionResponseErrors,
       );
     }

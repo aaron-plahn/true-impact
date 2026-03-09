@@ -183,6 +183,11 @@ export class SurveyAnalyzer extends Entity {
       valuesByCategory.set(k, v);
     });
 
+    if (!this.values.valuesByQuestion.has(questionLabel)) {
+      // This is the first value for an option in this question
+      this.values.valuesByQuestion.set(questionLabel, new Map());
+    }
+
     this.values.valuesByQuestion
       .get(questionLabel)
       ?.set(optionLabel, valuesByCategory);

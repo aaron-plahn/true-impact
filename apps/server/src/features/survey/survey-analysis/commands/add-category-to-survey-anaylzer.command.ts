@@ -12,6 +12,7 @@ import { SurveyCompositeIdentifier } from '../../survey.composite-identifier';
       type: SURVEY_AGGREGATE_TYPE,
       id: '123',
     },
+    analyzerName: 'medicine wheel',
     category: 'red',
   },
 })
@@ -25,6 +26,12 @@ export class AddCategoryToSurveyAnalyzer {
     description: `a globally unique reference to the target survey`,
   })
   aggregateCompositeIdentifier: SurveyCompositeIdentifier;
+
+  @NonEmptyString({
+    label: 'analyzer name',
+    description: 'the name of the analyzer for which you are adding a category',
+  })
+  analyzerName: string;
 
   /**
    * TODO We might want to make this an ID in case we decide

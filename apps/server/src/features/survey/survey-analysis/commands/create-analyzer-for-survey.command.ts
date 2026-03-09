@@ -4,7 +4,7 @@ import {
 } from '../../../../libs/data-types';
 import { SurveyCompositeIdentifier } from '../../survey.composite-identifier';
 
-@TrueImpactDataExample<CreateAnalyzer>({
+@TrueImpactDataExample<CreateAnalyzerForSurvey>({
   example: {
     aggregateCompositeIdentifier: {
       type: 'survey',
@@ -13,8 +13,8 @@ import { SurveyCompositeIdentifier } from '../../survey.composite-identifier';
     name: 'Medicine Wheel 3',
   },
 })
-export class CreateAnalyzer {
-  static readonly type = 'CREATE_ANALYZER';
+export class CreateAnalyzerForSurvey {
+  static readonly type = 'CREATE_ANALYZER_FOR_SURVEY';
 
   aggregateCompositeIdentifier: SurveyCompositeIdentifier;
 
