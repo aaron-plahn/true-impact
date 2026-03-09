@@ -49,14 +49,18 @@ export class SurveyAnalyzer extends Entity {
     values,
   }: {
     name: string;
-    categories: SurveyAnalysisCategory[];
+    categories?: SurveyAnalysisCategory[];
     values: SurveyOptionValueTracker;
   }) {
     super();
 
     this.name = name;
 
-    this.categories = categories;
+    if (categories) {
+      this.categories = categories;
+    } else {
+      this.categories = [];
+    }
 
     this.values = values;
   }
@@ -194,6 +198,13 @@ export class SurveyAnalyzer extends Entity {
       categories: this.categories.map((c) => c.toPersistenceDto()),
       values: this.values.toPersistenceDto(),
     };
+  }
+
+  static buildEmpty({ name }: { name: string }) {
+    return new SurveyAnalyzer({
+      name,
+      values: SurveyOptionValueTracker.buildEmpty(),
+    });
   }
 
   static fromPersistenceDto(

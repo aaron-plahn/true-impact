@@ -89,6 +89,10 @@ export class SurveyOptionValueTracker extends Entity {
     };
   }
 
+  static buildEmpty(): SurveyOptionValueTracker {
+    return new SurveyOptionValueTracker({ valuesByQuestion: {} });
+  }
+
   static fromPersistenceDto(
     { valuesByQuestion }: SurveyOptionValueTrackerPersistenceDto,
     _shouldValidate?: boolean,

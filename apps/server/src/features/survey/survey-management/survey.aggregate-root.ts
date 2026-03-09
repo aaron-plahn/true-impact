@@ -717,7 +717,6 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
     return this;
   }
 
-  // TODO move this to a `SurveyAnalyzer`
   @UpdateMethod()
   addFlagToQuestionOption({
     questionLabel,
@@ -787,6 +786,19 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
   /**
    * Survey Analysis Workflow
    */
+  @UpdateMethod()
+  createAnalyzer({ name }: { name: string }): Survey | TrueImpactError {
+    if (this.analyzersByName.has(name)) {
+      return new TrueImpactError(
+        `You cannot add analyzer [${name}] to survey [${this.name}], as it already has an analyzer with this name.`,
+      );
+    }
+
+    this.analyzersByName.set(name, SurveyAnalyzer.buildEmpty({ name }));
+
+    return this;
+  }
+
   @UpdateMethod()
   addCategoryValueForOptionInQuestion({
     analyzerName,
@@ -860,7 +872,6 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
     return this;
   }
 
-  // fromUserRequest? // buildEmpty?
   static buildEmpty({
     name,
   }: {
