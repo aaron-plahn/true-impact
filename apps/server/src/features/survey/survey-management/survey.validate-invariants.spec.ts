@@ -1,7 +1,24 @@
 import { buildTestInstance, TrueImpactError } from '../../../libs/data-types';
+import { assertTextMatchesAll } from '../../../libs/test-utils';
+import { SurveyAnalysisCategoryPersistenceDto } from '../survey-analysis/models/survey-analysis-category';
 import { Survey } from './survey.aggregate-root';
 
 const surveyName = 'my survey';
+
+const testCategories = ['white', 'yellow', 'red', 'black']
+  .map(
+    (category): SurveyAnalysisCategoryPersistenceDto => ({
+      label: category,
+    }),
+  )
+  .reduce(
+    (acc, c) => {
+      acc[c.label] = c;
+
+      return acc;
+    },
+    {} as Record<string, SurveyAnalysisCategoryPersistenceDto>,
+  );
 
 describe(`Survey.validateInvariants`, () => {
   describe(`when the survey is valid`, () => {
@@ -54,7 +71,7 @@ describe(`Survey.validateInvariants`, () => {
             },
           },
         },
-        false,
+        { shouldValidate: false },
       );
 
       it(`should return a valid survey`, () => {
@@ -66,6 +83,239 @@ describe(`Survey.validateInvariants`, () => {
   });
 
   describe(`when the survey is invalid`, () => {
+    describe(`when the analyzers are invalid`, () => {
+      describe(`when one of the analyzers is invalid`, () => {
+        describe(`when one of its questions is not in the survey`, () => {
+          const invalidAnalyzerName = 'bad analyzer';
+
+          const missingQuestionLabel = 'VII';
+
+          const invalidSurvey = buildTestInstance(
+            Survey,
+            {
+              name: surveyName,
+              questions: {
+                q1: {
+                  prompt: 'What do you think of my survey?',
+                  options: {
+                    a: {
+                      text: 'it is good',
+                    },
+                    b: {
+                      text: 'it is bad',
+                    },
+                  },
+                },
+                q2: {
+                  prompt: 'Would you take it again?',
+                  options: {
+                    a: {
+                      text: 'yes',
+                    },
+                    b: {
+                      text: 'no',
+                    },
+                  },
+                },
+              },
+              analyzers: {
+                [invalidAnalyzerName]: {
+                  categories: testCategories,
+                  valuesByQuestion: {
+                    [missingQuestionLabel]: {
+                      a: { red: 2 },
+                      b: { yellow: 1 },
+                    },
+                    q2: {
+                      a: {
+                        white: 1,
+                      },
+                      b: {
+                        red: 1,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            { shouldValidate: false },
+          );
+
+          it(`should return the expected error`, () => {
+            const result = invalidSurvey.validateInvariants();
+
+            expect(result).toBeInstanceOf(TrueImpactError);
+
+            assertTextMatchesAll(
+              (result as TrueImpactError).toString(),
+              surveyName,
+              invalidAnalyzerName,
+              'no such question',
+            );
+          });
+        });
+
+        describe(`when one of the options is not in the survey`, () => {
+          const invalidAnalyzerName = 'bad analyzer';
+
+          const labelOfQuestionMissingOption = 'VII';
+
+          const missingOptionLabel = 'c';
+
+          const invalidSurvey = buildTestInstance(
+            Survey,
+            {
+              name: surveyName,
+              questions: {
+                q1: {
+                  prompt: 'What do you think of my survey?',
+                  options: {
+                    a: {
+                      text: 'it is good',
+                    },
+                    b: {
+                      text: 'it is bad',
+                    },
+                  },
+                },
+                q2: {
+                  prompt: 'Would you take it again?',
+                  options: {
+                    a: {
+                      text: 'yes',
+                    },
+                    b: {
+                      text: 'no',
+                    },
+                  },
+                },
+              },
+              analyzers: {
+                [invalidAnalyzerName]: {
+                  categories: testCategories,
+                  valuesByQuestion: {
+                    [labelOfQuestionMissingOption]: {
+                      a: { red: 2 },
+                      b: { yellow: 1 },
+                      [missingOptionLabel]: { white: 1 },
+                    },
+                    q2: {
+                      a: {
+                        white: 1,
+                      },
+                      b: {
+                        red: 1,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            { shouldValidate: false },
+          );
+
+          it(`should return the expected error`, () => {
+            const result = invalidSurvey.validateInvariants();
+
+            expect(result).toBeInstanceOf(TrueImpactError);
+
+            assertTextMatchesAll(
+              (result as TrueImpactError).toString(),
+              surveyName,
+              invalidAnalyzerName,
+              'no such question',
+            );
+          });
+        });
+
+        describe(`when one of its option values is negative`, () => {
+          const invalidCategory = 'yellow';
+
+          const invalidValue = -10;
+
+          const invalidSurvey = buildTestInstance(
+            Survey,
+            {
+              name: surveyName,
+              analyzers: {
+                'medicine-wheel': {
+                  categories: testCategories,
+                  valuesByQuestion: {
+                    q1: {
+                      a: {
+                        white: 1,
+                      },
+                      b: {
+                        [invalidCategory]: invalidValue,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            { shouldValidate: false },
+          );
+
+          it(`should return the expected error`, () => {
+            const result = invalidSurvey.validateInvariants();
+
+            expect(result).toBeInstanceOf(TrueImpactError);
+
+            assertTextMatchesAll(
+              (result as TrueImpactError).toString(),
+              surveyName,
+              'positive integer',
+              invalidCategory,
+              invalidValue.toString(),
+            );
+          });
+        });
+
+        describe(`when one of its option values references a missing category`, () => {
+          const invalidSurvey = buildTestInstance(
+            Survey,
+            {
+              name: surveyName,
+              analyzers: {
+                'medicine-wheel': {
+                  categories: testCategories,
+
+                  valuesByQuestion: {
+                    q1: {
+                      a: { orange: 2 },
+                      b: { yellow: 1 },
+                    },
+                    q2: {
+                      a: {
+                        white: 1,
+                      },
+                      b: {
+                        red: 1,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            { shouldValidate: false },
+          );
+
+          it(`should return the expected error`, () => {
+            const result = invalidSurvey.validateInvariants();
+
+            expect(result).toBeInstanceOf(TrueImpactError);
+
+            assertTextMatchesAll(
+              (result as TrueImpactError).toString(),
+              surveyName,
+              'unknown category',
+              'orange',
+            );
+          });
+        });
+      });
+    });
+
     describe(`when one of the top-level question labels has no corresponding question`, () => {
       const invalidSurvey = buildTestInstance(
         Survey,
@@ -82,7 +332,7 @@ describe(`Survey.validateInvariants`, () => {
           },
           isPublished: false,
         },
-        false,
+        { shouldValidate: false },
       );
 
       it(`should return the expected error`, () => {
@@ -120,7 +370,7 @@ describe(`Survey.validateInvariants`, () => {
             },
           },
         },
-        false,
+        { shouldValidate: false },
       );
 
       it(`should return the expected error`, () => {
@@ -181,7 +431,7 @@ describe(`Survey.validateInvariants`, () => {
             },
           },
         },
-        false,
+        { shouldValidate: false },
       );
 
       it(`should return the expected error`, () => {

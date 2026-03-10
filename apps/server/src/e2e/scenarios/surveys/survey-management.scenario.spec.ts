@@ -317,7 +317,10 @@ describe(`Survey Management Scenarios`, () => {
             it(`should return the expected error response`, async () => {
               await assertCommandStreamError({
                 endpoint: commandEndpoint,
-                stream: publishSurvey.andThen(AddOptionToSurveyQuestion, {}),
+                stream: publishSurvey.andThen(AddOptionToSurveyQuestion, {
+                  questionLabel: questionLabels[0],
+                  optionLabel: 'new-option-label-X',
+                }),
                 assertErrorMessageAsExpected: (message: string) => {
                   expect(message).toContain(surveyName);
                   expect(message).toContain('has been published');
@@ -486,7 +489,12 @@ describe(`Survey Management Scenarios`, () => {
               endpoint: commandEndpoint,
               stream: publishSurvey.andThen(
                 AddFollowUpQuestionForSurveyOption,
-                {},
+                {
+                  questionLabel: `${questionLabels[0]}.${optionLabels[0]}.FU-1`,
+                  optionLabel: `FUOa`,
+                  followUpQuestionLabel: `FU2-label`,
+                  followUpQuestionPrompt: 'You forgot to ask this one!',
+                },
               ),
               assertErrorMessageAsExpected: (message: string) => {
                 expect(message).toContain(surveyName);

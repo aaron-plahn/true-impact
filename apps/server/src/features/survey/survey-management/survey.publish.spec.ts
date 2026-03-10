@@ -37,50 +37,7 @@ describe(`Survey.publish`, () => {
         expect(updatedSurvey.isPublished).toBe(true);
       });
 
-      it(`should prevent additional edits`, () => {
-        const publishedSurvey = result as Survey;
-
-        const results = [
-          publishedSurvey.addTopLevelQuestion({
-            label: '',
-            prompt: '',
-          }),
-          publishedSurvey.addFlagToQuestionOption({
-            questionLabel: '',
-            optionLabel: '',
-            flagId: 'none',
-          }),
-          publishedSurvey.addFollowUpQuestion({
-            optionLabel: '',
-            questionLabel: '',
-            followUpQuestion: {
-              label: '',
-              prompt: '',
-            },
-          }),
-          publishedSurvey.addOptionToQuestion({
-            questionLabel: '',
-            optionLabel: '',
-            text: '',
-          }),
-          publishedSurvey.addCategoryValueForOptionInQuestion({
-            questionLabel: '',
-            optionLabel: '',
-            valuesByCategory: {},
-          }),
-        ];
-
-        results.forEach((r) => {
-          // expect(r).toBeInstanceOf(CannotEditLiveSurveyError);
-          expect(r).toBeInstanceOf(TrueImpactError);
-
-          const message = (r as TrueImpactError).toString();
-
-          expect(message).toContain(publishedSurvey.name);
-
-          expect(message).toContain('has been published');
-        });
-      });
+      // note that we have scenario tests to ensure that edits to the survey are locked upon publication
     });
 
     describe(`when the survey fails one of the publication status checks`, () => {

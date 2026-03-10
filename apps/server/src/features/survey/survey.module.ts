@@ -16,6 +16,14 @@ import { SURVEY_QUERY_REPOSITORY_PROVIDER_TOKEN } from './queries/survey-query-r
 import { SurveyQueryService } from './queries/survey-query.service';
 import { SurveyViewModel } from './queries/survey.view-model';
 import {
+  AddCategoryToSurveyAnalyzer,
+  AddValueForSurveyOption,
+  AddValueForSurveyOptionCommandHandler,
+  CreateAnalyzerForSurvey,
+  CreateAnalyzerForSurveyCommandHandler,
+} from './survey-analysis';
+import { AddCategoryToSurveyAnalyzerCommandHandler } from './survey-analysis/commands/add-category-to-survey-analyzer.command-handler';
+import {
   AbandonSurveyCompletion,
   AbandonSurveyCompletionCommandHandler,
   AnswerSurveyQuestion,
@@ -65,6 +73,10 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
     AnswerSurveyQuestionCommandHandler,
     AbandonSurveyCompletionCommandHandler,
     SubmitSurveyCommandHandler,
+    // Survey Analysis Commands
+    CreateAnalyzerForSurveyCommandHandler,
+    AddCategoryToSurveyAnalyzerCommandHandler,
+    AddValueForSurveyOptionCommandHandler,
     // services
     SurveyQueryService,
     SurveyResponseQueryService,
@@ -135,6 +147,19 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
           .register({
             CommandHandlerCtor: SubmitSurveyCommandHandler,
             CommandPayloadCtor: SubmitSurvey,
+          })
+          // Survey Analysis
+          .register({
+            CommandHandlerCtor: CreateAnalyzerForSurveyCommandHandler,
+            CommandPayloadCtor: CreateAnalyzerForSurvey,
+          })
+          .register({
+            CommandHandlerCtor: AddCategoryToSurveyAnalyzerCommandHandler,
+            CommandPayloadCtor: AddCategoryToSurveyAnalyzer,
+          })
+          .register({
+            CommandHandlerCtor: AddValueForSurveyOptionCommandHandler,
+            CommandPayloadCtor: AddValueForSurveyOption,
           });
 
         return commandHandlerService;

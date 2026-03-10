@@ -4,6 +4,7 @@ import { Client, ClientPersistenceDto } from './client.aggregate-root';
 // TODO Build test instance
 const validDtoWihtoutOptionalProperties: ClientPersistenceDto = {
   id: '1',
+  revision: 1,
   fullName: {
     firstName: 'Ronald',
     // middleName: undefined,
@@ -51,9 +52,12 @@ describe(`Client.validateInvariants`, () => {
           community: 'Blue Lake',
         });
 
-        const result = Client.fromPersistenceDto(
+        const invalidInstance = Client.fromPersistenceDto(
           invalidDto as ClientPersistenceDto,
-        );
+          { shouldValidate: false },
+        ) as Client;
+
+        const result = invalidInstance.validateInvariants();
 
         assertTrueImpactError(result);
 
@@ -72,9 +76,11 @@ describe(`Client.validateInvariants`, () => {
           community: 'Red Mountain',
         });
 
-        const result = Client.fromPersistenceDto(
+        const instance = Client.fromPersistenceDto(
           invalidDto as ClientPersistenceDto,
-        );
+        ) as Client;
+
+        const result = instance.validateInvariants();
 
         assertTrueImpactError(result);
 
@@ -95,9 +101,11 @@ describe(`Client.validateInvariants`, () => {
       );
 
       it(`should return the expected error`, () => {
-        const result = Client.fromPersistenceDto(
+        const instance = Client.fromPersistenceDto(
           invalidInstance as unknown as ClientPersistenceDto,
-        );
+        ) as Client;
+
+        const result = instance.validateInvariants();
 
         assertTrueImpactError(result);
 
