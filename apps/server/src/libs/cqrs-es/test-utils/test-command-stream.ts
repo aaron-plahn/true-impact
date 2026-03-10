@@ -143,7 +143,9 @@ export class TestCommandStream {
     C: Ctor<T> & { type: string },
     overrides: DeepPartial<T>,
   ): ICommandFsa<T> {
-    const payloadWithOverrides = buildTestInstance(C, overrides, true);
+    const payloadWithOverrides = buildTestInstance(C, overrides, {
+      shouldValidate: true,
+    });
 
     const fsa = {
       type: C.type,

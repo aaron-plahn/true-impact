@@ -34,7 +34,7 @@ describe(`deepConvertMapToObject`, () => {
           new Map()
             .set('1', { price: 10 })
             .set('2', { price: 20 })
-            .set('3', new Map().set('discout', '50%').set('preferred', '25%')),
+            .set('3', new Map().set('discount', '50%').set('preferred', '25%')),
         ),
     );
 

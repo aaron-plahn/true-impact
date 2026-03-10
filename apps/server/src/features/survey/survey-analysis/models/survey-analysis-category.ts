@@ -30,7 +30,7 @@ export class SurveyAnalysisCategory extends Entity {
   }
 
   validateComplexInvariants(): TrueImpactError[] {
-    throw new Error('Method not implemented.');
+    return [];
   }
 
   getId(): string {

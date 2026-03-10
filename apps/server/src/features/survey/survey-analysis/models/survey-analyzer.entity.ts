@@ -321,6 +321,8 @@ export class SurveyAnalyzer extends Entity {
       valuesByQuestion: valuesByQuestion,
     });
 
-    return instance.validateInvariants();
+    return buildOptions?.shouldValidate
+      ? instance.validateInvariants()
+      : instance;
   }
 }

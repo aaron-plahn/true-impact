@@ -782,8 +782,8 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
   @UpdateMethod()
   publish(): this | TrueImpactError {
     if (this.isPublished) {
-      new TrueImpactError(
-        `You cannot publish survey [${this.name}], as it is already published`,
+      return new TrueImpactError(
+        `You cannot publish survey [${this.name}], as it has been published already.`,
       );
     }
 

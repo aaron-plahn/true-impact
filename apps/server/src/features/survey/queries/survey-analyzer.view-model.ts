@@ -73,14 +73,14 @@ export class SurveyAnalyzerViewModel {
     };
   }
 
-  static fromDomainModel({
-    name,
-    categoriesByLabel,
-    valuesByQuestion: values,
-  }: SurveyAnalyzer): SurveyAnalyzerViewModel {
+  static fromDomainModel(domainModel: SurveyAnalyzer): SurveyAnalyzerViewModel {
+    const { name, categoriesByLabel, valuesByQuestion: values } = domainModel;
+
+    const categories = Array.from(categoriesByLabel.keys());
+
     return new SurveyAnalyzerViewModel({
       name,
-      categories: Object.keys(categoriesByLabel), // in the future, this may be a `Record<string,CategoryViewModel>`
+      categories, // in the future, this may be a `Record<string,CategoryViewModel>`
       valuesByOptionByQuestion: values,
     });
   }

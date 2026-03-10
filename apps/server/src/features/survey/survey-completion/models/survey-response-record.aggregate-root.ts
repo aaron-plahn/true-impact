@@ -21,6 +21,11 @@ import {
 } from '../../survey-management/survey.aggregate-root';
 import { SurveyParticipantCompositeIdentifier } from './survey-participant.composite-identifier';
 
+class SurveyQuestionResponsePersistenceDto {
+  questionLabel: string;
+  optionLabel: string;
+}
+
 export class SurveyResponseCompositeIdentifier {
   readonly type = SURVEY_RESPONSE_AGGREGATE_TYPE;
 
@@ -72,8 +77,11 @@ class SurveyQuestionResponse extends Entity {
     return this.getId();
   }
 
-  toPersistenceDto(): unknown {
-    throw new Error('Method not implemented.');
+  toPersistenceDto(): SurveyQuestionResponsePersistenceDto {
+    return {
+      questionLabel: this.questionLabel,
+      optionLabel: this.optionLabel,
+    };
   }
 
   static fromPersistenceDto(
