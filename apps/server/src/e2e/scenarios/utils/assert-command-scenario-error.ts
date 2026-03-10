@@ -16,7 +16,7 @@ type ErrorTestCase = {
   assertErrorMessageAsExpected?: (message: string) => void;
 };
 
-export const assertCommandStreamError = async ({
+export const assertCommandScenarioError = async ({
   endpoint,
   stream,
   assertErrorMessageAsExpected,

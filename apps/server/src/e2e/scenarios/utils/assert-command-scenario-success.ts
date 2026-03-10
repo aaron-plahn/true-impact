@@ -6,7 +6,7 @@ import { RestCommandStreamExecutor } from './rest-command-executor';
 
 export * from './assert-command-scenario-success';
 
-export const assertScenarioSuccess = async ({
+export const assertCommandScenarioSuccess = async ({
   endpoint,
   stream,
   // name,
