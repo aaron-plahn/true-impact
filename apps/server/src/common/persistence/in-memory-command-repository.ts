@@ -112,32 +112,11 @@ export class InMemoryCommandRepository<
 
     instance.id = id;
 
-    const uniqueFieldViolations = Array.from(this.uniqueFields).flatMap(
-      (field: string): TrueImpactError[] => {
-        const newValue = instance[field];
+    const uniquenessConstraintsValidationResult =
+      this.validateUniquenessConstraints(instance);
 
-        const collisions = this.fetchWhere({
-          field,
-          value: instance[field],
-        });
-
-        return collisions.length > 0
-          ? [
-              new TrueImpactError(
-                `Uniqueness constraint violated for field [${field}]. The value [${newValue}] is already in use.`,
-              ),
-            ]
-          : [];
-      },
-    );
-
-    if (uniqueFieldViolations.length > 0) {
-      return new TrueImpactBadUserInputError([
-        new TrueImpactError(
-          `One or more uniqueness constraints were violated when attempting to create a [${this.instanceCtor.name}]`,
-          uniqueFieldViolations,
-        ),
-      ]);
+    if (uniquenessConstraintsValidationResult instanceof TrueImpactError) {
+      return Promise.resolve(uniquenessConstraintsValidationResult);
     }
 
     this.entititesById.set(id, instance);
@@ -156,6 +135,13 @@ export class InMemoryCommandRepository<
   update(
     instance: T,
   ): Promise<{ id: string; revision: string; type: string } | TrueImpactError> {
+    const uniquenessConstraintsValidationResult =
+      this.validateUniquenessConstraints(instance);
+
+    if (uniquenessConstraintsValidationResult instanceof TrueImpactError) {
+      return Promise.resolve(uniquenessConstraintsValidationResult);
+    }
+
     const { id, revision: revisonNumber } = instance.toPersistenceDto();
 
     if (!this.entititesById.has(id)) {
@@ -192,6 +178,42 @@ export class InMemoryCommandRepository<
     for (const id of this.entititesById.keys()) {
       this.entititesById.delete(id);
     }
+  }
+
+  private validateUniquenessConstraints(instance: T): TrueImpactError | this {
+    const uniqueFieldViolations = Array.from(this.uniqueFields).flatMap(
+      (field: string): TrueImpactError[] => {
+        const newValue = instance[field];
+
+        const collisions = this.fetchWhere({
+          field,
+          value: instance[field],
+          // it's not a collision if it's already in use
+          // we'll have a better way of doing this in the production DB implementation
+        }).filter(({ id }) => id !== instance.id);
+
+        return collisions.length > 0
+          ? [
+              new TrueImpactError(
+                `Uniqueness constraint violated for field [${field}]. The value [${newValue}] is already in use.`,
+              ),
+            ]
+          : [];
+      },
+    );
+
+    if (uniqueFieldViolations.length > 0) {
+      const e = new TrueImpactBadUserInputError([
+        new TrueImpactError(
+          `One or more uniqueness constraints were violated when attempting to create a [${this.instanceCtor.name}]`,
+          uniqueFieldViolations,
+        ),
+      ]);
+
+      return e;
+    }
+
+    return this;
   }
 
   private getNextId() {

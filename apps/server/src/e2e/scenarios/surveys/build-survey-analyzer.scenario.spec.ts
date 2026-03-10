@@ -13,8 +13,8 @@ import { TestCommandStream } from '../../../libs/cqrs-es';
 import { assertTextMatchesAll } from '../../../libs/test-utils';
 import {
   assertCommandError,
-  assertCommandStreamError,
-  assertScenarioSuccess,
+  assertCommandScenarioError,
+  assertCommandScenarioSuccess,
 } from '../utils';
 
 // TODO From env.e2e
@@ -100,7 +100,7 @@ describe(`Build Survey Analyzer Scenarios`, () => {
       describe(`when the survey already has an analyzer`, () => {
         describe(`when the new analyzer name is in conflict with the existing one`, () => {
           it(`should return the expected error resposne`, async () => {
-            await assertCommandStreamError({
+            await assertCommandScenarioError({
               endpoint: surveyCommandsEndpoint,
               stream: createAnalyzer.andThen(CreateAnalyzerForSurvey, {
                 name: analyzerName,
@@ -121,7 +121,7 @@ describe(`Build Survey Analyzer Scenarios`, () => {
           it(`should add the analyzer`, async () => {
             const uniqueName = 'Favourite Sports';
 
-            await assertScenarioSuccess({
+            await assertCommandScenarioSuccess({
               endpoint: surveyCommandsEndpoint,
               stream: createAnalyzer.andThen(CreateAnalyzerForSurvey, {
                 name: uniqueName,
@@ -142,7 +142,7 @@ describe(`Build Survey Analyzer Scenarios`, () => {
 
       describe(`when the survey has no analyzers`, () => {
         it(`should add the analyzer`, async () => {
-          await assertScenarioSuccess({
+          await assertCommandScenarioSuccess({
             endpoint: surveyCommandsEndpoint,
             stream: createAnalyzer,
             assertSuccess: async (acks) => {
@@ -182,7 +182,7 @@ describe(`Build Survey Analyzer Scenarios`, () => {
       describe(`when the analyzer exists`, () => {
         describe(`when the analyzer has no categories`, () => {
           it(`should add the first category`, async () => {
-            await assertScenarioSuccess({
+            await assertCommandScenarioSuccess({
               endpoint: surveyCommandsEndpoint,
               stream: createAnalyzer.andThen(AddCategoryToSurveyAnalyzer, {
                 analyzerName,
@@ -212,7 +212,7 @@ describe(`Build Survey Analyzer Scenarios`, () => {
             const secondCategory = 'Purple';
 
             it(`should add an additional category`, async () => {
-              await assertScenarioSuccess({
+              await assertCommandScenarioSuccess({
                 endpoint: surveyCommandsEndpoint,
                 stream: addCategoryForAnalyzer.andThen(
                   AddCategoryToSurveyAnalyzer,
@@ -242,7 +242,7 @@ describe(`Build Survey Analyzer Scenarios`, () => {
 
           describe(`when the new category name conflicts with an existing name`, () => {
             it(`should return the expected error response`, async () => {
-              await assertCommandStreamError({
+              await assertCommandScenarioError({
                 endpoint: surveyCommandsEndpoint,
                 stream: addCategoryForAnalyzer.andThen(
                   AddCategoryToSurveyAnalyzer,
@@ -268,7 +268,7 @@ describe(`Build Survey Analyzer Scenarios`, () => {
 
       describe(`when the analyzer does not exist`, () => {
         it(`should return the expected error response`, async () => {
-          await assertCommandStreamError({
+          await assertCommandScenarioError({
             endpoint: surveyCommandsEndpoint,
             stream: createSurvey.andThen(AddCategoryToSurveyAnalyzer, {
               analyzerName,
@@ -320,7 +320,7 @@ describe(`Build Survey Analyzer Scenarios`, () => {
             describe(`when all categories exist`, () => {
               describe(`when all values are valid`, () => {
                 it(`should add the values`, async () => {
-                  await assertScenarioSuccess({
+                  await assertCommandScenarioSuccess({
                     endpoint: surveyCommandsEndpoint,
                     stream: addValueForOption,
                     assertSuccess: async (acks) => {
@@ -355,7 +355,7 @@ describe(`Build Survey Analyzer Scenarios`, () => {
                   const newValue = 10;
 
                   it(`should return the expected error response`, async () => {
-                    await assertCommandStreamError({
+                    await assertCommandScenarioError({
                       endpoint: surveyCommandsEndpoint,
                       stream: addValueForOption.andThen(
                         AddValueForSurveyOption,
@@ -388,7 +388,7 @@ describe(`Build Survey Analyzer Scenarios`, () => {
                   it(`should return the expected error response`, async () => {
                     const invalidValue = -20;
 
-                    await assertCommandStreamError({
+                    await assertCommandScenarioError({
                       endpoint: surveyCommandsEndpoint,
                       stream: createAnalyzer.andThen(AddValueForSurveyOption, {
                         questionLabel: targetQuestion,
@@ -417,7 +417,7 @@ describe(`Build Survey Analyzer Scenarios`, () => {
               it(`should return the expected error response`, async () => {
                 const missingCategory = 'spunk';
 
-                await assertCommandStreamError({
+                await assertCommandScenarioError({
                   endpoint: surveyCommandsEndpoint,
                   stream: addCategoryForAnalyzer.andThen(
                     AddValueForSurveyOption,
@@ -448,7 +448,7 @@ describe(`Build Survey Analyzer Scenarios`, () => {
 
           describe(`when the analyzer does not exist`, () => {
             it(`should return the expected error response`, async () => {
-              await assertCommandStreamError({
+              await assertCommandScenarioError({
                 endpoint: surveyCommandsEndpoint,
                 stream: publishSurvey.andThen(AddValueForSurveyOption, {
                   analyzerName,
@@ -472,7 +472,7 @@ describe(`Build Survey Analyzer Scenarios`, () => {
           const missingOption = 'Jx';
 
           it(`should return the expected error response`, async () => {
-            await assertCommandStreamError({
+            await assertCommandScenarioError({
               endpoint: surveyCommandsEndpoint,
               stream: addValueForOption.andThen(AddValueForSurveyOption, {
                 questionLabel: targetQuestion,
@@ -500,7 +500,7 @@ describe(`Build Survey Analyzer Scenarios`, () => {
         const missingQuestionLabel = '02';
 
         it(`should return the expected error response`, async () => {
-          await assertCommandStreamError({
+          await assertCommandScenarioError({
             endpoint: surveyCommandsEndpoint,
             stream: addValueForOption.andThen(AddValueForSurveyOption, {
               questionLabel: missingQuestionLabel,

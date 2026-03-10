@@ -19,9 +19,9 @@ import { TestCommandStream } from '../../../libs/cqrs-es';
 import { assertTextMatchesAll } from '../../../libs/test-utils';
 import {
   assertCommandError,
-  assertCommandStreamError,
+  assertCommandScenarioError,
+  assertCommandScenarioSuccess,
   assertQueryResponse,
-  assertScenarioSuccess,
 } from '../utils';
 
 // TODO From env.e2e
@@ -127,7 +127,7 @@ const buildFullSurveyBeforePublishing = TestCommandStream.first(CreateSurvey, {
 const publishSurvey = buildFullSurveyBeforePublishing.andThen(PublishSurvey);
 
 const seedTestClient = async () => {
-  await assertScenarioSuccess({
+  await assertCommandScenarioSuccess({
     endpoint: clientCommandsEndpoint,
     stream: createClient,
     // onSuccess?
@@ -140,7 +140,7 @@ const seedTestClient = async () => {
 };
 
 const seedPublishedSurvey = async () => {
-  await assertScenarioSuccess({
+  await assertCommandScenarioSuccess({
     endpoint: surveyCompletionCommandsEndpoint,
     stream: publishSurvey,
   });
@@ -174,7 +174,7 @@ describe(`Survey Completion Scenarios`, () => {
             (await axios.get(surveyIndexEndpoint)).data as SurveyViewModel[]
           )[0];
 
-          await assertScenarioSuccess({
+          await assertCommandScenarioSuccess({
             endpoint: surveyCompletionCommandsEndpoint,
             stream: TestCommandStream.first(BeginSurvey, {
               surveyId,
@@ -226,7 +226,7 @@ describe(`Survey Completion Scenarios`, () => {
             (await axios.get(surveyIndexEndpoint)).data as SurveyViewModel[]
           )[0];
 
-          await assertScenarioSuccess({
+          await assertCommandScenarioSuccess({
             endpoint: surveyCompletionCommandsEndpoint,
             stream: TestCommandStream.first(BeginSurvey, {
               surveyId,
@@ -262,7 +262,7 @@ describe(`Survey Completion Scenarios`, () => {
             },
           });
 
-          await assertScenarioSuccess({
+          await assertCommandScenarioSuccess({
             endpoint: surveyCompletionCommandsEndpoint,
             stream: TestCommandStream.first(BeginSurvey, {
               surveyId,
@@ -313,7 +313,7 @@ describe(`Survey Completion Scenarios`, () => {
               (await axios.get(surveyIndexEndpoint)).data as SurveyViewModel[]
             )[0];
 
-            await assertScenarioSuccess({
+            await assertCommandScenarioSuccess({
               endpoint: surveyCompletionCommandsEndpoint,
               stream: TestCommandStream.first(BeginSurvey, {
                 surveyId,
@@ -361,7 +361,7 @@ describe(`Survey Completion Scenarios`, () => {
               surveyId: missingSurveyId,
             });
 
-            await assertCommandStreamError({
+            await assertCommandScenarioError({
               endpoint: surveyCompletionCommandsEndpoint,
               stream: beginSurvey,
               assertErrorMessageAsExpected: (message: string) => {
@@ -377,7 +377,7 @@ describe(`Survey Completion Scenarios`, () => {
 
         describe(`when the target survey is not published`, () => {
           it(`should return the expected error response`, async () => {
-            await assertScenarioSuccess({
+            await assertCommandScenarioSuccess({
               endpoint: surveyCompletionCommandsEndpoint,
               stream: buildFullSurveyBeforePublishing,
             });
@@ -400,7 +400,7 @@ describe(`Survey Completion Scenarios`, () => {
               surveyId,
             });
 
-            await assertCommandStreamError({
+            await assertCommandScenarioError({
               endpoint: surveyCompletionCommandsEndpoint,
               stream: beginSurvey,
             });
@@ -415,7 +415,7 @@ describe(`Survey Completion Scenarios`, () => {
           it(`should fail with the expected error response`, async () => {
             let surveyId: string;
 
-            await assertScenarioSuccess({
+            await assertCommandScenarioSuccess({
               endpoint: surveyCompletionCommandsEndpoint,
               stream: publishSurvey,
               assertSuccess: (acks) => {
@@ -423,7 +423,7 @@ describe(`Survey Completion Scenarios`, () => {
               },
             });
 
-            await assertCommandStreamError({
+            await assertCommandScenarioError({
               endpoint: surveyCompletionCommandsEndpoint,
               stream: TestCommandStream.first(BeginSurvey, {
                 // @ts-expect-error The compiler doesn't realize our callback has a side effect
@@ -440,7 +440,7 @@ describe(`Survey Completion Scenarios`, () => {
         describe(`when the survey participant is a client`, () => {
           describe(`when the client does not exist`, () => {
             it(`should fail with the expected error response`, async () => {
-              await assertScenarioSuccess({
+              await assertCommandScenarioSuccess({
                 endpoint: surveyCompletionCommandsEndpoint,
                 stream: publishSurvey,
               });
@@ -465,7 +465,7 @@ describe(`Survey Completion Scenarios`, () => {
                 },
               });
 
-              await assertCommandStreamError({
+              await assertCommandScenarioError({
                 endpoint: surveyCompletionCommandsEndpoint,
                 stream: beginSurvey,
                 assertErrorMessageAsExpected: (message) => {
@@ -519,7 +519,7 @@ describe(`Survey Completion Scenarios`, () => {
 
             const missingQuestionLabel = 'J7';
 
-            await assertCommandStreamError({
+            await assertCommandScenarioError({
               endpoint: surveyCompletionCommandsEndpoint,
               stream: TestCommandStream.first(BeginSurvey, {
                 surveyId,
@@ -558,7 +558,7 @@ describe(`Survey Completion Scenarios`, () => {
               (await axios.get(surveyIndexEndpoint)).data as SurveyViewModel[]
             )[0];
 
-            await assertCommandStreamError({
+            await assertCommandScenarioError({
               endpoint: surveyCompletionCommandsEndpoint,
               stream: TestCommandStream.first(BeginSurvey, {
                 surveyId,
@@ -604,7 +604,7 @@ describe(`Survey Completion Scenarios`, () => {
 
             const outOfOrderQuestionLabel = 'q2';
 
-            await assertCommandStreamError({
+            await assertCommandScenarioError({
               endpoint: surveyCompletionCommandsEndpoint,
               stream: TestCommandStream.first(BeginSurvey, {
                 surveyId,
@@ -637,7 +637,7 @@ describe(`Survey Completion Scenarios`, () => {
               (await axios.get(surveyIndexEndpoint)).data as SurveyViewModel[]
             )[0];
 
-            await assertCommandStreamError({
+            await assertCommandScenarioError({
               endpoint: surveyCompletionCommandsEndpoint,
               stream: TestCommandStream.first(BeginSurvey, {
                 surveyId,
@@ -678,7 +678,7 @@ describe(`Survey Completion Scenarios`, () => {
               (await axios.get(surveyIndexEndpoint)).data as SurveyViewModel[]
             )[0];
 
-            await assertCommandStreamError({
+            await assertCommandScenarioError({
               endpoint: surveyCompletionCommandsEndpoint,
               stream: TestCommandStream.first(BeginSurvey, {
                 surveyId,
@@ -732,7 +732,7 @@ describe(`Survey Completion Scenarios`, () => {
               (await axios.get(surveyIndexEndpoint)).data as SurveyViewModel[]
             )[0];
 
-            await assertCommandStreamError({
+            await assertCommandScenarioError({
               endpoint: surveyCompletionCommandsEndpoint,
               stream: TestCommandStream.first(BeginSurvey, {
                 surveyId,
@@ -805,7 +805,7 @@ describe(`Survey Completion Scenarios`, () => {
               (await axios.get(surveyIndexEndpoint)).data as SurveyViewModel[]
             )[0];
 
-            await assertCommandStreamError({
+            await assertCommandScenarioError({
               endpoint: surveyCompletionCommandsEndpoint,
               stream: TestCommandStream.first(BeginSurvey, {
                 participantCompositeIdentifier: {
@@ -843,7 +843,7 @@ describe(`Survey Completion Scenarios`, () => {
               (await axios.get(surveyIndexEndpoint)).data as SurveyViewModel[]
             )[0];
 
-            await assertCommandStreamError({
+            await assertCommandScenarioError({
               endpoint: surveyCompletionCommandsEndpoint,
               stream: TestCommandStream.first(BeginSurvey, {
                 surveyId,
@@ -920,7 +920,7 @@ describe(`Survey Completion Scenarios`, () => {
               (await axios.get(surveyIndexEndpoint)).data as SurveyViewModel[]
             )[0];
 
-            await assertCommandStreamError({
+            await assertCommandScenarioError({
               endpoint: surveyCompletionCommandsEndpoint,
               stream: TestCommandStream.first(BeginSurvey, {
                 surveyId,
@@ -948,7 +948,7 @@ describe(`Survey Completion Scenarios`, () => {
 
         describe(`when the survey attempt has already been abandoned`, () => {
           it(`should return the expected error response`, async () => {
-            await assertCommandStreamError({
+            await assertCommandScenarioError({
               endpoint: surveyCompletionCommandsEndpoint,
               stream: TestCommandStream.first(BeginSurvey, {}).andThen(
                 AbandonSurveyCompletion,

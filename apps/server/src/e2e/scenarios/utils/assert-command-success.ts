@@ -7,13 +7,13 @@ type SuccessTestCase = {
   endpoint: string;
   commandFsa: ICommandFsa;
   // arrange: () => Promise<void>;
-  assert?: (response: SuccessResponse) => Promise<void>;
+  assertSuccess?: (response: SuccessResponse) => Promise<void>;
 };
 
 export const assertCommandSuccess = async ({
   endpoint,
   commandFsa,
-  assert: assertSuccess,
+  assertSuccess: assertSuccess,
 }: SuccessTestCase) => {
   const response = await axios
     .post(endpoint, commandFsa)
