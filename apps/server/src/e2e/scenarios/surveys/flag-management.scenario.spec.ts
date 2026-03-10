@@ -5,9 +5,9 @@ import { TestCommandStream } from '../../../libs/cqrs-es';
 import { assertTextMatchesAll } from '../../../libs/test-utils';
 import {
   assertCommandError,
-  assertCommandStreamError,
+  assertCommandScenarioError,
+  assertCommandScenarioSuccess,
   assertCommandSuccess,
-  assertScenarioSuccess,
 } from '../utils';
 
 // TODO From env.e2e
@@ -47,8 +47,7 @@ describe(`Flag Management Scenarios`, () => {
   describe(`when creating a flag`, () => {
     describe(`when  creating a first flag`, () => {
       it(`should create the flag`, async () => {
-        // todo name these helpers consistently now
-        await assertScenarioSuccess({
+        await assertCommandScenarioSuccess({
           endpoint: flagCommandsEndpoint,
           stream: createFlag,
           assertSuccess: async (acks) => {
@@ -82,7 +81,7 @@ describe(`Flag Management Scenarios`, () => {
             commandFsa: TestCommandStream.buildOne(CreateFlag, {
               label: 'new label',
             }),
-            assert: async () => {
+            assertSuccess: async () => {
               const indexResult = (await axios.get(flagIndexEndpoint))
                 .data as FlagViewModel[];
 
@@ -96,13 +95,13 @@ describe(`Flag Management Scenarios`, () => {
         describe(`because another flag was created with this label`, () => {
           it(`should return the expected error response`, async () => {
             // Arrange
-            await assertScenarioSuccess({
+            await assertCommandScenarioSuccess({
               endpoint: flagCommandsEndpoint,
               stream: createFlag,
             });
 
             // Act \ Assert
-            await assertCommandStreamError({
+            await assertCommandScenarioError({
               endpoint: flagCommandsEndpoint,
               stream: createFlag,
               assertErrorMessageAsExpected: (message) => {
@@ -115,7 +114,7 @@ describe(`Flag Management Scenarios`, () => {
         describe(`because another flag was relabelled to have this label`, () => {
           it(`should return the epxected error response`, async () => {
             // Arrange
-            await assertScenarioSuccess({
+            await assertCommandScenarioSuccess({
               endpoint: flagCommandsEndpoint,
               stream: createFlag.andThen(RelabelFlag, {
                 newLabel: repeatedFlagLabel,
@@ -123,8 +122,7 @@ describe(`Flag Management Scenarios`, () => {
             });
 
             // Act \ Assert
-
-            await assertCommandStreamError({
+            await assertCommandScenarioError({
               endpoint: flagCommandsEndpoint,
               stream: TestCommandStream.first(CreateFlag, {
                 label: 'ok label',
@@ -149,7 +147,7 @@ describe(`Flag Management Scenarios`, () => {
     describe(`when the target flag exists`, () => {
       describe(`when the new label is unique`, () => {
         it(`should update the flag`, async () => {
-          await assertScenarioSuccess({
+          await assertCommandScenarioSuccess({
             endpoint: flagCommandsEndpoint,
             stream: relabelFlag,
             assertSuccess: async (acks) => {
@@ -176,7 +174,7 @@ describe(`Flag Management Scenarios`, () => {
               });
 
               // Act \ Assert
-              await assertCommandStreamError({
+              await assertCommandScenarioError({
                 endpoint: flagCommandsEndpoint,
                 stream: createFlag.andThen(RelabelFlag, {
                   newLabel: repeatedFlagLabel,
@@ -194,7 +192,7 @@ describe(`Flag Management Scenarios`, () => {
 
           describe(`that was relabelled to have this label`, () => {
             it(`should return the expected error resposne`, async () => {
-              await assertScenarioSuccess({
+              await assertCommandScenarioSuccess({
                 endpoint: flagCommandsEndpoint,
                 stream: TestCommandStream.first(CreateFlag, {
                   label: 'some other label',
@@ -203,7 +201,7 @@ describe(`Flag Management Scenarios`, () => {
                 }),
               });
 
-              await assertCommandStreamError({
+              await assertCommandScenarioError({
                 endpoint: flagCommandsEndpoint,
                 stream: TestCommandStream.first(CreateFlag, {
                   label: 'no problem here',
@@ -224,7 +222,7 @@ describe(`Flag Management Scenarios`, () => {
 
         describe(`by the target flag`, () => {
           it(`should return the expected error response`, async () => {
-            await assertCommandStreamError({
+            await assertCommandScenarioError({
               endpoint: flagCommandsEndpoint,
               stream: createFlag
                 .andThen(RelabelFlag, {

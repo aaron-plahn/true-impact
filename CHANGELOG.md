@@ -2,6 +2,10 @@
 
 This first release of the True Impact platform introduces a working model for user management, client management, and survey creation and completion.
 
+## #10
+
+In this commit, we introduce a workflow for managing flags. We will support attaching these to clients and surveys in a future commit.
+
 ## #9
 
 In this commit, we introduce a workflow for survey analysis. This allows admin users to assign values per-category for each

@@ -12,10 +12,10 @@ import { TestCommandStream } from '../../../libs/cqrs-es/test-utils';
 import { HttpStatus } from '../../../libs/framework';
 import {
   assertCommandError,
-  assertCommandStreamError,
+  assertCommandScenarioError,
+  assertCommandScenarioSuccess,
   assertCommandSuccess,
   assertQueryResponse,
-  assertScenarioSuccess,
 } from '../utils';
 
 // TODO From env.e2e
@@ -144,7 +144,7 @@ describe(`Survey Management Scenarios`, () => {
           await assertCommandSuccess({
             endpoint: commandEndpoint,
             commandFsa: createSurvey.getCreationCommand(),
-            assert: async (response) => {
+            assertSuccess: async (response) => {
               const {
                 body: { id },
                 status,
@@ -163,12 +163,12 @@ describe(`Survey Management Scenarios`, () => {
       describe(`when the request is invalid`, () => {
         describe(`when there is already a survey with the given name`, () => {
           it(`should return the expected error message`, async () => {
-            await assertScenarioSuccess({
+            await assertCommandScenarioSuccess({
               endpoint: commandEndpoint,
               stream: createSurvey,
             });
 
-            await assertCommandStreamError({
+            await assertCommandScenarioError({
               endpoint: commandEndpoint,
               stream: createSurvey,
               assertErrorMessageAsExpected: (message: string) => {
@@ -187,7 +187,7 @@ describe(`Survey Management Scenarios`, () => {
     describe(`when adding a first question to a survey`, () => {
       describe(`when the request is valid`, () => {
         it(`should succeed`, async () => {
-          await assertScenarioSuccess({
+          await assertCommandScenarioSuccess({
             endpoint: commandEndpoint,
             stream: addFirstQuestionToSurvey,
             assertSuccess: async (acks) => {
@@ -207,7 +207,7 @@ describe(`Survey Management Scenarios`, () => {
       describe(`when the request is invalid`, () => {
         describe(`when the survey is already published`, () => {
           it(`should return the expected error response`, async () => {
-            await assertCommandStreamError({
+            await assertCommandScenarioError({
               endpoint: commandEndpoint,
               stream: publishSurvey.andThen(AddQuestionToSurvey, {}),
               assertErrorMessageAsExpected: (message: string) => {
@@ -242,7 +242,7 @@ describe(`Survey Management Scenarios`, () => {
           const duplicateQuestionLabel = 'Q1';
 
           it(`should return the expected error`, async () => {
-            await assertCommandStreamError({
+            await assertCommandScenarioError({
               endpoint: commandEndpoint,
               stream: createSurvey
                 .andThen(AddQuestionToSurvey, {
@@ -291,7 +291,7 @@ describe(`Survey Management Scenarios`, () => {
       describe(`when adding a first option`, () => {
         describe(`when the request is valid`, () => {
           it(`should add the option to the survey`, async () => {
-            await assertScenarioSuccess({
+            await assertCommandScenarioSuccess({
               endpoint: commandEndpoint,
               stream: addOptionToSurveyQuestion,
               assertSuccess: async (acks) => {
@@ -315,7 +315,7 @@ describe(`Survey Management Scenarios`, () => {
         describe(`when the request is invalid`, () => {
           describe(`when the survey is already published`, () => {
             it(`should return the expected error response`, async () => {
-              await assertCommandStreamError({
+              await assertCommandScenarioError({
                 endpoint: commandEndpoint,
                 stream: publishSurvey.andThen(AddOptionToSurveyQuestion, {
                   questionLabel: questionLabels[0],
@@ -361,7 +361,7 @@ describe(`Survey Management Scenarios`, () => {
 
           describe(`when the question does not exist`, () => {
             it(`should return the expected error`, async () => {
-              await assertCommandStreamError({
+              await assertCommandScenarioError({
                 endpoint: commandEndpoint,
                 stream: createSurvey.andThen(AddOptionToSurveyQuestion, {
                   questionLabel: missingQuestionLabel,
@@ -386,7 +386,7 @@ describe(`Survey Management Scenarios`, () => {
         describe(`when the request is invalid`, () => {
           describe(`when there is already a question with the given option`, () => {
             it(`should return the expected error`, async () => {
-              await assertCommandStreamError({
+              await assertCommandScenarioError({
                 endpoint: commandEndpoint,
                 stream: addOptionToSurveyQuestion.andThen(
                   AddOptionToSurveyQuestion,
@@ -447,7 +447,7 @@ describe(`Survey Management Scenarios`, () => {
     describe(`when adding a follow-up question`, () => {
       describe(`when the request is valid`, () => {
         it(`should add the follow-up question`, async () => {
-          await assertScenarioSuccess({
+          await assertCommandScenarioSuccess({
             endpoint: commandEndpoint,
             stream: addFollowUpQuestionForOption,
             assertSuccess: async (acks) => {
@@ -485,7 +485,7 @@ describe(`Survey Management Scenarios`, () => {
       describe(`when the request is invalid`, () => {
         describe(`when the survey is already published`, () => {
           it(`should return the expected error response`, async () => {
-            await assertCommandStreamError({
+            await assertCommandScenarioError({
               endpoint: commandEndpoint,
               stream: publishSurvey.andThen(
                 AddFollowUpQuestionForSurveyOption,
@@ -529,7 +529,7 @@ describe(`Survey Management Scenarios`, () => {
 
         describe(`when the question does not exist`, () => {
           it(`should return the expected error response`, async () => {
-            await assertCommandStreamError({
+            await assertCommandScenarioError({
               endpoint: commandEndpoint,
               stream: createSurvey.andThen(AddFollowUpQuestionForSurveyOption, {
                 questionLabel: missingQuestionLabel,
@@ -547,7 +547,7 @@ describe(`Survey Management Scenarios`, () => {
 
         describe(`when the option does not exist`, () => {
           it(`should return the expected error response`, async () => {
-            await assertCommandStreamError({
+            await assertCommandScenarioError({
               endpoint: commandEndpoint,
               stream: addFirstQuestionToSurvey.andThen(
                 AddFollowUpQuestionForSurveyOption,
@@ -570,7 +570,7 @@ describe(`Survey Management Scenarios`, () => {
           it(`should return the expected error response`, async () => {
             const existingQuestionLabel = questionLabels[0];
 
-            await assertCommandStreamError({
+            await assertCommandScenarioError({
               endpoint: commandEndpoint,
               stream: createSurvey
                 .andThen(AddQuestionToSurvey, {
@@ -620,7 +620,7 @@ describe(`Survey Management Scenarios`, () => {
     describe(`when publishing a survey`, () => {
       describe(`when the request is valid`, () => {
         it(`should publish the survey`, async () => {
-          await assertScenarioSuccess({
+          await assertCommandScenarioSuccess({
             endpoint: commandEndpoint,
             stream: publishSurvey,
             assertSuccess: async (acks) => {
@@ -640,7 +640,7 @@ describe(`Survey Management Scenarios`, () => {
       describe(`when the request is invalid`, () => {
         describe(`when the survey is already published`, () => {
           it(`should return the expected error response`, async () => {
-            await assertCommandStreamError({
+            await assertCommandScenarioError({
               endpoint: commandEndpoint,
               stream: publishSurvey.andThen(PublishSurvey, {}),
               assertErrorMessageAsExpected: (message: string) => {
@@ -653,7 +653,7 @@ describe(`Survey Management Scenarios`, () => {
 
         describe(`when the survey has no questions`, () => {
           it(`should return the expected error response`, async () => {
-            await assertCommandStreamError({
+            await assertCommandScenarioError({
               endpoint: commandEndpoint,
               stream: createSurvey.andThen(PublishSurvey),
               assertErrorMessageAsExpected: (message) => {
@@ -667,7 +667,7 @@ describe(`Survey Management Scenarios`, () => {
 
         describe(`when one of the questions has no options`, () => {
           it(`should return the expected error response`, async () => {
-            await assertCommandStreamError({
+            await assertCommandScenarioError({
               endpoint: commandEndpoint,
               stream: addFirstQuestionToSurvey.andThen(PublishSurvey, {}),
               assertErrorMessageAsExpected: (message) => {
@@ -681,7 +681,7 @@ describe(`Survey Management Scenarios`, () => {
 
         describe(`when one of the question has an option with an empty follow-up question`, () => {
           it(`should return the expected error response`, async () => {
-            await assertCommandStreamError({
+            await assertCommandScenarioError({
               endpoint: commandEndpoint,
               stream: addFollowUpQuestionForOption.andThen(PublishSurvey),
               assertErrorMessageAsExpected: (message) => {

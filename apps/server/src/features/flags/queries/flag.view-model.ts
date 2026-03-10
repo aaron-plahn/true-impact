@@ -16,7 +16,6 @@ export class FlagViewModel {
 
   id: string;
   revision: string;
-  name: string; // todo ML text
   label: string;
   description: string;
 
@@ -32,9 +31,6 @@ export class FlagViewModel {
     description: string;
   }) {
     this.id = id;
-
-    // TODO do we really want to duplicate this?
-    this.name = label;
 
     this.revision = revision;
 
