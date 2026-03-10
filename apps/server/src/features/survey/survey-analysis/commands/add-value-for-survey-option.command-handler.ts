@@ -35,7 +35,7 @@ export class AddValueForSurveyOptionCommandHandler implements ICommandHandler<Ad
       return new TrueImpactBadUserInputError([existing]);
     }
 
-    const updated = existing.addCategoryValueForOptionInQuestion({
+    const updated = existing.addValueForOption({
       analyzerName,
       questionLabel,
       optionLabel,

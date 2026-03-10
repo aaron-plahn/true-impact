@@ -274,7 +274,6 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
    * question in the survey.
    * - A published survey's questions must offer at least 2 options each
    *
-   * TODO Finalize this and add a dedicated unit test
    *
    */
   validateComplexInvariants(): TrueImpactError[] {
@@ -353,33 +352,31 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
       (analyzer) => {
         const errorsForThisAnalyzer = analyzer.validateComplexInvariants();
 
-        analyzer.values.valuesByQuestion.forEach(
-          (valuesByOption, questionLabel) => {
-            if (!this.questionBank.has(questionLabel)) {
-              errorsForThisAnalyzer.push(
-                new TrueImpactError(
-                  `Encountered an invalid question [${questionLabel}] in analyzer [${analyzer.name}] for survey [${this.name}]. There is no such question in the survey.`,
-                ),
-              );
-            } else {
-              const targetQuestion = this.questionBank.get(
-                questionLabel,
-              ) as SurveyQuestion;
+        analyzer.valuesByQuestion.forEach((valuesByOption, questionLabel) => {
+          if (!this.questionBank.has(questionLabel)) {
+            errorsForThisAnalyzer.push(
+              new TrueImpactError(
+                `Encountered an invalid question [${questionLabel}] in analyzer [${analyzer.name}] for survey [${this.name}]. There is no such question in the survey.`,
+              ),
+            );
+          } else {
+            const targetQuestion = this.questionBank.get(
+              questionLabel,
+            ) as SurveyQuestion;
 
-              valuesByOption.forEach((_valuesByCategory, optionLabel) => {
-                if (!targetQuestion.has(optionLabel)) {
-                  errorsForThisAnalyzer.push(
-                    new TrueImpactError(
-                      `Encountered an invalid option [${optionLabel}] for question [${questionLabel}] in analyzer [${analyzer.name}] for survey [${this.name}]. The given question has no such option.`,
-                    ),
-                  );
-                }
+            valuesByOption.forEach((_valuesByCategory, optionLabel) => {
+              if (!targetQuestion.has(optionLabel)) {
+                errorsForThisAnalyzer.push(
+                  new TrueImpactError(
+                    `Encountered an invalid option [${optionLabel}] for question [${questionLabel}] in analyzer [${analyzer.name}] for survey [${this.name}]. The given question has no such option.`,
+                  ),
+                );
+              }
 
-                // TODO why not validate the categories while we are here?
-              });
-            }
-          },
-        );
+              // TODO why not validate the categories while we are here?
+            });
+          }
+        });
 
         return errorsForThisAnalyzer;
       },
@@ -840,7 +837,7 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
   }
 
   @UpdateMethod()
-  addCategoryValueForOptionInQuestion({
+  addValueForOption({
     analyzerName,
     questionLabel,
     optionLabel,
@@ -941,7 +938,7 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
       revision,
       analyzers,
     }: SurveyPersistenceDto,
-    shouldValidate = false,
+    buildOptions: { shouldValidate?: boolean } = {},
   ): Survey | TrueImpactError {
     const allQuestions = Object.entries(questions).map(
       ([label, questionDtoWithoutLabel]) =>
@@ -950,7 +947,7 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
             ...questionDtoWithoutLabel,
             label,
           },
-          shouldValidate,
+          buildOptions,
         ),
     );
 
@@ -973,7 +970,7 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
           ...analyzerDto,
           name: analyzerName,
         },
-        shouldValidate,
+        buildOptions,
       );
 
       if (buildResult instanceof TrueImpactError) {
@@ -1008,7 +1005,7 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
       analyzersByName: analyzersBuildResult,
     });
 
-    if (shouldValidate) {
+    if (buildOptions.shouldValidate) {
       return survey.validateInvariants();
     }
 

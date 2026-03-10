@@ -1,5 +1,6 @@
 import { buildTestInstance, TrueImpactError } from '../../../libs/data-types';
 import { assertTextMatchesAll } from '../../../libs/test-utils';
+import { SurveyAnalysisCategory } from '../survey-analysis/models/survey-analysis-category';
 import { Survey } from './survey.aggregate-root';
 
 const surveyName = 'Staff Evaluation';
@@ -58,53 +59,59 @@ const targetSurvey = buildTestInstance(
     analyzers: {
       [analyzerName]: {
         name: 'Balance Checker',
-        categories: ['red', 'white', 'yellow', 'black'].map(
-          (label, number) => ({
-            label,
-            number,
-          }),
-        ),
-        values: {
-          valuesByQuestion: {
-            // can we have type-safety here?
-            1: {
-              a: {
-                white: existingValue,
-              },
-              b: {
-                yellow: 1,
-              },
+        categories: {
+          red: SurveyAnalysisCategory.fromPersistenceDto({
+            label: 'red',
+          }) as SurveyAnalysisCategory,
+          white: SurveyAnalysisCategory.fromPersistenceDto({
+            label: 'white',
+          }) as SurveyAnalysisCategory,
+          yellow: SurveyAnalysisCategory.fromPersistenceDto({
+            label: 'yellow',
+          }) as SurveyAnalysisCategory,
+          black: SurveyAnalysisCategory.fromPersistenceDto({
+            label: 'black',
+          }) as SurveyAnalysisCategory,
+        },
+        valuesByQuestion: {
+          // can we have type-safety here?
+          1: {
+            a: {
+              white: existingValue,
             },
-            2: {
-              a: {
-                white: 1,
-              },
-              b: {
-                yellow: 1,
-              },
-              // 2(c) has no values to start
-              // c: {
-              //   red: 1,
-              // },
+            b: {
+              yellow: 1,
             },
-            // 3 has no values to start
-            //   3: {
-            //     a: {
-            //       white: 1,
-            //     },
-            //     b: {
-            //       yellow: 1,
-            //     },
-            //     c: {
-            //       red: 1,
-            //     },
-            //   },
           },
+          2: {
+            a: {
+              white: 1,
+            },
+            b: {
+              yellow: 1,
+            },
+            // 2(c) has no values to start
+            // c: {
+            //   red: 1,
+            // },
+          },
+          // 3 has no values to start
+          //   3: {
+          //     a: {
+          //       white: 1,
+          //     },
+          //     b: {
+          //       yellow: 1,
+          //     },
+          //     c: {
+          //       red: 1,
+          //     },
+          //   },
         },
       },
     },
   },
-  true,
+  { shouldValidate: true },
 );
 
 const targetQuestionLabel = '2';
@@ -112,7 +119,7 @@ const targetOptionLabel = 'c';
 const targetCategory = 'red';
 
 // TODO change method name?
-describe(`Survey.updateAnalyzerValues`, () => {
+describe(`Survey.addValueForOption`, () => {
   describe(`when the target analyzer exists`, () => {
     describe(`when the target question exists`, () => {
       describe(`when the target option exists`, () => {
@@ -123,15 +130,14 @@ describe(`Survey.updateAnalyzerValues`, () => {
                 const newValue = 1;
 
                 it(`should add the new value`, () => {
-                  const result =
-                    targetSurvey.addCategoryValueForOptionInQuestion({
-                      analyzerName,
-                      questionLabel: targetQuestionLabel,
-                      optionLabel: targetOptionLabel,
-                      valuesByCategory: {
-                        [targetCategory]: newValue,
-                      },
-                    });
+                  const result = targetSurvey.addValueForOption({
+                    analyzerName,
+                    questionLabel: targetQuestionLabel,
+                    optionLabel: targetOptionLabel,
+                    valuesByCategory: {
+                      [targetCategory]: newValue,
+                    },
+                  });
 
                   expect(result).toBeInstanceOf(Survey);
 
@@ -141,11 +147,11 @@ describe(`Survey.updateAnalyzerValues`, () => {
                     updated.analyzersByName
                       .get(analyzerName)
                       // should this take in an object?
-                      ?.getValueFor(
-                        targetQuestionLabel,
-                        targetOptionLabel,
-                        targetCategory,
-                      ),
+                      ?.getValueFor({
+                        questionLabel: targetQuestionLabel,
+                        optionLabel: targetOptionLabel,
+                        category: targetCategory,
+                      }),
                   ).toBe(newValue);
 
                   expect(updated.analyzersByName.get('white')).toBe(undefined);
@@ -156,15 +162,14 @@ describe(`Survey.updateAnalyzerValues`, () => {
                 it(`should return the expected error`, () => {
                   const invalidValue = -15;
 
-                  const result =
-                    targetSurvey.addCategoryValueForOptionInQuestion({
-                      analyzerName,
-                      questionLabel: targetQuestionLabel,
-                      optionLabel: targetOptionLabel,
-                      valuesByCategory: {
-                        [targetCategory]: invalidValue,
-                      },
-                    });
+                  const result = targetSurvey.addValueForOption({
+                    analyzerName,
+                    questionLabel: targetQuestionLabel,
+                    optionLabel: targetOptionLabel,
+                    valuesByCategory: {
+                      [targetCategory]: invalidValue,
+                    },
+                  });
 
                   expect(result).toBeInstanceOf(TrueImpactError);
 
@@ -189,18 +194,15 @@ describe(`Survey.updateAnalyzerValues`, () => {
 
               const newValue = 12;
 
-              // TODO is this the behaviour we want?
               it(`should return the expected error`, () => {
-                const result = targetSurvey.addCategoryValueForOptionInQuestion(
-                  {
-                    analyzerName,
-                    questionLabel: existingQuestionLabel,
-                    optionLabel: existingOptionLabel,
-                    valuesByCategory: {
-                      [existingCategory]: newValue,
-                    },
+                const result = targetSurvey.addValueForOption({
+                  analyzerName,
+                  questionLabel: existingQuestionLabel,
+                  optionLabel: existingOptionLabel,
+                  valuesByCategory: {
+                    [existingCategory]: newValue,
                   },
-                );
+                });
 
                 expect(result).toBeInstanceOf(TrueImpactError);
 
@@ -230,56 +232,47 @@ describe(`Survey.updateAnalyzerValues`, () => {
                 };
 
                 it(`should add all values for the given option`, () => {
-                  const result =
-                    targetSurvey.addCategoryValueForOptionInQuestion({
-                      analyzerName,
-                      questionLabel: targetQuestionLabel,
-                      optionLabel: targetOptionLabel,
-                      valuesByCategory,
-                    });
+                  const result = targetSurvey.addValueForOption({
+                    analyzerName,
+                    questionLabel: targetQuestionLabel,
+                    optionLabel: targetOptionLabel,
+                    valuesByCategory,
+                  });
 
                   expect(result).toBeInstanceOf(Survey);
 
                   const updated = result as Survey;
 
                   expect(
-                    updated.analyzersByName
-                      .get(analyzerName)
-                      ?.getValueFor(
-                        targetQuestionLabel,
-                        targetOptionLabel,
-                        'red',
-                      ),
+                    updated.analyzersByName.get(analyzerName)?.getValueFor({
+                      questionLabel: targetQuestionLabel,
+                      optionLabel: targetOptionLabel,
+                      category: 'red',
+                    }),
                   ).toBe(1);
 
                   expect(
-                    updated.analyzersByName
-                      .get(analyzerName)
-                      ?.getValueFor(
-                        targetQuestionLabel,
-                        targetOptionLabel,
-                        'white',
-                      ),
+                    updated.analyzersByName.get(analyzerName)?.getValueFor({
+                      questionLabel: targetQuestionLabel,
+                      optionLabel: targetOptionLabel,
+                      category: 'white',
+                    }),
                   ).toBe(2);
 
                   expect(
-                    updated.analyzersByName
-                      .get(analyzerName)
-                      ?.getValueFor(
-                        targetQuestionLabel,
-                        targetOptionLabel,
-                        'yellow',
-                      ),
+                    updated.analyzersByName.get(analyzerName)?.getValueFor({
+                      questionLabel: targetQuestionLabel,
+                      optionLabel: targetOptionLabel,
+                      category: 'yellow',
+                    }),
                   ).toBe(3);
 
                   expect(
-                    updated.analyzersByName
-                      .get(analyzerName)
-                      ?.getValueFor(
-                        targetQuestionLabel,
-                        targetOptionLabel,
-                        'black',
-                      ),
+                    updated.analyzersByName.get(analyzerName)?.getValueFor({
+                      questionLabel: targetQuestionLabel,
+                      optionLabel: targetOptionLabel,
+                      category: 'black',
+                    }),
                   ).toBe(4);
                 });
               });
@@ -291,16 +284,14 @@ describe(`Survey.updateAnalyzerValues`, () => {
                   const categoryWithExistingValue = 'white';
                   const newValue = 5;
 
-                  // TODO this shouldn't work as a side effect- we need a top-level update method.
-                  const result =
-                    targetSurvey.addCategoryValueForOptionInQuestion({
-                      analyzerName,
-                      questionLabel: questionWithExistingValue,
-                      optionLabel: optionWithExistingValue,
-                      valuesByCategory: {
-                        [categoryWithExistingValue]: newValue,
-                      },
-                    });
+                  const result = targetSurvey.addValueForOption({
+                    analyzerName,
+                    questionLabel: questionWithExistingValue,
+                    optionLabel: optionWithExistingValue,
+                    valuesByCategory: {
+                      [categoryWithExistingValue]: newValue,
+                    },
+                  });
 
                   expect(result).toBeInstanceOf(TrueImpactError);
 
@@ -322,16 +313,14 @@ describe(`Survey.updateAnalyzerValues`, () => {
               const valueForMissingCategory = 12;
 
               it(`should return the expected error`, () => {
-                const result = targetSurvey.addCategoryValueForOptionInQuestion(
-                  {
-                    analyzerName,
-                    questionLabel: targetQuestionLabel,
-                    optionLabel: targetOptionLabel,
-                    valuesByCategory: {
-                      [missingCategory]: 12,
-                    },
+                const result = targetSurvey.addValueForOption({
+                  analyzerName,
+                  questionLabel: targetQuestionLabel,
+                  optionLabel: targetOptionLabel,
+                  valuesByCategory: {
+                    [missingCategory]: 12,
                   },
-                );
+                });
 
                 expect(result).toBeInstanceOf(TrueImpactError);
 
@@ -357,7 +346,7 @@ describe(`Survey.updateAnalyzerValues`, () => {
 
           const failedNewValue = 1;
 
-          const result = targetSurvey.addCategoryValueForOptionInQuestion({
+          const result = targetSurvey.addValueForOption({
             analyzerName,
             questionLabel: targetQuestionLabel,
             optionLabel: missingOptionLabel,
@@ -387,7 +376,7 @@ describe(`Survey.updateAnalyzerValues`, () => {
 
         const failedNewValue = 2;
 
-        const result = targetSurvey.addCategoryValueForOptionInQuestion({
+        const result = targetSurvey.addValueForOption({
           analyzerName,
           questionLabel: missingQuestionLabel,
           optionLabel: 'a',
@@ -412,7 +401,7 @@ describe(`Survey.updateAnalyzerValues`, () => {
     const bogusAnalyzerName = 'Richter Scale';
 
     it(`should return the expected error`, () => {
-      const result = targetSurvey.addCategoryValueForOptionInQuestion({
+      const result = targetSurvey.addValueForOption({
         analyzerName: bogusAnalyzerName,
         questionLabel: targetQuestionLabel,
         optionLabel: targetOptionLabel,

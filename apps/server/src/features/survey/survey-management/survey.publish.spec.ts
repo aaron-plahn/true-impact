@@ -63,7 +63,7 @@ describe(`Survey.publish`, () => {
             optionLabel: '',
             text: '',
           }),
-          publishedSurvey.addCategoryValueForOptionInQuestion({
+          publishedSurvey.addValueForOption({
             questionLabel: '',
             optionLabel: '',
             valuesByCategory: {},

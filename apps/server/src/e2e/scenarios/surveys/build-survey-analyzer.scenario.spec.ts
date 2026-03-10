@@ -26,8 +26,6 @@ const surveyIndexEndpoint = `${baseEndpoint}/surveys`;
 
 const surveyCommandsEndpoint = `${surveyIndexEndpoint}/commands`;
 
-// const surveyAnalysisEndpoint = `${surveyIndexEndpoint}/analysis`;
-
 const surveyTestSetupEndpoint = `${surveyIndexEndpoint}/test-setup`;
 
 const missingSurveyId = 's404';

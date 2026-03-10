@@ -19,8 +19,6 @@ import { SurveyCompositeIdentifier } from '../../survey.composite-identifier';
 export class AddCategoryToSurveyAnalyzer {
   static readonly type = 'ADD_CATEGORY_TO_SURVEY_ANALYZER';
 
-  // implements IUpdateCommand
-
   @NestedDataType(() => SurveyCompositeIdentifier, {
     label: 'survey composite ID',
     description: `a globally unique reference to the target survey`,

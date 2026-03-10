@@ -125,10 +125,11 @@ export class Client
 
   public static fromPersistenceDto(
     dto: ClientPersistenceDto,
+    { shouldValidate }: { shouldValidate?: boolean } = {},
   ): Client | TrueImpactError {
-    const result = new Client(dto).validateInvariants();
+    const result = new Client(dto);
 
-    return result;
+    return shouldValidate ? result.validateInvariants() : result;
   }
 
   public static fromCreateClientCommand(

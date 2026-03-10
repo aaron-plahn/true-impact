@@ -1,12 +1,10 @@
 import {
   Entity,
   NonEmptyString,
-  NonNegativeInteger,
   TrueImpactError,
 } from '../../../../libs/data-types';
 
 export class SurveyAnalysisCategoryPersistenceDto {
-  number: number;
   label: string;
 }
 
@@ -17,14 +15,6 @@ export class SurveyAnalysisCategoryPersistenceDto {
  * For survey analysis categories, you can assign a numeric value for each question option.
  */
 export class SurveyAnalysisCategory extends Entity {
-  @NonNegativeInteger({
-    label: 'category number',
-    // this allows relabelling a category without losing its assigned question values
-    description:
-      'uniquely identifies this category within the context of a given survey',
-  })
-  number: number;
-
   @NonEmptyString({
     label: 'label',
     description: 'the label for this category',
@@ -33,10 +23,8 @@ export class SurveyAnalysisCategory extends Entity {
 
   // TODO language code
 
-  constructor({ number, label }: { number: number; label: string }) {
+  constructor({ label }: { label: string }) {
     super();
-
-    this.number = number;
 
     this.label = label;
   }
@@ -46,7 +34,7 @@ export class SurveyAnalysisCategory extends Entity {
   }
 
   getId(): string {
-    return this.number.toString();
+    return this.label;
   }
 
   getName(): string {
@@ -55,18 +43,20 @@ export class SurveyAnalysisCategory extends Entity {
 
   toPersistenceDto(): SurveyAnalysisCategoryPersistenceDto {
     return {
-      number: this.number,
       label: this.label,
     };
   }
 
   static fromPersistenceDto(
-    { number, label }: SurveyAnalysisCategoryPersistenceDto,
-    _shouldValidate?: boolean,
-  ): Entity | TrueImpactError {
-    return new SurveyAnalysisCategory({
-      number,
+    { label }: SurveyAnalysisCategoryPersistenceDto,
+    buildOptions: { shouldValidate?: boolean } = {},
+  ): SurveyAnalysisCategory | TrueImpactError {
+    const instance = new SurveyAnalysisCategory({
       label,
     });
+
+    return buildOptions?.shouldValidate
+      ? instance.validateInvariants()
+      : instance;
   }
 }

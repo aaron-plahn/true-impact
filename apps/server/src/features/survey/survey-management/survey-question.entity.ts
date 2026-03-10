@@ -226,8 +226,7 @@ export class SurveyQuestion extends Entity {
 
   static fromPersistenceDto(
     { label, options, prompt }: SurveyQuestionPersistenceDto,
-    // todo `options: { shouldValidate: boolean}`
-    shouldValidate: boolean,
+    userOptions: { shouldValidate?: boolean } = {},
   ): SurveyQuestion | TrueImpactError {
     const optionErrors: TrueImpactError[] = [];
 
@@ -258,6 +257,6 @@ export class SurveyQuestion extends Entity {
       options: surveyOptionsBuildResult,
     });
 
-    return shouldValidate ? result.validateInvariants() : result;
+    return userOptions.shouldValidate ? result.validateInvariants() : result;
   }
 }

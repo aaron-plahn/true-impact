@@ -1,4 +1,4 @@
-import { NonEmptyString } from '../../../libs/data-types';
+import { NestedDataType, NonEmptyString } from '../../../libs/data-types';
 import { SurveyOption } from '../survey-management/survey-option.entity';
 import { SurveyQuestion } from '../survey-management/survey-question.entity';
 import { Survey } from '../survey-management/survey.aggregate-root';
@@ -59,7 +59,11 @@ export class SurveyViewModel {
   })
   size: number;
 
-  // @NestedViewModel DO THIS
+  @NestedDataType(() => SurveyQuestionViewModel, {
+    label: 'questions',
+    description: 'an ordered list of the top-level questions in this survey',
+    isArray: true,
+  })
   questions: SurveyQuestionViewModel[];
 
   analyzersByName: Map<string, SurveyAnalyzerViewModel>;

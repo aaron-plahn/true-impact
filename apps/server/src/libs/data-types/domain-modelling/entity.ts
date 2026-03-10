@@ -44,6 +44,10 @@ export abstract class Entity<TEntityPersistenceDto = unknown> {
 
     const complexInvariantValidationErrors = this.validateComplexInvariants();
 
+    /**
+     * TODO We should call "validateComplexInvariants" for all nested entities.
+     */
+
     if (complexInvariantValidationErrors.length > 0) {
       return this.buildInvariantValidationError(
         complexInvariantValidationErrors,
@@ -57,7 +61,7 @@ export abstract class Entity<TEntityPersistenceDto = unknown> {
 
   static fromPersistenceDto(
     _dto: any,
-    _shouldValidate?: boolean,
+    _buildOptions?: { shouldValidate?: boolean },
   ): Entity | TrueImpactError {
     throw new TrueImpactRuntimeException([
       new TrueImpactError(

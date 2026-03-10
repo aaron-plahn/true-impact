@@ -231,7 +231,7 @@ export class SurveyOption extends Entity {
       values,
       flagIds,
     }: SurveyOptionPersistenceDto,
-    shouldValidate = false,
+    buildOptions: { shouldValidate?: boolean } = {},
   ): SurveyOption | TrueImpactError {
     const result = new SurveyOption({
       label,
@@ -241,7 +241,7 @@ export class SurveyOption extends Entity {
       flagIds,
     });
 
-    return shouldValidate ? result.validateInvariants() : result;
+    return buildOptions?.shouldValidate ? result.validateInvariants() : result;
   }
 
   // an "empty" option has no flags or category values

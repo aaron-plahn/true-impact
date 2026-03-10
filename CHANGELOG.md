@@ -2,6 +2,11 @@
 
 This first release of the True Impact platform introduces a working model for user management, client management, and survey creation and completion.
 
+## #9
+
+In this commit, we introduce a workflow for survey analysis. This allows admin users to assign values per-category for each
+survey option.
+
 ## #8
 
 In this commit, we expose a REST API for the survey completion workflow. This allows a future client to drive this workflow

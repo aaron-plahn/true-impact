@@ -1,4 +1,7 @@
-import { deepConvertMapToObject, NonEmptyString } from 'src/libs/data-types';
+import {
+  deepConvertMapToObject,
+  NonEmptyString,
+} from '../../../libs/data-types';
 import { SurveyAnalyzer } from '../survey-analysis';
 
 type QuestionLabel = string;
@@ -72,13 +75,13 @@ export class SurveyAnalyzerViewModel {
 
   static fromDomainModel({
     name,
-    categories,
-    values,
+    categoriesByLabel,
+    valuesByQuestion: values,
   }: SurveyAnalyzer): SurveyAnalyzerViewModel {
     return new SurveyAnalyzerViewModel({
       name,
-      categories: categories.map(({ label }) => label),
-      valuesByOptionByQuestion: values.valuesByQuestion,
+      categories: Object.keys(categoriesByLabel), // in the future, this may be a `Record<string,CategoryViewModel>`
+      valuesByOptionByQuestion: values,
     });
   }
 }

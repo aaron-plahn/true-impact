@@ -5,12 +5,20 @@ import { Survey } from './survey.aggregate-root';
 
 const surveyName = 'my survey';
 
-const testCategories = ['white', 'yellow', 'red', 'black'].map(
-  (category, index): SurveyAnalysisCategoryPersistenceDto => ({
-    label: category,
-    number: index,
-  }),
-);
+const testCategories = ['white', 'yellow', 'red', 'black']
+  .map(
+    (category): SurveyAnalysisCategoryPersistenceDto => ({
+      label: category,
+    }),
+  )
+  .reduce(
+    (acc, c) => {
+      acc[c.label] = c;
+
+      return acc;
+    },
+    {} as Record<string, SurveyAnalysisCategoryPersistenceDto>,
+  );
 
 describe(`Survey.validateInvariants`, () => {
   describe(`when the survey is valid`, () => {
@@ -63,7 +71,7 @@ describe(`Survey.validateInvariants`, () => {
             },
           },
         },
-        false,
+        { shouldValidate: false },
       );
 
       it(`should return a valid survey`, () => {
@@ -113,28 +121,24 @@ describe(`Survey.validateInvariants`, () => {
               analyzers: {
                 [invalidAnalyzerName]: {
                   categories: testCategories,
-                  values: {
-                    // do we want this repeated key?
-                    valuesByQuestion: {
-                      [missingQuestionLabel]: {
-                        // do we want numbers or labels here?
-                        a: { red: 2 },
-                        b: { yellow: 1 },
+                  valuesByQuestion: {
+                    [missingQuestionLabel]: {
+                      a: { red: 2 },
+                      b: { yellow: 1 },
+                    },
+                    q2: {
+                      a: {
+                        white: 1,
                       },
-                      q2: {
-                        a: {
-                          white: 1,
-                        },
-                        b: {
-                          red: 1,
-                        },
+                      b: {
+                        red: 1,
                       },
                     },
                   },
                 },
               },
             },
-            false,
+            { shouldValidate: false },
           );
 
           it(`should return the expected error`, () => {
@@ -142,7 +146,6 @@ describe(`Survey.validateInvariants`, () => {
 
             expect(result).toBeInstanceOf(TrueImpactError);
 
-            // TODO ensure all analyzer errors contain the anaylzer name
             assertTextMatchesAll(
               (result as TrueImpactError).toString(),
               surveyName,
@@ -190,29 +193,25 @@ describe(`Survey.validateInvariants`, () => {
               analyzers: {
                 [invalidAnalyzerName]: {
                   categories: testCategories,
-                  values: {
-                    // do we want this repeated key?
-                    valuesByQuestion: {
-                      [labelOfQuestionMissingOption]: {
-                        // do we want numbers or labels here?
-                        a: { red: 2 },
-                        b: { yellow: 1 },
-                        [missingOptionLabel]: { white: 1 },
+                  valuesByQuestion: {
+                    [labelOfQuestionMissingOption]: {
+                      a: { red: 2 },
+                      b: { yellow: 1 },
+                      [missingOptionLabel]: { white: 1 },
+                    },
+                    q2: {
+                      a: {
+                        white: 1,
                       },
-                      q2: {
-                        a: {
-                          white: 1,
-                        },
-                        b: {
-                          red: 1,
-                        },
+                      b: {
+                        red: 1,
                       },
                     },
                   },
                 },
               },
             },
-            false,
+            { shouldValidate: false },
           );
 
           it(`should return the expected error`, () => {
@@ -220,7 +219,6 @@ describe(`Survey.validateInvariants`, () => {
 
             expect(result).toBeInstanceOf(TrueImpactError);
 
-            // TODO ensure all analyzer errors contain the anaylzer name
             assertTextMatchesAll(
               (result as TrueImpactError).toString(),
               surveyName,
@@ -242,22 +240,20 @@ describe(`Survey.validateInvariants`, () => {
               analyzers: {
                 'medicine-wheel': {
                   categories: testCategories,
-                  values: {
-                    valuesByQuestion: {
-                      q1: {
-                        a: {
-                          white: 1,
-                        },
-                        b: {
-                          [invalidCategory]: invalidValue,
-                        },
+                  valuesByQuestion: {
+                    q1: {
+                      a: {
+                        white: 1,
+                      },
+                      b: {
+                        [invalidCategory]: invalidValue,
                       },
                     },
                   },
                 },
               },
             },
-            false,
+            { shouldValidate: false },
           );
 
           it(`should return the expected error`, () => {
@@ -283,29 +279,25 @@ describe(`Survey.validateInvariants`, () => {
               analyzers: {
                 'medicine-wheel': {
                   categories: testCategories,
-                  values: {
-                    // do we want this repeated key?
-                    valuesByQuestion: {
-                      q1: {
-                        // do we want numbers or labels here?
-                        a: { orange: 2 },
-                        b: { yellow: 1 },
+
+                  valuesByQuestion: {
+                    q1: {
+                      a: { orange: 2 },
+                      b: { yellow: 1 },
+                    },
+                    q2: {
+                      a: {
+                        white: 1,
                       },
-                      q2: {
-                        a: {
-                          white: 1,
-                        },
-                        b: {
-                          red: 1,
-                        },
+                      b: {
+                        red: 1,
                       },
                     },
                   },
                 },
               },
             },
-            // TODO can't we make this part of a named options object?
-            false,
+            { shouldValidate: false },
           );
 
           it(`should return the expected error`, () => {
@@ -340,7 +332,7 @@ describe(`Survey.validateInvariants`, () => {
           },
           isPublished: false,
         },
-        false,
+        { shouldValidate: false },
       );
 
       it(`should return the expected error`, () => {
@@ -378,7 +370,7 @@ describe(`Survey.validateInvariants`, () => {
             },
           },
         },
-        false,
+        { shouldValidate: false },
       );
 
       it(`should return the expected error`, () => {
@@ -439,7 +431,7 @@ describe(`Survey.validateInvariants`, () => {
             },
           },
         },
-        false,
+        { shouldValidate: false },
       );
 
       it(`should return the expected error`, () => {
