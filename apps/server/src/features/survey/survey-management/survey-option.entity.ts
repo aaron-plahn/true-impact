@@ -54,7 +54,7 @@ export class SurveyOption extends Entity {
     description:
       'a local ID referring to the question that should be presented if the user has chosen this option',
     isArray: false,
-    isOptional: false,
+    isOptional: true,
   })
   followUpQuestionLabel?: string;
 
@@ -223,13 +223,16 @@ export class SurveyOption extends Entity {
     return this;
   }
 
-  static fromPersistenceDto({
-    label,
-    text,
-    nextQuestionLabel,
-    values,
-    flagIds,
-  }: SurveyOptionPersistenceDto): SurveyOption {
+  static fromPersistenceDto(
+    {
+      label,
+      text,
+      nextQuestionLabel,
+      values,
+      flagIds,
+    }: SurveyOptionPersistenceDto,
+    buildOptions: { shouldValidate?: boolean } = {},
+  ): SurveyOption | TrueImpactError {
     const result = new SurveyOption({
       label,
       text,
@@ -238,7 +241,7 @@ export class SurveyOption extends Entity {
       flagIds,
     });
 
-    return result;
+    return buildOptions?.shouldValidate ? result.validateInvariants() : result;
   }
 
   // an "empty" option has no flags or category values

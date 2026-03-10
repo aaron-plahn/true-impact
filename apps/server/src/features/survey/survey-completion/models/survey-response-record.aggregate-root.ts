@@ -21,6 +21,11 @@ import {
 } from '../../survey-management/survey.aggregate-root';
 import { SurveyParticipantCompositeIdentifier } from './survey-participant.composite-identifier';
 
+class SurveyQuestionResponsePersistenceDto {
+  questionLabel: string;
+  optionLabel: string;
+}
+
 export class SurveyResponseCompositeIdentifier {
   readonly type = SURVEY_RESPONSE_AGGREGATE_TYPE;
 
@@ -72,8 +77,11 @@ class SurveyQuestionResponse extends Entity {
     return this.getId();
   }
 
-  toPersistenceDto(): unknown {
-    throw new Error('Method not implemented.');
+  toPersistenceDto(): SurveyQuestionResponsePersistenceDto {
+    return {
+      questionLabel: this.questionLabel,
+      optionLabel: this.optionLabel,
+    };
   }
 
   static fromPersistenceDto(
@@ -84,14 +92,14 @@ class SurveyQuestionResponse extends Entity {
       questionLabel: string;
       optionLabel: string;
     },
-    shouldValidate = false,
+    buildOptions: { shouldValidate?: boolean } = {},
   ): SurveyQuestionResponse | TrueImpactError {
     const result = new SurveyQuestionResponse({
       questionLabel,
       optionLabel,
     });
 
-    if (shouldValidate) {
+    if (buildOptions.shouldValidate) {
       return result.validateInvariants();
     }
 
@@ -552,16 +560,16 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
       responses,
       participantCompositeIdentifier,
     }: SurveyResponseRecordPersistenceDto,
-    shouldValidate: boolean,
+    buildOptions: { shouldValidate?: boolean } = {},
   ): SurveyResponseRecord | TrueImpactError {
-    const surveyBuildResult = Survey.fromPersistenceDto(survey, shouldValidate);
+    const surveyBuildResult = Survey.fromPersistenceDto(survey, buildOptions);
 
     if (surveyBuildResult instanceof TrueImpactError) {
       return surveyBuildResult;
     }
 
     const questionResponses = responses.map((r) =>
-      SurveyQuestionResponse.fromPersistenceDto(r, shouldValidate),
+      SurveyQuestionResponse.fromPersistenceDto(r, buildOptions),
     );
 
     const questionResponseErrors = questionResponses.filter(
@@ -571,6 +579,7 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
     if (questionResponseErrors.length > 0) {
       return new InvariantValidationError(
         SurveyResponseRecord,
+        `response for: ${survey.name}`,
         questionResponseErrors,
       );
     }

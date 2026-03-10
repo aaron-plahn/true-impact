@@ -1,7 +1,11 @@
-import { NonEmptyString } from '../../../libs/data-types';
+import { NestedDataType, NonEmptyString } from '../../../libs/data-types';
 import { SurveyOption } from '../survey-management/survey-option.entity';
 import { SurveyQuestion } from '../survey-management/survey-question.entity';
 import { Survey } from '../survey-management/survey.aggregate-root';
+import {
+  SurveyAnalyzerViewModel,
+  SurveyAnalyzerViewModelClientDto,
+} from './survey-analyzer.view-model';
 import { SurveyOptionViewModel } from './survey-option.view-model';
 import { SurveyQuestionViewModel } from './survey-question.view-model';
 
@@ -18,6 +22,8 @@ export class SurveyViewModelClientDto {
   name: string;
 
   size: number;
+
+  analyzersByName: Record<string, SurveyAnalyzerViewModelClientDto> = {};
 
   questions: {
     label: string;
@@ -53,8 +59,14 @@ export class SurveyViewModel {
   })
   size: number;
 
-  // @NestedViewModel
+  @NestedDataType(() => SurveyQuestionViewModel, {
+    label: 'questions',
+    description: 'an ordered list of the top-level questions in this survey',
+    isArray: true,
+  })
   questions: SurveyQuestionViewModel[];
+
+  analyzersByName: Map<string, SurveyAnalyzerViewModel>;
 
   isPublished: boolean;
 
@@ -62,6 +74,7 @@ export class SurveyViewModel {
     id,
     name,
     size,
+    analyzersByName,
     questions,
     isPublished,
   }: {
@@ -69,6 +82,7 @@ export class SurveyViewModel {
     name: string;
     size: number;
     questions?: SurveyQuestionViewModel[];
+    analyzersByName: Map<string, SurveyAnalyzerViewModel>;
     isPublished: boolean;
   }) {
     this.id = id;
@@ -80,14 +94,23 @@ export class SurveyViewModel {
     this.questions = questions || [];
 
     this.isPublished = typeof isPublished === 'boolean' ? isPublished : false;
+
+    this.analyzersByName = analyzersByName;
   }
 
   toClientDto(): SurveyViewModelClientDto {
+    const analyzersByName = {};
+
+    this.analyzersByName.forEach((viewModel) => {
+      analyzersByName[viewModel.name] = viewModel.toClientDto();
+    });
+
     return {
       id: this.id,
       isPublished: this.isPublished,
       name: this.name,
       size: this.size,
+      analyzersByName,
       questions: this.questions.map((q) => ({
         label: q.label,
         prompt: q.prompt,
@@ -158,11 +181,21 @@ export class SurveyViewModel {
       questionViewsByLabel.set(ql, questionView);
     });
 
+    const analyzersByName = new Map<string, SurveyAnalyzerViewModel>();
+
+    survey.analyzersByName.forEach((surveyAnalyzer, analyzerName) => {
+      analyzersByName.set(
+        analyzerName,
+        SurveyAnalyzerViewModel.fromDomainModel(surveyAnalyzer),
+      );
+    });
+
     const result = new SurveyViewModel({
       id: survey.getId(),
       name: survey.getName(),
       size: survey.size(),
       questions: Array.from(questionViewsByLabel.values()),
+      analyzersByName,
       isPublished: survey.isPublished,
     });
 

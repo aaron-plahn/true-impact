@@ -5,10 +5,14 @@ import {
 } from '../../error-handling';
 import { Ctor, DeepPartial } from '../../utility-types';
 
+interface DomainFactoryBuildOptions {
+  shouldValidate?: boolean;
+}
+
 interface FromPersistenceDto<TDto = unknown, UInstance = unknown> {
   fromPersistenceDto(
     dto: TDto,
-    shouldValidate?: boolean,
+    buildOptions?: DomainFactoryBuildOptions,
   ): UInstance | TrueImpactError;
 }
 
@@ -37,7 +41,7 @@ export const buildTestInstance = <
   ctor: Ctor<UInstance> &
     Partial<FromPersistenceDto<TPersistenceDto, UInstance>>,
   overrides?: DeepPartial<TPersistenceDto>,
-  shouldValidate = true,
+  buildOptions: { shouldValidate: boolean } = { shouldValidate: true },
 ): UInstance => {
   const dataExampleMetadata = Reflect.get(
     ctor,
@@ -65,10 +69,7 @@ export const buildTestInstance = <
     return plainToClass(ctor, dtoWithOverridesApplied);
   }
 
-  const result = ctor.fromPersistenceDto(
-    dtoWithOverridesApplied,
-    shouldValidate,
-  );
+  const result = ctor.fromPersistenceDto(dtoWithOverridesApplied, buildOptions);
 
   if (result instanceof TrueImpactError) {
     throw new TrueImpactRuntimeException([

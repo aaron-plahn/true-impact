@@ -1,5 +1,6 @@
 import {
   Entity,
+  InvariantValidationError,
   NonEmptyString,
   TrueImpactDataExample,
   TrueImpactError,
@@ -10,12 +11,15 @@ import {
   SurveyOptionPersistenceDto,
 } from './survey-option.entity';
 
-type SurveyLabel = string;
+type SurveyQuestionLabel = string;
 
 export class SurveyQuestionPersistenceDto {
   label: string;
   prompt: string;
-  options: Record<SurveyLabel, Omit<SurveyOptionPersistenceDto, 'label'>>;
+  options: Record<
+    SurveyQuestionLabel,
+    Omit<SurveyOptionPersistenceDto, 'label'>
+  >;
 }
 
 @TrueImpactDataExample<SurveyQuestionPersistenceDto>({
@@ -41,7 +45,7 @@ export class SurveyQuestion extends Entity {
   prompt: string;
 
   // @LookupTable(SurveyOption,{...})
-  options: Map<SurveyLabel, SurveyOption>;
+  options: Map<SurveyQuestionLabel, SurveyOption>;
 
   constructor({
     label,
@@ -50,7 +54,7 @@ export class SurveyQuestion extends Entity {
   }: {
     label: string;
     prompt: string;
-    options?: Record<SurveyLabel, SurveyOption>;
+    options?: Map<SurveyQuestionLabel, SurveyOption>;
   }) {
     super();
 
@@ -58,7 +62,9 @@ export class SurveyQuestion extends Entity {
 
     this.prompt = prompt;
 
-    this.options = new Map(Object.entries(options || {}));
+    this.options = options
+      ? new Map(options.entries())
+      : new Map<SurveyQuestionLabel, SurveyOption>();
   }
 
   validateComplexInvariants(): TrueImpactError[] {
@@ -92,7 +98,7 @@ export class SurveyQuestion extends Entity {
 
     const { optionLabel: label } = userRequest;
 
-    const questionsWithTheSameText = Array.from(this.options.values()).filter(
+    const optionsWithTheSameText = Array.from(this.options.values()).filter(
       // TODO trim and remove punctuation?
       // TODO add case-insensitive test cases
       ({ text }) => {
@@ -100,9 +106,9 @@ export class SurveyQuestion extends Entity {
       },
     );
 
-    if (questionsWithTheSameText.length > 0) {
+    if (optionsWithTheSameText.length > 0) {
       return new TrueImpactError(
-        `You cannot add option [${userRequest.optionLabel}] to question [${userRequest.questionLabel}] as question [${questionsWithTheSameText[0].label}] already has the text [${questionsWithTheSameText[0].text}]`,
+        `You cannot add option [${userRequest.optionLabel}] to question [${userRequest.questionLabel}] as option [${optionsWithTheSameText[0].label}] already has the text [${optionsWithTheSameText[0].text}]`,
       );
     }
     // TODO allow the user to register a "next" for a question
@@ -218,31 +224,39 @@ export class SurveyQuestion extends Entity {
     return instance.validateInvariants();
   }
 
-  static fromPersistenceDto({
-    label,
-    options,
-    prompt,
-  }: SurveyQuestionPersistenceDto): SurveyQuestion | TrueImpactError {
-    const optionsBuildResult = Object.entries(options || {}).reduce(
-      (acc: Record<string, SurveyOption>, [label, option]) => {
-        const optionBuildResult = SurveyOption.fromPersistenceDto({
-          ...option,
-          label,
-        });
+  static fromPersistenceDto(
+    { label, options, prompt }: SurveyQuestionPersistenceDto,
+    userOptions: { shouldValidate?: boolean } = {},
+  ): SurveyQuestion | TrueImpactError {
+    const optionErrors: TrueImpactError[] = [];
 
-        acc[label] = optionBuildResult;
+    const surveyOptionsBuildResult = new Map<string, SurveyOption>();
 
-        return acc;
-      },
-      {},
-    );
+    Object.entries(options || {}).forEach(([optionLabel, option]) => {
+      const optionBuildResult = SurveyOption.fromPersistenceDto({
+        ...option,
+        label: optionLabel,
+      });
+
+      if (optionBuildResult instanceof TrueImpactError) {
+        optionErrors.push(optionBuildResult);
+
+        return;
+      }
+
+      surveyOptionsBuildResult.set(optionLabel, optionBuildResult);
+    });
+
+    if (optionErrors.length > 0) {
+      return new InvariantValidationError(SurveyQuestion, label, optionErrors);
+    }
 
     const result = new SurveyQuestion({
       label,
       prompt,
-      options: optionsBuildResult,
+      options: surveyOptionsBuildResult,
     });
 
-    return result.validateInvariants();
+    return userOptions.shouldValidate ? result.validateInvariants() : result;
   }
 }

@@ -2,6 +2,7 @@ import {
   AggregateRoot,
   BooleanDataType,
   InvariantValidationError,
+  isPositiveNumber,
   NonEmptyString,
   NonNegativeInteger,
   TrueImpactBadUserInputError,
@@ -11,6 +12,10 @@ import {
   UpdateMethod,
 } from '../../../libs/data-types';
 import { DONE, SURVEY_AGGREGATE_TYPE } from '../constants';
+import {
+  SurveyAnalyzer,
+  SurveyAnalyzerPersistenceDto,
+} from '../survey-analysis';
 import { SurveyOption } from './survey-option.entity';
 import {
   SurveyQuestion,
@@ -24,6 +29,7 @@ export class SurveyPersistenceDto {
   questions: Record<string, Omit<SurveyQuestionPersistenceDto, 'label'>>;
   topLevelQuestionLabels: string[];
   revision: number;
+  analyzers: Record<string, SurveyAnalyzerPersistenceDto>;
 }
 
 // TODO We need to track schema versions
@@ -38,6 +44,7 @@ export class SurveyPersistenceDto {
     questions: {},
     topLevelQuestionLabels: [],
     revision: 12,
+    analyzers: {},
     // firstQuestionLabel:
   },
 })
@@ -94,6 +101,11 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
   })
   topLevelQuestionLabels: string[] = [];
 
+  // We might want this in the future
+  // defaultAnalyzerName?: string;
+
+  analyzersByName: Map<string, SurveyAnalyzer> = new Map();
+
   constructor({
     id,
     isPublished,
@@ -101,6 +113,7 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
     questions,
     questionLabels,
     revision,
+    analyzersByName,
   }: {
     id: string;
     isPublished: boolean;
@@ -108,6 +121,7 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
     revision?: number;
     questions?: Record<string, SurveyQuestion>;
     questionLabels?: string[];
+    analyzersByName: Map<string, SurveyAnalyzer>;
   }) {
     super();
 
@@ -129,6 +143,8 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
     }
 
     this.questionBank = new Map(Object.entries(questions || {}));
+
+    this.analyzersByName = new Map(analyzersByName.entries());
   }
 
   getId(): string {
@@ -147,6 +163,15 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
   }
 
   toPersistenceDto(): SurveyPersistenceDto {
+    const analyzers = Object.fromEntries(
+      Array.from(this.analyzersByName.entries()).map(
+        ([analyzerName, analyzer]): [string, SurveyAnalyzerPersistenceDto] => [
+          analyzerName,
+          analyzer.toPersistenceDto(),
+        ],
+      ),
+    );
+
     const result: SurveyPersistenceDto = {
       id: this.id,
       name: this.name,
@@ -165,6 +190,7 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
       ),
       revision: this.revision,
       topLevelQuestionLabels: this.topLevelQuestionLabels,
+      analyzers,
     };
 
     return result;
@@ -248,7 +274,7 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
    * question in the survey.
    * - A published survey's questions must offer at least 2 options each
    *
-   * TODO Finalize this and add a dedicated unit test
+   *
    */
   validateComplexInvariants(): TrueImpactError[] {
     const allErrors = [...this.validatePublicationStatus()];
@@ -318,6 +344,46 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
 
     allErrors.push(...missingQuestionErrors);
 
+    /**
+     * TODO Can't we use the schema to ensure that nested entities automatically have their
+     * `validateInvariants` called without needing to explicitly write this logic?
+     */
+    const analyzerErrors = Array.from(this.analyzersByName.values()).flatMap(
+      (analyzer) => {
+        const errorsForThisAnalyzer = analyzer.validateComplexInvariants();
+
+        analyzer.valuesByQuestion.forEach((valuesByOption, questionLabel) => {
+          if (!this.questionBank.has(questionLabel)) {
+            errorsForThisAnalyzer.push(
+              new TrueImpactError(
+                `Encountered an invalid question [${questionLabel}] in analyzer [${analyzer.name}] for survey [${this.name}]. There is no such question in the survey.`,
+              ),
+            );
+          } else {
+            const targetQuestion = this.questionBank.get(
+              questionLabel,
+            ) as SurveyQuestion;
+
+            valuesByOption.forEach((_valuesByCategory, optionLabel) => {
+              if (!targetQuestion.has(optionLabel)) {
+                errorsForThisAnalyzer.push(
+                  new TrueImpactError(
+                    `Encountered an invalid option [${optionLabel}] for question [${questionLabel}] in analyzer [${analyzer.name}] for survey [${this.name}]. The given question has no such option.`,
+                  ),
+                );
+              }
+
+              // TODO why not validate the categories while we are here?
+            });
+          }
+        });
+
+        return errorsForThisAnalyzer;
+      },
+    );
+
+    allErrors.push(...analyzerErrors);
+
     return allErrors;
   }
 
@@ -349,7 +415,7 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
 
     this.topLevelQuestionLabels.push(questionBuildResult.label);
 
-    return this;
+    return this.preventEditIfPublished();
   }
 
   find(
@@ -605,41 +671,7 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
 
     this.questionBank.set(questionLabel, updatedQuestion);
 
-    return this;
-  }
-
-  @UpdateMethod()
-  addCategoryValueForOptionInQuestion({
-    questionLabel,
-    optionLabel,
-    valuesByCategory,
-  }: {
-    questionLabel: string;
-    optionLabel: string;
-    valuesByCategory: Record<string, number>;
-  }): this | TrueImpactError {
-    const targetQuestion =
-      this.get(questionLabel) ||
-      new TrueImpactError(
-        `You cannot add weights to question [${questionLabel}] as there is no such question in survey [${this.name}]`,
-      );
-
-    if (targetQuestion instanceof TrueImpactError) {
-      return targetQuestion;
-    }
-
-    const updatedQuestion = targetQuestion?.addWeightsForOption({
-      optionLabel,
-      weights: valuesByCategory,
-    });
-
-    if (updatedQuestion instanceof TrueImpactError) {
-      return updatedQuestion;
-    }
-
-    this.questionBank.set(questionLabel, updatedQuestion);
-
-    return this;
+    return this.preventEditIfPublished();
   }
 
   @UpdateMethod()
@@ -681,10 +713,9 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
 
     this.questionBank.set(questionLabel, updatedQuestion);
 
-    return this;
+    return this.preventEditIfPublished();
   }
 
-  // TODO move this to a `SurveyAnalyzer`
   @UpdateMethod()
   addFlagToQuestionOption({
     questionLabel,
@@ -735,14 +766,24 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
 
     this.questionBank.set(questionLabel, updatedQuestion);
 
+    return this.preventEditIfPublished();
+  }
+
+  private preventEditIfPublished(): this | TrueImpactError {
+    if (this.isPublished) {
+      return new TrueImpactError(
+        `You cannot edit Survey [${this.name}] as it has been published for public use.`,
+      );
+    }
+
     return this;
   }
 
   @UpdateMethod()
   publish(): this | TrueImpactError {
     if (this.isPublished) {
-      new TrueImpactError(
-        `You cannot publish survey [${this.name}], as it is already published`,
+      return new TrueImpactError(
+        `You cannot publish survey [${this.name}], as it has been published already.`,
       );
     }
 
@@ -751,7 +792,123 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
     return this;
   }
 
-  // fromUserRequest? // buildEmpty?
+  /**
+   * Survey Analysis Workflow
+   */
+  @UpdateMethod()
+  createAnalyzer({ name }: { name: string }): Survey | TrueImpactError {
+    if (this.analyzersByName.has(name)) {
+      return new TrueImpactError(
+        `You cannot add analyzer [${name}] to survey [${this.name}], as it already has an analyzer with this name.`,
+      );
+    }
+
+    this.analyzersByName.set(name, SurveyAnalyzer.buildEmpty({ name }));
+
+    return this;
+  }
+
+  @UpdateMethod()
+  addCategoryForAnalyzer({
+    analyzerName,
+    category,
+  }: {
+    analyzerName: string;
+    category: string;
+  }): Survey | TrueImpactError {
+    const targetAnalyzer = this.analyzersByName.get(analyzerName);
+
+    const updatedAnalyzer =
+      targetAnalyzer?.addCategory(category) ||
+      new TrueImpactError(
+        `You cannot add category [${category}] to analyzer [${analyzerName}] in survey [${this.name}], as there is no such analyzer in the target survey.`,
+      );
+
+    if (updatedAnalyzer instanceof TrueImpactError) {
+      return new TrueImpactError(
+        `Failed to add category [${category}] for analyzer [${analyzerName}] in survey [${this.name}]`,
+        [updatedAnalyzer],
+      );
+    }
+
+    this.analyzersByName.set(analyzerName, updatedAnalyzer);
+
+    return this;
+  }
+
+  @UpdateMethod()
+  addValueForOption({
+    analyzerName,
+    questionLabel,
+    optionLabel,
+    valuesByCategory,
+  }: {
+    analyzerName: string;
+    questionLabel: string;
+    optionLabel: string;
+    valuesByCategory: Record<string, number>;
+  }): this | TrueImpactError {
+    const invalidValueErrors = Object.entries(valuesByCategory).flatMap(
+      ([category, value]) =>
+        // TODO this should **not** be a typeguard in itself
+        !isPositiveNumber(value)
+          ? [
+              new TrueImpactError(
+                `You cannot assign the value [${value as string}] to category [${category}]. All values must be positive integers.`,
+              ),
+            ]
+          : [],
+    );
+
+    if (invalidValueErrors.length > 0) {
+      return new TrueImpactError(
+        `Failed to update values for for option [${optionLabel}] of question [${questionLabel}] in survey [${this.name}] (analyzer [${analyzerName}])`,
+        invalidValueErrors,
+      );
+    }
+
+    if (!this.has(questionLabel)) {
+      // we can't go further
+      return new TrueImpactError(
+        `You cannot add values for question [${questionLabel}] in survey [${this.name}] (analyzer [${analyzerName}]), as there is no such question.`,
+      );
+    }
+
+    if (!this.get(questionLabel)?.has(optionLabel)) {
+      return new TrueImpactError(
+        `You cannot add values for option [${optionLabel}] of question [${questionLabel}] in survey [${this.name} (analyzer [${analyzerName}])], as there is no such option`,
+      );
+    }
+
+    if (!this.analyzersByName.has(analyzerName)) {
+      return new TrueImpactError(
+        `You cannot add values for option [${optionLabel}] of question [${questionLabel}] in survey [${this.name}], as the target analyzer [${analyzerName}] does not exist. Perhaps you forgot to create it?`,
+      );
+    }
+
+    const targetAnalyzer = this.analyzersByName.get(
+      analyzerName,
+    ) as SurveyAnalyzer;
+
+    const updatedAnalyzer = targetAnalyzer.addValuesForOption(
+      questionLabel,
+      optionLabel,
+      valuesByCategory,
+    );
+
+    if (updatedAnalyzer instanceof TrueImpactError) {
+      return new TrueImpactError(
+        // Here we ensure the survey name is available to the user
+        `Failed to add values for an option in survey [${this.name}] (analyzer [${analyzerName}])`,
+        [updatedAnalyzer],
+      );
+    }
+
+    this.analyzersByName.set(analyzerName, updatedAnalyzer);
+
+    return this;
+  }
+
   static buildEmpty({
     name,
   }: {
@@ -763,6 +920,7 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
       name,
       questions: {},
       revision: 0,
+      analyzersByName: new Map(),
     });
 
     const result = instance.validateInvariants();
@@ -778,15 +936,19 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
       questions,
       topLevelQuestionLabels: questionLabels,
       revision,
+      analyzers,
     }: SurveyPersistenceDto,
-    shouldValidate = false,
+    buildOptions: { shouldValidate?: boolean } = {},
   ): Survey | TrueImpactError {
     const allQuestions = Object.entries(questions).map(
       ([label, questionDtoWithoutLabel]) =>
-        SurveyQuestion.fromPersistenceDto({
-          ...questionDtoWithoutLabel,
-          label,
-        }),
+        SurveyQuestion.fromPersistenceDto(
+          {
+            ...questionDtoWithoutLabel,
+            label,
+          },
+          buildOptions,
+        ),
     );
 
     const questionBuildErrors = allQuestions.filter(
@@ -794,7 +956,38 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
     );
 
     if (questionBuildErrors.length > 0) {
-      return new InvariantValidationError(Survey, questionBuildErrors);
+      return new InvariantValidationError(Survey, name, questionBuildErrors);
+    }
+
+    const analyzersBuildResult = new Map<string, SurveyAnalyzer>();
+
+    const analyzerInvariantErrors: TrueImpactError[] = [];
+
+    Object.entries(analyzers).forEach(([analyzerName, analyzerDto]) => {
+      const buildResult = SurveyAnalyzer.fromPersistenceDto(
+        {
+          // TODO remove name from the lookup table DTO as it's redundant
+          ...analyzerDto,
+          name: analyzerName,
+        },
+        buildOptions,
+      );
+
+      if (buildResult instanceof TrueImpactError) {
+        analyzerInvariantErrors.push(buildResult);
+
+        return;
+      }
+
+      analyzersBuildResult.set(analyzerName, buildResult);
+    });
+
+    if (analyzerInvariantErrors.length > 0) {
+      return new InvariantValidationError(
+        Survey,
+        name,
+        analyzerInvariantErrors,
+      );
     }
 
     const survey = new Survey({
@@ -809,9 +1002,10 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
           q,
         ]),
       ),
+      analyzersByName: analyzersBuildResult,
     });
 
-    if (shouldValidate) {
+    if (buildOptions.shouldValidate) {
       return survey.validateInvariants();
     }
 
