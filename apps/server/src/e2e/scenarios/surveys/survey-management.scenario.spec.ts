@@ -1,8 +1,11 @@
 import axios from 'axios';
+import { CreateFlag } from '../../../features/flags/commands';
+import { FlagViewModel } from '../../../features/flags/queries';
 import {
   SurveyViewModel,
   SurveyViewModelClientDto,
 } from '../../../features/survey/queries/survey.view-model';
+import { AddFlagToSurveyOption } from '../../../features/survey/survey-management/commands/add-flag-to-survey-option.command';
 import { AddFollowUpQuestionForSurveyOption } from '../../../features/survey/survey-management/commands/add-follow-up-question-for-survey-option.command';
 import { AddOptionToSurveyQuestion } from '../../../features/survey/survey-management/commands/add-option-to-survey-question.command';
 import { AddQuestionToSurvey } from '../../../features/survey/survey-management/commands/add-question-to-survey.command';
@@ -10,6 +13,7 @@ import { CreateSurvey } from '../../../features/survey/survey-management/command
 import { PublishSurvey } from '../../../features/survey/survey-management/commands/publish-survey.command';
 import { TestCommandStream } from '../../../libs/cqrs-es/test-utils';
 import { HttpStatus } from '../../../libs/framework';
+import { assertTextMatchesAll } from '../../../libs/test-utils';
 import {
   assertCommandError,
   assertCommandScenarioError,
@@ -26,6 +30,10 @@ const baseEndpoint = `http://localhost:${port}`;
 const surveyIndexEndpoint = `${baseEndpoint}/surveys`;
 
 const commandEndpoint = `${surveyIndexEndpoint}/commands`;
+
+const flagIndexEndpoint = `${baseEndpoint}/flags`;
+
+const flagCommandsEndpoint = `${flagIndexEndpoint}/commands`;
 
 const testSetupEndpoint = `${surveyIndexEndpoint}/test-setup`;
 
@@ -131,10 +139,14 @@ const addOptionsToEveryQuestion = questionLabels.reduce(
 
 const publishSurvey = addOptionsToEveryQuestion.andThen(PublishSurvey, {});
 
+const flagLabel = 'socially awkward';
+
 describe(`Survey Management Scenarios`, () => {
   beforeEach(async () => {
     // TODO Deal with seeding an admin user who has survey management permissions
     await axios.patch(testSetupEndpoint);
+
+    await axios.patch(`${baseEndpoint}/flags/test-setup`);
   });
 
   describe(`create, complete, and publish a survey`, () => {
@@ -690,6 +702,220 @@ describe(`Survey Management Scenarios`, () => {
                 expect(message).toContain('at least 2 options');
               },
             });
+          });
+        });
+      });
+    });
+
+    describe(`when adding a flag to a survey option`, () => {
+      describe(`when the survey exists`, () => {
+        describe(`when the question exists`, () => {
+          describe(`when it is a top-level question`, () => {
+            describe(`when the option exists`, () => {
+              describe(`when the option does not yet have the given flag`, () => {
+                describe(`when the flag exists`, () => {
+                  it(`should add the flag`, async () => {
+                    await assertCommandSuccess({
+                      endpoint: flagCommandsEndpoint,
+                      commandFsa: TestCommandStream.buildOne(CreateFlag, {
+                        label: flagLabel,
+                      }),
+                    });
+
+                    const allFlags = (await axios.get(flagIndexEndpoint))
+                      .data as FlagViewModel[];
+
+                    // TODO use a query endpoint for this
+                    const flagId = allFlags.find(
+                      (f) => f.label === flagLabel,
+                    )?.id;
+
+                    await assertCommandScenarioSuccess({
+                      endpoint: commandEndpoint,
+                      stream: publishSurvey.andThen(AddFlagToSurveyOption, {
+                        flagId,
+                        questionLabel: '1',
+                        optionLabel: 'a',
+                      }),
+                    });
+                  });
+                });
+
+                describe(`when the flag does not exist`, () => {
+                  const missingFlagId = 'f404';
+
+                  it(`should return the expected error resposne`, async () => {
+                    const questionLabel = '1';
+                    const optionLabel = 'a';
+
+                    await assertCommandScenarioError({
+                      endpoint: commandEndpoint,
+                      stream: publishSurvey.andThen(AddFlagToSurveyOption, {
+                        flagId: missingFlagId,
+                        questionLabel,
+                        optionLabel,
+                      }),
+                      assertErrorMessageAsExpected: (message) => {
+                        assertTextMatchesAll(
+                          message,
+                          surveyName,
+                          missingFlagId,
+                          'no such flag',
+                        );
+                      },
+                    });
+                  });
+                });
+              });
+
+              describe(`when the option already has the given flag`, () => {
+                const questionLabel = '1';
+                const optionLabel = 'a';
+
+                it(`should return the expected error response`, async () => {
+                  await assertCommandSuccess({
+                    endpoint: flagCommandsEndpoint,
+                    commandFsa: TestCommandStream.buildOne(CreateFlag, {
+                      label: flagLabel,
+                    }),
+                  });
+
+                  const allFlags = (await axios.get(flagIndexEndpoint))
+                    .data as FlagViewModel[];
+
+                  // TODO use a query endpoint for this
+                  const flagId = allFlags.find(
+                    (f) => f.label === flagLabel,
+                  )?.id;
+
+                  await assertCommandScenarioError({
+                    endpoint: commandEndpoint,
+                    stream: publishSurvey
+                      .andThen(AddFlagToSurveyOption, {
+                        flagId,
+                        questionLabel,
+                        optionLabel,
+                      })
+                      .andThen(AddFlagToSurveyOption, {
+                        flagId,
+                        questionLabel,
+                        optionLabel,
+                      }),
+                    assertErrorMessageAsExpected: (message) => {
+                      assertTextMatchesAll(
+                        message,
+                        surveyName,
+                        questionLabel,
+                        optionLabel,
+                        flagId as string,
+                        'already',
+                      );
+                    },
+                  });
+                });
+              });
+            });
+
+            describe(`when the option does not exist`, () => {
+              const questionLabel = '1';
+
+              const missingOptionLabel = 'HotDog';
+
+              it(`should return the expected error response`, async () => {
+                await assertCommandSuccess({
+                  endpoint: flagCommandsEndpoint,
+                  commandFsa: TestCommandStream.buildOne(CreateFlag, {
+                    label: flagLabel,
+                  }),
+                });
+
+                const allFlags = (await axios.get(flagIndexEndpoint))
+                  .data as FlagViewModel[];
+
+                // TODO use a query endpoint for this
+                const flagId = allFlags.find((f) => f.label === flagLabel)?.id;
+
+                await assertCommandScenarioError({
+                  endpoint: commandEndpoint,
+                  stream: publishSurvey.andThen(AddFlagToSurveyOption, {
+                    flagId,
+                    questionLabel,
+                    optionLabel: missingOptionLabel,
+                  }),
+                  assertErrorMessageAsExpected: (message) => {
+                    assertTextMatchesAll(
+                      message,
+                      surveyName,
+                      questionLabel,
+                      missingOptionLabel,
+                      flagId as string,
+                      'no such option',
+                    );
+                  },
+                });
+              });
+            });
+          });
+
+          describe(`when it is a follow-up question`, () => {
+            describe(`when the option exists`, () => {
+              describe(`when the option does not yet have the given flag`, () => {
+                describe(`when the flag does not exist`, () => {
+                  it.todo(`should add the flag`);
+                });
+
+                describe(`when the flag does not exist`, () => {
+                  it(`should return the expected error resposne`, async () => {
+                    const missingFlagId = 'f404';
+
+                    await assertCommandScenarioError({
+                      endpoint: commandEndpoint,
+                      stream: publishSurvey.andThen(AddFlagToSurveyOption, {
+                        flagId: missingFlagId,
+                        questionLabel: followUpQuestion.label,
+                        optionLabel: 'FUOa',
+                      }),
+                      assertErrorMessageAsExpected: (message) => {
+                        assertTextMatchesAll(
+                          message,
+                          surveyName,
+                          missingFlagId,
+                          'no such flag',
+                        );
+                      },
+                    });
+                  });
+                });
+              });
+
+              describe(`when the option already has the given flag`, () => {
+                it.todo(`should return the expected error response`);
+              });
+            });
+
+            describe(`when the option does not exist`, () => {
+              it.todo(`should return the expected error response`);
+            });
+          });
+        });
+
+        describe(`when the question does not exist`, () => {
+          it.todo(`should return the expected error response`);
+        });
+      });
+
+      describe(`when the survey does not exist`, () => {
+        it(`should return the expected error response`, async () => {
+          await assertCommandError({
+            endpoint: commandEndpoint,
+            commandFsa: TestCommandStream.buildOne(AddFlagToSurveyOption, {
+              aggregateCompositeIdentifier: {
+                id: missingSurveyId,
+              },
+            }),
+            assertErrorMessageAsExpected: (message) => {
+              assertTextMatchesAll(message, missingSurveyId, 'no such survey');
+            },
           });
         });
       });
