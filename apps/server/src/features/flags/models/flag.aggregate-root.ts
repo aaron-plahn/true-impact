@@ -6,6 +6,7 @@ import {
   TrueImpactError,
   UpdateMethod,
 } from '../../../libs/data-types';
+import { FLAG_AGGREGATE_TYPE } from '../constants';
 
 export class FlagPersistenceDto {
   id: string;
@@ -23,10 +24,13 @@ export class FlagPersistenceDto {
   },
 })
 export class Flag extends AggregateRoot<FlagPersistenceDto> {
+  static readonly type = FLAG_AGGREGATE_TYPE;
+
   @NonEmptyString({
     label: 'id',
     description: 'id',
     // this is not optional once the first instance has been persisted
+    isOptional: true,
   })
   id?: string | undefined;
 
@@ -39,6 +43,7 @@ export class Flag extends AggregateRoot<FlagPersistenceDto> {
   @NonEmptyString({
     label: 'label',
     description: 'short-text to display to users',
+    mustBeUnique: true,
   })
   label: string; // TODO Multilingual Text
 
@@ -102,12 +107,30 @@ export class Flag extends AggregateRoot<FlagPersistenceDto> {
     return this;
   }
 
+  static fromClientRequest({
+    label,
+    description,
+  }: {
+    label: string;
+    description: string;
+  }): Flag | TrueImpactError {
+    const instance = new Flag({
+      revision: 0,
+      label,
+      description,
+    });
+
+    return instance.validateInvariants();
+  }
+
   static fromPersistenceDto(
     { id, revision, label, description }: FlagPersistenceDto,
-    shouldValidate?: boolean,
+    buildOptions: { shouldValidate?: boolean } = {},
   ): Flag | TrueImpactError {
     const instance = new Flag({ id, revision, label, description });
 
-    return shouldValidate ? instance.validateInvariants() : instance;
+    return buildOptions.shouldValidate
+      ? instance.validateInvariants()
+      : instance;
   }
 }

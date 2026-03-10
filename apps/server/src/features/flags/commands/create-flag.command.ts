@@ -1,12 +1,16 @@
-import { NestedDataType, NonEmptyString } from 'src/libs/data-types';
-import { FlagCompositeIdentifier } from '../models';
+import {
+  NonEmptyString,
+  TrueImpactDataExample,
+} from '../../../libs/data-types';
 
+@TrueImpactDataExample<CreateFlag>({
+  example: {
+    label: 'vicious dog',
+    description: 'this client has a vicious dog on property',
+  },
+})
 export class CreateFlag {
-  @NestedDataType(() => FlagCompositeIdentifier, {
-    label: 'composite ID',
-    description: 'system-wide unique identifier for this flag',
-  })
-  aggregateCompositeIdentifier: FlagCompositeIdentifier;
+  static readonly type = 'CREATE_FLAG';
 
   // TODO `ShortText` ?
   @NonEmptyString({

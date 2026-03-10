@@ -1,4 +1,4 @@
-import { NonEmptyString } from 'src/libs/data-types';
+import { NonEmptyString } from '../../../libs/data-types';
 import { FLAG_AGGREGATE_TYPE } from '../constants';
 
 export class FlagCompositeIdentifier {

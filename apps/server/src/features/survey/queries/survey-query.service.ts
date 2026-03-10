@@ -28,6 +28,7 @@ export class SurveyQueryService {
   ): Promise<SurveyViewModelClientDto | TrueImpactError> {
     const searchResult =
       (await this.surveyCommandRepository.fetchById(id)) ||
+      // Does this lead to a 404?
       new TrueImpactBadUserInputError([
         new TrueImpactError(
           `Failed to fetch survey [${id}], as there is no survey with this ID.`,

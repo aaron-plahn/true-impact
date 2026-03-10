@@ -1,6 +1,7 @@
-import { Inject } from '@nestjs/common';
-import { TrueImpactError } from 'src/libs/data-types';
+import { TrueImpactError } from '../../../libs/data-types';
+import { Inject } from '../../../libs/framework';
 import { FLAG_COMMAND_REPOSITORY_DEPENDENCY_TOKEN } from '../constants';
+import { Flag } from '../models';
 import type { IFlagCommandRepository } from '../repositories';
 import { FlagViewModel, FlagViewModelClientDto } from './flag.view-model';
 
@@ -25,5 +26,15 @@ export class FlagQueryService {
     }
 
     return FlagViewModel.fromDomainModel(domainModelSearchResult).toClientDto();
+  }
+
+  async fetchMany(): Promise<FlagViewModelClientDto[] | TrueImpactError> {
+    const domainModels = await this.flagCommandRepository.fetchMany();
+
+    return domainModels.map((dm) => this.buildViewModel(dm));
+  }
+
+  private buildViewModel(domainModel: Flag): FlagViewModelClientDto {
+    return FlagViewModel.fromDomainModel(domainModel).toClientDto();
   }
 }

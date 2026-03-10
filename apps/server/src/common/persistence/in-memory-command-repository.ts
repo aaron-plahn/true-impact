@@ -156,6 +156,36 @@ export class InMemoryCommandRepository<
   update(
     instance: T,
   ): Promise<{ id: string; revision: string; type: string } | TrueImpactError> {
+    const uniqueFieldViolations = Array.from(this.uniqueFields).flatMap(
+      (field: string): TrueImpactError[] => {
+        const newValue = instance[field];
+
+        const collisions = this.fetchWhere({
+          field,
+          value: instance[field],
+        });
+
+        return collisions.length > 0
+          ? [
+              new TrueImpactError(
+                `Uniqueness constraint violated for field [${field}]. The value [${newValue}] is already in use.`,
+              ),
+            ]
+          : [];
+      },
+    );
+
+    if (uniqueFieldViolations.length > 0) {
+      const e = new TrueImpactBadUserInputError([
+        new TrueImpactError(
+          `One or more uniqueness constraints were violated when attempting to create a [${this.instanceCtor.name}]`,
+          uniqueFieldViolations,
+        ),
+      ]);
+
+      return Promise.resolve(e);
+    }
+
     const { id, revision: revisonNumber } = instance.toPersistenceDto();
 
     if (!this.entititesById.has(id)) {

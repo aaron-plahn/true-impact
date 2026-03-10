@@ -1,4 +1,57 @@
-import { Module } from '../../libs/framework';
+import {
+  InMemoryCommandRepository,
+  InMemoryQueryRepository,
+} from '../../common/persistence';
+import { CommandHandlerService } from '../../libs/cqrs-es';
+import { Module, ModuleRef } from '../../libs/framework';
+import { CreateFlag, RelabelFlag, RelabelFlagCommandHandler } from './commands';
+import { CreateFlagCommandHandler } from './commands/create-flag.command-handler';
+import {
+  FLAG_COMMAND_REPOSITORY_DEPENDENCY_TOKEN,
+  FLAG_QUERY_REPOSITORY_DEPENDENCY_TOKEN,
+} from './constants';
+import { FlagController } from './flag.controller';
+import { Flag } from './models';
+import { FlagQueryService, FlagViewModel } from './queries';
 
-@Module({})
+@Module({
+  providers: [
+    FlagQueryService,
+    // commands
+    CreateFlagCommandHandler,
+    RelabelFlagCommandHandler,
+    {
+      provide: FLAG_QUERY_REPOSITORY_DEPENDENCY_TOKEN,
+      useFactory: () => new InMemoryQueryRepository(FlagViewModel),
+    },
+    {
+      provide: FLAG_COMMAND_REPOSITORY_DEPENDENCY_TOKEN,
+      useFactory: () => new InMemoryCommandRepository(Flag),
+    },
+    {
+      provide: CommandHandlerService,
+      useFactory: (moduleRef: ModuleRef) => {
+        const commandHandlerService = new CommandHandlerService({
+          resolve(injectionToken) {
+            return moduleRef.get(injectionToken);
+          },
+        });
+
+        commandHandlerService
+          .register({
+            CommandHandlerCtor: CreateFlagCommandHandler,
+            CommandPayloadCtor: CreateFlag,
+          })
+          .register({
+            CommandHandlerCtor: RelabelFlagCommandHandler,
+            CommandPayloadCtor: RelabelFlag,
+          });
+
+        return commandHandlerService;
+      },
+      inject: [ModuleRef],
+    },
+  ],
+  controllers: [FlagController],
+})
 export class FlagModule {}

@@ -1,3 +1,4 @@
+import { FLAG_AGGREGATE_TYPE } from '../constants';
 import { Flag } from '../models';
 
 export class FlagViewModelClientDto {
@@ -11,8 +12,11 @@ export class FlagViewModelClientDto {
 }
 
 export class FlagViewModel {
+  static readonly type = FLAG_AGGREGATE_TYPE;
+
   id: string;
   revision: string;
+  name: string; // todo ML text
   label: string;
   description: string;
 
@@ -28,6 +32,9 @@ export class FlagViewModel {
     description: string;
   }) {
     this.id = id;
+
+    // TODO do we really want to duplicate this?
+    this.name = label;
 
     this.revision = revision;
 
