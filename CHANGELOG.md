@@ -2,6 +2,10 @@
 
 This first release of the True Impact platform introduces a working model for user management, client management, and survey creation and completion.
 
+## #11
+
+In this commit, we support flagging survey options. If a participant selects a particular option, the survey response will be marked with the inidcated flag.
+
 ## #10
 
 In this commit, we introduce a workflow for managing flags. We will support attaching these to clients and surveys in a future commit.

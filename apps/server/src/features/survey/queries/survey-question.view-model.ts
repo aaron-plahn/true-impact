@@ -1,6 +1,19 @@
+import { FlagViewModelClientDto } from 'src/features/flags/queries';
 import { SurveyOption } from '../survey-management/survey-option.entity';
 import { SurveyQuestion } from '../survey-management/survey-question.entity';
-import { SurveyOptionViewModel } from './survey-option.view-model';
+import {
+  FollowUpQuestionViewModel,
+  SurveyOptionViewModel,
+  SurveyOptionViewModelClientDto,
+} from './survey-option.view-model';
+
+export class SurveyQuestionViewModelClientDto {
+  label: string;
+
+  prompt: string;
+
+  options: Record<string, SurveyOptionViewModelClientDto>;
+}
 
 export class SurveyQuestionViewModel {
   label: string;
@@ -32,18 +45,24 @@ export class SurveyQuestionViewModel {
     this.options = options;
   }
 
+  toClientDto(): SurveyQuestionViewModelClientDto {
+    const options: Record<string, SurveyOptionViewModelClientDto> = {};
+
+    this.options.forEach((o, optionLabel) => {
+      options[optionLabel] = o.toClientDto();
+    });
+
+    return {
+      label: this.label,
+      prompt: this.prompt,
+      options,
+    };
+  }
+
   static fromDomainModel(
     surveyQuestion: SurveyQuestion,
-    questionsByLabel: Map<
-      string,
-      {
-        label: string;
-
-        prompt: string;
-
-        options: Map<string, SurveyOptionViewModel>;
-      }
-    >,
+    questionsByLabel: Map<string, FollowUpQuestionViewModel>,
+    context: { flags: Map<string, FlagViewModelClientDto> },
   ) {
     const options = new Map<string, SurveyOptionViewModel>();
 
@@ -51,6 +70,7 @@ export class SurveyQuestionViewModel {
       const optionViewModel = SurveyOptionViewModel.fromDomainModel(
         surveyOption,
         questionsByLabel,
+        context,
       );
 
       options.set(surveyOption.label, optionViewModel);

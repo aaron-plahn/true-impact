@@ -11,6 +11,7 @@ import { Module, ModuleRef } from '../../libs/framework';
 import { CLIENT_AGGREGATE_TYPE } from '../clients/client.composite-identifier';
 import { ClientModule } from '../clients/client.module';
 import { ClientValidationService } from '../clients/services';
+import { FlagModule } from '../flags/flag.module';
 import { SURVEY_COMMAND_REPOSITORY_DEPENDENCY_TOKEN } from './constants';
 import { SURVEY_QUERY_REPOSITORY_PROVIDER_TOKEN } from './queries/survey-query-repository.interface';
 import { SurveyQueryService } from './queries/survey-query.service';
@@ -51,6 +52,8 @@ import { AddQuestionToSurvey } from './survey-management/commands/add-question-t
 import { AddQuestionToSurveyCommandHandler } from './survey-management/commands/add-question-to-survey.command-handler';
 import { CreateSurvey } from './survey-management/commands/create-survey.command';
 import { CreateSurveyCommandHandler } from './survey-management/commands/create-survey.command-handler';
+import { FlagSurveyOption } from './survey-management/commands/flag-survey-option.command';
+import { FlagSurveyOptionCommandHandler } from './survey-management/commands/flag-survey-option.command-handler';
 import { PublishSurvey } from './survey-management/commands/publish-survey.command';
 import { PublishSurveyCommandHandler } from './survey-management/commands/publish-survey.command-handler';
 import { Survey } from './survey-management/survey.aggregate-root';
@@ -61,13 +64,15 @@ import { SurveyController } from './survey.controller';
 const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
 
 @Module({
-  imports: [ClientModule],
+  imports: [ClientModule, FlagModule],
   providers: [
+    // core survey commands
     CreateSurveyCommandHandler,
     AddQuestionToSurveyCommandHandler,
     AddOptionToSurveyQuestionCommandHandler,
     AddFollowUpQuestionForSurveyOptionCommandHandler,
     PublishSurveyCommandHandler,
+    FlagSurveyOptionCommandHandler,
     // Survey Completion Commands
     BeginSurveyCommandHandler,
     AnswerSurveyQuestionCommandHandler,
@@ -131,6 +136,10 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
             CommandPayloadCtor: PublishSurvey,
             CommandHandlerCtor: PublishSurveyCommandHandler,
           })
+          .register({
+            CommandHandlerCtor: FlagSurveyOptionCommandHandler,
+            CommandPayloadCtor: FlagSurveyOption,
+          })
           // Survey Completion
           .register({
             CommandHandlerCtor: BeginSurveyCommandHandler,
@@ -176,6 +185,11 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
         return new InMemorySurveyResponseCommandRepository();
       },
     },
+    /**
+     * Note that an alternative pattern is to use a `plug-in` approach
+     * by which the client and other modules providing survey participants
+     * imports the survey module and registers itself.
+     */
     {
       provide: SURVEY_PARTICIPANT_VALIDATION_SERVICE_PROVIDER_INJECTION_TOKEN,
       useFactory: (clientValidationService: ClientValidationService) => {

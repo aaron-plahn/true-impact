@@ -2,6 +2,10 @@ import { Inject, Injectable } from '../../../libs/framework';
 import { SurveyViewModel, SurveyViewModelClientDto } from './survey.view-model';
 
 import {
+  FlagQueryService,
+  FlagViewModelClientDto,
+} from 'src/features/flags/queries';
+import {
   TrueImpactBadUserInputError,
   TrueImpactError,
 } from '../../../libs/data-types';
@@ -21,6 +25,7 @@ export class SurveyQueryService {
      */
     @Inject(SURVEY_COMMAND_REPOSITORY_DEPENDENCY_TOKEN)
     private readonly surveyCommandRepository: ISurveyCommandRepository,
+    private readonly flagQueryService: FlagQueryService,
   ) {}
 
   async fetchById(
@@ -39,17 +44,54 @@ export class SurveyQueryService {
       return searchResult;
     }
 
-    return this.buildViewModel(searchResult);
+    /**
+     * TODO We could fetch only the relevant flags for this survey's options.
+     * But we will move to a dedicated query database with materialized views
+     * as soon as we hit performance issues with the current approach.
+     */
+    const flags = await this.flagQueryService.fetchMany();
+
+    if (flags instanceof TrueImpactError) {
+      return new TrueImpactError(
+        `Failed to fetch flags for survey [${searchResult.name}].`,
+        [flags],
+      );
+    }
+
+    return this.buildViewModel(searchResult, {
+      flags: new Map(flags.map((f) => [f.id, f])),
+    });
   }
 
   async fetchMany(): Promise<SurveyViewModelClientDto[] | TrueImpactError> {
     const domainModels = await this.surveyCommandRepository.fetchMany();
 
-    return domainModels.map((dm) => this.buildViewModel(dm));
+    /**
+     * TODO Ideally we will filter in the database. But once we get enough data that
+     * this is not performant, we will move to eagerly building a separate query database
+     * synchronized by events.
+     */
+    const flags = await this.flagQueryService.fetchMany();
+
+    if (flags instanceof TrueImpactError) {
+      return new TrueImpactError(
+        `Failed to fetch surveys due to failure to fetch flags.`,
+        [flags],
+      );
+    }
+
+    const context = {
+      flags: new Map(flags.map((f) => [f.id, f])),
+    };
+
+    return domainModels.map((dm) => this.buildViewModel(dm, context));
   }
 
-  private buildViewModel(domainModel: Survey): SurveyViewModelClientDto {
-    const view = SurveyViewModel.fromDomainModel(domainModel);
+  private buildViewModel(
+    domainModel: Survey,
+    context: { flags: Map<string, FlagViewModelClientDto> },
+  ): SurveyViewModelClientDto {
+    const view = SurveyViewModel.fromDomainModel(domainModel, context);
 
     return view.toClientDto();
   }

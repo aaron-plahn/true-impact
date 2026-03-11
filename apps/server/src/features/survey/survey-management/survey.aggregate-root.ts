@@ -717,7 +717,7 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
   }
 
   @UpdateMethod()
-  addFlagToQuestionOption({
+  flagOption({
     questionLabel,
     optionLabel,
     flagId,
@@ -733,6 +733,8 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
      */
     flagId: string;
   }): this | TrueImpactError {
+    // note that you are allowed to add flags after a survey is published as this doesn't affect survey completion. The participant is unaware of the flags.
+
     const updatedQuestion =
       this.get(questionLabel) ||
       new TrueImpactError(
@@ -766,7 +768,10 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
 
     this.questionBank.set(questionLabel, updatedQuestion);
 
-    return this.preventEditIfPublished();
+    /**
+     * Note that there is nothing that prevents you from modifying flags after a survey as published for use.
+     */
+    return this;
   }
 
   private preventEditIfPublished(): this | TrueImpactError {

@@ -178,6 +178,10 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
    * Note that when a participant begins a survey, the target survey is copied here
    * as a value object. Surveys are currently immutable and in the future will be fully
    * versioned.
+   *
+   * Technically, we should build a specific `SurveyRecordForResponse` that doesn't have `flags`, `analyzers` or any
+   * irrelevant information that can be edited after the survey is `published` for use. We avoid accessing these to
+   * validate survey responses by convention at present.
    */
   @NestedDataType(() => Survey, {
     label: 'survey',
