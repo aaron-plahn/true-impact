@@ -1,4 +1,4 @@
-import { MultilingualTextItemRole } from '../../../common/multilingual-text/multilingual-text-item-role.enum';
+import { MultilingualTextItemRole } from '../../../common/multilingual-text';
 import {
   buildTestInstance,
   TrueImpactBadUserInputError,
@@ -15,7 +15,6 @@ const communityWithEnglishNameOnly = buildTestInstance(
     name: {
       items: {
         [MultilingualTextItemRole.original]: {
-          role: MultilingualTextItemRole.original,
           text: 'Big Creek',
           languageCode: 'en',
         },
@@ -57,12 +56,10 @@ describe(`Community.translateName`, () => {
               [MultilingualTextItemRole.original]: {
                 text: 'Original Name',
                 languageCode: 'en',
-                role: MultilingualTextItemRole.original,
               },
-              [MultilingualTextItemRole.free]: {
+              [MultilingualTextItemRole.freeTranslation]: {
                 text: existingTranslation,
                 languageCode: 'clc',
-                role: MultilingualTextItemRole.free,
               },
             },
           },

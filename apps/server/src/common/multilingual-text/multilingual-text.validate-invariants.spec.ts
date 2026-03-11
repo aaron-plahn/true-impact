@@ -11,9 +11,7 @@ describe(`MultilingualText.validateInvariants`, () => {
         items: {
           [MultilingualTextItemRole.original]: buildTestInstance(
             MultilingualTextItem,
-            {
-              role: MultilingualTextItemRole.original,
-            },
+            {},
           ),
         },
       });
@@ -25,44 +23,6 @@ describe(`MultilingualText.validateInvariants`, () => {
   });
 
   describe(`when the text is invalid`, () => {
-    describe(`when one of the item keys does not match the corresponding role`, () => {
-      const textForInvalidItem = 'foo';
-      const invalidRoleThatIsUsedAsKey = MultilingualTextItemRole.free;
-      const invalidRoleThatIsUsedOnItem = MultilingualTextItemRole.original;
-
-      it(`should return the expected errors`, () => {
-        const invalidInstance = buildTestInstance(MultilingualText, {
-          items: {
-            [MultilingualTextItemRole.original]: buildTestInstance(
-              MultilingualTextItem,
-              {
-                role: MultilingualTextItemRole.original,
-              },
-            ),
-            [invalidRoleThatIsUsedAsKey]: buildTestInstance(
-              MultilingualTextItem,
-              {
-                text: textForInvalidItem,
-                // this is wrong
-                role: invalidRoleThatIsUsedOnItem,
-              },
-            ),
-          },
-        });
-
-        const result = invalidInstance.validateInvariants();
-
-        expect(result).toBeInstanceOf(TrueImpactError);
-
-        assertTextMatchesAll(
-          (result as TrueImpactError).toString(),
-          textForInvalidItem,
-          invalidRoleThatIsUsedAsKey,
-          invalidRoleThatIsUsedOnItem,
-        );
-      });
-    });
-
     describe(`when no original has been declared`, () => {
       it(`should return the expected error`, () => {
         const invalidInstance = buildTestInstance(MultilingualText, {

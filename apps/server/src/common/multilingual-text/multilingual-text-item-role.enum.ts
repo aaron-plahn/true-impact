@@ -1,6 +1,6 @@
 export enum MultilingualTextItemRole {
   original = 'original',
-  free = 'free translation',
-  literal = 'literal translation',
-  elicitedFromPrompt = 'elicited from prompt',
+  freeTranslation = 'free translation',
+  literalTranslation = 'literal translation',
+  elicitedFromPrompt = 'elicited from a prompt',
 }

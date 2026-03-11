@@ -64,7 +64,6 @@ export class MultilingualText extends Entity<MultilingualTextPersistenceDto> {
       );
     }
 
-    // do we want to call it `hasTranslationIn`? or `hasTextIn` maybe?
     if (this.has(languageCode)) {
       return new TrueImpactError(
         `You cannot translate [${this.getOriginalTextItem().toString()}] as [${text}], because there is already a translation [${this.get(languageCode)?.text || '-'}] in the target language [${languageCode}]`,
@@ -72,11 +71,10 @@ export class MultilingualText extends Entity<MultilingualTextPersistenceDto> {
     }
 
     this.items.set(
-      MultilingualTextItemRole.free,
+      MultilingualTextItemRole.freeTranslation,
       new MultilingualTextItem({
         text,
         languageCode,
-        role: MultilingualTextItemRole.free,
       }),
     );
 
@@ -99,22 +97,12 @@ export class MultilingualText extends Entity<MultilingualTextPersistenceDto> {
       );
     }
 
-    this.items.forEach((item, roleFromKey) => {
-      if (item.role !== roleFromKey) {
-        allErrors.push(
-          new TrueImpactError(
-            `Encountered an invalid multilingual-text item [${item.text}]. The translation role used as a key [${roleFromKey}] in the lookup table does not match the translation role on the corresponding entry [${item.role}]`,
-          ),
-        );
-      }
-    });
-
     return allErrors;
   }
 
   getId(): string {
     /**
-     * This is a bit odd. Other properties could have the same type on a given aggregate root.
+     * Other properties could have the same type on a given aggregate root.
      * But if we want to ensure that this text is unique among a list of other values, the text \ languageCode
      * combo would ensure this.
      */
@@ -176,7 +164,6 @@ export class MultilingualText extends Entity<MultilingualTextPersistenceDto> {
         new MultilingualTextItem({
           text,
           languageCode: languageCode || DEFAULT_LANGUAGE_CODE,
-          role: MultilingualTextItemRole.original,
         }),
       ),
     });

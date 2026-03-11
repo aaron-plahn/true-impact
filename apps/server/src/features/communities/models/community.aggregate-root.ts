@@ -1,8 +1,8 @@
-import { MultilingualTextItemRole } from '../../../common/multilingual-text/multilingual-text-item-role.enum';
 import {
   MultilingualText,
+  MultilingualTextItemRole,
   MultilingualTextPersistenceDto,
-} from '../../../common/multilingual-text/multilingual-text.entity';
+} from '../../../common/multilingual-text';
 import {
   AggregateRoot,
   NestedDataType,
@@ -21,7 +21,7 @@ export class CommunityPersistenceDto {
 
   revision: number;
 
-  name: MultilingualTextPersistenceDto; // multilingual text
+  name: MultilingualTextPersistenceDto;
 
   nation: string;
 }
@@ -37,7 +37,6 @@ export class CommunityPersistenceDto {
         [MultilingualTextItemRole.original]: {
           text: 'Pink Sky',
           languageCode: 'en',
-          role: MultilingualTextItemRole.original,
         },
       },
     },

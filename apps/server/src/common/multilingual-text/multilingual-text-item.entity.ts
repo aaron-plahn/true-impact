@@ -3,29 +3,16 @@ import {
   TrueImpactDataExample,
   TrueImpactError,
 } from '../../libs/data-types';
-import { MultilingualTextItemRole } from './multilingual-text-item-role.enum';
 
 export class MultilingualTextItemPersistenceDto {
   text: string;
 
   languageCode: string;
 
-  role: MultilingualTextItemRole;
-
-  constructor({
-    text,
-    languageCode,
-    role,
-  }: {
-    text: string;
-    languageCode: string;
-    role: MultilingualTextItemRole;
-  }) {
+  constructor({ text, languageCode }: { text: string; languageCode: string }) {
     this.text = text;
 
     this.languageCode = languageCode;
-
-    this.role = role;
   }
 }
 
@@ -34,28 +21,16 @@ export class MultilingualTextItemPersistenceDto {
   example: {
     text: 'hat',
     languageCode: 'clc',
-    role: MultilingualTextItemRole.original,
   },
 })
 export class MultilingualTextItem extends Entity<MultilingualTextItemPersistenceDto> {
   text: string;
   languageCode: string;
-  role: MultilingualTextItemRole;
 
-  constructor({
-    text,
-    role,
-    languageCode,
-  }: {
-    text: string;
-    languageCode: string;
-    role: MultilingualTextItemRole;
-  }) {
+  constructor({ text, languageCode }: { text: string; languageCode: string }) {
     super();
 
     this.text = text;
-
-    this.role = role;
 
     this.languageCode = languageCode;
   }
@@ -81,16 +56,14 @@ export class MultilingualTextItem extends Entity<MultilingualTextItemPersistence
     return {
       text: this.text,
       languageCode: this.languageCode,
-      role: this.role,
     };
   }
 
   static fromPersistenceDto(
-    { role, text, languageCode }: MultilingualTextItemPersistenceDto,
+    { text, languageCode }: MultilingualTextItemPersistenceDto,
     buildOptions?: { shouldValidate?: boolean },
   ): MultilingualTextItem | TrueImpactError {
     const instance = new MultilingualTextItem({
-      role,
       text,
       languageCode,
     });
