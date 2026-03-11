@@ -1,19 +1,19 @@
 import { Inject } from '@nestjs/common';
-import { FLAG_VALIDATION_SERVICE_INJECTION_TOKEN } from '../../../../features/flags/constants';
 import { CommandResult, ICommandHandler } from '../../../../libs/cqrs-es';
 import {
   TrueImpactBadUserInputError,
   TrueImpactError,
 } from '../../../../libs/data-types';
+import { FLAG_VALIDATION_SERVICE_INJECTION_TOKEN } from '../../../flags/constants';
 import { SURVEY_COMMAND_REPOSITORY_DEPENDENCY_TOKEN } from '../../constants';
 import type { ISurveyCommandRepository } from '../../repositories';
-import { AddFlagToSurveyOption } from './add-flag-to-survey-option.command';
+import { FlagSurveyOption } from './flag-survey-option.command';
 
 interface IFlagValidationService {
   exists(flagId: string): Promise<boolean>;
 }
 
-export class AddFlagToSurveyOptionCommandHandler implements ICommandHandler<AddFlagToSurveyOption> {
+export class FlagSurveyOptionCommandHandler implements ICommandHandler<FlagSurveyOption> {
   constructor(
     @Inject(SURVEY_COMMAND_REPOSITORY_DEPENDENCY_TOKEN)
     private readonly surveyRepository: ISurveyCommandRepository,
@@ -29,7 +29,7 @@ export class AddFlagToSurveyOptionCommandHandler implements ICommandHandler<AddF
       flagId,
     },
   }: {
-    payload: AddFlagToSurveyOption;
+    payload: FlagSurveyOption;
   }): Promise<CommandResult> {
     const existing =
       (await this.surveyRepository.fetchById(surveyId)) ||
@@ -51,7 +51,7 @@ export class AddFlagToSurveyOptionCommandHandler implements ICommandHandler<AddF
       ]);
     }
 
-    const updated = existing.addFlagToQuestionOption({
+    const updated = existing.flagOption({
       questionLabel,
       optionLabel,
       flagId,

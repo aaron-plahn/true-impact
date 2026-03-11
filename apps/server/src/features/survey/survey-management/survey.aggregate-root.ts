@@ -717,7 +717,7 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
   }
 
   @UpdateMethod()
-  addFlagToQuestionOption({
+  flagOption({
     questionLabel,
     optionLabel,
     flagId,
@@ -768,6 +768,9 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
 
     this.questionBank.set(questionLabel, updatedQuestion);
 
+    /**
+     * Note that there is nothing that prevents you from modifying flags after a survey as published for use.
+     */
     return this;
   }
 

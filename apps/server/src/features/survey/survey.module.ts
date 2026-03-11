@@ -44,8 +44,6 @@ import {
 import { SurveyResponseRecordViewModel } from './survey-completion/queries/survey-response-record.view-model';
 import { SURVEY_RESPONSE_COMMAND_REPOSITORY_INJECTION_TOKEN } from './survey-completion/repositories';
 import { InMemorySurveyResponseCommandRepository } from './survey-completion/repositories/in-memory-survey-response.command-repository';
-import { AddFlagToSurveyOption } from './survey-management/commands/add-flag-to-survey-option.command';
-import { AddFlagToSurveyOptionCommandHandler } from './survey-management/commands/add-flag-to-survey-option.command-handler';
 import { AddFollowUpQuestionForSurveyOption } from './survey-management/commands/add-follow-up-question-for-survey-option.command';
 import { AddFollowUpQuestionForSurveyOptionCommandHandler } from './survey-management/commands/add-follow-up-question-for-survey-option.command-handler';
 import { AddOptionToSurveyQuestion } from './survey-management/commands/add-option-to-survey-question.command';
@@ -54,6 +52,8 @@ import { AddQuestionToSurvey } from './survey-management/commands/add-question-t
 import { AddQuestionToSurveyCommandHandler } from './survey-management/commands/add-question-to-survey.command-handler';
 import { CreateSurvey } from './survey-management/commands/create-survey.command';
 import { CreateSurveyCommandHandler } from './survey-management/commands/create-survey.command-handler';
+import { FlagSurveyOption } from './survey-management/commands/flag-survey-option.command';
+import { FlagSurveyOptionCommandHandler } from './survey-management/commands/flag-survey-option.command-handler';
 import { PublishSurvey } from './survey-management/commands/publish-survey.command';
 import { PublishSurveyCommandHandler } from './survey-management/commands/publish-survey.command-handler';
 import { Survey } from './survey-management/survey.aggregate-root';
@@ -72,7 +72,7 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
     AddOptionToSurveyQuestionCommandHandler,
     AddFollowUpQuestionForSurveyOptionCommandHandler,
     PublishSurveyCommandHandler,
-    AddFlagToSurveyOptionCommandHandler,
+    FlagSurveyOptionCommandHandler,
     // Survey Completion Commands
     BeginSurveyCommandHandler,
     AnswerSurveyQuestionCommandHandler,
@@ -137,8 +137,8 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
             CommandHandlerCtor: PublishSurveyCommandHandler,
           })
           .register({
-            CommandHandlerCtor: AddFlagToSurveyOptionCommandHandler,
-            CommandPayloadCtor: AddFlagToSurveyOption,
+            CommandHandlerCtor: FlagSurveyOptionCommandHandler,
+            CommandPayloadCtor: FlagSurveyOption,
           })
           // Survey Completion
           .register({
@@ -185,7 +185,11 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
         return new InMemorySurveyResponseCommandRepository();
       },
     },
-    // TODO where should we get this from?
+    /**
+     * Note that an alternative pattern is to use a `plug-in` approach
+     * by which the client and other modules providing survey participants
+     * imports the survey module and registers itself.
+     */
     {
       provide: SURVEY_PARTICIPANT_VALIDATION_SERVICE_PROVIDER_INJECTION_TOKEN,
       useFactory: (clientValidationService: ClientValidationService) => {

@@ -5,11 +5,11 @@ import {
   SurveyViewModel,
   SurveyViewModelClientDto,
 } from '../../../features/survey/queries/survey.view-model';
-import { AddFlagToSurveyOption } from '../../../features/survey/survey-management/commands/add-flag-to-survey-option.command';
 import { AddFollowUpQuestionForSurveyOption } from '../../../features/survey/survey-management/commands/add-follow-up-question-for-survey-option.command';
 import { AddOptionToSurveyQuestion } from '../../../features/survey/survey-management/commands/add-option-to-survey-question.command';
 import { AddQuestionToSurvey } from '../../../features/survey/survey-management/commands/add-question-to-survey.command';
 import { CreateSurvey } from '../../../features/survey/survey-management/commands/create-survey.command';
+import { FlagSurveyOption } from '../../../features/survey/survey-management/commands/flag-survey-option.command';
 import { PublishSurvey } from '../../../features/survey/survey-management/commands/publish-survey.command';
 import { TestCommandStream } from '../../../libs/cqrs-es/test-utils';
 import { HttpStatus } from '../../../libs/framework';
@@ -43,7 +43,7 @@ const missingSurveyId = '404';
 
 const missingQuestionLabel = 'XIV';
 
-const missingOptionLabel = 'a';
+const missingOptionLabel = 'HotDog';
 
 const surveyName = 'Staff Evaluation';
 
@@ -141,6 +141,10 @@ const publishSurvey = addOptionsToEveryQuestion.andThen(PublishSurvey, {});
 
 const flagLabel = 'socially awkward';
 
+const flagDescription = `should not be pressured to interact with others, especially in a large group`;
+
+const missingFlagId = 'f404';
+
 const labelOfTopLevelQuestionToFlag = '1';
 const labelOfTopLevelOptionToFlag = 'a';
 const labelOfFollowUpQuestionToFlag = '1.a.FU-1';
@@ -159,6 +163,7 @@ describe(`Survey Management Scenarios`, () => {
       endpoint: flagCommandsEndpoint,
       commandFsa: TestCommandStream.buildOne(CreateFlag, {
         label: flagLabel,
+        description: flagDescription,
       }),
     });
 
@@ -504,7 +509,9 @@ describe(`Survey Management Scenarios`, () => {
 
                   expect(optionSearchResult).toBeTruthy();
 
-                  expect(optionSearchResult?.followUpQuestions).toHaveLength(1);
+                  expect(
+                    Object.keys(optionSearchResult?.followUpQuestions || {}),
+                  ).toHaveLength(1);
 
                   return Promise.resolve();
                 },
@@ -737,25 +744,46 @@ describe(`Survey Management Scenarios`, () => {
                   it(`should add the flag`, async () => {
                     await assertCommandScenarioSuccess({
                       endpoint: commandEndpoint,
-                      stream: publishSurvey.andThen(AddFlagToSurveyOption, {
+                      stream: publishSurvey.andThen(FlagSurveyOption, {
                         flagId,
                         questionLabel: labelOfTopLevelQuestionToFlag,
                         optionLabel: labelOfTopLevelOptionToFlag,
                       }),
+                      assertSuccess: async (acks) => {
+                        const result = (
+                          await axios.get(
+                            `${surveyIndexEndpoint}/${acks[0].id}`,
+                          )
+                        ).data as SurveyViewModelClientDto;
+
+                        const { questions } = result;
+
+                        const targetQuestion =
+                          questions[labelOfTopLevelQuestionToFlag];
+
+                        const targetOption =
+                          targetQuestion.options[labelOfTopLevelOptionToFlag];
+
+                        const targetFlag = targetOption.flags[flagId];
+
+                        expect(targetFlag).toEqual({
+                          id: flagId,
+                          label: flagLabel,
+                          description: flagDescription,
+                        });
+                      },
                     });
                   });
                 });
 
                 describe(`when the flag does not exist`, () => {
-                  const missingFlagId = 'f404';
-
                   it(`should return the expected error resposne`, async () => {
                     const questionLabel = labelOfTopLevelQuestionToFlag;
                     const optionLabel = labelOfTopLevelOptionToFlag;
 
                     await assertCommandScenarioError({
                       endpoint: commandEndpoint,
-                      stream: publishSurvey.andThen(AddFlagToSurveyOption, {
+                      stream: publishSurvey.andThen(FlagSurveyOption, {
                         flagId: missingFlagId,
                         questionLabel,
                         optionLabel,
@@ -781,12 +809,12 @@ describe(`Survey Management Scenarios`, () => {
                   await assertCommandScenarioError({
                     endpoint: commandEndpoint,
                     stream: publishSurvey
-                      .andThen(AddFlagToSurveyOption, {
+                      .andThen(FlagSurveyOption, {
                         flagId,
                         questionLabel,
                         optionLabel,
                       })
-                      .andThen(AddFlagToSurveyOption, {
+                      .andThen(FlagSurveyOption, {
                         flagId,
                         questionLabel,
                         optionLabel,
@@ -807,12 +835,10 @@ describe(`Survey Management Scenarios`, () => {
             });
 
             describe(`when the option does not exist`, () => {
-              const missingOptionLabel = 'HotDog';
-
               it(`should return the expected error response`, async () => {
                 await assertCommandScenarioError({
                   endpoint: commandEndpoint,
-                  stream: publishSurvey.andThen(AddFlagToSurveyOption, {
+                  stream: publishSurvey.andThen(FlagSurveyOption, {
                     flagId,
                     questionLabel: labelOfTopLevelQuestionToFlag,
                     optionLabel: missingOptionLabel,
@@ -836,28 +862,59 @@ describe(`Survey Management Scenarios`, () => {
             describe(`when the option exists`, () => {
               describe(`when the option does not yet have the given flag`, () => {
                 describe(`when the flag exists`, () => {
-                  const questionLabel = labelOfFollowUpQuestionToFlag;
-                  const optionLabel = labelOfFollowUpOptionToFlag;
-
                   it(`should add the flag`, async () => {
                     await assertCommandScenarioSuccess({
                       endpoint: commandEndpoint,
-                      stream: publishSurvey.andThen(AddFlagToSurveyOption, {
+                      stream: publishSurvey.andThen(FlagSurveyOption, {
                         flagId,
-                        questionLabel,
-                        optionLabel,
+                        questionLabel: labelOfFollowUpQuestionToFlag,
+                        optionLabel: labelOfFollowUpOptionToFlag,
                       }),
+                      assertSuccess: async (acks) => {
+                        const { questions } = (
+                          await axios.get(
+                            `${surveyIndexEndpoint}/${acks[0].id}`,
+                          )
+                        ).data as SurveyViewModelClientDto;
+
+                        expect(questions).toBeTruthy();
+
+                        const parentQuestion = questions[0];
+
+                        const parentOption = parentQuestion.options['a'];
+
+                        const flaggedFollowUpQuestion =
+                          parentOption.followUpQuestions[
+                            labelOfFollowUpQuestionToFlag
+                          ];
+
+                        const flaggedFollowUpOption =
+                          flaggedFollowUpQuestion.options[
+                            labelOfFollowUpOptionToFlag
+                          ];
+
+                        expect(
+                          Object.keys(flaggedFollowUpOption.flags),
+                        ).toHaveLength(1);
+
+                        const flagSearchResult =
+                          flaggedFollowUpOption.flags[flagId];
+
+                        expect(flagSearchResult).toEqual({
+                          id: flagId,
+                          label: flagLabel,
+                          description: flagDescription,
+                        });
+                      },
                     });
                   });
                 });
 
                 describe(`when the flag does not exist`, () => {
                   it(`should return the expected error resposne`, async () => {
-                    const missingFlagId = 'f404';
-
                     await assertCommandScenarioError({
                       endpoint: commandEndpoint,
-                      stream: publishSurvey.andThen(AddFlagToSurveyOption, {
+                      stream: publishSurvey.andThen(FlagSurveyOption, {
                         flagId: missingFlagId,
                         questionLabel: labelOfFollowUpQuestionToFlag,
                         optionLabel: labelOfFollowUpOptionToFlag,
@@ -880,12 +937,12 @@ describe(`Survey Management Scenarios`, () => {
                   await assertCommandScenarioError({
                     endpoint: commandEndpoint,
                     stream: publishSurvey
-                      .andThen(AddFlagToSurveyOption, {
+                      .andThen(FlagSurveyOption, {
                         flagId,
                         questionLabel: labelOfFollowUpQuestionToFlag,
                         optionLabel: labelOfFollowUpOptionToFlag,
                       })
-                      .andThen(AddFlagToSurveyOption, {
+                      .andThen(FlagSurveyOption, {
                         flagId,
                         questionLabel: labelOfFollowUpQuestionToFlag,
                         optionLabel: labelOfFollowUpOptionToFlag,
@@ -908,7 +965,7 @@ describe(`Survey Management Scenarios`, () => {
               it(`should return the expected error response`, async () => {
                 await assertCommandScenarioError({
                   endpoint: commandEndpoint,
-                  stream: publishSurvey.andThen(AddFlagToSurveyOption, {
+                  stream: publishSurvey.andThen(FlagSurveyOption, {
                     flagId,
                     questionLabel: labelOfFollowUpQuestionToFlag,
                     optionLabel: missingOptionLabel,
@@ -934,7 +991,7 @@ describe(`Survey Management Scenarios`, () => {
           it(`should return the expected error response`, async () => {
             await assertCommandScenarioError({
               endpoint: commandEndpoint,
-              stream: publishSurvey.andThen(AddFlagToSurveyOption, {
+              stream: publishSurvey.andThen(FlagSurveyOption, {
                 flagId,
                 questionLabel: missingQuestionLabel,
               }),
@@ -956,7 +1013,7 @@ describe(`Survey Management Scenarios`, () => {
         it(`should return the expected error response`, async () => {
           await assertCommandError({
             endpoint: commandEndpoint,
-            commandFsa: TestCommandStream.buildOne(AddFlagToSurveyOption, {
+            commandFsa: TestCommandStream.buildOne(FlagSurveyOption, {
               aggregateCompositeIdentifier: {
                 id: missingSurveyId,
               },

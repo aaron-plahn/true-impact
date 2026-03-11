@@ -5,7 +5,7 @@ import {
 } from '../../../../libs/data-types';
 import { SurveyCompositeIdentifier } from '../../survey.composite-identifier';
 
-@TrueImpactDataExample<AddFlagToSurveyOption>({
+@TrueImpactDataExample<FlagSurveyOption>({
   example: {
     aggregateCompositeIdentifier: {
       type: 'survey',
@@ -16,8 +16,8 @@ import { SurveyCompositeIdentifier } from '../../survey.composite-identifier';
     flagId: '5',
   },
 })
-export class AddFlagToSurveyOption {
-  static readonly type = 'ADD_FLAG_TO_SURVEY_OPTION';
+export class FlagSurveyOption {
+  static readonly type = 'FLAG_SURVEY_OPTION';
 
   @NestedDataType(() => SurveyCompositeIdentifier, {
     label: 'composite ID',
