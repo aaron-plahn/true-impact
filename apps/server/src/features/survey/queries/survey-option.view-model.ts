@@ -1,5 +1,8 @@
-import { FlagViewModelClientDto } from 'src/features/flags/queries';
-import { deepConvertMapToObject, NonEmptyString } from 'src/libs/data-types';
+import { FlagViewModelClientDto } from '../../../features/flags/queries';
+import {
+  deepConvertMapToObject,
+  NonEmptyString,
+} from '../../../libs/data-types';
 import { SurveyOption } from '../survey-management/survey-option.entity';
 import { SurveyFlagViewModelClientDto } from './survey-flag.view-model';
 

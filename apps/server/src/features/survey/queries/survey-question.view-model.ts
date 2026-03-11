@@ -1,4 +1,4 @@
-import { FlagViewModelClientDto } from 'src/features/flags/queries';
+import { FlagViewModelClientDto } from '../../../features/flags/queries';
 import { SurveyOption } from '../survey-management/survey-option.entity';
 import { SurveyQuestion } from '../survey-management/survey-question.entity';
 import {

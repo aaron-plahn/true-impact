@@ -2,6 +2,11 @@
 
 This first release of the True Impact platform introduces a working model for user management, client management, and survey creation and completion.
 
+## #12
+
+In this commit, we introduce a model for communities. This includes the ability to translate a community's
+name into the Indigenous language. This sets the stage for attaching clients to communities.
+
 ## #11
 
 In this commit, we support flagging survey options. If a participant selects a particular option, the survey response will be marked with the inidcated flag.
