@@ -1,3 +1,4 @@
+import { FlagViewModelClientDto } from 'src/features/flags/queries';
 import { NestedDataType, NonEmptyString } from '../../../libs/data-types';
 import { SurveyOption } from '../survey-management/survey-option.entity';
 import { SurveyQuestion } from '../survey-management/survey-question.entity';
@@ -6,7 +7,12 @@ import {
   SurveyAnalyzerViewModel,
   SurveyAnalyzerViewModelClientDto,
 } from './survey-analyzer.view-model';
-import { SurveyOptionViewModel } from './survey-option.view-model';
+import { SurveyFlagViewModel } from './survey-flag.view-model';
+import {
+  FollowUpQuestionViewModel,
+  SurveyOptionViewModel,
+  SurveyOptionViewModelClientDto,
+} from './survey-option.view-model';
 import { SurveyQuestionViewModel } from './survey-question.view-model';
 
 /**
@@ -30,7 +36,7 @@ export class SurveyViewModelClientDto {
 
     prompt: string;
 
-    options: Record<string, SurveyOptionViewModel>;
+    options: Record<string, SurveyOptionViewModelClientDto>;
   }[];
 }
 
@@ -111,17 +117,26 @@ export class SurveyViewModel {
       name: this.name,
       size: this.size,
       analyzersByName,
-      questions: this.questions.map((q) => ({
-        label: q.label,
-        prompt: q.prompt,
-        options: Object.fromEntries(q.options.entries()),
-      })),
+      questions: this.questions.map((q) => {
+        const options: Record<string, SurveyOptionViewModelClientDto> = {};
+
+        q.options.forEach((o, optionLabel) => {
+          options[optionLabel] = o.toClientDto();
+        });
+
+        return {
+          label: q.label,
+          prompt: q.prompt,
+          options,
+        };
+      }),
     };
   }
 
   static buildSurveyQuestionViewModel(
     surveyQuestion: SurveyQuestion,
     questionBank: Map<string, SurveyQuestion>,
+    context: { flags: Map<string, FlagViewModelClientDto> },
   ): SurveyQuestionViewModel {
     const { label, prompt, options } = surveyQuestion;
 
@@ -133,39 +148,55 @@ export class SurveyViewModel {
           acc: Map<string, SurveyOptionViewModel>,
           { label, text, followUpQuestionLabel }: SurveyOption,
         ): Map<string, SurveyOptionViewModel> => {
-          const followUpQuestions: SurveyQuestionViewModel[] =
+          const followUpQuestions: FollowUpQuestionViewModel[] =
             typeof followUpQuestionLabel === 'string'
               ? [
                   SurveyViewModel.buildSurveyQuestionViewModel(
                     questionBank.get(followUpQuestionLabel) as SurveyQuestion,
                     questionBank,
-                  ),
+                    context,
+                  ) as FollowUpQuestionViewModel, // We do this to avoid circularities with our type definitions when recursing
                 ]
-              : ([] as SurveyQuestionViewModel[]);
+              : ([] as FollowUpQuestionViewModel[]);
 
-          acc.set(label, {
+          const flags = new Map<string, SurveyFlagViewModel>();
+
+          context.flags.forEach(({ id, label, description }, flagId) => {
+            flags.set(
+              flagId,
+              new SurveyFlagViewModel({ id, label, description }),
+            );
+          });
+
+          const optionView = new SurveyOptionViewModel({
             label,
             text,
             followUpQuestions,
+            flags,
           });
+
+          acc.set(label, optionView);
 
           return acc;
         },
         new Map<string, SurveyOptionViewModel>(),
       );
 
-    return {
+    return new SurveyQuestionViewModel({
       label,
       prompt,
       options: optionViews,
-    };
+    });
   }
 
   /**
    * Currently, we project off the domain to build views. This is inefficient.
    * Eventually, we will want to build materialized views from an event history.
    */
-  static fromDomainModel(survey: Survey) {
+  static fromDomainModel(
+    survey: Survey,
+    context: { flags: Map<string, FlagViewModelClientDto> },
+  ) {
     const questionViewsByLabel: Map<string, SurveyQuestionViewModel> =
       new Map();
 
@@ -176,6 +207,7 @@ export class SurveyViewModel {
         SurveyViewModel.buildSurveyQuestionViewModel(
           surveyQuestion,
           survey.questionBank,
+          context,
         );
 
       questionViewsByLabel.set(ql, questionView);
