@@ -13,6 +13,7 @@ import {
   TrueImpactError,
 } from '../../../libs/data-types';
 import { CreateCommunity } from '../commands/create-community.command';
+import { COMMUNITY_AGGREGATE_TYPE } from '../constants';
 
 export class CommunityPersistenceDto {
   id: string;
@@ -34,15 +35,18 @@ export class CommunityPersistenceDto {
     nation: 'River People',
     name: {
       items: {
-        [MultilingualTextItemRole.original]: {
-          text: 'Pink Sky',
-          languageCode: 'en',
+        en: {
+          [MultilingualTextItemRole.original]: {
+            text: 'Pink Sky',
+          },
         },
       },
     },
   },
 })
 export class Community extends AggregateRoot<CommunityPersistenceDto> {
+  static readonly type = COMMUNITY_AGGREGATE_TYPE;
+
   @NonEmptyString({
     label: 'community ID',
     description: 'a unique system identifier for this community',
@@ -124,7 +128,7 @@ export class Community extends AggregateRoot<CommunityPersistenceDto> {
   }
 
   getName(): string {
-    return this.name.getOriginalTextItem().toString();
+    return this.name.toString();
   }
 
   toPersistenceDto(): CommunityPersistenceDto {
@@ -143,6 +147,14 @@ export class Community extends AggregateRoot<CommunityPersistenceDto> {
     languageCodeForName,
     nation,
   }: CreateCommunity): Community | TrueImpactError {
+    if (languageCodeForName !== 'en') {
+      return new TrueImpactBadUserInputError([
+        new TrueImpactError(
+          `Providing the community name in a language [${languageCodeForName}] other than English is not yet supported, but you can translate the name into Chilcotin.`,
+        ),
+      ]);
+    }
+
     const nameBuildResult = MultilingualText.withText({
       text: name,
       languageCode: languageCodeForName,

@@ -3,6 +3,7 @@ import { AppController } from './app.controller';
 import { SupertokensConfigService } from './auth/supertokens-config.service';
 import { SupertokensMiddleware } from './auth/supertokens.middleware';
 import { ClientModule } from './features/clients/client.module';
+import { CommunityModule } from './features/communities/community.module';
 import { FlagModule } from './features/flags/flag.module';
 import { SurveyModule } from './features/survey/survey.module';
 import {
@@ -30,6 +31,7 @@ import {
     ClientModule,
     SurveyModule,
     FlagModule,
+    CommunityModule,
   ],
   controllers: [AppController],
   providers: [],
