@@ -20,18 +20,17 @@ const port = '3001';
 
 const baseEndpoint = `http://localhost:${port}`;
 
-// TODO call this Index endpoint?
-const clientBaseEndpoint = `${baseEndpoint}/clients`;
+const clientIndexEndpoint = `${baseEndpoint}/clients`;
 
-const commandsEndpointForClients = `${clientBaseEndpoint}/commands`;
+const commandsEndpointForClients = `${clientIndexEndpoint}/commands`;
 
-const clientTestSetupEndpoint = `${clientBaseEndpoint}/test-setup`;
+const clientTestSetupEndpoint = `${clientIndexEndpoint}/test-setup`;
 
-const communityBaseEndpoint = `${baseEndpoint}/communities`;
+const communityIndexEndpoint = `${baseEndpoint}/communities`;
 
-const commandsEndpointForCommunities = `${communityBaseEndpoint}/commands`;
+const commandsEndpointForCommunities = `${communityIndexEndpoint}/commands`;
 
-const communityTestSetupEndpoint = `${communityBaseEndpoint}/test-setup`;
+const communityTestSetupEndpoint = `${communityIndexEndpoint}/test-setup`;
 
 const flagIndexEndpoint = `${baseEndpoint}/flags`;
 
@@ -69,7 +68,7 @@ describe(`Client Management Scenarios`, () => {
     });
 
     communityId = (
-      (await axios.get(communityBaseEndpoint)).data as CommunityViewModel[]
+      (await axios.get(communityIndexEndpoint)).data as CommunityViewModel[]
     )[0].id;
 
     await assertCommandSuccess({
@@ -110,7 +109,7 @@ describe(`Client Management Scenarios`, () => {
                 }),
                 assertSuccess: async (acks) => {
                   const updated = (
-                    await axios.get(`${clientBaseEndpoint}/${acks[0].id}`)
+                    await axios.get(`${clientIndexEndpoint}/${acks[0].id}`)
                   ).data as Client; // use a view model - ClientViewModelClientDto
 
                   expect(updated.flagIds).toContain(flagId);
