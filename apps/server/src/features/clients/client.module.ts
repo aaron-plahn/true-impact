@@ -1,6 +1,7 @@
 import { InMemoryCommandRepository } from '../../common/persistence';
 import { CommandHandlerService } from '../../libs/cqrs-es';
 import { Module, ModuleRef } from '../../libs/framework';
+import { CommunityModule } from '../communities/community.module';
 import { FlagModule } from '../flags/flag.module';
 import { Client } from './client.aggregate-root';
 import { ClientController } from './client.controller';
@@ -13,7 +14,7 @@ import { ClientValidationService } from './services';
 import { ClientQueryService } from './services/client-query.service';
 
 @Module({
-  imports: [FlagModule],
+  imports: [FlagModule, CommunityModule],
   providers: [
     ClientQueryService,
     // Commands

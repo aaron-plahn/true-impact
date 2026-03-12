@@ -1,5 +1,7 @@
+import { COMMUNITY_VALIDATION_SERVICE_INJECTION_TOKEN } from 'src/features/communities/constants';
 import { CommandResult, ICommandHandler } from '../../../libs/cqrs-es';
 import {
+  isNonEmptyString,
   TrueImpactBadUserInputError,
   TrueImpactError,
 } from '../../../libs/data-types';
@@ -9,10 +11,16 @@ import { CLIENT_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../constants';
 import type { IClientCommandRepository } from '../repositories';
 import { CreateClient } from './create-client.command';
 
+interface ICommunityValidationService {
+  exists(communityId: string): Promise<boolean>;
+}
+
 export class CreateClientCommandHandler implements ICommandHandler {
   constructor(
     @Inject(CLIENT_COMMAND_REPOSITORY_INJECTION_TOKEN)
     private readonly clientCommandRepository: IClientCommandRepository,
+    @Inject(COMMUNITY_VALIDATION_SERVICE_INJECTION_TOKEN)
+    private readonly communityValidationService: ICommunityValidationService,
   ) {}
 
   async handle({
@@ -20,6 +28,23 @@ export class CreateClientCommandHandler implements ICommandHandler {
   }: {
     payload: CreateClient;
   }): Promise<CommandResult> {
+    const { communityId } = command;
+
+    if (isNonEmptyString(communityId)) {
+      const doesCommunityExist =
+        await this.communityValidationService.exists(communityId);
+
+      if (!doesCommunityExist) {
+        return new TrueImpactBadUserInputError([
+          new TrueImpactError(
+            `Failed to create client from community [${communityId}], as there is no such community.`,
+          ),
+        ]);
+      }
+    }
+
+    // TODO validate that communityId is not provided unless `isIndigenous === 'yes'`
+
     const buildResult = Client.fromCreateClientCommand(command);
 
     if (buildResult instanceof TrueImpactError) {

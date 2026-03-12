@@ -1,4 +1,7 @@
-import { TrueImpactDataExample } from '../../../libs/data-types';
+import {
+  NonEmptyString,
+  TrueImpactDataExample,
+} from '../../../libs/data-types';
 
 @TrueImpactDataExample<CreateClient>({
   example: {
@@ -9,7 +12,7 @@ import { TrueImpactDataExample } from '../../../libs/data-types';
     dateOfBirth: '2010-11-04',
     isIndigenous: 'Yes',
     // TODO validate this in the command handler against known communities
-    community: '55506',
+    communityId: '55506',
   },
 })
 export class CreateClient {
@@ -24,13 +27,31 @@ export class CreateClient {
    */
   // aggregateComposteIdentifier: ClientCompositeIdentifier;
 
+  @NonEmptyString({
+    label: 'first name',
+    description: `the new client's first name`,
+  })
   firstName: string;
 
+  @NonEmptyString({
+    label: 'last name',
+    description: `the new client's last name`,
+  })
   lastName: string;
 
-  dateOfBirth: string; // parse to Date
+  @NonEmptyString({
+    label: 'date of birth',
+    description: `the new client's date of birth`,
+  })
+  dateOfBirth: string; // parse to Date or put date object on payload
 
+  // TODO @Enum
   isIndigenous: 'Yes' | 'No' | 'Unknown';
 
-  community?: string;
+  @NonEmptyString({
+    label: 'community ID',
+    description: `system identifier for this client's community`,
+    isOptional: true,
+  })
+  communityId?: string;
 }

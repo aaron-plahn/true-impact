@@ -156,7 +156,7 @@ export class Client
     if (this.isIndigenous === 'No' && isNonEmptyString(this.community)) {
       allErrors.push(
         new TrueImpactError(
-          `A non-indigenous client cannot be registered to a community`,
+          `A non-indigenous client cannot be registered to a community [${this.community}]`,
         ),
       );
     }
@@ -164,7 +164,7 @@ export class Client
     if (this.isIndigenous === 'Unknown' && isNonEmptyString(this.community)) {
       allErrors.push(
         new TrueImpactError(
-          `When specifying a client's community, the client must be listed as Indigenous`,
+          `When specifying a client's community [${this.community}], the client must be listed as Indigenous`,
         ),
       );
     }
@@ -188,8 +188,13 @@ export class Client
   public static fromCreateClientCommand(
     command: CreateClient,
   ): Client | TrueImpactBadUserInputError {
-    const { firstName, lastName, dateOfBirth, isIndigenous, community } =
-      command;
+    const {
+      firstName,
+      lastName,
+      dateOfBirth,
+      isIndigenous,
+      communityId: community,
+    } = command;
 
     const unverifiedInstance = new Client({
       fullName: { firstName, lastName },

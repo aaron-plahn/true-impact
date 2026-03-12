@@ -16,9 +16,10 @@ const command: CreateClient = {
   lastName: 'DeBaron',
   dateOfBirth: '1999-12-31',
   isIndigenous: 'Yes',
-  community: 'Tha Rez',
+  communityId: 'Tha Rez',
 };
 
+// TODO Isn't this test redundant with the `Client Management Scenario` tests at this point?
 describe(commandType, () => {
   let app: INestApplication<App>;
 
@@ -57,7 +58,7 @@ describe(commandType, () => {
 
       expect(lastName).toEqual(command.lastName);
 
-      expect(community).toEqual(command.community);
+      expect(community).toEqual(command.communityId);
 
       expect(isIndigenous).toEqual(command.isIndigenous);
 
@@ -111,7 +112,7 @@ describe(commandType, () => {
         expect(message).toContain('ill-formed');
 
         expect(message).toContain(
-          `When specifying a client's community, the client must be listed as Indigenous`,
+          `When specifying a client's community [Northville], the client must be listed as Indigenous`,
         );
       });
     });

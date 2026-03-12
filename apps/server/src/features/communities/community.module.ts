@@ -12,7 +12,9 @@ import { CommunityController } from './community.controller';
 import {
   COMMUNITY_COMMAND_REPOSITORY_INJECTION_TOKEN,
   COMMUNITY_QUERY_REPOSITORY_INJECTION_TOKEN,
+  COMMUNITY_VALIDATION_SERVICE_INJECTION_TOKEN,
 } from './constants';
+import { CommunityValidationService } from './external-services';
 import { CommunityQueryService, CommunityViewModel } from './queries';
 
 @Module({
@@ -25,7 +27,6 @@ import { CommunityQueryService, CommunityViewModel } from './queries';
       provide: COMMUNITY_COMMAND_REPOSITORY_INJECTION_TOKEN,
       useFactory: () => new InMemoryCommunityCommandRepository(),
     },
-    CommunityQueryService,
     {
       provide: CommandHandlerService,
       useFactory: (moduleRef: ModuleRef) => {
@@ -52,6 +53,16 @@ import { CommunityQueryService, CommunityViewModel } from './queries';
     // Commands
     CreateCommunityCommandHandler,
     TranslateCommunityNameCommandHandler,
+    // External Services
+    CommunityQueryService,
+    {
+      provide: COMMUNITY_VALIDATION_SERVICE_INJECTION_TOKEN,
+      useClass: CommunityValidationService,
+    },
+  ],
+  exports: [
+    CommunityQueryService,
+    COMMUNITY_VALIDATION_SERVICE_INJECTION_TOKEN,
   ],
   controllers: [CommunityController],
 })

@@ -46,6 +46,8 @@ const missingFlagId = 'fl-404';
 
 const missingClientId = 'cl-404';
 
+const missingCommunityId = 'comm-404';
+
 describe(`Client Management Scenarios`, () => {
   let communityId: string;
 
@@ -95,6 +97,227 @@ describe(`Client Management Scenarios`, () => {
   });
 
   describe(`when the client's home community is valid`, () => {
+    describe(`when creating a client`, () => {
+      describe(`when the client is marked as indigenous`, () => {
+        describe(`when no community is provided`, () => {
+          it(`should create the client`, async () => {
+            await assertCommandSuccess({
+              endpoint: commandsEndpointForClients,
+              commandFsa: TestCommandStream.buildOne(CreateClient, {
+                isIndigenous: 'Yes',
+                communityId: undefined,
+                firstName: clientFirstName,
+                lastName: clientLastName,
+              }),
+              assertSuccess: async (ack) => {
+                const updated = // why is this .body? other helpers do not nest this data on the `ack`
+                  (await axios.get(`${clientIndexEndpoint}/${ack.body.id}`))
+                    .data as Client;
+
+                expect(updated.community).toBe(undefined);
+
+                expect(updated.isIndigenous).toBe('Yes');
+
+                expect(updated.fullName.firstName).toBe(clientFirstName);
+
+                expect(updated.fullName.lastName).toBe(clientLastName);
+              },
+            });
+          });
+        });
+
+        describe(`when a community is provided`, () => {
+          describe(`when the community exists`, () => {
+            it(`should create the client with the given community`, async () => {
+              await assertCommandScenarioSuccess({
+                endpoint: commandsEndpointForClients,
+                stream: TestCommandStream.first(CreateClient, {
+                  communityId,
+                  firstName: clientFirstName,
+                  lastName: clientLastName,
+                }),
+                assertSuccess: async (acks) => {
+                  const newClient = (
+                    await axios.get(`${clientIndexEndpoint}/${acks[0].id}`)
+                  ).data as Client;
+
+                  // shouldn't this be .communityId ?
+                  // TODO join in the communites in query responses
+                  expect(newClient.community).toBe(communityId);
+
+                  expect(newClient.fullName.firstName).toBe(clientFirstName);
+
+                  expect(newClient.fullName.lastName).toBe(clientLastName);
+                },
+              });
+            });
+          });
+
+          describe(`when the community does not exist`, () => {
+            const bogusCommunityId = 'WD-40';
+
+            it(`should return the expected error`, async () => {
+              await assertCommandError({
+                endpoint: commandsEndpointForClients,
+                commandFsa: TestCommandStream.buildOne(CreateClient, {
+                  communityId: bogusCommunityId,
+                }),
+                assertErrorMessageAsExpected: (message) => {
+                  assertTextMatchesAll(
+                    message,
+                    bogusCommunityId,
+                    'no such community',
+                  );
+                },
+              });
+            });
+          });
+        });
+      });
+
+      describe(`when the client is marked as non-indigenous`, () => {
+        describe(`when no community is provided`, () => {
+          it(`should create the client`, async () => {
+            await assertCommandSuccess({
+              endpoint: commandsEndpointForClients,
+              commandFsa: TestCommandStream.buildOne(CreateClient, {
+                communityId: undefined,
+                firstName: clientFirstName,
+                lastName: clientLastName,
+                isIndigenous: 'No',
+              }),
+              assertSuccess: async (ack) => {
+                const newClient = (
+                  await axios.get(`${clientIndexEndpoint}/${ack.body.id}`)
+                ).data as Client;
+
+                expect(newClient.community).toBe(undefined);
+
+                expect(newClient.isIndigenous).toBe('No');
+
+                expect(newClient.fullName.firstName).toBe(clientFirstName);
+
+                expect(newClient.fullName.lastName).toBe(clientLastName);
+              },
+            });
+          });
+        });
+
+        describe(`when a community is provided`, () => {
+          it(`should return the expected error`, async () => {
+            await assertCommandError({
+              endpoint: commandsEndpointForClients,
+              commandFsa: TestCommandStream.buildOne(CreateClient, {
+                isIndigenous: 'No',
+                communityId,
+              }),
+              assertErrorMessageAsExpected: (error) => {
+                assertTextMatchesAll(
+                  error,
+                  'non-indigenous',
+                  'cannot',
+                  'community',
+                  communityId,
+                );
+              },
+            });
+          });
+        });
+      });
+
+      describe(`when the client's indigenous identity is unknown`, () => {
+        describe(`when no community is provided`, () => {
+          it(`should create the client`, async () => {
+            await assertCommandSuccess({
+              endpoint: commandsEndpointForClients,
+              commandFsa: TestCommandStream.buildOne(CreateClient, {
+                firstName: clientFirstName,
+                lastName: clientLastName,
+                communityId: undefined,
+                isIndigenous: 'Unknown',
+              }),
+              assertSuccess: async (ack) => {
+                const newClient = (
+                  await axios.get(`${clientIndexEndpoint}/${ack.body.id}`)
+                ).data as Client;
+
+                expect(newClient.fullName.firstName).toBe(clientFirstName);
+
+                expect(newClient.fullName.lastName).toBe(clientLastName);
+
+                expect(newClient.community).toBe(undefined);
+
+                expect(newClient.isIndigenous).toBe('Unknown');
+              },
+            });
+          });
+        });
+
+        describe(`when a community is provided`, () => {
+          it(`should return the expected error`, async () => {
+            await assertCommandError({
+              endpoint: commandsEndpointForClients,
+              commandFsa: TestCommandStream.buildOne(CreateClient, {
+                isIndigenous: 'Unknown',
+                communityId,
+              }),
+              assertErrorMessageAsExpected: (message) => {
+                assertTextMatchesAll(
+                  message,
+                  `When specifying a client's community`,
+                  `the client must be listed as Indigenous`,
+                  communityId,
+                );
+              },
+            });
+          });
+        });
+      });
+
+      describe(`when an invalid community is specified for the client`, () => {
+        it(`should return the expected error response`, async () => {
+          await assertCommandError({
+            endpoint: commandsEndpointForClients,
+            commandFsa: TestCommandStream.buildOne(CreateClient, {
+              isIndigenous: 'Yes',
+              communityId: missingCommunityId,
+            }),
+            assertErrorMessageAsExpected: (message) => {
+              assertTextMatchesAll(
+                message,
+                missingCommunityId,
+                'no such community',
+              );
+            },
+          });
+        });
+      });
+    });
+
+    describe(`when adding community afiliation for a client`, () => {
+      describe(`when the provided community exists`, () => {
+        describe(`when the client already has a community affiliation`, () => {
+          it.todo(`should return the expected error resposne`);
+        });
+
+        describe(`when the client is non-indigenous`, () => {
+          it.todo(`should return the expected error response`);
+        });
+      });
+
+      describe(`when the provided community does not exist`, () => {
+        describe(`when whether the client is indigenous was previously recorded as unknown`, () => {
+          it.todo(
+            `should update the client's community and mark them as indigenous`,
+          );
+        });
+
+        describe(`when the client was previously marked as indigenous, but their community was not specified`, () => {
+          it.todo(`should update the client's community`);
+        });
+      });
+    });
+
     describe(`when flagging a client`, () => {
       describe(`when the client exists`, () => {
         describe(`when the target flag exists`, () => {
@@ -103,7 +326,7 @@ describe(`Client Management Scenarios`, () => {
               await assertCommandScenarioSuccess({
                 endpoint: commandsEndpointForClients,
                 stream: TestCommandStream.first(CreateClient, {
-                  community: communityId,
+                  communityId: communityId,
                 }).andThen(FlagClient, {
                   flagId,
                 }),
@@ -124,7 +347,7 @@ describe(`Client Management Scenarios`, () => {
                 await assertCommandScenarioSuccess({
                   endpoint: commandsEndpointForClients,
                   stream: TestCommandStream.first(CreateClient, {
-                    community: communityId,
+                    communityId: communityId,
                     firstName: clientFirstName,
                   })
                     .andThen(FlagClient, {
@@ -142,7 +365,7 @@ describe(`Client Management Scenarios`, () => {
                 await assertCommandScenarioError({
                   endpoint: commandsEndpointForClients,
                   stream: TestCommandStream.first(CreateClient, {
-                    community: communityId,
+                    communityId: communityId,
                     firstName: clientFirstName,
                     lastName: clientLastName,
                   })
@@ -172,6 +395,7 @@ describe(`Client Management Scenarios`, () => {
             await assertCommandScenarioError({
               endpoint: commandsEndpointForClients,
               stream: TestCommandStream.first(CreateClient, {
+                communityId,
                 firstName: clientFirstName,
                 lastName: clientLastName,
               }).andThen(FlagClient, {
