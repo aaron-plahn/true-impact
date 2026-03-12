@@ -133,6 +133,28 @@ export class Client
     return this.flagIds.includes(flagId);
   }
 
+  // TODO unit test?
+  @UpdateMethod()
+  addCommunityAffiliation(communityId: string): Client | TrueImpactError {
+    if (isNonEmptyString(this.community)) {
+      return new TrueImpactError(
+        `You cannot add community [${communityId}] for client [${this.id}], as the client is already listed as being registered to [${this.community}]`,
+      );
+    }
+
+    if (this.isIndigenous === 'No') {
+      return new TrueImpactError(
+        `You cannot add a community for a non-indigenous client`,
+      );
+    }
+
+    this.community = communityId;
+
+    this.isIndigenous = 'Yes';
+
+    return this;
+  }
+
   @UpdateMethod()
   flag(flagId: string): Client | TrueImpactError {
     if (this.flagIds.includes(flagId)) {

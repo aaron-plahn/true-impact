@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { Client } from '../../../features/clients/client.aggregate-root';
+import { AddCommunityAffiliationForClient } from '../../../features/clients/commands/add-community-affiliation-for-client';
 import { CreateClient } from '../../../features/clients/commands/create-client.command';
 import { FlagClient } from '../../../features/clients/commands/flag-client.command';
 import { CreateCommunity } from '../../../features/communities/commands';
@@ -296,24 +297,116 @@ describe(`Client Management Scenarios`, () => {
 
     describe(`when adding community afiliation for a client`, () => {
       describe(`when the provided community exists`, () => {
+        // TODO use this
+        // const secondCommunityId = '555';
+
         describe(`when the client already has a community affiliation`, () => {
-          it.todo(`should return the expected error resposne`);
+          it(`should return the expected error resposne`, async () => {
+            await assertCommandScenarioError({
+              endpoint: commandsEndpointForClients,
+              stream: TestCommandStream.first(CreateClient, {
+                // Shouldn't this simply be omitted from the payload if the community is provided?
+                isIndigenous: 'Yes',
+                communityId,
+              }).andThen(AddCommunityAffiliationForClient, {
+                communityId,
+              }),
+            });
+          });
         });
 
         describe(`when the client is non-indigenous`, () => {
-          it.todo(`should return the expected error response`);
+          it(`should return the expected error response`, async () => {
+            await assertCommandScenarioError({
+              endpoint: commandsEndpointForClients,
+              stream: TestCommandStream.first(CreateClient, {
+                communityId: undefined,
+                isIndigenous: 'No',
+              }).andThen(AddCommunityAffiliationForClient, {
+                communityId,
+              }),
+              assertErrorMessageAsExpected: (message) => {
+                assertTextMatchesAll(
+                  message,
+                  'cannot add a community',
+                  'non-indigenous client',
+                );
+              },
+            });
+          });
+        });
+
+        describe(`when whether the client is indigenous was previously recorded as unknown`, () => {
+          it(`should update the client's community and mark them as indigenous`, async () => {
+            await assertCommandScenarioSuccess({
+              endpoint: commandsEndpointForClients,
+              stream: TestCommandStream.first(CreateClient, {
+                firstName: clientFirstName,
+                lastName: clientLastName,
+                isIndigenous: 'Unknown',
+                communityId: undefined,
+              }).andThen(AddCommunityAffiliationForClient, {
+                communityId,
+              }),
+              assertSuccess: async (acks) => {
+                const updated = (
+                  await axios.get(`${clientIndexEndpoint}/${acks[0].id}`)
+                ).data as Client;
+
+                expect(updated.community).toBe(communityId);
+
+                expect(updated.isIndigenous).toBe('Yes');
+              },
+            });
+          });
+        });
+
+        describe(`when the client was previously marked as indigenous, but their community was not specified`, () => {
+          it(`should update the client's community`, async () => {
+            await assertCommandScenarioSuccess({
+              endpoint: commandsEndpointForClients,
+              stream: TestCommandStream.first(CreateClient, {
+                firstName: clientFirstName,
+                lastName: clientLastName,
+                isIndigenous: 'Yes',
+                communityId: undefined,
+              }).andThen(AddCommunityAffiliationForClient, {
+                communityId,
+              }),
+              assertSuccess: async (acks) => {
+                const updated = (
+                  await axios.get(`${clientIndexEndpoint}/${acks[0].id}`)
+                ).data as Client;
+
+                expect(updated.isIndigenous).toBe('Yes');
+
+                expect(updated.community).toBe(communityId);
+              },
+            });
+          });
         });
       });
 
       describe(`when the provided community does not exist`, () => {
-        describe(`when whether the client is indigenous was previously recorded as unknown`, () => {
-          it.todo(
-            `should update the client's community and mark them as indigenous`,
-          );
-        });
-
-        describe(`when the client was previously marked as indigenous, but their community was not specified`, () => {
-          it.todo(`should update the client's community`);
+        it(`should return the expected error response`, async () => {
+          await assertCommandScenarioError({
+            endpoint: commandsEndpointForClients,
+            stream: TestCommandStream.first(CreateClient, {
+              firstName: clientFirstName,
+              lastName: clientLastName,
+              isIndigenous: 'Yes',
+              communityId: undefined,
+            }).andThen(AddCommunityAffiliationForClient, {
+              communityId: missingCommunityId,
+            }),
+            assertErrorMessageAsExpected: (message) => {
+              assertTextMatchesAll(
+                message,
+                missingCommunityId,
+                'no such community',
+              );
+            },
+          });
         });
       });
     });

@@ -1,4 +1,4 @@
-import { COMMUNITY_VALIDATION_SERVICE_INJECTION_TOKEN } from 'src/features/communities/constants';
+import { COMMUNITY_VALIDATION_SERVICE_INJECTION_TOKEN } from '../../../features/communities/constants';
 import { CommandResult, ICommandHandler } from '../../../libs/cqrs-es';
 import {
   isNonEmptyString,

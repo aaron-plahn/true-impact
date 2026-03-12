@@ -1,6 +1,19 @@
-import { NestedDataType, NonEmptyString } from 'src/libs/data-types';
+import {
+  NestedDataType,
+  NonEmptyString,
+  TrueImpactDataExample,
+} from '../../../libs/data-types';
 import { ClientCompositeIdentifier } from '../client.composite-identifier';
 
+@TrueImpactDataExample<AddCommunityAffiliationForClient>({
+  example: {
+    aggregateCompositeIdentifier: {
+      type: 'client',
+      id: '3',
+    },
+    communityId: '444',
+  },
+})
 export class AddCommunityAffiliationForClient {
   static readonly type = 'ADD_COMMUNITY_AFFILIATION_FOR_CLIENT';
 

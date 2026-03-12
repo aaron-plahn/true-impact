@@ -22,6 +22,7 @@ import { ClientQueryService } from './services/client-query.service';
     // Commands
     CreateClientCommandHandler,
     FlagClientCommandHandler,
+    AddCommunityAffiliationForClientCommandHandler,
     {
       provide: CLIENT_COMMAND_REPOSITORY_INJECTION_TOKEN,
       useFactory: () => new InMemoryCommandRepository(Client),
