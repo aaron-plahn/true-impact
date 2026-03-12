@@ -2,7 +2,12 @@
 
 This first release of the True Impact platform introduces a working model for user management, client management, and survey creation and completion.
 
-## 14
+## #15
+
+In this commit, we support linking communities to a client. This can be done when creating the client or after the fact, in case
+the client's community affiliation is initially unknown.
+
+## #14
 
 In this commit, we support applying flags directly to a client.
 
