@@ -9,6 +9,10 @@ import { Community } from '../models';
 import { CreateCommunity } from './create-community.command';
 import type { ICommunityCommandRepository } from './repositories/community-command-repository.interface';
 
+/**
+ * This is a placeholder for a future service that will be configurable per-tenant. It allows us
+ * to limit the accepted language codes depending on the tenant.
+ */
 interface ILanguageValidationService {
   has(languageCode: string): boolean;
 }

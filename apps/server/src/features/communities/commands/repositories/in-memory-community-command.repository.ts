@@ -1,6 +1,7 @@
 import { PersistenceAcknowledgement } from '../../../../libs/cqrs-es';
 import {
   getDataSchemaFromClassCtor,
+  SimpleSchemaPropertyMetadata,
   TrueImpactBadUserInputError,
   TrueImpactError,
   TrueImpactRuntimeException,
@@ -22,8 +23,9 @@ export class InMemoryCommunityCommandRepository implements ICommunityCommandRepo
     const uniqueFields: (keyof Community)[] = Array.from(
       Object.entries(schema.properties),
     ).flatMap(([propertyKey, propertySchema]) => {
-      // @ts-expect-error TODO Let's update our base types here
-      if (propertySchema?.mustBeUnique) {
+      if (
+        (propertySchema as SimpleSchemaPropertyMetadata | null)?.mustBeUnique
+      ) {
         return [propertyKey as keyof Community];
       }
 
