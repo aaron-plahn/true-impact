@@ -112,6 +112,8 @@ export class InMemoryCommandRepository<
 
     instance.id = id;
 
+    instance.revision = 1;
+
     const uniquenessConstraintsValidationResult =
       this.validateUniquenessConstraints(instance);
 

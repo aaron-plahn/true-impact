@@ -9,10 +9,14 @@ describe(`MultilingualText.validateInvariants`, () => {
     it(`should return the instance`, () => {
       const validInstance = buildTestInstance(MultilingualText, {
         items: {
-          [MultilingualTextItemRole.original]: buildTestInstance(
-            MultilingualTextItem,
-            {},
-          ),
+          en: {
+            [MultilingualTextItemRole.original]: buildTestInstance(
+              MultilingualTextItem,
+              {
+                text: 'bla bla bla',
+              },
+            ),
+          },
         },
       });
 
