@@ -4,7 +4,7 @@ import { SurveyViewModel, SurveyViewModelClientDto } from './survey.view-model';
 import {
   FlagQueryService,
   FlagViewModelClientDto,
-} from 'src/features/flags/queries';
+} from '../../../features/flags/queries';
 import {
   TrueImpactBadUserInputError,
   TrueImpactError,

@@ -1,5 +1,5 @@
-import { Flag } from 'src/features/flags/models';
-import { NonEmptyString } from 'src/libs/data-types';
+import { Flag } from '../../../features/flags/models';
+import { NonEmptyString } from '../../../libs/data-types';
 
 export class SurveyFlagViewModelClientDto {
   @NonEmptyString({
