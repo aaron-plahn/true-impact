@@ -26,7 +26,7 @@ const communityTestSetupEndpoint = `${communityBaseEndpoint}/test-setup`;
 
 const englishCommunityName = 'The Community';
 
-const translatedCommunityName = 'Community Name in the language';
+const translationOfTheCommunityName = 'Community Name in the language';
 
 const originalLanguageCodeForName = 'en';
 
@@ -43,13 +43,10 @@ const createCommunity = TestCommandStream.first(CreateCommunity, {
   nation,
 });
 
-const _translateCommunityName = createCommunity.andThen(
-  TranslateCommunityName,
-  {
-    translation: translatedCommunityName,
-    languageCode: translationLanguageCodeForName,
-  },
-);
+const translateCommunityName = createCommunity.andThen(TranslateCommunityName, {
+  translation: translationOfTheCommunityName,
+  languageCode: translationLanguageCodeForName,
+});
 
 describe(`Community Management Scenarios`, () => {
   beforeEach(async () => {
@@ -166,26 +163,92 @@ describe(`Community Management Scenarios`, () => {
     describe(`when the name has no translation`, () => {
       describe(`when the langauge code is a known langauge code`, () => {
         describe(`clc`, () => {
-          it.todo(`should translate the community name`);
+          it(`should translate the community name`, async () => {
+            await assertCommandScenarioSuccess({
+              endpoint: commandsEndpointForCommunities,
+              stream: translateCommunityName,
+              assertSuccess: async (acks) => {
+                const { name } = (
+                  await axios.get(`${communityBaseEndpoint}/${acks[0].id}`)
+                ).data as CommunityViewModelClientDto;
+
+                expect(
+                  name.items[translationLanguageCodeForName]?.[
+                    'free translation'
+                  ]?.text,
+                ).toBe(translationOfTheCommunityName);
+              },
+            });
+          });
         });
       });
 
       describe(`when the language code is one that is not yet supported (but will be in the near future)`, () => {
         describe(`en`, () => {
-          it.todo(`should translate the community name`);
+          const invalidLanguageCode = 'en';
+
+          it(`should translate the community name`, async () => {
+            await assertCommandScenarioError({
+              endpoint: commandsEndpointForCommunities,
+              stream: createCommunity.andThen(TranslateCommunityName, {
+                languageCode: invalidLanguageCode,
+              }),
+              assertErrorMessageAsExpected: (message) => {
+                assertTextMatchesAll(
+                  message,
+                  invalidLanguageCode,
+                  'not yet supported',
+                );
+              },
+            });
+          });
         });
       });
 
       describe(`when the language code is not a valid language code`, () => {
         describe(`abc`, () => {
-          it.todo(`should return the expected error resposne`);
+          const invalidLanguageCode = 'abc';
+
+          it(`should return the expected error resposne`, async () => {
+            await assertCommandScenarioError({
+              endpoint: commandsEndpointForCommunities,
+              stream: createCommunity.andThen(TranslateCommunityName, {
+                languageCode: invalidLanguageCode,
+              }),
+              assertErrorMessageAsExpected: (message) => {
+                assertTextMatchesAll(
+                  message,
+                  invalidLanguageCode,
+                  'unknown language',
+                );
+              },
+            });
+          });
         });
       });
     });
 
     describe(`when the name has a translation`, () => {
       describe(`when the new translation targets the same langauge as the existing translation`, () => {
-        it.todo(`should return the expected error response`);
+        it(`should return the expected error response`, async () => {
+          await assertCommandScenarioError({
+            endpoint: commandsEndpointForCommunities,
+            stream: createCommunity.andThen(TranslateCommunityName, {
+              languageCode: originalLanguageCodeForName,
+            }),
+            assertErrorMessageAsExpected: (message) => {
+              assertTextMatchesAll(
+                message,
+                // this is what we expect until we support English translations
+                'not yet supported',
+                // in the future:
+                // englishCommunityName,
+                // originalLanguageCodeForName,
+                // 'already has',
+              );
+            },
+          });
+        });
       });
     });
   });

@@ -80,12 +80,14 @@ export class MultilingualText extends Entity<MultilingualTextPersistenceDto> {
 
     const translationsByLanguage =
       this.items.get(languageCode) ||
-      new Map<LanguageCode, MultilingualTextItem>();
+      new Map<MultilingualTextItemRole, MultilingualTextItem>();
 
     translationsByLanguage.set(
       MultilingualTextItemRole.freeTranslation,
       new MultilingualTextItem({ text }),
     );
+
+    this.items.set(languageCode, translationsByLanguage);
 
     return this;
   }
