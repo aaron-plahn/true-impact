@@ -1,10 +1,25 @@
-import { NonEmptyString } from '../../../libs/data-types';
+import {
+  NonEmptyString,
+  TrueImpactDataExample,
+} from '../../../libs/data-types';
 import {
   CommunityCompositeIdentifier,
   CommunityCompositeIdentifierDataProperty,
 } from '../models';
 
+@TrueImpactDataExample<TranslateCommunityName>({
+  example: {
+    aggregateCompositeIdentifier: {
+      type: 'community',
+      id: '55',
+    },
+    translation: 'Le River People',
+    languageCode: 'clc',
+  },
+})
 export class TranslateCommunityName {
+  static readonly type = 'TRANSLATE_COMMUNITY_NAME';
+
   @CommunityCompositeIdentifierDataProperty
   aggregateCompositeIdentifier: CommunityCompositeIdentifier;
 

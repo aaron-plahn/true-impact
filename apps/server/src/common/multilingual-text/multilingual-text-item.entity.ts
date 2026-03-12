@@ -7,12 +7,8 @@ import {
 export class MultilingualTextItemPersistenceDto {
   text: string;
 
-  languageCode: string;
-
-  constructor({ text, languageCode }: { text: string; languageCode: string }) {
+  constructor({ text }: { text: string }) {
     this.text = text;
-
-    this.languageCode = languageCode;
   }
 }
 
@@ -20,19 +16,16 @@ export class MultilingualTextItemPersistenceDto {
 @TrueImpactDataExample<MultilingualTextItemPersistenceDto>({
   example: {
     text: 'hat',
-    languageCode: 'clc',
   },
 })
 export class MultilingualTextItem extends Entity<MultilingualTextItemPersistenceDto> {
   text: string;
   languageCode: string;
 
-  constructor({ text, languageCode }: { text: string; languageCode: string }) {
+  constructor({ text }: { text: string }) {
     super();
 
     this.text = text;
-
-    this.languageCode = languageCode;
   }
 
   validateComplexInvariants(): TrueImpactError[] {
@@ -55,17 +48,15 @@ export class MultilingualTextItem extends Entity<MultilingualTextItemPersistence
   toPersistenceDto(): MultilingualTextItemPersistenceDto {
     return {
       text: this.text,
-      languageCode: this.languageCode,
     };
   }
 
   static fromPersistenceDto(
-    { text, languageCode }: MultilingualTextItemPersistenceDto,
+    { text }: MultilingualTextItemPersistenceDto,
     buildOptions?: { shouldValidate?: boolean },
   ): MultilingualTextItem | TrueImpactError {
     const instance = new MultilingualTextItem({
       text,
-      languageCode,
     });
 
     return buildOptions?.shouldValidate

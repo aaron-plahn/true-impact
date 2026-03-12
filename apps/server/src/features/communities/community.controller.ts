@@ -18,18 +18,18 @@ import {
   UseFilters,
   UseInterceptors,
 } from '../../libs/framework';
-import { FlagQueryService, FlagViewModelClientDto } from './queries';
+import { CommunityQueryService, CommunityViewModelClientDto } from './queries';
 
-// TODO Can we wrap these into @Controller?
-@UseFilters(ResourceNotFoundFilter, BadUserInputFilter)
-@UseInterceptors(QueryResponseInterceptor)
-@Controller('flags')
-export class FlagController {
+@Controller('communities')
+export class CommunityController {
   constructor(
-    private readonly flagQueryService: FlagQueryService,
     private readonly commandHandlerService: CommandHandlerService,
+    private readonly communityQueryService: CommunityQueryService,
   ) {}
 
+  // TODO Can we wrap these into @Controller?
+  @UseFilters(ResourceNotFoundFilter, BadUserInputFilter)
+  @UseInterceptors(QueryResponseInterceptor)
   // TODO @CommandExecutionEndpoint
   @Post('commands')
   async executeCommand(@Body() fsa: ICommandFsa): Promise<CommandResult> {
@@ -40,18 +40,16 @@ export class FlagController {
 
   @DetailQueryEndpoint()
   async fetchById(
-    @IdParam()
-    id: string,
-  ): Promise<FlagViewModelClientDto | TrueImpactError | null> {
-    const result = await this.flagQueryService.fetchById(id);
+    @IdParam() id: string,
+  ): Promise<CommunityViewModelClientDto | TrueImpactError | null> {
+    const result = await this.communityQueryService.fetchById(id);
 
     return result;
   }
 
-  // TODO do we want to use an interceptor to convert view models to client-facing DTOs insead of doing it explicitly lower down?
   @IndexQueryEndpoint()
-  async fetchMany(): Promise<FlagViewModelClientDto[] | TrueImpactError> {
-    const result = await this.flagQueryService.fetchMany();
+  async fetchMany(): Promise<CommunityViewModelClientDto[] | TrueImpactError> {
+    const result = await this.communityQueryService.fetchMany();
 
     return result;
   }
@@ -68,7 +66,7 @@ export class FlagController {
 
     // @ts-expect-error This will only work if the private, concrete dependency has a `clear` method (not for the production implementation)
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-    await this.flagQueryService.flagCommandRepository.clear();
+    await this.communityQueryService.commandRepository.clear();
 
     return 'OK';
   }
