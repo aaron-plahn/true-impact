@@ -11,6 +11,15 @@ exports[`ClientSchema should match the snapshot 1`] = `
       "mustBeUnique": false,
       "type": "NON_EMPTY_STRING",
     },
+    "flagIds": {
+      "canBeEmpty": true,
+      "description": "a reference to flags that indicate warnings or other context when interacting with the given client",
+      "items": {
+        "type": "NON_EMPTY_STRING",
+      },
+      "label": "flag IDs",
+      "type": "array",
+    },
   },
 }
 `;
