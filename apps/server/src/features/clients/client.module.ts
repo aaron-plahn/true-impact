@@ -5,6 +5,8 @@ import { CommunityModule } from '../communities/community.module';
 import { FlagModule } from '../flags/flag.module';
 import { Client } from './client.aggregate-root';
 import { ClientController } from './client.controller';
+import { AddCommunityAffiliationForClient } from './commands/add-community-affiliation-for-client';
+import { AddCommunityAffiliationForClientCommandHandler } from './commands/add-community-affiliation-for-client.command-handler';
 import { CreateClient } from './commands/create-client.command';
 import { CreateClientCommandHandler } from './commands/create-client.command-handler';
 import { FlagClient } from './commands/flag-client.command';
@@ -41,6 +43,10 @@ import { ClientQueryService } from './services/client-query.service';
           .register({
             CommandHandlerCtor: FlagClientCommandHandler,
             CommandPayloadCtor: FlagClient,
+          })
+          .register({
+            CommandHandlerCtor: AddCommunityAffiliationForClientCommandHandler,
+            CommandPayloadCtor: AddCommunityAffiliationForClient,
           });
 
         return commandHandlerService;

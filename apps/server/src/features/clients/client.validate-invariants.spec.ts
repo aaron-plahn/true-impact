@@ -88,7 +88,7 @@ describe(`Client.validateInvariants`, () => {
         const errorMessage = result.toString();
 
         expect(errorMessage).toContain(
-          `When specifying a client's community, the client must be listed as Indigenous`,
+          `When specifying a client's community Red Mountain, the client must be listed as Indigenous`,
         );
       });
     });
