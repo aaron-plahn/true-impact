@@ -2,7 +2,6 @@ import { PersistenceAcknowledgement } from '../../../libs/cqrs-es';
 import { TrueImpactError } from '../../../libs/data-types';
 import { Client } from '../client.aggregate-root';
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface IClientCommandRepository {
   exists(id: string): Promise<boolean>;
 
@@ -17,4 +16,9 @@ export interface IClientCommandRepository {
 
   // Error[] ?
   createMany(instances: Client[]): Promise<void>;
+
+  // DeepPartial<ClientPersistenceDto> ?
+  update(
+    instance: Client,
+  ): Promise<PersistenceAcknowledgement | TrueImpactError>;
 }
