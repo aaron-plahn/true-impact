@@ -14,9 +14,10 @@ const communityWithEnglishNameOnly = buildTestInstance(
   {
     name: {
       items: {
-        [MultilingualTextItemRole.original]: {
-          text: 'Big Creek',
-          languageCode: 'en',
+        en: {
+          [MultilingualTextItemRole.original]: {
+            text: 'Big Crek',
+          },
         },
       },
     },
@@ -53,13 +54,15 @@ describe(`Community.translateName`, () => {
         {
           name: {
             items: {
-              [MultilingualTextItemRole.original]: {
-                text: 'Original Name',
-                languageCode: 'en',
+              en: {
+                [MultilingualTextItemRole.original]: {
+                  text: 'Original Name',
+                },
               },
-              [MultilingualTextItemRole.freeTranslation]: {
-                text: existingTranslation,
-                languageCode: 'clc',
+              clc: {
+                [MultilingualTextItemRole.freeTranslation]: {
+                  text: existingTranslation,
+                },
               },
             },
           },

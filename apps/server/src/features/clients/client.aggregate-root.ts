@@ -6,8 +6,11 @@ import {
   isNonEmptyString,
   NonEmptyString,
   TrueImpactBadUserInputError,
+  TrueImpactDataExample,
   TrueImpactError,
+  UpdateMethod,
 } from '../../libs/data-types';
+import { CLIENT_AGGREGATE_TYPE } from './client.composite-identifier';
 
 interface ValidateInvariants<T> {
   // Should we make this an either?
@@ -26,12 +29,30 @@ export class ClientPersistenceDto {
   isIndigenous: 'Yes' | 'No' | 'Unknown'; // this is a smell
 
   community?: string;
+
+  flagIds: string[];
 }
 
+@TrueImpactDataExample<ClientPersistenceDto>({
+  example: {
+    id: '4',
+    revision: 2,
+    fullName: {
+      firstName: 'James',
+      middleName: 'Bob',
+      lastName: 'Deer',
+    },
+    dateOfBirth: '2020-10-01',
+    isIndigenous: 'Yes',
+    flagIds: [],
+  },
+})
 export class Client
   extends AggregateRoot
   implements ValidateInvariants<Client>
 {
+  static readonly type = CLIENT_AGGREGATE_TYPE;
+
   id: string;
 
   revision: number;
@@ -50,6 +71,16 @@ export class Client
   })
   community?: string;
 
+  @NonEmptyString({
+    label: 'flag IDs',
+    description:
+      'a reference to flags that indicate warnings or other context when interacting with the given client',
+    isArray: true,
+    isOptional: true, // i.e., can be empty
+  })
+  // We could change this to a set if we introduce a `Set` data type decorator.
+  flagIds: string[];
+
   constructor({
     id,
     revision,
@@ -57,6 +88,7 @@ export class Client
     dateOfBirth,
     isIndigenous,
     community,
+    flagIds,
   }: {
     id?: string;
 
@@ -69,6 +101,8 @@ export class Client
     isIndigenous: 'Yes' | 'No' | 'Unknown'; // this is a smell
 
     community?: string;
+
+    flagIds: string[];
   }) {
     super();
 
@@ -87,10 +121,29 @@ export class Client
     this.isIndigenous = isIndigenous;
 
     this.community = community;
+
+    this.flagIds = [...flagIds];
   }
 
   public getId() {
     return this.id;
+  }
+
+  hasFlag(flagId: string): boolean {
+    return this.flagIds.includes(flagId);
+  }
+
+  @UpdateMethod()
+  flag(flagId: string): Client | TrueImpactError {
+    if (this.flagIds.includes(flagId)) {
+      return new TrueImpactError(
+        `You cannot flag client ${this.getName()} with the flag [${flagId}], as the client already has this flag.`,
+      );
+    }
+
+    this.flagIds.push(flagId);
+
+    return this;
   }
 
   getName(): string {
@@ -144,6 +197,7 @@ export class Client
       isIndigenous,
       community,
       revision: 1,
+      flagIds: [], // none to start with
     });
 
     const result = unverifiedInstance.validateInvariants();

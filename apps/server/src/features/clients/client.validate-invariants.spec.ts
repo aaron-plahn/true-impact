@@ -12,6 +12,7 @@ const validDtoWihtoutOptionalProperties: ClientPersistenceDto = {
   },
   dateOfBirth: '2022-08-01',
   isIndigenous: 'Yes',
+  flagIds: [],
   // community: undefined
 };
 
