@@ -41,6 +41,14 @@ export class FullName {
     return this.middleName.charAt(0);
   }
 
+  toDto(): FullNameDto {
+    return {
+      firstName: this.firstName,
+      middleName: this.middleName,
+      lastName: this.lastName,
+    };
+  }
+
   toString() {
     return `${this.firstName} ${this.getMiddleInitial()} ${this.lastName}`;
   }

@@ -2,6 +2,9 @@ import {
   NonEmptyString,
   TrueImpactDataExample,
 } from '../../../libs/data-types';
+import { EnumeratedType } from '../../../libs/data-types/schema-management/decorators/enumerated-type.decorator';
+
+import type { YesNoOrUnknown } from '../../../libs/data-types';
 
 @TrueImpactDataExample<CreateClient>({
   example: {
@@ -45,8 +48,18 @@ export class CreateClient {
   })
   dateOfBirth: string; // parse to Date or put date object on payload
 
-  // TODO @Enum
-  isIndigenous: 'Yes' | 'No' | 'Unknown';
+  @EnumeratedType(
+    {
+      Yes: 'Yes',
+      No: 'No',
+      Unknown: 'Unknown',
+    },
+    {
+      label: 'is indigenous',
+      description: 'Is the client you are adding Indigenous (may be unknown)?',
+    },
+  )
+  isIndigenous: YesNoOrUnknown;
 
   @NonEmptyString({
     label: 'community ID',

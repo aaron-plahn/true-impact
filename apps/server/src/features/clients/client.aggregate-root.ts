@@ -9,6 +9,7 @@ import {
   TrueImpactDataExample,
   TrueImpactError,
   UpdateMethod,
+  YesNoOrUnknown,
 } from '../../libs/data-types';
 import { CLIENT_AGGREGATE_TYPE } from './client.composite-identifier';
 
@@ -26,9 +27,9 @@ export class ClientPersistenceDto {
 
   dateOfBirth: string; // Date?
 
-  isIndigenous: 'Yes' | 'No' | 'Unknown'; // this is a smell
+  isIndigenous: YesNoOrUnknown;
 
-  community?: string;
+  communityId?: string;
 
   flagIds: string[];
 }
@@ -61,7 +62,7 @@ export class Client
 
   dateOfBirth: string; // Date?
 
-  isIndigenous: 'Yes' | 'No' | 'Unknown'; // Is there a better way to represent this?
+  isIndigenous: YesNoOrUnknown; // Is there a better way to represent this?
 
   @NonEmptyString({
     label: 'Community',
@@ -69,7 +70,7 @@ export class Client
     isOptional: true,
     isArray: false,
   })
-  community?: string;
+  communityId?: string;
 
   @NonEmptyString({
     label: 'flag IDs',
@@ -87,7 +88,7 @@ export class Client
     fullName,
     dateOfBirth,
     isIndigenous,
-    community,
+    communityId,
     flagIds,
   }: {
     id?: string;
@@ -98,9 +99,9 @@ export class Client
 
     dateOfBirth: string; // Date?
 
-    isIndigenous: 'Yes' | 'No' | 'Unknown'; // this is a smell
+    isIndigenous: YesNoOrUnknown;
 
-    community?: string;
+    communityId?: string;
 
     flagIds: string[];
   }) {
@@ -120,7 +121,7 @@ export class Client
 
     this.isIndigenous = isIndigenous;
 
-    this.community = community;
+    this.communityId = communityId;
 
     this.flagIds = [...flagIds];
   }
@@ -133,12 +134,11 @@ export class Client
     return this.flagIds.includes(flagId);
   }
 
-  // TODO unit test?
   @UpdateMethod()
   addCommunityAffiliation(communityId: string): Client | TrueImpactError {
-    if (isNonEmptyString(this.community)) {
+    if (isNonEmptyString(this.communityId)) {
       return new TrueImpactError(
-        `You cannot add community [${communityId}] for client [${this.id}], as the client is already listed as being registered to [${this.community}]`,
+        `You cannot add community [${communityId}] for client [${this.id}], as the client is already listed as being registered to [${this.communityId}]`,
       );
     }
 
@@ -148,7 +148,7 @@ export class Client
       );
     }
 
-    this.community = communityId;
+    this.communityId = communityId;
 
     this.isIndigenous = 'Yes';
 
@@ -175,18 +175,18 @@ export class Client
   validateComplexInvariants(): TrueImpactError[] {
     const allErrors: TrueImpactError[] = [];
 
-    if (this.isIndigenous === 'No' && isNonEmptyString(this.community)) {
+    if (this.isIndigenous === 'No' && isNonEmptyString(this.communityId)) {
       allErrors.push(
         new TrueImpactError(
-          `A non-indigenous client cannot be registered to a community [${this.community}]`,
+          `A non-indigenous client cannot be registered to a community [${this.communityId}]`,
         ),
       );
     }
 
-    if (this.isIndigenous === 'Unknown' && isNonEmptyString(this.community)) {
+    if (this.isIndigenous === 'Unknown' && isNonEmptyString(this.communityId)) {
       allErrors.push(
         new TrueImpactError(
-          `When specifying a client's community [${this.community}], the client must be listed as Indigenous`,
+          `When specifying a client's community [${this.communityId}], the client must be listed as Indigenous`,
         ),
       );
     }
@@ -222,7 +222,7 @@ export class Client
       fullName: { firstName, lastName },
       dateOfBirth,
       isIndigenous,
-      community,
+      communityId: community,
       revision: 1,
       flagIds: [], // none to start with
     });

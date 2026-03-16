@@ -4,3 +4,4 @@ export * from './data-properties.type';
 export * from './deep-map-to-record';
 export * from './deep-overrides';
 export * from './deep-partial';
+export * from './yes-no-or-unknown';

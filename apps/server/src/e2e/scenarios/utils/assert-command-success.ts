@@ -7,7 +7,7 @@ type SuccessTestCase = {
   endpoint: string;
   commandFsa: ICommandFsa;
   // arrange: () => Promise<void>;
-  assertSuccess?: (response: SuccessResponse) => Promise<void>;
+  assertSuccess?: (response: SuccessResponse['body']) => Promise<void>;
 };
 
 export const assertCommandSuccess = async ({
@@ -31,6 +31,10 @@ export const assertCommandSuccess = async ({
       },
     );
 
+  if ((response.status as HttpStatus) !== HttpStatus.CREATED) {
+    console.log('test setup failed here');
+  }
+
   expect(response.status).toBe(HttpStatus.CREATED);
 
   const successResponse = {
@@ -40,6 +44,6 @@ export const assertCommandSuccess = async ({
   } as unknown as SuccessResponse;
 
   if (typeof assertSuccess === 'function') {
-    await assertSuccess(successResponse);
+    await assertSuccess(successResponse.body);
   }
 };

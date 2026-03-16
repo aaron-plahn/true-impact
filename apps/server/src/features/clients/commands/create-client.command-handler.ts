@@ -43,8 +43,6 @@ export class CreateClientCommandHandler implements ICommandHandler {
       }
     }
 
-    // TODO validate that communityId is not provided unless `isIndigenous === 'yes'`
-
     const buildResult = Client.fromCreateClientCommand(command);
 
     if (buildResult instanceof TrueImpactError) {
