@@ -2,6 +2,15 @@ const SCHEMA_PROPERTY_METADATA_KEY = '__SCHEMA_PROPERTY_METADATA_KEY__';
 import { Ctor, DataKeys } from '../../utility-types';
 import { SimpleDataTypeDecoratorOptions } from './type-decorator-options';
 
+export type EnumeratedTypeSchemaPropertyMetadata = {
+  type: 'ENUMERATED_TYPE';
+  isOptional: boolean;
+  label: string;
+  description: string;
+  enum: string[];
+  valuesAndLabels: Record<string, string>;
+};
+
 export type ObjectSchemaPropertyMetadata = {
   type: 'object';
   isOptional: boolean;
@@ -53,7 +62,8 @@ export type ArraySchemaPropertyMetadata = {
 export type SchemaPropertyMetadata =
   | SimpleSchemaPropertyMetadata
   | ObjectSchemaPropertyMetadata
-  | ArraySchemaPropertyMetadata;
+  | ArraySchemaPropertyMetadata
+  | EnumeratedTypeSchemaPropertyMetadata;
 
 export type DataSchema<T = object> = {
   properties: DataKeys<T> extends never

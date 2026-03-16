@@ -1,4 +1,10 @@
-import { TrueImpactDataExample } from '../../../libs/data-types';
+import {
+  NonEmptyString,
+  TrueImpactDataExample,
+} from '../../../libs/data-types';
+import { EnumeratedType } from '../../../libs/data-types/schema-management/decorators/enumerated-type.decorator';
+
+import type { YesNoOrUnknown } from '../../../libs/data-types';
 
 @TrueImpactDataExample<CreateClient>({
   example: {
@@ -9,7 +15,7 @@ import { TrueImpactDataExample } from '../../../libs/data-types';
     dateOfBirth: '2010-11-04',
     isIndigenous: 'Yes',
     // TODO validate this in the command handler against known communities
-    community: '55506',
+    communityId: '55506',
   },
 })
 export class CreateClient {
@@ -24,13 +30,41 @@ export class CreateClient {
    */
   // aggregateComposteIdentifier: ClientCompositeIdentifier;
 
+  @NonEmptyString({
+    label: 'first name',
+    description: `the new client's first name`,
+  })
   firstName: string;
 
+  @NonEmptyString({
+    label: 'last name',
+    description: `the new client's last name`,
+  })
   lastName: string;
 
-  dateOfBirth: string; // parse to Date
+  @NonEmptyString({
+    label: 'date of birth',
+    description: `the new client's date of birth`,
+  })
+  dateOfBirth: string; // parse to Date or put date object on payload
 
-  isIndigenous: 'Yes' | 'No' | 'Unknown';
+  @EnumeratedType(
+    {
+      Yes: 'Yes',
+      No: 'No',
+      Unknown: 'Unknown',
+    },
+    {
+      label: 'is indigenous',
+      description: 'Is the client you are adding Indigenous (may be unknown)?',
+    },
+  )
+  isIndigenous: YesNoOrUnknown;
 
-  community?: string;
+  @NonEmptyString({
+    label: 'community ID',
+    description: `system identifier for this client's community`,
+    isOptional: true,
+  })
+  communityId?: string;
 }

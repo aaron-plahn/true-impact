@@ -19,7 +19,6 @@ import {
   UseFilters,
   UseInterceptors,
 } from '../../libs/framework';
-import { CreateClient } from './commands/create-client.command';
 import { ClientQueryService } from './services/client-query.service';
 
 @UseFilters(ResourceNotFoundFilter, BadUserInputFilter)
@@ -33,8 +32,9 @@ export class ClientController {
 
   @DetailQueryEndpoint()
   async fetchById(@IdParam() id: string) {
-    // TODO we need a client view model
-    return this.clientsService.fetchById(id);
+    const result = await this.clientsService.fetchById(id);
+
+    return result;
   }
 
   @IndexQueryEndpoint()
@@ -46,18 +46,6 @@ export class ClientController {
   @Post('commands')
   async executeCommand(@Body() fsa: ICommandFsa): Promise<CommandResult> {
     const result = await this.commandHandlerService.execute(fsa);
-
-    return result;
-  }
-
-  // TODO We want a dedicated /commands endpoint for extensibility
-  @Post('')
-  async create(@Body() creationCommand: CreateClient) {
-    // TODO inject a CommandHandlerService
-    const result = await this.commandHandlerService.execute({
-      type: 'CREATE_CLIENT',
-      payload: creationCommand,
-    });
 
     return result;
   }

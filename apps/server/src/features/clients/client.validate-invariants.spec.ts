@@ -50,7 +50,7 @@ describe(`Client.validateInvariants`, () => {
       it(`should return the expected error`, () => {
         const invalidDto = clonePlainObject(validDtoWihtoutOptionalProperties, {
           isIndigenous: 'No',
-          community: 'Blue Lake',
+          communityId: 'Blue Lake',
         });
 
         const invalidInstance = Client.fromPersistenceDto(
@@ -69,12 +69,11 @@ describe(`Client.validateInvariants`, () => {
         );
       });
     });
-
     describe(`when the has a community but indigenous is "Unknown"`, () => {
       it(`should return the expected error`, () => {
         const invalidDto = clonePlainObject(validDtoWihtoutOptionalProperties, {
           isIndigenous: 'Unknown',
-          community: 'Red Mountain',
+          communityId: '99',
         });
 
         const instance = Client.fromPersistenceDto(
@@ -88,7 +87,7 @@ describe(`Client.validateInvariants`, () => {
         const errorMessage = result.toString();
 
         expect(errorMessage).toContain(
-          `When specifying a client's community, the client must be listed as Indigenous`,
+          `When specifying a client's community [99], the client must be listed as Indigenous`,
         );
       });
     });
@@ -97,7 +96,7 @@ describe(`Client.validateInvariants`, () => {
       const invalidInstance = clonePlainObject(
         validDtoWihtoutOptionalProperties,
         {
-          community: 78,
+          communityId: 78,
         },
       );
 
