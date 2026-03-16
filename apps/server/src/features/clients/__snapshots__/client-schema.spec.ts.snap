@@ -3,7 +3,7 @@
 exports[`ClientSchema should match the snapshot 1`] = `
 {
   "properties": {
-    "community": {
+    "communityId": {
       "description": "the Indigenous community to which the client is registered",
       "isArray": false,
       "isOptional": true,

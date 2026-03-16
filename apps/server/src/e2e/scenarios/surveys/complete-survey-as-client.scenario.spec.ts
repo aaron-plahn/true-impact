@@ -2,6 +2,8 @@ import axios from 'axios';
 import { Client } from '../../../features/clients/client.aggregate-root';
 import { CLIENT_AGGREGATE_TYPE } from '../../../features/clients/client.composite-identifier';
 import { CreateClient } from '../../../features/clients/commands/create-client.command';
+import { CreateCommunity } from '../../../features/communities/commands';
+import { CommunityViewModelClientDto } from '../../../features/communities/queries';
 import { SurveyViewModel } from '../../../features/survey/queries/survey.view-model';
 import {
   AbandonSurveyCompletion,
@@ -21,6 +23,7 @@ import {
   assertCommandError,
   assertCommandScenarioError,
   assertCommandScenarioSuccess,
+  assertCommandSuccess,
   assertQueryResponse,
 } from '../utils';
 
@@ -35,6 +38,12 @@ const surveyResponseRecordIndexEndpoint = `${surveyIndexEndpoint}/responses`;
 
 const surveyCompletionCommandsEndpoint = `${surveyIndexEndpoint}/commands`;
 
+const communityIndexEndpoint = `${baseEndpoint}/communities`;
+
+const communityTestSetupEndpoint = `${communityIndexEndpoint}/test-setup`;
+
+const communityCommandEndpoint = `${communityIndexEndpoint}/commands`;
+
 const clientBaseEndpoint = `${baseEndpoint}/clients`;
 
 const clientCommandsEndpoint = `${clientBaseEndpoint}/commands`;
@@ -44,8 +53,6 @@ const clientTestSetupEndpoint = `${clientBaseEndpoint}/test-setup`;
 const surveyTestSetupEndpoint = `${surveyIndexEndpoint}/test-setup`;
 
 const surveyCompletionTestSetupEndpoint = `${surveyResponseRecordIndexEndpoint}/test-setup`;
-
-const createClient = TestCommandStream.first(CreateClient, {});
 
 let clientId: string;
 
@@ -126,10 +133,10 @@ const buildFullSurveyBeforePublishing = TestCommandStream.first(CreateSurvey, {
 
 const publishSurvey = buildFullSurveyBeforePublishing.andThen(PublishSurvey);
 
-const seedTestClient = async () => {
+const seedTestClient = async ({ communityId }: { communityId: string }) => {
   await assertCommandScenarioSuccess({
     endpoint: clientCommandsEndpoint,
-    stream: createClient,
+    stream: TestCommandStream.first(CreateClient, { communityId }),
     // onSuccess?
     assertSuccess: (acks) => {
       expect(acks).toHaveLength(1);
@@ -146,7 +153,11 @@ const seedPublishedSurvey = async () => {
   });
 };
 
+const communityName = 'Big Community';
+
 describe(`Survey Completion Scenarios`, () => {
+  let communityId: string;
+
   beforeEach(async () => {
     // clear all test data between runs
     await axios.patch(surveyCompletionTestSetupEndpoint);
@@ -155,7 +166,21 @@ describe(`Survey Completion Scenarios`, () => {
 
     await axios.patch(clientTestSetupEndpoint);
 
-    await seedTestClient();
+    await axios.patch(communityTestSetupEndpoint);
+
+    await assertCommandSuccess({
+      endpoint: communityCommandEndpoint,
+      commandFsa: TestCommandStream.buildOne(CreateCommunity, {
+        name: communityName,
+      }),
+    });
+
+    const communities = (await axios.get(communityIndexEndpoint))
+      .data as CommunityViewModelClientDto[];
+
+    communityId = communities[0].id;
+
+    await seedTestClient({ communityId });
   });
 
   describe(`when executing a scenario`, () => {

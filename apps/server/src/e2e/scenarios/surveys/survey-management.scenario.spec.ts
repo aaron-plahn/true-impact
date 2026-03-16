@@ -12,7 +12,6 @@ import { CreateSurvey } from '../../../features/survey/survey-management/command
 import { FlagSurveyOption } from '../../../features/survey/survey-management/commands/flag-survey-option.command';
 import { PublishSurvey } from '../../../features/survey/survey-management/commands/publish-survey.command';
 import { TestCommandStream } from '../../../libs/cqrs-es/test-utils';
-import { HttpStatus } from '../../../libs/framework';
 import { assertTextMatchesAll } from '../../../libs/test-utils';
 import {
   assertCommandError,
@@ -182,12 +181,7 @@ describe(`Survey Management Scenarios`, () => {
             endpoint: commandEndpoint,
             commandFsa: createSurvey.getCreationCommand(),
             assertSuccess: async (response) => {
-              const {
-                body: { id },
-                status,
-              } = response;
-
-              expect(status).toBe(HttpStatus.CREATED);
+              const { id } = response;
 
               await assertQueryResponse({
                 endpoint: buildSurveyDetailEndpoint(id),

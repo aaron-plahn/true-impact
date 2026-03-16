@@ -1,12 +1,14 @@
 import { TrueImpactError, TrueImpactRuntimeException } from '../error-handling';
 import {
   BOOLEAN,
+  ENUMERATED_TYPE,
   NON_EMPTY_STRING,
   NON_NEGATIVE_INTEGER,
 } from '../schema-management';
 import {
   ArrayItemObjectSchema,
   DataSchema,
+  EnumeratedTypeSchemaPropertyMetadata,
   getDataSchemaFromClassCtor,
   isArraySchemaPropertyMetadata,
   isObjectSchemaPropertyMetadata,
@@ -92,6 +94,27 @@ const validateSimpleDataType = (
             propertyKey,
             value,
             'boolean (logical true or false)',
+          ),
+        ),
+      );
+    }
+
+    return acc;
+  }
+
+  if (propertySchema.type === ENUMERATED_TYPE) {
+    const { valuesAndLabels } =
+      propertySchema as EnumeratedTypeSchemaPropertyMetadata;
+
+    const allowedValues = Array.from(Object.values(valuesAndLabels));
+
+    if (!allowedValues.some((v) => value === v)) {
+      acc.push(
+        new TrueImpactError(
+          buildSimplePropertyErrorMessage(
+            propertyKey,
+            value,
+            `one of: ${allowedValues.join(', ')}`,
           ),
         ),
       );
