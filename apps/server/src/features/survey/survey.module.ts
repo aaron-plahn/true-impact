@@ -59,12 +59,14 @@ import { PublishSurveyCommandHandler } from './survey-management/commands/publis
 import { Survey } from './survey-management/survey.aggregate-root';
 import { SurveyResponseController } from './survey-response.controller';
 import {
+  AcknowledgeResponseForSurveyQuestionHasBeenViewed,
   BeginReviewOfSurvey,
   SURVEY_REVIEW_COMMAND_REPOSITORY_INJECTION_TOKEN,
   SURVEY_REVIEW_QUERY_REPOSITORY_INJECTION_TOKEN,
   SurveyReview,
 } from './survey-review';
 import { SurveyReviewController } from './survey-review.controller';
+import { AcknowledgeResponseForSurveyQuestionHasBeenViewedCommandHandler } from './survey-review/commands/acknowledge-response-for-survey-question-has-been-viewed.command-handler';
 import { BeginReviewOfSurveyCommandHandler } from './survey-review/commands/begin-review-of-survey.command-handler';
 import { SurveyReviewQueryService } from './survey-review/queries/survey-review-query.service';
 import { SurveyController } from './survey.controller';
@@ -93,6 +95,7 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
     AddValueForSurveyOptionCommandHandler,
     // Survey Review Commands
     BeginReviewOfSurveyCommandHandler,
+    AcknowledgeResponseForSurveyQuestionHasBeenViewedCommandHandler,
     // services
     SurveyQueryService,
     SurveyResponseQueryService,
@@ -186,6 +189,12 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
           .register({
             CommandHandlerCtor: BeginReviewOfSurveyCommandHandler,
             CommandPayloadCtor: BeginReviewOfSurvey,
+          })
+          .register({
+            CommandHandlerCtor:
+              AcknowledgeResponseForSurveyQuestionHasBeenViewedCommandHandler,
+            CommandPayloadCtor:
+              AcknowledgeResponseForSurveyQuestionHasBeenViewed,
           });
 
         return commandHandlerService;

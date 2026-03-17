@@ -4,6 +4,7 @@ import {
   Entity,
   NestedDataType,
   TrueImpactError,
+  UpdateMethod,
 } from '../../../libs/data-types';
 import { SurveyResponseRecord } from '../survey-completion';
 import { SurveyParticipantCompositeIdentifier } from '../survey-completion/models';
@@ -66,6 +67,33 @@ export class SurveyReview extends AggregateRoot<SurveyReviewPersistenceDto> {
 
     this.surveyParticipantCompositeIdentifier =
       surveyParticipantCompositeIdentifier;
+  }
+
+  @UpdateMethod()
+  acknowledgeResponseToQuestionViewed(
+    questionLabel: string,
+  ): SurveyReview | TrueImpactError {
+    const questionSearchResult =
+      this.questionsReviewed.find((q) => q.questionLabel === questionLabel) ||
+      new TrueImpactError(
+        `You cannot acknowledge review of question [${questionLabel}] in attempt [${this.id}] of survey [${this.surveyName}], as there is no such question.`,
+      );
+
+    if (questionSearchResult instanceof TrueImpactError) {
+      return questionSearchResult;
+    }
+
+    if (questionSearchResult.hasBeenViewed) {
+      return new TrueImpactError(
+        // TODO let's make our wording of this action consistent across the board
+        `You cannot acknowledge review of question [${questionLabel}] in attempt [${this.id}] of survey [${this.surveyName}], as it has already been marked as viewed.`,
+      );
+    }
+
+    // Note that this is modified as an original array element by reference (a side-effect)
+    questionSearchResult.hasBeenViewed = true;
+
+    return this;
   }
 
   toPersistenceDto(): SurveyReviewPersistenceDto {

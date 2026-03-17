@@ -17,8 +17,14 @@ import { CreateSurvey } from '../../../features/survey/survey-management/command
 import { PublishSurvey } from '../../../features/survey/survey-management/commands/publish-survey.command';
 import { SurveyOptionPersistenceDto } from '../../../features/survey/survey-management/survey-option.entity';
 import { SurveyQuestionPersistenceDto } from '../../../features/survey/survey-management/survey-question.entity';
-import { BeginReviewOfSurvey } from '../../../features/survey/survey-review';
-import { SurveyReviewViewModelClientDto } from '../../../features/survey/survey-review/queries';
+import {
+  AcknowledgeResponseForSurveyQuestionHasBeenViewed,
+  BeginReviewOfSurvey,
+} from '../../../features/survey/survey-review';
+import {
+  SurveyQuestionReviewRecordViewModelClientDto,
+  SurveyReviewViewModelClientDto,
+} from '../../../features/survey/survey-review/queries';
 import { TestCommandStream } from '../../../libs/cqrs-es';
 import { assertTextMatchesAll } from '../../../libs/test-utils';
 import {
@@ -225,6 +231,10 @@ describe(`when reviewing a survey (e.g. when a clinician reviews a client's resp
     )[0].id;
   });
 
+  beforeEach(async () => {
+    await axios.patch(buildTestSetupEndpoint(indexEndpoints.reviews));
+  });
+
   describe(`when beginning a review`, () => {
     describe(`when the target survey attempt exists`, () => {
       describe(`when the attempt has been submitted`, () => {
@@ -314,16 +324,77 @@ describe(`when reviewing a survey (e.g. when a clinician reviews a client's resp
   describe(`when acknowledging the participant's response to a survey question`, () => {
     describe(`when the target in-progress review exists`, () => {
       describe(`when the question has not yet been marked as viewed`, () => {
-        it.todo(`should mark the question as viewed`);
+        it(`should mark the question as viewed`, async () => {
+          await assertCommandScenarioSuccess({
+            endpoint: buildCommandEndpoint(indexEndpoints.surveys),
+            stream: TestCommandStream.first(BeginReviewOfSurvey, {
+              surveyResponseRecordId,
+            }).andThen(AcknowledgeResponseForSurveyQuestionHasBeenViewed, {
+              questionLabel: '1',
+            }),
+            assertSuccess: async (acks) => {
+              const updatedReviewRecord = (
+                await axios.get(
+                  buildDetailQueryEndpoint(indexEndpoints.reviews, acks[0].id),
+                )
+              ).data as SurveyQuestionReviewRecordViewModelClientDto;
+
+              expect(updatedReviewRecord);
+            },
+          });
+        });
       });
 
       describe(`when the question has already been marked as viewed`, () => {
-        it.todo(`should return the expected error response`);
+        const repeatedQuestionLabel = '1';
+
+        it(`should return the expected error response`, async () => {
+          await assertCommandScenarioError({
+            endpoint: buildCommandEndpoint(indexEndpoints.surveys),
+            stream: TestCommandStream.first(BeginReviewOfSurvey, {
+              surveyResponseRecordId,
+            })
+              .andThen(AcknowledgeResponseForSurveyQuestionHasBeenViewed, {
+                questionLabel: repeatedQuestionLabel,
+              })
+              .andThen(AcknowledgeResponseForSurveyQuestionHasBeenViewed, {
+                questionLabel: repeatedQuestionLabel,
+              }),
+            assertErrorMessageAsExpected: (message) => {
+              assertTextMatchesAll(
+                message,
+                surveyName,
+                repeatedQuestionLabel,
+                'cannot acknowledge review of question',
+                'already',
+              );
+            },
+          });
+        });
       });
     });
 
     describe(`when the target in-progress review does not exist`, () => {
-      it.todo(`should return the expected error response`);
+      it(`should return the expected error response`, async () => {
+        await assertCommandError({
+          endpoint: buildCommandEndpoint(indexEndpoints.surveys),
+          commandFsa: TestCommandStream.buildOne(
+            AcknowledgeResponseForSurveyQuestionHasBeenViewed,
+            {
+              aggregateCompositeIdentifier: {
+                id: missingAggregateId,
+              },
+            },
+          ),
+          assertErrorMessageAsExpected: (message) => {
+            assertTextMatchesAll(
+              message,
+              missingAggregateId,
+              'no such attempt',
+            );
+          },
+        });
+      });
     });
   });
 

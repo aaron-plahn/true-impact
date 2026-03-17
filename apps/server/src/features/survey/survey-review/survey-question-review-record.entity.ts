@@ -54,7 +54,12 @@ export class SurveyQuestionReviewRecord extends Entity<SurveyQuestionReviewRecor
   }
 
   toPersistenceDto(): SurveyQuestionReviewRecordPersistenceDto {
-    throw new Error('Method not implemented.');
+    return {
+      questionLabel: this.questionLabel,
+      optionLabel: this.optionLabel,
+      hasBeenViewed: this.hasBeenViewed,
+      notes: this.notes.map((n) => n.toPersistenceDto()),
+    };
   }
 
   static buildEmptyFromResponse({
