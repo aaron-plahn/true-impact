@@ -9,6 +9,7 @@ export class SurveyQuestionReviewRecordPersistenceDto {
   optionLabel: string;
   hasBeenViewed: boolean;
   notes: MultilingualTextPersistenceDto[];
+  flagIds: string[];
 }
 
 export class SurveyQuestionReviewRecord extends Entity<SurveyQuestionReviewRecordPersistenceDto> {
@@ -18,17 +19,20 @@ export class SurveyQuestionReviewRecord extends Entity<SurveyQuestionReviewRecor
   hasBeenViewed: boolean;
   // TODO `class Note` ?
   notes: MultilingualText[];
+  flagIds = new Set<string>();
 
   constructor({
     questionLabel,
     optionLabel,
     hasBeenViewed,
     notes,
+    flagIds,
   }: {
     questionLabel: string;
     optionLabel: string;
     hasBeenViewed: boolean;
     notes?: MultilingualText[];
+    flagIds?: Set<string>;
   }) {
     super();
 
@@ -39,6 +43,12 @@ export class SurveyQuestionReviewRecord extends Entity<SurveyQuestionReviewRecor
     this.hasBeenViewed = hasBeenViewed;
 
     this.notes = notes || [];
+
+    if (flagIds) {
+      flagIds.forEach((flagId) => {
+        this.flagIds.add(flagId);
+      });
+    }
   }
 
   validateComplexInvariants(): TrueImpactError[] {
@@ -59,6 +69,7 @@ export class SurveyQuestionReviewRecord extends Entity<SurveyQuestionReviewRecor
       optionLabel: this.optionLabel,
       hasBeenViewed: this.hasBeenViewed,
       notes: this.notes.map((n) => n.toPersistenceDto()),
+      flagIds: [...this.flagIds],
     };
   }
 
@@ -83,6 +94,7 @@ export class SurveyQuestionReviewRecord extends Entity<SurveyQuestionReviewRecor
       optionLabel,
       hasBeenViewed,
       notes: notesDtos,
+      flagIds,
     }: SurveyQuestionReviewRecordPersistenceDto,
     buildOptions?: { shouldValidate?: boolean },
   ): SurveyQuestionReviewRecord | TrueImpactError {
@@ -104,6 +116,7 @@ export class SurveyQuestionReviewRecord extends Entity<SurveyQuestionReviewRecor
       optionLabel,
       hasBeenViewed,
       notes: notes as MultilingualText[],
+      flagIds: new Set(flagIds),
     });
   }
 }

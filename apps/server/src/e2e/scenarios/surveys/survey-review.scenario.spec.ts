@@ -3,6 +3,8 @@ import { CLIENT_AGGREGATE_TYPE } from '../../../features/clients/client.composit
 import { CreateClient } from '../../../features/clients/commands/create-client.command';
 import { CreateCommunity } from '../../../features/communities/commands';
 import { CommunityViewModelClientDto } from '../../../features/communities/queries';
+import { CreateFlag } from '../../../features/flags/commands';
+import { FlagViewModelClientDto } from '../../../features/flags/queries';
 import { SurveyViewModelClientDto } from '../../../features/survey/queries/survey.view-model';
 import {
   AnswerSurveyQuestion,
@@ -19,7 +21,10 @@ import { SurveyOptionPersistenceDto } from '../../../features/survey/survey-mana
 import { SurveyQuestionPersistenceDto } from '../../../features/survey/survey-management/survey-question.entity';
 import {
   AcknowledgeResponseForSurveyQuestionHasBeenViewed,
+  AddGeneralNoteAboutSurveyResponse,
+  AddNoteAboutQuestionResponse,
   BeginReviewOfSurvey,
+  FlagSurveyQuestionResponse,
 } from '../../../features/survey/survey-review';
 import {
   SurveyQuestionReviewRecordViewModelClientDto,
@@ -53,6 +58,7 @@ const indexEndpoints = {
   surveys: `${baseEndpoint}/surveys`,
   responses: `${baseEndpoint}/surveys/responses`,
   reviews: `${baseEndpoint}/surveys/reviews`,
+  flags: `${baseEndpoint}/flags`,
 };
 
 const buildCommandEndpoint = (indexEndpoint: string) =>
@@ -125,10 +131,17 @@ const surveyName = 'Monthly Check-In';
 
 const missingAggregateId = 'nf-404';
 
+const missingQuestionLabel = 'Q3';
+
+const targetQuestion = '1';
+
+const flagLabel = 'Sus';
+
 describe(`when reviewing a survey (e.g. when a clinician reviews a client's response to a particular survey)`, () => {
   let communityId: string;
   let clientId: string;
   let surveyId: string;
+  let flagId: string;
   let surveyResponseRecordId: string;
 
   beforeAll(async () => {
@@ -136,6 +149,18 @@ describe(`when reviewing a survey (e.g. when a clinician reviews a client's resp
     await axios.patch(buildTestSetupEndpoint(indexEndpoints.clients));
     await axios.patch(buildTestSetupEndpoint(indexEndpoints.surveys));
     await axios.patch(buildTestSetupEndpoint(indexEndpoints.responses));
+    await axios.patch(buildTestSetupEndpoint(indexEndpoints.flags));
+
+    await assertCommandSuccess({
+      endpoint: buildCommandEndpoint(indexEndpoints.flags),
+      commandFsa: TestCommandStream.buildOne(CreateFlag, {
+        label: flagLabel,
+      }),
+    });
+
+    flagId = (
+      (await axios.get(indexEndpoints.flags)).data as FlagViewModelClientDto[]
+    )[0].id;
 
     await assertCommandSuccess({
       endpoint: buildCommandEndpoint(indexEndpoints.communities),
@@ -401,20 +426,137 @@ describe(`when reviewing a survey (e.g. when a clinician reviews a client's resp
   describe(`when adding a note about a participant's response to a particular question`, () => {
     describe(`when the question exists`, () => {
       describe(`when the question has no notes`, () => {
-        it.todo(`should add a first note`);
+        it(`should add a first note`, async () => {
+          await assertCommandScenarioSuccess({
+            endpoint: buildCommandEndpoint(indexEndpoints.surveys),
+            stream: TestCommandStream.first(BeginReviewOfSurvey, {
+              surveyResponseRecordId,
+            }).andThen(AddNoteAboutQuestionResponse, {
+              questionLabel: targetQuestion,
+            }),
+            assertSuccess: async (acks) => {
+              const updatedReviewRecord = (
+                await axios.get(
+                  buildDetailQueryEndpoint(indexEndpoints.reviews, acks[0].id),
+                )
+              ).data as SurveyReviewViewModelClientDto;
+
+              expect(updatedReviewRecord.questions[0].notes).toHaveLength(1);
+
+              // Note that making a note about a question's response automatically marks it as viewed
+              expect(updatedReviewRecord.questions[0].hasBeenViewed).toBe(true);
+
+              // Do we really want to call this size? What do we call the number of questions?
+              expect(updatedReviewRecord.size).toBe(1);
+
+              expect(updatedReviewRecord.isComplete).toBe(false);
+            },
+          });
+        });
       });
 
       describe(`when the question has existing notes`, () => {
-        it.todo(`should add an additional note `);
+        /**
+         * Note that we are intentionally reviewing the questions out of order to
+         * confirm that this is not a problem.
+         */
+        const existingQuestionLabel = '2';
+
+        const secondNoteText = 'Also, note that bla bla bla.';
+
+        const secondNoteLanguageCode = 'en';
+
+        it(`should add an additional note`, async () => {
+          await assertCommandScenarioSuccess({
+            endpoint: buildCommandEndpoint(indexEndpoints.surveys),
+            stream: TestCommandStream.first(BeginReviewOfSurvey, {
+              surveyResponseRecordId,
+            })
+              .andThen(AddNoteAboutQuestionResponse, {
+                questionLabel: existingQuestionLabel,
+              })
+              .andThen(AddNoteAboutQuestionResponse, {
+                questionLabel: existingQuestionLabel,
+                note: secondNoteText,
+                languageCode: secondNoteLanguageCode,
+              }),
+            assertSuccess: async (acks) => {
+              const updatedReviewRecord = (
+                await axios.get(
+                  buildDetailQueryEndpoint(indexEndpoints.reviews, acks[0].id),
+                )
+              ).data as SurveyReviewViewModelClientDto;
+
+              const targetQuestion = updatedReviewRecord.questions.find(
+                (q) => q.label === existingQuestionLabel,
+              ) as SurveyQuestionReviewRecordViewModelClientDto;
+
+              expect(targetQuestion.notes).toHaveLength(2);
+
+              const secondNote = targetQuestion.notes[1];
+
+              expect(
+                secondNote.items[secondNoteLanguageCode].original?.text,
+              ).toEqual(secondNoteText);
+
+              // Note that making a note about a question's response automatically marks it as viewed
+              expect(targetQuestion.hasBeenViewed).toBe(true);
+
+              // Do we really want to call this size? What do we call the number of questions?
+              expect(updatedReviewRecord.size).toBe(1);
+
+              expect(updatedReviewRecord.isComplete).toBe(false);
+            },
+          });
+        });
       });
     });
 
     describe(`when the question does not exist`, () => {
-      it.todo(`should return the expected error response`);
+      it(`should return the expected error response`, async () => {
+        await assertCommandScenarioError({
+          endpoint: buildCommandEndpoint(indexEndpoints.surveys),
+          stream: TestCommandStream.first(BeginReviewOfSurvey, {
+            surveyResponseRecordId,
+          }).andThen(AddNoteAboutQuestionResponse, {
+            questionLabel: missingQuestionLabel,
+          }),
+          assertErrorMessageAsExpected: (message) => {
+            assertTextMatchesAll(
+              message,
+              surveyName,
+              missingQuestionLabel,
+              'no such question',
+            );
+          },
+        });
+      });
     });
 
     describe(`when the language code is invalid`, () => {
-      it.todo(`should return the expected error response`);
+      const invalidLanguageCode = 'xyz';
+
+      it(`should return the expected error response`, async () => {
+        await assertCommandScenarioError({
+          endpoint: buildCommandEndpoint(indexEndpoints.surveys),
+          stream: TestCommandStream.first(BeginReviewOfSurvey, {
+            surveyResponseRecordId,
+          }).andThen(AddNoteAboutQuestionResponse, {
+            questionLabel: targetQuestion,
+            languageCode: invalidLanguageCode,
+          }),
+          assertErrorMessageAsExpected: (message) => {
+            assertTextMatchesAll(
+              message,
+              surveyName,
+              targetQuestion,
+              'provided language',
+              'not supported',
+              invalidLanguageCode,
+            );
+          },
+        });
+      });
     });
   });
 
@@ -423,13 +565,84 @@ describe(`when reviewing a survey (e.g. when a clinician reviews a client's resp
   });
 
   describe(`when adding a general note about the participant's response to this survey`, () => {
+    const firstNoteText = 'Not a lot to see here.';
+
+    const firstNoteLanguageCode = 'en';
+
     describe(`when the language code is valid`, () => {
       describe(`when there are no general notes`, () => {
-        it.todo(`should add a first general note`);
+        it(`should add a first general note`, async () => {
+          await assertCommandScenarioSuccess({
+            endpoint: buildCommandEndpoint(indexEndpoints.surveys),
+            stream: TestCommandStream.first(BeginReviewOfSurvey, {
+              surveyResponseRecordId,
+            }).andThen(AddGeneralNoteAboutSurveyResponse, {
+              languageCode: firstNoteLanguageCode,
+              note: firstNoteText,
+            }),
+            assertSuccess: async (acks) => {
+              const updatedReviewRecord = (
+                await axios.get(
+                  buildDetailQueryEndpoint(indexEndpoints.reviews, acks[0].id),
+                )
+              ).data as SurveyReviewViewModelClientDto;
+
+              expect(updatedReviewRecord.generalNotes).toHaveLength(1);
+
+              const firstNote = updatedReviewRecord.generalNotes[0];
+
+              expect(
+                firstNote.items[firstNoteLanguageCode].original?.text,
+              ).toBe(firstNoteText);
+            },
+          });
+        });
       });
 
       describe(`when there are existing general notes`, () => {
-        it.todo(`should add an additional note`);
+        const secondNoteText =
+          'But this is one thing I noticed. Bla bla bla bla bla, Charley Brown.';
+
+        const secondNoteLanguageCode = 'clc';
+
+        it(`should add an additional note`, async () => {
+          await assertCommandScenarioSuccess({
+            endpoint: buildCommandEndpoint(indexEndpoints.surveys),
+            stream: TestCommandStream.first(BeginReviewOfSurvey, {
+              surveyResponseRecordId,
+            })
+              .andThen(AddGeneralNoteAboutSurveyResponse, {
+                note: firstNoteText,
+                languageCode: firstNoteLanguageCode,
+              })
+              .andThen(AddGeneralNoteAboutSurveyResponse, {
+                note: secondNoteText,
+                languageCode: secondNoteLanguageCode,
+              }),
+            assertSuccess: async (acks) => {
+              const updatedReviewRecord =
+                // TODO review or review record in the name here?
+                (
+                  await axios.get(
+                    buildDetailQueryEndpoint(
+                      indexEndpoints.reviews,
+                      acks[0].id,
+                    ),
+                  )
+                ).data as SurveyReviewViewModelClientDto;
+
+              const { generalNotes } = updatedReviewRecord;
+
+              expect(generalNotes).toHaveLength(2);
+
+              const secondNote = generalNotes[1];
+
+              expect(
+                secondNote.items[secondNoteLanguageCode].original?.text,
+              ).toEqual(secondNoteText);
+            },
+          });
+        });
       });
     });
   });
@@ -444,31 +657,186 @@ describe(`when reviewing a survey (e.g. when a clinician reviews a client's resp
         describe(`when the flag exists`, () => {
           describe(`when the question does not yet have the given flag`, () => {
             describe(`when the question has no existing flags`, () => {
-              it.todo(`should add the first flag`);
+              it(`should add the first flag`, async () => {
+                await assertCommandScenarioSuccess({
+                  endpoint: buildCommandEndpoint(indexEndpoints.surveys),
+                  stream: TestCommandStream.first(BeginReviewOfSurvey, {
+                    surveyResponseRecordId,
+                  }).andThen(FlagSurveyQuestionResponse, {
+                    questionLabel: targetQuestion,
+                    flagId,
+                  }),
+                });
+              });
             });
 
             describe(`when the question has existing flags`, () => {
-              it.todo(`should add the additional flag`);
+              let secondFlagId: string;
+
+              const secondFlagLabel = 'tells strange jokes';
+
+              beforeEach(async () => {
+                await assertCommandSuccess({
+                  endpoint: buildCommandEndpoint(indexEndpoints.flags),
+                  commandFsa: TestCommandStream.buildOne(CreateFlag, {
+                    label: secondFlagLabel,
+                  }),
+                });
+
+                const allFlags = (await axios.get(indexEndpoints.flags))
+                  .data as FlagViewModelClientDto[];
+
+                const secondFlag = allFlags.find(
+                  (f) => f.label === secondFlagLabel,
+                );
+
+                secondFlagId = secondFlag?.id as string;
+              });
+
+              it(`should add the additional flag`, async () => {
+                await assertCommandScenarioSuccess({
+                  endpoint: buildCommandEndpoint(indexEndpoints.surveys),
+                  stream: TestCommandStream.first(BeginReviewOfSurvey, {
+                    surveyResponseRecordId,
+                  })
+                    .andThen(FlagSurveyQuestionResponse, {
+                      questionLabel: targetQuestion,
+                      flagId,
+                    })
+                    .andThen(FlagSurveyQuestionResponse, {
+                      questionLabel: targetQuestion,
+                      flagId: secondFlagId,
+                    }),
+                  assertSuccess: async (acks) => {
+                    const updatedReviewRecord = (
+                      await axios.get(
+                        buildDetailQueryEndpoint(
+                          indexEndpoints.reviews,
+                          acks[0].id,
+                        ),
+                      )
+                    ).data as SurveyReviewViewModelClientDto;
+
+                    const updatedQuestion = updatedReviewRecord.questions.find(
+                      (q) => q.label === targetQuestion,
+                    ) as SurveyQuestionReviewRecordViewModelClientDto;
+
+                    const allFlagIds = Object.keys(updatedQuestion.flagsById);
+
+                    expect(allFlagIds).toHaveLength(2);
+
+                    expect(allFlagIds).toContain(flagId); // first flag ID
+
+                    expect(allFlagIds).toContain(secondFlagId);
+
+                    const secondFlagSearchResult =
+                      updatedQuestion.flagsById[secondFlagId];
+
+                    expect(secondFlagSearchResult.label).toBe(secondFlagLabel);
+
+                    // TODO what about the description?
+                  },
+                });
+              });
             });
           });
 
           describe(`when the question already has the given flag`, () => {
-            it.todo(`should return the expected error response`);
+            it(`should return the expected error response`, async () => {
+              await assertCommandScenarioError({
+                endpoint: buildCommandEndpoint(indexEndpoints.surveys),
+                stream: TestCommandStream.first(BeginReviewOfSurvey, {
+                  surveyResponseRecordId,
+                })
+                  .andThen(FlagSurveyQuestionResponse, {
+                    questionLabel: targetQuestion,
+                    flagId,
+                  })
+                  .andThen(FlagSurveyQuestionResponse, {
+                    questionLabel: targetQuestion,
+                    flagId,
+                  }),
+
+                assertErrorMessageAsExpected: (message) => {
+                  assertTextMatchesAll(
+                    message,
+                    'cannot flag',
+                    targetQuestion,
+                    flagId,
+                    'already',
+                  );
+                },
+              });
+            });
           });
         });
 
         describe(`when the flag does not exist`, () => {
-          it.todo(`should return the expected error response`);
+          const missingFlagId = 'f505';
+
+          it(`should return the expected error response`, async () => {
+            await assertCommandScenarioError({
+              endpoint: buildCommandEndpoint(indexEndpoints.surveys),
+              stream: TestCommandStream.first(BeginReviewOfSurvey, {
+                surveyResponseRecordId,
+              }).andThen(FlagSurveyQuestionResponse, {
+                questionLabel: targetQuestion,
+                flagId: missingFlagId,
+              }),
+              assertErrorMessageAsExpected: (message) => {
+                assertTextMatchesAll(
+                  message,
+                  missingFlagId,
+                  surveyName,
+                  'cannot flag',
+                  'no such flag',
+                );
+              },
+            });
+          });
         });
       });
 
       describe(`when the question does not exist`, () => {
-        it.todo(`should return the epected error response`);
+        it(`should return the epected error response`, async () => {
+          await assertCommandScenarioError({
+            endpoint: buildCommandEndpoint(indexEndpoints.surveys),
+            stream: TestCommandStream.first(BeginReviewOfSurvey, {
+              surveyResponseRecordId,
+            }).andThen(FlagSurveyQuestionResponse, {
+              flagId,
+              questionLabel: missingQuestionLabel,
+            }),
+            assertErrorMessageAsExpected: (message) => {
+              assertTextMatchesAll(
+                message,
+                flagId,
+                missingQuestionLabel,
+                surveyName,
+                'no such question',
+              );
+            },
+          });
+        });
       });
     });
 
     describe(`when the target survey review does not exist`, () => {
-      it.todo(`should return the expected error response`);
+      it(`should return the expected error response`, async () => {
+        await assertCommandError({
+          endpoint: buildCommandEndpoint(indexEndpoints.surveys),
+          commandFsa: TestCommandStream.buildOne(FlagSurveyQuestionResponse, {
+            aggregateCompositeIdentifier: {
+              id: missingAggregateId,
+            },
+            questionLabel: targetQuestion,
+            flagId,
+          }),
+          assertErrorMessageAsExpected: (message) => {
+            assertTextMatchesAll(message, 'no such attempt');
+          },
+        });
+      });
     });
   });
 

@@ -60,14 +60,20 @@ import { Survey } from './survey-management/survey.aggregate-root';
 import { SurveyResponseController } from './survey-response.controller';
 import {
   AcknowledgeResponseForSurveyQuestionHasBeenViewed,
+  AddGeneralNoteAboutSurveyResponse,
+  AddNoteAboutQuestionResponse,
   BeginReviewOfSurvey,
+  FlagSurveyQuestionResponse,
   SURVEY_REVIEW_COMMAND_REPOSITORY_INJECTION_TOKEN,
   SURVEY_REVIEW_QUERY_REPOSITORY_INJECTION_TOKEN,
   SurveyReview,
 } from './survey-review';
 import { SurveyReviewController } from './survey-review.controller';
 import { AcknowledgeResponseForSurveyQuestionHasBeenViewedCommandHandler } from './survey-review/commands/acknowledge-response-for-survey-question-has-been-viewed.command-handler';
+import { AddGeneralNoteAboutSurveyResponseCommandHandler } from './survey-review/commands/add-general-note-about-survey-response.command-handler';
+import { AddNoteAboutQuestionResponseCommandHandler } from './survey-review/commands/add-note-about-question-response.command-handler';
 import { BeginReviewOfSurveyCommandHandler } from './survey-review/commands/begin-review-of-survey.command-handler';
+import { FlagSurveyQuestionResponseCommandHandler } from './survey-review/commands/flag-survey-question-response.command-handler';
 import { SurveyReviewQueryService } from './survey-review/queries/survey-review-query.service';
 import { SurveyController } from './survey.controller';
 
@@ -96,10 +102,14 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
     // Survey Review Commands
     BeginReviewOfSurveyCommandHandler,
     AcknowledgeResponseForSurveyQuestionHasBeenViewedCommandHandler,
+    AddNoteAboutQuestionResponseCommandHandler,
+    AddGeneralNoteAboutSurveyResponseCommandHandler,
+    FlagSurveyQuestionResponseCommandHandler,
     // services
     SurveyQueryService,
     SurveyResponseQueryService,
     SurveyReviewQueryService,
+
     {
       provide: SURVEY_QUERY_REPOSITORY_PROVIDER_TOKEN,
       useValue: new InMemoryQueryRepositoryProvider().forFeature(
@@ -195,6 +205,18 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
               AcknowledgeResponseForSurveyQuestionHasBeenViewedCommandHandler,
             CommandPayloadCtor:
               AcknowledgeResponseForSurveyQuestionHasBeenViewed,
+          })
+          .register({
+            CommandHandlerCtor: AddNoteAboutQuestionResponseCommandHandler,
+            CommandPayloadCtor: AddNoteAboutQuestionResponse,
+          })
+          .register({
+            CommandHandlerCtor: AddGeneralNoteAboutSurveyResponseCommandHandler,
+            CommandPayloadCtor: AddGeneralNoteAboutSurveyResponse,
+          })
+          .register({
+            CommandHandlerCtor: FlagSurveyQuestionResponseCommandHandler,
+            CommandPayloadCtor: FlagSurveyQuestionResponse,
           });
 
         return commandHandlerService;

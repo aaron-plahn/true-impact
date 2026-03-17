@@ -1,15 +1,30 @@
-import { NestedDataType, NonEmptyString } from '../../../../libs/data-types';
-import { SurveyResponseCompositeIdentifier } from '../../survey-completion';
+import {
+  NestedDataType,
+  NonEmptyString,
+  TrueImpactDataExample,
+} from '../../../../libs/data-types';
+import { SurveyReviewCompositeIdentifier } from '../survey-review.composite-identifier';
 
+@TrueImpactDataExample<FlagSurveyQuestionResponse>({
+  example: {
+    aggregateCompositeIdentifier: {
+      type: 'survey review',
+      id: '1',
+    },
+    reviewId: '2',
+    questionLabel: 'XX',
+    flagId: '145',
+  },
+})
 export class FlagSurveyQuestionResponse {
   static readonly type = 'FLAG_SURVEY_QUESTION_RESPONSE';
 
-  @NestedDataType(() => SurveyResponseCompositeIdentifier, {
+  @NestedDataType(() => SurveyReviewCompositeIdentifier, {
     label: 'survey response composite ID',
     description:
       'unique sytem-wide reference to the survey attempt being reviewed',
   })
-  aggregateCompositeIdentifier: SurveyResponseCompositeIdentifier;
+  aggregateCompositeIdentifier: SurveyReviewCompositeIdentifier;
 
   @NonEmptyString({
     label: 'review ID',

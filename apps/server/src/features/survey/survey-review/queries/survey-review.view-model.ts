@@ -1,4 +1,14 @@
-import { NonEmptyString } from '../../../../libs/data-types';
+import { FlagViewModelClientDto } from 'src/features/flags/queries';
+import {
+  MultilingualText,
+  MultilingualTextPersistenceDto,
+} from '../../../../common/multilingual-text';
+import {
+  BooleanDataType,
+  NestedDataType,
+  NonEmptyString,
+  NonNegativeInteger,
+} from '../../../../libs/data-types';
 import { SURVEY_REVIEW_AGGREGATE_TYPE } from '../constants';
 import { SurveyReview } from '../survey-review.aggregate-root';
 import {
@@ -38,8 +48,25 @@ export class SurveyReviewViewModelClientDto {
   })
   surveyParticipantLabel: string;
 
+  @NestedDataType(() => MultilingualTextPersistenceDto, {
+    label: 'general notes',
+    description:
+      'a list of notes that pertain to the overall participant response, not a single question in particular',
+    isArray: true,
+  })
+  generalNotes: MultilingualTextPersistenceDto[];
+
+  @BooleanDataType({
+    label: 'is complete',
+    description: 'Has every question been marked as viewed?',
+  })
   isComplete: boolean;
 
+  @NonNegativeInteger({
+    label: 'size',
+    description: 'the number of questions that have been marked as viewed',
+  })
+  // TODO do we really want to call it size? progress? countOfReviewedQuestions?
   size: number;
 }
 
@@ -54,18 +81,22 @@ export class SurveyReviewViewModel {
 
   surveyParticipantLabel: string;
 
+  generalNotes: MultilingualText[];
+
   constructor({
     id,
     revision,
     questions,
     surveyName,
     surveyParticipantLabel,
+    generalNotes,
   }: {
     id: string;
     revision: string;
     questions?: SurveyQuestionReviewRecordViewModel[];
     surveyName: string;
     surveyParticipantLabel: string;
+    generalNotes?: MultilingualText[];
   }) {
     this.id = id;
 
@@ -74,6 +105,10 @@ export class SurveyReviewViewModel {
     this.surveyName = surveyName;
 
     this.surveyParticipantLabel = surveyParticipantLabel;
+
+    if (Array.isArray(generalNotes)) {
+      this.generalNotes = generalNotes;
+    }
 
     if (questions) {
       this.questions = questions;
@@ -93,10 +128,14 @@ export class SurveyReviewViewModel {
       questions: this.questions.map((q) => q.toClientDto()),
       isComplete,
       size,
+      generalNotes: this.generalNotes.map((n) => n.toPersistenceDto()),
     };
   }
 
-  static fromDomainModel(domainModel: SurveyReview) {
+  static fromDomainModel(
+    domainModel: SurveyReview,
+    context: { flags: Map<string, FlagViewModelClientDto> },
+  ): SurveyReviewViewModel {
     return new SurveyReviewViewModel({
       id: domainModel.getId(),
       revision: domainModel.revision.toString(),
@@ -104,8 +143,9 @@ export class SurveyReviewViewModel {
       // TODO handle this
       surveyParticipantLabel: 'REDACTED',
       questions: domainModel.questionsReviewed.map((qr) =>
-        SurveyQuestionReviewRecordViewModel.fromDomainModel(qr),
+        SurveyQuestionReviewRecordViewModel.fromDomainModel(qr, context),
       ),
+      generalNotes: domainModel.generalNotes,
     });
   }
 }

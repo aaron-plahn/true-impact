@@ -1,3 +1,7 @@
+import {
+  FlagQueryService,
+  FlagViewModelClientDto,
+} from 'src/features/flags/queries';
 import { TrueImpactError } from '../../../../libs/data-types';
 import { Inject } from '../../../../libs/framework';
 import type { ISurveyReviewCommandRepository } from '../commands';
@@ -12,6 +16,7 @@ export class SurveyReviewQueryService {
   constructor(
     @Inject(SURVEY_REVIEW_COMMAND_REPOSITORY_INJECTION_TOKEN)
     private readonly surveyReviewCommandRepository: ISurveyReviewCommandRepository,
+    private readonly flagQueryService: FlagQueryService,
   ) {}
 
   async fetchById(id: string) {
@@ -22,7 +27,19 @@ export class SurveyReviewQueryService {
       return null;
     }
 
-    return this.buildViewModel(domainModelSearchResult);
+    const flags = await this.flagQueryService.fetchMany();
+
+    if (flags instanceof TrueImpactError) {
+      return flags;
+    }
+
+    const flagsById = new Map<string, FlagViewModelClientDto>();
+
+    flags.forEach((flag) => {
+      flagsById.set(flag.id, flag);
+    });
+
+    return this.buildViewModel(domainModelSearchResult, { flags: flagsById });
   }
 
   async fetchMany() {
@@ -32,14 +49,34 @@ export class SurveyReviewQueryService {
       return domainModels;
     }
 
-    const result = domainModels.map((dm) => this.buildViewModel(dm));
+    const flags = await this.flagQueryService.fetchMany();
+
+    if (flags instanceof TrueImpactError) {
+      return flags;
+    }
+
+    const flagsById = new Map<string, FlagViewModelClientDto>();
+
+    flags.forEach((flag) => {
+      flagsById.set(flag.id, flag);
+    });
+
+    const result = domainModels.map((dm) =>
+      this.buildViewModel(dm, { flags: flagsById }),
+    );
 
     return result;
   }
 
   private buildViewModel(
     domainModel: SurveyReview,
+    context: { flags: Map<string, FlagViewModelClientDto> },
   ): SurveyReviewViewModelClientDto {
-    return SurveyReviewViewModel.fromDomainModel(domainModel).toClientDto();
+    const result = SurveyReviewViewModel.fromDomainModel(
+      domainModel,
+      context,
+    ).toClientDto();
+
+    return result;
   }
 }

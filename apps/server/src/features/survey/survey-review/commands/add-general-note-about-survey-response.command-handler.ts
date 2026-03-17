@@ -5,10 +5,10 @@ import {
   TrueImpactError,
 } from '../../../../libs/data-types';
 import { SURVEY_REVIEW_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../constants';
-import { AcknowledgeResponseForSurveyQuestionHasBeenViewed } from './acknowledge-response-for-survey-question-has-been-viewed.command';
+import { AddGeneralNoteAboutSurveyResponse } from './add-general-note-about-survey-response.command';
 import type { ISurveyReviewCommandRepository } from './survey-review-command-repository.interface';
 
-export class AcknowledgeResponseForSurveyQuestionHasBeenViewedCommandHandler implements ICommandHandler<AcknowledgeResponseForSurveyQuestionHasBeenViewed> {
+export class AddGeneralNoteAboutSurveyResponseCommandHandler implements ICommandHandler<AddGeneralNoteAboutSurveyResponse> {
   constructor(
     @Inject(SURVEY_REVIEW_COMMAND_REPOSITORY_INJECTION_TOKEN)
     private readonly repository: ISurveyReviewCommandRepository,
@@ -17,22 +17,23 @@ export class AcknowledgeResponseForSurveyQuestionHasBeenViewedCommandHandler imp
   async handle({
     payload: {
       aggregateCompositeIdentifier: { id },
-      questionLabel,
+      note,
+      languageCode,
     },
   }: {
-    payload: AcknowledgeResponseForSurveyQuestionHasBeenViewed;
+    payload: AddGeneralNoteAboutSurveyResponse;
   }): Promise<CommandResult> {
     const existing =
       (await this.repository.fetchById(id)) ||
       new TrueImpactError(
-        `You cannot acknowledge response for question [${questionLabel}] in survey attempt [${id}], as there is no such attempt.`,
+        `You cannot add a general note about survey attempt [${id}], as there is no such attempt.`,
       );
 
     if (existing instanceof TrueImpactError) {
       return new TrueImpactBadUserInputError([existing]);
     }
 
-    const updated = existing.acknowledgeResponseToQuestionViewed(questionLabel);
+    const updated = existing.addGeneralNote({ text: note, languageCode });
 
     if (updated instanceof TrueImpactError) {
       return updated;

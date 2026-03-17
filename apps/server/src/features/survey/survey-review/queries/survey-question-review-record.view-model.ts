@@ -1,3 +1,4 @@
+import { FlagViewModelClientDto } from 'src/features/flags/queries';
 import {
   MultilingualText,
   MultilingualTextPersistenceDto,
@@ -34,6 +35,9 @@ export class SurveyQuestionReviewRecordViewModelClientDto {
       'a list of notes that revieweres have made about this particular response',
   })
   notes: MultilingualTextPersistenceDto[];
+
+  // TODO lookup table
+  flagsById: Record<string, FlagViewModelClientDto>;
 }
 
 export class SurveyQuestionReviewRecordViewModel {
@@ -41,17 +45,20 @@ export class SurveyQuestionReviewRecordViewModel {
   chosenOptionLabel: string;
   hasBeenViewed: boolean;
   notes: MultilingualText[];
+  flagsById = new Map<string, FlagViewModelClientDto>();
 
   constructor({
     label,
     chosenOptionLabel,
     hasBeenViewed,
     notes,
+    flagsById: flags,
   }: {
     label: string;
     chosenOptionLabel: string;
     hasBeenViewed: boolean;
     notes: MultilingualText[];
+    flagsById: Map<string, FlagViewModelClientDto>;
   }) {
     this.label = label;
 
@@ -60,28 +67,51 @@ export class SurveyQuestionReviewRecordViewModel {
     this.hasBeenViewed = hasBeenViewed;
 
     this.notes = notes;
+
+    flags.forEach((flag, flagId) => {
+      this.flagsById.set(flagId, flag);
+    });
   }
 
   toClientDto(): SurveyQuestionReviewRecordViewModelClientDto {
+    const flagsById: Record<string, FlagViewModelClientDto> = {};
+
+    this.flagsById.forEach((flag, flagId) => {
+      flagsById[flagId] = flag;
+    });
+
     return {
       label: this.label,
       chosenOptionLabel: this.chosenOptionLabel,
       hasBeenViewed: this.hasBeenViewed,
       notes: this.notes.map((n) => n.toPersistenceDto()),
+      flagsById,
     };
   }
 
-  static fromDomainModel({
-    questionLabel,
-    optionLabel,
-    hasBeenViewed,
-    notes,
-  }: SurveyQuestionReviewRecord) {
+  static fromDomainModel(
+    domainModel: SurveyQuestionReviewRecord,
+    context: { flags: Map<string, FlagViewModelClientDto> },
+  ) {
+    const flagsById = new Map<string, FlagViewModelClientDto>();
+
+    const { questionLabel, optionLabel, hasBeenViewed, notes } = domainModel;
+
+    domainModel.flagIds.forEach((flagId) => {
+      if (context.flags.has(flagId)) {
+        flagsById.set(
+          flagId,
+          context.flags.get(flagId) as FlagViewModelClientDto,
+        );
+      }
+    });
+
     return new SurveyQuestionReviewRecordViewModel({
       label: questionLabel,
       chosenOptionLabel: optionLabel,
       hasBeenViewed,
       notes,
+      flagsById,
     });
   }
 }
