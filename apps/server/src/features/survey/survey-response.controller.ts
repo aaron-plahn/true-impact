@@ -1,4 +1,3 @@
-import { CommandHandlerService } from '../../libs/cqrs-es';
 import {
   TrueImpactError,
   TrueImpactRuntimeException,
@@ -8,6 +7,7 @@ import {
   Controller,
   DetailQueryEndpoint,
   IdParam,
+  IndexQueryEndpoint,
   QueryResponseInterceptor,
   ResourceNotFoundFilter,
   TestSetupEndpoint,
@@ -22,10 +22,14 @@ import { SurveyResponseQueryService } from './survey-completion/queries';
 export class SurveyResponseController {
   constructor(
     private readonly surveyCompletionQueryService: SurveyResponseQueryService,
-    private readonly commandHandlerService: CommandHandlerService,
   ) {}
 
   // commands are routed through the base /surveys endpoint
+
+  @IndexQueryEndpoint()
+  fetchCompletionAttempts() {
+    return this.surveyCompletionQueryService.fetchMany();
+  }
 
   @DetailQueryEndpoint()
   fetchCompletionByAttemptId(@IdParam() id: string) {

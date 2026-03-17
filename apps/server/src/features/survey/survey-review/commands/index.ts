@@ -5,3 +5,4 @@ export * from './begin-review-of-survey.command';
 export * from './flag-survey-question-response.command';
 export * from './submit-complete-survey-review.command';
 export * from './submit-partial-survey-review.command';
+export * from './survey-review-command-repository.interface';

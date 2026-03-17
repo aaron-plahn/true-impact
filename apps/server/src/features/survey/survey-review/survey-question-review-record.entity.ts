@@ -6,28 +6,35 @@ import { Entity, TrueImpactError } from '../../../libs/data-types';
 
 export class SurveyQuestionReviewRecordPersistenceDto {
   questionLabel: string;
+  optionLabel: string;
   hasBeenViewed: boolean;
   notes: MultilingualTextPersistenceDto[];
 }
 
 export class SurveyQuestionReviewRecord extends Entity<SurveyQuestionReviewRecordPersistenceDto> {
+  // TODO change these to `Question` and `Option`?
   questionLabel: string;
+  optionLabel: string;
   hasBeenViewed: boolean;
-  // todo `class Note` ?
+  // TODO `class Note` ?
   notes: MultilingualText[];
 
   constructor({
     questionLabel,
+    optionLabel,
     hasBeenViewed,
     notes,
   }: {
     questionLabel: string;
+    optionLabel: string;
     hasBeenViewed: boolean;
     notes?: MultilingualText[];
   }) {
     super();
 
     this.questionLabel = questionLabel;
+
+    this.optionLabel = optionLabel;
 
     this.hasBeenViewed = hasBeenViewed;
 
@@ -50,9 +57,25 @@ export class SurveyQuestionReviewRecord extends Entity<SurveyQuestionReviewRecor
     throw new Error('Method not implemented.');
   }
 
+  static buildEmptyFromResponse({
+    questionLabel,
+    optionLabel,
+  }: {
+    questionLabel: string;
+    optionLabel: string;
+  }): SurveyQuestionReviewRecord {
+    return new SurveyQuestionReviewRecord({
+      questionLabel,
+      optionLabel,
+      hasBeenViewed: false,
+      notes: [],
+    });
+  }
+
   static fromPersistenceDto(
     {
       questionLabel,
+      optionLabel,
       hasBeenViewed,
       notes: notesDtos,
     }: SurveyQuestionReviewRecordPersistenceDto,
@@ -73,6 +96,7 @@ export class SurveyQuestionReviewRecord extends Entity<SurveyQuestionReviewRecor
 
     return new SurveyQuestionReviewRecord({
       questionLabel,
+      optionLabel,
       hasBeenViewed,
       notes: notes as MultilingualText[],
     });

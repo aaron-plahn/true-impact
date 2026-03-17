@@ -9,15 +9,24 @@ import {
   BeginSurvey,
   SubmitSurvey,
 } from '../../../features/survey/survey-completion';
+import { SurveyResponseRecordViewModel } from '../../../features/survey/survey-completion/queries/survey-response-record.view-model';
 import { AddFollowUpQuestionForSurveyOption } from '../../../features/survey/survey-management/commands/add-follow-up-question-for-survey-option.command';
 import { AddOptionToSurveyQuestion } from '../../../features/survey/survey-management/commands/add-option-to-survey-question.command';
 import { AddQuestionToSurvey } from '../../../features/survey/survey-management/commands/add-question-to-survey.command';
 import { CreateSurvey } from '../../../features/survey/survey-management/commands/create-survey.command';
+import { PublishSurvey } from '../../../features/survey/survey-management/commands/publish-survey.command';
 import { SurveyOptionPersistenceDto } from '../../../features/survey/survey-management/survey-option.entity';
 import { SurveyQuestionPersistenceDto } from '../../../features/survey/survey-management/survey-question.entity';
 import { BeginReviewOfSurvey } from '../../../features/survey/survey-review';
+import { SurveyReviewViewModelClientDto } from '../../../features/survey/survey-review/queries';
 import { TestCommandStream } from '../../../libs/cqrs-es';
-import { assertCommandScenarioSuccess, assertCommandSuccess } from '../utils';
+import { assertTextMatchesAll } from '../../../libs/test-utils';
+import {
+  assertCommandError,
+  assertCommandScenarioError,
+  assertCommandScenarioSuccess,
+  assertCommandSuccess,
+} from '../utils';
 
 /**
  * There is a fair deal of dependent state for this test.
@@ -27,11 +36,17 @@ import { assertCommandScenarioSuccess, assertCommandSuccess } from '../utils';
  * - SurveyResponseRecord (copy of Survey completed by a Client)
  */
 
+// TODO From env.e2e
+const port = '3001';
+
+const baseEndpoint = `http://localhost:${port}`;
+
 const indexEndpoints = {
-  clients: 'clients',
-  communities: 'communities',
-  surveys: 'surveys',
-  responses: 'surveys/responses',
+  clients: `${baseEndpoint}/clients`,
+  communities: `${baseEndpoint}/communities`,
+  surveys: `${baseEndpoint}/surveys`,
+  responses: `${baseEndpoint}/surveys/responses`,
+  reviews: `${baseEndpoint}/surveys/reviews`,
 };
 
 const buildCommandEndpoint = (indexEndpoint: string) =>
@@ -100,13 +115,15 @@ const questions: (Omit<SurveyQuestionPersistenceDto, 'options'> & {
   },
 ];
 
+const surveyName = 'Monthly Check-In';
+
+const missingAggregateId = 'nf-404';
+
 describe(`when reviewing a survey (e.g. when a clinician reviews a client's response to a particular survey)`, () => {
   let communityId: string;
   let clientId: string;
   let surveyId: string;
   let surveyResponseRecordId: string;
-
-  let completeSurveyAsClient: TestCommandStream;
 
   beforeAll(async () => {
     await axios.patch(buildTestSetupEndpoint(indexEndpoints.communities));
@@ -138,33 +155,37 @@ describe(`when reviewing a survey (e.g. when a clinician reviews a client's resp
 
     await assertCommandScenarioSuccess({
       endpoint: buildCommandEndpoint(indexEndpoints.surveys),
-      stream: questions.reduce(
-        (acc: TestCommandStream, nextQuestion) => {
-          const addQuestion =
-            nextQuestion.label === '2'
-              ? acc.andThen(AddFollowUpQuestionForSurveyOption, {
-                  questionLabel: '1',
-                  optionLabel: 'c',
-                  followUpQuestionLabel: '2',
-                  followUpQuestionPrompt: questions[1].prompt,
-                })
-              : acc.andThen(AddQuestionToSurvey, {
-                  label: nextQuestion.label,
-                });
+      stream: questions
+        .reduce(
+          (acc: TestCommandStream, nextQuestion) => {
+            const addQuestion =
+              nextQuestion.label === '2'
+                ? acc.andThen(AddFollowUpQuestionForSurveyOption, {
+                    questionLabel: '1',
+                    optionLabel: 'c',
+                    followUpQuestionLabel: '2',
+                    followUpQuestionPrompt: questions[1].prompt,
+                  })
+                : acc.andThen(AddQuestionToSurvey, {
+                    label: nextQuestion.label,
+                  });
 
-          return Object.entries(nextQuestion.options).reduce(
-            (innerAcc, [optionLabel, { text }]) => {
-              return innerAcc.andThen(AddOptionToSurveyQuestion, {
-                questionLabel: nextQuestion.label,
-                optionLabel,
-                text,
-              });
-            },
-            addQuestion,
-          );
-        },
-        TestCommandStream.first(CreateSurvey, {}),
-      ),
+            return Object.entries(nextQuestion.options).reduce(
+              (innerAcc, [optionLabel, { text }]) => {
+                return innerAcc.andThen(AddOptionToSurveyQuestion, {
+                  questionLabel: nextQuestion.label,
+                  optionLabel,
+                  text,
+                });
+              },
+              addQuestion,
+            );
+          },
+          TestCommandStream.first(CreateSurvey, {
+            name: surveyName,
+          }),
+        )
+        .andThen(PublishSurvey),
     });
 
     surveyId = (
@@ -172,7 +193,7 @@ describe(`when reviewing a survey (e.g. when a clinician reviews a client's resp
         .data as SurveyViewModelClientDto[]
     )[0].id;
 
-    completeSurveyAsClient = TestCommandStream.first(BeginSurvey, {
+    const completeSurveyAsClient = TestCommandStream.first(BeginSurvey, {
       surveyId,
       participantCompositeIdentifier: {
         type: CLIENT_AGGREGATE_TYPE,
@@ -192,6 +213,16 @@ describe(`when reviewing a survey (e.g. when a clinician reviews a client's resp
         chosenOptionLabel: 'a',
       })
       .andThen(SubmitSurvey);
+
+    await assertCommandScenarioSuccess({
+      endpoint: buildCommandEndpoint(indexEndpoints.surveys),
+      stream: completeSurveyAsClient,
+    });
+
+    surveyResponseRecordId = (
+      (await axios.get(indexEndpoints.responses))
+        .data as SurveyReviewViewModelClientDto[]
+    )[0].id;
   });
 
   describe(`when beginning a review`, () => {
@@ -199,19 +230,84 @@ describe(`when reviewing a survey (e.g. when a clinician reviews a client's resp
       describe(`when the attempt has been submitted`, () => {
         it(`should create a new in-progress review`, async () => {
           await assertCommandScenarioSuccess({
-            endpoint: buildCommandEndpoint(indexEndpoints.responses),
-            stream: completeSurveyAsClient.andThen(BeginReviewOfSurvey, {}),
+            endpoint: buildCommandEndpoint(indexEndpoints.surveys),
+            stream: TestCommandStream.first(BeginReviewOfSurvey, {
+              surveyResponseRecordId,
+            }),
+            assertSuccess: async (acks) => {
+              const newReviewRecord = (
+                await axios.get(
+                  buildDetailQueryEndpoint(indexEndpoints.reviews, acks[0].id),
+                )
+              ).data as SurveyReviewViewModelClientDto;
+
+              expect(newReviewRecord).toBeTruthy();
+
+              expect(newReviewRecord.surveyName).toBe(surveyName);
+              // expect(newReviewRecord.surveyParticipantLabel).toBe('TODO')
+
+              expect(newReviewRecord.isComplete).toBe(false);
+
+              expect(newReviewRecord.size).toBe(0);
+            },
           });
         });
       });
 
       describe(`when the attempt has not been submitted`, () => {
-        it.todo(`should return the expected errorr response`);
+        it(`should return the expected error response`, async () => {
+          await assertCommandScenarioSuccess({
+            endpoint: buildCommandEndpoint(indexEndpoints.surveys),
+            stream: TestCommandStream.first(BeginSurvey, {
+              surveyId,
+              participantCompositeIdentifier: {
+                type: CLIENT_AGGREGATE_TYPE,
+                id: clientId,
+              },
+            }),
+          });
+
+          const incompleteResponseRecordQueryResult = (
+            (await axios.get(indexEndpoints.responses))
+              .data as SurveyResponseRecordViewModel[]
+          ).find((r) => r.hasBeenSubmitted === false);
+
+          const incompleteSurveyResponseId =
+            incompleteResponseRecordQueryResult?.id as string;
+
+          await assertCommandScenarioError({
+            endpoint: buildCommandEndpoint(indexEndpoints.surveys),
+            stream: TestCommandStream.first(BeginReviewOfSurvey, {
+              surveyResponseRecordId: incompleteSurveyResponseId,
+            }),
+            assertErrorMessageAsExpected: (message) => {
+              assertTextMatchesAll(
+                message,
+                surveyName,
+                'has not been submitted',
+              );
+            },
+          });
+        });
       });
     });
 
     describe(`when the target survey attempt does not exist`, () => {
-      it.todo(`should return the expected error response`);
+      it(`should return the expected error response`, async () => {
+        await assertCommandError({
+          endpoint: buildCommandEndpoint(indexEndpoints.surveys),
+          commandFsa: TestCommandStream.buildOne(BeginReviewOfSurvey, {
+            surveyResponseRecordId: missingAggregateId,
+          }),
+          assertErrorMessageAsExpected: (message) => {
+            assertTextMatchesAll(
+              message,
+              missingAggregateId,
+              'no such attempt',
+            );
+          },
+        });
+      });
     });
   });
 

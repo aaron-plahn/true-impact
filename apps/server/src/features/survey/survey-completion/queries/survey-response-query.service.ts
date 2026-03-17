@@ -18,11 +18,18 @@ export class SurveyResponseQueryService {
       return null; // not found error?
     }
 
-    return this.buildViewModelFromDomainModel(domainModel);
+    return this.buildViewModel(domainModel);
+  }
+
+  async fetchMany() {
+    const domainModels =
+      await this.surveyCompletionCommandRepository.fetchMany();
+
+    return domainModels.map((dm) => this.buildViewModel(dm));
   }
 
   // TODO stick to completion record **or** response record in all naming
-  private buildViewModelFromDomainModel(domainModel: SurveyResponseRecord) {
+  private buildViewModel(domainModel: SurveyResponseRecord) {
     // TODO inject client state
     return SurveyResponseRecordViewModel.fromDomainModel(domainModel);
   }

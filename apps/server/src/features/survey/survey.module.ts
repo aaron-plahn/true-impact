@@ -58,6 +58,15 @@ import { PublishSurvey } from './survey-management/commands/publish-survey.comma
 import { PublishSurveyCommandHandler } from './survey-management/commands/publish-survey.command-handler';
 import { Survey } from './survey-management/survey.aggregate-root';
 import { SurveyResponseController } from './survey-response.controller';
+import {
+  BeginReviewOfSurvey,
+  SURVEY_REVIEW_COMMAND_REPOSITORY_INJECTION_TOKEN,
+  SURVEY_REVIEW_QUERY_REPOSITORY_INJECTION_TOKEN,
+  SurveyReview,
+} from './survey-review';
+import { SurveyReviewController } from './survey-review.controller';
+import { BeginReviewOfSurveyCommandHandler } from './survey-review/commands/begin-review-of-survey.command-handler';
+import { SurveyReviewQueryService } from './survey-review/queries/survey-review-query.service';
 import { SurveyController } from './survey.controller';
 
 // Is this necessary?
@@ -82,9 +91,12 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
     CreateAnalyzerForSurveyCommandHandler,
     AddCategoryToSurveyAnalyzerCommandHandler,
     AddValueForSurveyOptionCommandHandler,
+    // Survey Review Commands
+    BeginReviewOfSurveyCommandHandler,
     // services
     SurveyQueryService,
     SurveyResponseQueryService,
+    SurveyReviewQueryService,
     {
       provide: SURVEY_QUERY_REPOSITORY_PROVIDER_TOKEN,
       useValue: new InMemoryQueryRepositoryProvider().forFeature(
@@ -169,6 +181,11 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
           .register({
             CommandHandlerCtor: AddValueForSurveyOptionCommandHandler,
             CommandPayloadCtor: AddValueForSurveyOption,
+          })
+          // Survey Review
+          .register({
+            CommandHandlerCtor: BeginReviewOfSurveyCommandHandler,
+            CommandPayloadCtor: BeginReviewOfSurvey,
           });
 
         return commandHandlerService;
@@ -183,6 +200,18 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
       provide: SURVEY_RESPONSE_COMMAND_REPOSITORY_INJECTION_TOKEN,
       useFactory: () => {
         return new InMemorySurveyResponseCommandRepository();
+      },
+    },
+    {
+      provide: SURVEY_REVIEW_COMMAND_REPOSITORY_INJECTION_TOKEN,
+      useFactory: () => {
+        return new InMemoryCommandRepository(SurveyReview);
+      },
+    },
+    {
+      provide: SURVEY_REVIEW_QUERY_REPOSITORY_INJECTION_TOKEN,
+      useFactory: () => {
+        return new InMemoryQueryRepositoryProvider();
       },
     },
     /**
@@ -212,6 +241,11 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
   ],
   // Exposing data classes allows us to drive them via repl
   exports: [...dataClasses],
-  controllers: [SurveyController, SurveyResponseController],
+  controllers: [
+    SurveyResponseController,
+    SurveyReviewController,
+    // this must come last so that `survey/responses` is not routed to its `surveys/:id` with `{ id:responses }`, for example
+    SurveyController,
+  ],
 })
 export class SurveyModule {}
