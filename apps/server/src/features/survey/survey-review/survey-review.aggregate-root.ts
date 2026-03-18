@@ -20,6 +20,7 @@ import {
 class SurveyReviewPersistenceDto {
   id: string;
   revision: number;
+  hasBeenSubmitted: boolean;
   questionsReviewed: SurveyQuestionReviewRecordPersistenceDto[];
   surveyName: string;
   surveyParticipantCompositeIdentifier?: SurveyParticipantCompositeIdentifier;
@@ -32,6 +33,8 @@ export class SurveyReview extends AggregateRoot<SurveyReviewPersistenceDto> {
   id: string;
 
   revision: number;
+
+  hasBeenSubmitted: boolean;
 
   surveyName: string;
 
@@ -49,6 +52,7 @@ export class SurveyReview extends AggregateRoot<SurveyReviewPersistenceDto> {
   constructor({
     id,
     revision,
+    hasBeenSubmitted,
     questionsReviewed,
     surveyName,
     surveyParticipantCompositeIdentifier,
@@ -56,6 +60,7 @@ export class SurveyReview extends AggregateRoot<SurveyReviewPersistenceDto> {
   }: {
     id: string;
     revision: number;
+    hasBeenSubmitted: boolean;
     questionsReviewed: SurveyQuestionReviewRecord[];
     surveyName: string;
     surveyParticipantCompositeIdentifier?: SurveyParticipantCompositeIdentifier;
@@ -77,6 +82,8 @@ export class SurveyReview extends AggregateRoot<SurveyReviewPersistenceDto> {
     if (Array.isArray(generalNotes)) {
       this.generalNotes = generalNotes;
     }
+
+    this.hasBeenSubmitted = hasBeenSubmitted;
   }
 
   @UpdateMethod()
@@ -203,10 +210,24 @@ export class SurveyReview extends AggregateRoot<SurveyReviewPersistenceDto> {
     return this;
   }
 
+  @UpdateMethod()
+  submitPartialReview() {
+    if (this.hasBeenSubmitted) {
+      return new TrueImpactError(
+        `You cannot submit partial review [${this.id}] of survey [${this.surveyName}], as it has already been submitted.`,
+      );
+    }
+
+    this.hasBeenSubmitted = true;
+
+    return this;
+  }
+
   toPersistenceDto(): SurveyReviewPersistenceDto {
     return {
       id: this.id,
       revision: this.revision,
+      hasBeenSubmitted: this.hasBeenSubmitted,
       questionsReviewed: this.questionsReviewed.map((qr) =>
         qr.toPersistenceDto(),
       ),
@@ -244,6 +265,7 @@ export class SurveyReview extends AggregateRoot<SurveyReviewPersistenceDto> {
     return new SurveyReview({
       id: undefined as unknown as string,
       revision: 0,
+      hasBeenSubmitted: false,
       questionsReviewed: questions,
       surveyName,
       surveyParticipantCompositeIdentifier: surveyResponseRecord.participant,
@@ -295,6 +317,7 @@ export class SurveyReview extends AggregateRoot<SurveyReviewPersistenceDto> {
     return new SurveyReview({
       id: dto.id,
       revision: dto.revision,
+      hasBeenSubmitted: dto.hasBeenSubmitted,
       questionsReviewed: questionsReviewed as SurveyQuestionReviewRecord[],
       surveyName: dto.surveyName,
       generalNotes,

@@ -17,4 +17,6 @@ export class BeginReviewOfSurvey {
       'a system identifier to the survey response you would like to review',
   })
   surveyResponseRecordId: string;
+
+  // TODO ReviewerCompositeIdentifier
 }

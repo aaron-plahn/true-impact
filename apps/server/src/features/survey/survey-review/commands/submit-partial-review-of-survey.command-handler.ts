@@ -1,0 +1,45 @@
+import { Inject } from '@nestjs/common';
+import { CommandResult, ICommandHandler } from '../../../../libs/cqrs-es';
+import {
+  TrueImpactBadUserInputError,
+  TrueImpactError,
+} from '../../../../libs/data-types';
+import { SURVEY_REVIEW_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../constants';
+import { SubmitPartialSurveyReview } from './submit-partial-survey-review.command';
+import type { ISurveyReviewCommandRepository } from './survey-review-command-repository.interface';
+
+export class SubmitPartialSurveyReviewCommandHandler implements ICommandHandler<SubmitPartialSurveyReview> {
+  constructor(
+    @Inject(SURVEY_REVIEW_COMMAND_REPOSITORY_INJECTION_TOKEN)
+    private readonly repository: ISurveyReviewCommandRepository,
+  ) {}
+
+  async handle({
+    payload: {
+      aggregateCompositeIdentifier: { id },
+    },
+  }: {
+    payload: SubmitPartialSurveyReview;
+  }): Promise<CommandResult> {
+    const existing =
+      (await this.repository.fetchById(id)) ||
+      new TrueImpactError(
+        `You cannot submit survey review [${id}] as there is no such review record.`,
+      );
+
+    if (existing instanceof TrueImpactError) {
+      return new TrueImpactBadUserInputError([existing]);
+    }
+
+    const updated = existing.submitPartialReview();
+
+    if (updated instanceof TrueImpactError) {
+      return updated;
+    }
+
+    const persistenceResult = await this.repository.update(updated);
+
+    // TODO Can we have one test that the revision numbers are being incremented?
+    return persistenceResult;
+  }
+}

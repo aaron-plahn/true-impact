@@ -1,10 +1,10 @@
 import { Inject } from '@nestjs/common';
-import { FLAG_VALIDATION_SERVICE_INJECTION_TOKEN } from 'src/features/flags/constants';
+import { FLAG_VALIDATION_SERVICE_INJECTION_TOKEN } from '../../../../features/flags/constants';
+import { CommandResult, ICommandHandler } from '../../../../libs/cqrs-es';
 import {
   TrueImpactBadUserInputError,
   TrueImpactError,
-} from 'src/libs/data-types';
-import { CommandResult, ICommandHandler } from '../../../../libs/cqrs-es';
+} from '../../../../libs/data-types';
 import { SURVEY_REVIEW_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../constants';
 import { FlagSurveyQuestionResponse } from './flag-survey-question-response.command';
 import type { ISurveyReviewCommandRepository } from './survey-review-command-repository.interface';

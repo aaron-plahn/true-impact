@@ -44,6 +44,7 @@ import {
 import { SurveyResponseRecordViewModel } from './survey-completion/queries/survey-response-record.view-model';
 import { SURVEY_RESPONSE_COMMAND_REPOSITORY_INJECTION_TOKEN } from './survey-completion/repositories';
 import { InMemorySurveyResponseCommandRepository } from './survey-completion/repositories/in-memory-survey-response.command-repository';
+// TODO use barrel exports \ imports
 import { AddFollowUpQuestionForSurveyOption } from './survey-management/commands/add-follow-up-question-for-survey-option.command';
 import { AddFollowUpQuestionForSurveyOptionCommandHandler } from './survey-management/commands/add-follow-up-question-for-survey-option.command-handler';
 import { AddOptionToSurveyQuestion } from './survey-management/commands/add-option-to-survey-question.command';
@@ -64,6 +65,8 @@ import {
   AddNoteAboutQuestionResponse,
   BeginReviewOfSurvey,
   FlagSurveyQuestionResponse,
+  SubmitPartialSurveyReview,
+  SubmitPartialSurveyReviewCommandHandler,
   SURVEY_REVIEW_COMMAND_REPOSITORY_INJECTION_TOKEN,
   SURVEY_REVIEW_QUERY_REPOSITORY_INJECTION_TOKEN,
   SurveyReview,
@@ -105,6 +108,7 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
     AddNoteAboutQuestionResponseCommandHandler,
     AddGeneralNoteAboutSurveyResponseCommandHandler,
     FlagSurveyQuestionResponseCommandHandler,
+    SubmitPartialSurveyReviewCommandHandler,
     // services
     SurveyQueryService,
     SurveyResponseQueryService,
@@ -217,6 +221,10 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
           .register({
             CommandHandlerCtor: FlagSurveyQuestionResponseCommandHandler,
             CommandPayloadCtor: FlagSurveyQuestionResponse,
+          })
+          .register({
+            CommandHandlerCtor: SubmitPartialSurveyReviewCommandHandler,
+            CommandPayloadCtor: SubmitPartialSurveyReview,
           });
 
         return commandHandlerService;

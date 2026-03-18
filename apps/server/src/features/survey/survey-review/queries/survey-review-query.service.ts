@@ -1,7 +1,7 @@
 import {
   FlagQueryService,
   FlagViewModelClientDto,
-} from 'src/features/flags/queries';
+} from '../../../../features/flags/queries';
 import { TrueImpactError } from '../../../../libs/data-types';
 import { Inject } from '../../../../libs/framework';
 import type { ISurveyReviewCommandRepository } from '../commands';

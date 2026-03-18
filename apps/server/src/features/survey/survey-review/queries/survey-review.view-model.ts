@@ -1,8 +1,8 @@
-import { FlagViewModelClientDto } from 'src/features/flags/queries';
 import {
   MultilingualText,
   MultilingualTextPersistenceDto,
 } from '../../../../common/multilingual-text';
+import { FlagViewModelClientDto } from '../../../../features/flags/queries';
 import {
   BooleanDataType,
   NestedDataType,
@@ -57,6 +57,15 @@ export class SurveyReviewViewModelClientDto {
   generalNotes: MultilingualTextPersistenceDto[];
 
   @BooleanDataType({
+    label: 'has been submitted',
+    description: 'Has this review been officially submitted by the reviewer?',
+  })
+  hasBeenSubmitted: boolean;
+
+  /**
+   * The following are calculated fields.
+   */
+  @BooleanDataType({
     label: 'is complete',
     description: 'Has every question been marked as viewed?',
   })
@@ -75,6 +84,8 @@ export class SurveyReviewViewModel {
 
   revision: string;
 
+  hasBeenSubmitted: boolean;
+
   questions: SurveyQuestionReviewRecordViewModel[] = [];
 
   surveyName: string;
@@ -86,6 +97,7 @@ export class SurveyReviewViewModel {
   constructor({
     id,
     revision,
+    hasBeenSubmitted,
     questions,
     surveyName,
     surveyParticipantLabel,
@@ -93,6 +105,7 @@ export class SurveyReviewViewModel {
   }: {
     id: string;
     revision: string;
+    hasBeenSubmitted: boolean;
     questions?: SurveyQuestionReviewRecordViewModel[];
     surveyName: string;
     surveyParticipantLabel: string;
@@ -101,6 +114,8 @@ export class SurveyReviewViewModel {
     this.id = id;
 
     this.revision = revision;
+
+    this.hasBeenSubmitted = hasBeenSubmitted;
 
     this.surveyName = surveyName;
 
@@ -123,6 +138,7 @@ export class SurveyReviewViewModel {
     return {
       id: this.id,
       revision: this.revision,
+      hasBeenSubmitted: this.hasBeenSubmitted,
       surveyName: this.surveyName,
       surveyParticipantLabel: this.surveyParticipantLabel,
       questions: this.questions.map((q) => q.toClientDto()),
@@ -139,6 +155,7 @@ export class SurveyReviewViewModel {
     return new SurveyReviewViewModel({
       id: domainModel.getId(),
       revision: domainModel.revision.toString(),
+      hasBeenSubmitted: domainModel.hasBeenSubmitted,
       surveyName: domainModel.surveyName,
       // TODO handle this
       surveyParticipantLabel: 'REDACTED',

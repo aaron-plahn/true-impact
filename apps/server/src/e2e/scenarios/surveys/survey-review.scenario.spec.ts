@@ -25,6 +25,7 @@ import {
   AddNoteAboutQuestionResponse,
   BeginReviewOfSurvey,
   FlagSurveyQuestionResponse,
+  SubmitPartialSurveyReview,
 } from '../../../features/survey/survey-review';
 import {
   SurveyQuestionReviewRecordViewModelClientDto,
@@ -144,6 +145,8 @@ describe(`when reviewing a survey (e.g. when a clinician reviews a client's resp
   let flagId: string;
   let surveyResponseRecordId: string;
 
+  let reviewAllButLastQuestion: TestCommandStream;
+
   beforeAll(async () => {
     await axios.patch(buildTestSetupEndpoint(indexEndpoints.communities));
     await axios.patch(buildTestSetupEndpoint(indexEndpoints.clients));
@@ -254,6 +257,25 @@ describe(`when reviewing a survey (e.g. when a clinician reviews a client's resp
       (await axios.get(indexEndpoints.responses))
         .data as SurveyReviewViewModelClientDto[]
     )[0].id;
+
+    reviewAllButLastQuestion = TestCommandStream.first(BeginReviewOfSurvey, {
+      surveyResponseRecordId,
+    })
+      .andThen(AcknowledgeResponseForSurveyQuestionHasBeenViewed, {
+        questionLabel: '1',
+      })
+      .andThen(AddNoteAboutQuestionResponse, {
+        questionLabel: '2',
+      })
+      .andThen(AddNoteAboutQuestionResponse, {
+        questionLabel: '2',
+        note: 'another note about question 2',
+      })
+      // TODO Should this also mark the response as viewed?
+      .andThen(FlagSurveyQuestionResponse, {
+        questionLabel: '1',
+        flagId,
+      });
   });
 
   beforeEach(async () => {
@@ -848,17 +870,73 @@ describe(`when reviewing a survey (e.g. when a clinician reviews a client's resp
         });
 
         describe(`when the survey review is incomplete`, () => {
-          it.todo(`should submit the review`);
+          it(`should submit the review`, async () => {
+            await assertCommandScenarioSuccess({
+              endpoint: buildCommandEndpoint(indexEndpoints.surveys),
+              stream: reviewAllButLastQuestion.andThen(
+                SubmitPartialSurveyReview,
+                {},
+              ),
+              assertSuccess: async (acks) => {
+                const updatedReviewRecord = (
+                  await axios.get(
+                    buildDetailQueryEndpoint(
+                      indexEndpoints.reviews,
+                      acks[0].id,
+                    ),
+                  )
+                ).data as SurveyReviewViewModelClientDto;
+
+                expect(updatedReviewRecord.isComplete).toBe(false);
+
+                expect(updatedReviewRecord.hasBeenSubmitted).toBe(true);
+              },
+            });
+          });
         });
       });
 
       describe(`when the review has already been submitted`, () => {
-        it.todo(`should return the expected error response`);
+        describe(`when a partial review has been submitted`, () => {
+          it(`should return the expected error response`, async () => {
+            await assertCommandScenarioError({
+              endpoint: buildCommandEndpoint(indexEndpoints.surveys),
+              stream: reviewAllButLastQuestion
+                .andThen(SubmitPartialSurveyReview)
+                .andThen(SubmitPartialSurveyReview),
+              assertErrorMessageAsExpected: (message) => {
+                assertTextMatchesAll(
+                  message,
+                  'cannot submit',
+                  'partial review',
+                  'already',
+                  'submitted',
+                );
+              },
+            });
+          });
+        });
+
+        describe(`when a full review has been submitted`, () => {
+          it.todo(`should return the expected error response`);
+        });
       });
     });
 
     describe(`when the target survey review does not exist`, () => {
-      it.todo(`should return the expected error response`);
+      it(`should return the expected error response`, async () => {
+        await assertCommandError({
+          endpoint: buildCommandEndpoint(indexEndpoints.surveys),
+          commandFsa: TestCommandStream.buildOne(SubmitPartialSurveyReview, {
+            aggregateCompositeIdentifier: {
+              id: missingAggregateId,
+            },
+          }),
+          assertErrorMessageAsExpected: (message) => {
+            assertTextMatchesAll(message, missingAggregateId, 'no such review');
+          },
+        });
+      });
     });
   });
 

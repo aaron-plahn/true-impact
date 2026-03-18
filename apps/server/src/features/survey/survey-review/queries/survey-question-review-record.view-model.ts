@@ -1,8 +1,8 @@
-import { FlagViewModelClientDto } from 'src/features/flags/queries';
 import {
   MultilingualText,
   MultilingualTextPersistenceDto,
 } from '../../../../common/multilingual-text';
+import { FlagViewModelClientDto } from '../../../../features/flags/queries';
 import {
   BooleanDataType,
   NestedDataType,
