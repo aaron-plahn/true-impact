@@ -20,6 +20,8 @@ import {
 } from '../../libs/framework';
 import { CommunityQueryService, CommunityViewModelClientDto } from './queries';
 
+@UseFilters(ResourceNotFoundFilter, BadUserInputFilter)
+@UseInterceptors(QueryResponseInterceptor)
 @Controller('communities')
 export class CommunityController {
   constructor(
@@ -27,9 +29,6 @@ export class CommunityController {
     private readonly communityQueryService: CommunityQueryService,
   ) {}
 
-  // TODO Can we wrap these into @Controller?
-  @UseFilters(ResourceNotFoundFilter, BadUserInputFilter)
-  @UseInterceptors(QueryResponseInterceptor)
   // TODO @CommandExecutionEndpoint
   @Post('commands')
   async executeCommand(@Body() fsa: ICommandFsa): Promise<CommandResult> {
