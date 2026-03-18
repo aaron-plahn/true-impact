@@ -13,9 +13,8 @@ export class SurveyQuestionReviewRecordPersistenceDto {
 }
 
 export class SurveyQuestionReviewRecord extends Entity<SurveyQuestionReviewRecordPersistenceDto> {
-  // TODO change these to `Question` and `Option`?
-  questionLabel: string;
-  optionLabel: string;
+  label: string;
+  chosenOptionLabel: string;
   hasBeenViewed: boolean;
   // TODO `class Note` ?
   notes: MultilingualText[];
@@ -36,9 +35,9 @@ export class SurveyQuestionReviewRecord extends Entity<SurveyQuestionReviewRecor
   }) {
     super();
 
-    this.questionLabel = questionLabel;
+    this.label = questionLabel;
 
-    this.optionLabel = optionLabel;
+    this.chosenOptionLabel = optionLabel;
 
     this.hasBeenViewed = hasBeenViewed;
 
@@ -52,21 +51,21 @@ export class SurveyQuestionReviewRecord extends Entity<SurveyQuestionReviewRecor
   }
 
   validateComplexInvariants(): TrueImpactError[] {
-    throw new Error('Method not implemented.');
+    return [];
   }
 
   getId(): string {
-    throw new Error('Method not implemented.');
+    return this.label;
   }
 
   getName(): string {
-    throw new Error('Method not implemented.');
+    return `${this.label} - review record`;
   }
 
   toPersistenceDto(): SurveyQuestionReviewRecordPersistenceDto {
     return {
-      questionLabel: this.questionLabel,
-      optionLabel: this.optionLabel,
+      questionLabel: this.label,
+      optionLabel: this.chosenOptionLabel,
       hasBeenViewed: this.hasBeenViewed,
       notes: this.notes.map((n) => n.toPersistenceDto()),
       flagIds: [...this.flagIds],

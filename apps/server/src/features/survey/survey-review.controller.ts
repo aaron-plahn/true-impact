@@ -24,6 +24,10 @@ export class SurveyReviewController {
     private readonly surveyReviewQueryService: SurveyReviewQueryService,
   ) {}
 
+  /**
+   * Currently, commands are routed through `surveys/commands`. See `Survey.controller.ts`.
+   */
+
   @DetailQueryEndpoint()
   async fetchById(@IdParam() id: string) {
     const result = await this.surveyReviewQueryService.fetchById(id);

@@ -20,7 +20,6 @@ import {
 } from '../../libs/framework';
 import { CommunityQueryService, CommunityViewModelClientDto } from './queries';
 
-// TODO Can we wrap these into @Controller?
 @UseFilters(ResourceNotFoundFilter, BadUserInputFilter)
 @UseInterceptors(QueryResponseInterceptor)
 @Controller('communities')

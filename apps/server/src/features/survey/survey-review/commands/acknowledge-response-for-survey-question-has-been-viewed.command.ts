@@ -3,12 +3,12 @@ import {
   NonEmptyString,
   TrueImpactDataExample,
 } from '../../../../libs/data-types';
-import { SurveyResponseCompositeIdentifier } from '../../survey-completion';
+import { SurveyReviewCompositeIdentifier } from '../survey-review.composite-identifier';
 
 @TrueImpactDataExample<AcknowledgeResponseForSurveyQuestionHasBeenViewed>({
   example: {
     aggregateCompositeIdentifier: {
-      type: 'survey response record',
+      type: 'survey review',
       id: '1',
     },
     questionLabel: 'IV',
@@ -18,12 +18,12 @@ export class AcknowledgeResponseForSurveyQuestionHasBeenViewed {
   static readonly type =
     'ACKNOWLEDGE_RESPONSE_FOR_SURVEY_QUESTION_HAS_BEEN_VIEWED';
 
-  @NestedDataType(() => SurveyResponseCompositeIdentifier, {
+  @NestedDataType(() => SurveyReviewCompositeIdentifier, {
     label: 'survey response composite ID',
     description:
       'unique sytem-wide reference to the survey attempt being reviewed',
   })
-  aggregateCompositeIdentifier: SurveyResponseCompositeIdentifier;
+  aggregateCompositeIdentifier: SurveyReviewCompositeIdentifier;
 
   @NonEmptyString({
     label: 'question label',

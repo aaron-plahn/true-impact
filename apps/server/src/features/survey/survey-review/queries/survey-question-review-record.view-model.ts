@@ -95,7 +95,12 @@ export class SurveyQuestionReviewRecordViewModel {
   ) {
     const flagsById = new Map<string, FlagViewModelClientDto>();
 
-    const { questionLabel, optionLabel, hasBeenViewed, notes } = domainModel;
+    const {
+      label: questionLabel,
+      chosenOptionLabel: optionLabel,
+      hasBeenViewed,
+      notes,
+    } = domainModel;
 
     domainModel.flagIds.forEach((flagId) => {
       if (context.flags.has(flagId)) {

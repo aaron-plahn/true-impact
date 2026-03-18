@@ -11,7 +11,6 @@ import { SurveyReviewCompositeIdentifier } from '../survey-review.composite-iden
       type: 'survey review',
       id: '1',
     },
-    reviewId: '2',
     note: 'this is the new note',
     languageCode: 'en',
   },
@@ -25,13 +24,6 @@ export class AddGeneralNoteAboutSurveyResponse {
       'unique sytem-wide reference to the survey attempt being reviewed',
   })
   aggregateCompositeIdentifier: SurveyReviewCompositeIdentifier;
-
-  @NonEmptyString({
-    label: 'review ID',
-    description:
-      'uniquely identifies this review amongst other reviews of the same survey attempt',
-  })
-  reviewId: string;
 
   @NonEmptyString({
     label: 'note',

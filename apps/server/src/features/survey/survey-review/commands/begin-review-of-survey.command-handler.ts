@@ -15,7 +15,9 @@ export class BeginReviewOfSurveyCommandHandler implements ICommandHandler<BeginR
   constructor(
     @Inject(SURVEY_REVIEW_COMMAND_REPOSITORY_INJECTION_TOKEN)
     private readonly surveyReviewRepository: ISurveyReviewCommandRepository,
-    // TODO Use a service for this
+    /**
+     * Should we use a service for this?
+     */
     @Inject(SURVEY_RESPONSE_COMMAND_REPOSITORY_INJECTION_TOKEN)
     private readonly surveyResponseRepository: ISurveyResponseCommandRepository,
   ) {}
@@ -25,8 +27,6 @@ export class BeginReviewOfSurveyCommandHandler implements ICommandHandler<BeginR
   }: {
     payload: BeginReviewOfSurvey;
   }): Promise<CommandResult> {
-    // TODO validate that the target survey response exists
-
     const targetSurveyAttempt =
       (await this.surveyResponseRepository.fetchById(surveyResponseRecordId)) ||
       new TrueImpactBadUserInputError([

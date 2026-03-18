@@ -21,7 +21,6 @@ import {
 import { SurveyQueryService } from './queries/survey-query.service';
 import { SurveyViewModelClientDto } from './queries/survey.view-model';
 
-// TODO Can we wrap these into @Controller?
 @UseFilters(ResourceNotFoundFilter, BadUserInputFilter)
 @UseInterceptors(QueryResponseInterceptor)
 @Controller('surveys')

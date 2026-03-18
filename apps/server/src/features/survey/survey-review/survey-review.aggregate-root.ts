@@ -91,7 +91,7 @@ export class SurveyReview extends AggregateRoot<SurveyReviewPersistenceDto> {
     questionLabel: string,
   ): SurveyReview | TrueImpactError {
     const questionSearchResult =
-      this.questionsReviewed.find((q) => q.questionLabel === questionLabel) ||
+      this.questionsReviewed.find((q) => q.label === questionLabel) ||
       new TrueImpactError(
         `You cannot acknowledge review of question [${questionLabel}] in attempt [${this.id}] of survey [${this.surveyName}], as there is no such question.`,
       );
@@ -126,7 +126,7 @@ export class SurveyReview extends AggregateRoot<SurveyReviewPersistenceDto> {
     languageCode: string;
   }): SurveyReview | TrueImpactError {
     const targetQuestion =
-      this.questionsReviewed.find((q) => q.questionLabel === questionLabel) ||
+      this.questionsReviewed.find((q) => q.label === questionLabel) ||
       new TrueImpactError(
         `You cannot add a note about the participant's response to question [${questionLabel}] in attempt [${this.id}] of survey [${this.surveyName}], as there is no such question.`,
       );
@@ -147,7 +147,7 @@ export class SurveyReview extends AggregateRoot<SurveyReviewPersistenceDto> {
     targetQuestion.notes.push(textBuildResult);
 
     /**
-     * We automatically mark the question as viewed when a note has been made.
+     * We automatically mark the question as viewed once a note has been made.
      * We need to gather user feedback on this once the UX is complete.
      */
     targetQuestion.hasBeenViewed = true;
@@ -193,10 +193,7 @@ export class SurveyReview extends AggregateRoot<SurveyReviewPersistenceDto> {
     flagId: string;
   }): SurveyReview | TrueImpactError {
     const targetQuestion =
-      this.questionsReviewed.find(
-        // TODO why not just q.label ?
-        (q) => q.questionLabel === questionLabel,
-      ) ||
+      this.questionsReviewed.find((q) => q.label === questionLabel) ||
       new TrueImpactError(
         `You cannot flag question [${questionLabel}] in attempt [${this.id}] of survey [${this.surveyName}] with flag [${flagId}], as there is no such question`,
       );
@@ -213,6 +210,10 @@ export class SurveyReview extends AggregateRoot<SurveyReviewPersistenceDto> {
 
     targetQuestion.flagIds.add(flagId);
 
+    /**
+     * We automatically mark the question as viewed once it has been flagged.
+     * We need to gather user feedback on this once the UX is complete.
+     */
     targetQuestion.hasBeenViewed = true;
 
     return this.applyUpdateIfPossible(
@@ -255,7 +256,7 @@ export class SurveyReview extends AggregateRoot<SurveyReviewPersistenceDto> {
     if (unreviewedQuestions.length > 0) {
       return new TrueImpactError(
         `You cannot submit complete review [${this.id}] of survey [${this.surveyName}], as not all questions have been reviewed. Please review questions: [${unreviewedQuestions
-          .map((q) => q.questionLabel)
+          .map((q) => q.label)
           .join(', ')}]`,
       );
     }
@@ -307,7 +308,7 @@ export class SurveyReview extends AggregateRoot<SurveyReviewPersistenceDto> {
   }
 
   getName(): string {
-    throw new Error('Method not implemented.');
+    return `${this.surveyName} - review [${this.id}]`;
   }
 
   static fromUserRequest({

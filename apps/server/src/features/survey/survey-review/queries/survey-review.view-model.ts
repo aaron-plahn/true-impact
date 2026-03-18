@@ -75,8 +75,7 @@ export class SurveyReviewViewModelClientDto {
     label: 'size',
     description: 'the number of questions that have been marked as viewed',
   })
-  // TODO do we really want to call it size? progress? countOfReviewedQuestions?
-  size: number;
+  numberOfQuestionsViewed: number;
 }
 
 export class SurveyReviewViewModel {
@@ -143,7 +142,7 @@ export class SurveyReviewViewModel {
       surveyParticipantLabel: this.surveyParticipantLabel,
       questions: this.questions.map((q) => q.toClientDto()),
       isComplete,
-      size,
+      numberOfQuestionsViewed: size,
       generalNotes: this.generalNotes.map((n) => n.toPersistenceDto()),
     };
   }

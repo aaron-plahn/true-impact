@@ -38,7 +38,7 @@ export const assertCommandScenarioError = async ({
         ) {
           throw new TrueImpactRuntimeException([
             new TrueImpactError(
-              `Invalid format for an error response. Are you missing a response interceptor?]nIf not, are you missing an @UpdateMethod() decorator on the target update method for the given aggregate root?`,
+              `Invalid format for an error response. Are you missing a response interceptor?\nIf not, are you missing an @UpdateMethod() decorator on the target update method for the given aggregate root?`,
             ),
           ]);
         }

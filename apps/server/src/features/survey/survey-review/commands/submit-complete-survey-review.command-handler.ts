@@ -1,9 +1,9 @@
 import { Inject } from '@nestjs/common';
+import { CommandResult, ICommandHandler } from '../../../../libs/cqrs-es';
 import {
   TrueImpactBadUserInputError,
   TrueImpactError,
-} from 'src/libs/data-types';
-import { CommandResult, ICommandHandler } from '../../../../libs/cqrs-es';
+} from '../../../../libs/data-types';
 import { SURVEY_REVIEW_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../constants';
 import { SubmitCompleteSurveyReview } from './submit-complete-survey-review.command';
 import type { ISurveyReviewCommandRepository } from './survey-review-command-repository.interface';

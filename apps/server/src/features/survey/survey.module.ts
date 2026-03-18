@@ -12,31 +12,30 @@ import { CLIENT_AGGREGATE_TYPE } from '../clients/client.composite-identifier';
 import { ClientModule } from '../clients/client.module';
 import { ClientValidationService } from '../clients/services';
 import { FlagModule } from '../flags/flag.module';
+import { AddFollowUpQuestionForSurveyOption } from '../survey/survey-management';
 import { SURVEY_COMMAND_REPOSITORY_DEPENDENCY_TOKEN } from './constants';
 import { SURVEY_QUERY_REPOSITORY_PROVIDER_TOKEN } from './queries/survey-query-repository.interface';
 import { SurveyQueryService } from './queries/survey-query.service';
 import { SurveyViewModel } from './queries/survey.view-model';
 import {
   AddCategoryToSurveyAnalyzer,
+  AddCategoryToSurveyAnalyzerCommandHandler,
   AddValueForSurveyOption,
   AddValueForSurveyOptionCommandHandler,
   CreateAnalyzerForSurvey,
   CreateAnalyzerForSurveyCommandHandler,
 } from './survey-analysis';
-import { AddCategoryToSurveyAnalyzerCommandHandler } from './survey-analysis/commands/add-category-to-survey-analyzer.command-handler';
 import {
   AbandonSurveyCompletion,
   AbandonSurveyCompletionCommandHandler,
   AnswerSurveyQuestion,
   AnswerSurveyQuestionCommandHandler,
   BeginSurvey,
+  BeginSurveyCommandHandler,
   SubmitSurvey,
   SubmitSurveyCommandHandler,
-} from './survey-completion';
-import {
-  BeginSurveyCommandHandler,
   SURVEY_PARTICIPANT_VALIDATION_SERVICE_PROVIDER_INJECTION_TOKEN,
-} from './survey-completion/commands/begin-survey.command-handler';
+} from './survey-completion';
 import {
   SURVEY_RESPONSE_QUERY_REPOSITORY_INJECTION_TOKEN,
   SurveyResponseQueryService,
@@ -44,42 +43,42 @@ import {
 import { SurveyResponseRecordViewModel } from './survey-completion/queries/survey-response-record.view-model';
 import { SURVEY_RESPONSE_COMMAND_REPOSITORY_INJECTION_TOKEN } from './survey-completion/repositories';
 import { InMemorySurveyResponseCommandRepository } from './survey-completion/repositories/in-memory-survey-response.command-repository';
-// TODO use barrel exports \ imports
-import { AddFollowUpQuestionForSurveyOption } from './survey-management/commands/add-follow-up-question-for-survey-option.command';
-import { AddFollowUpQuestionForSurveyOptionCommandHandler } from './survey-management/commands/add-follow-up-question-for-survey-option.command-handler';
-import { AddOptionToSurveyQuestion } from './survey-management/commands/add-option-to-survey-question.command';
-import { AddOptionToSurveyQuestionCommandHandler } from './survey-management/commands/add-option-to-survey.command-handler';
-import { AddQuestionToSurvey } from './survey-management/commands/add-question-to-survey.command';
-import { AddQuestionToSurveyCommandHandler } from './survey-management/commands/add-question-to-survey.command-handler';
-import { CreateSurvey } from './survey-management/commands/create-survey.command';
-import { CreateSurveyCommandHandler } from './survey-management/commands/create-survey.command-handler';
-import { FlagSurveyOption } from './survey-management/commands/flag-survey-option.command';
-import { FlagSurveyOptionCommandHandler } from './survey-management/commands/flag-survey-option.command-handler';
-import { PublishSurvey } from './survey-management/commands/publish-survey.command';
-import { PublishSurveyCommandHandler } from './survey-management/commands/publish-survey.command-handler';
-import { Survey } from './survey-management/survey.aggregate-root';
+import {
+  AddFollowUpQuestionForSurveyOptionCommandHandler,
+  AddOptionToSurveyQuestion,
+  AddOptionToSurveyQuestionCommandHandler,
+  AddQuestionToSurvey,
+  AddQuestionToSurveyCommandHandler,
+  CreateSurvey,
+  CreateSurveyCommandHandler,
+  FlagSurveyOption,
+  FlagSurveyOptionCommandHandler,
+  PublishSurvey,
+  PublishSurveyCommandHandler,
+  Survey,
+} from './survey-management';
 import { SurveyResponseController } from './survey-response.controller';
 import {
   AcknowledgeResponseForSurveyQuestionHasBeenViewed,
+  AcknowledgeResponseForSurveyQuestionHasBeenViewedCommandHandler,
   AddGeneralNoteAboutSurveyResponse,
+  AddGeneralNoteAboutSurveyResponseCommandHandler,
   AddNoteAboutQuestionResponse,
+  AddNoteAboutQuestionResponseCommandHandler,
   BeginReviewOfSurvey,
+  BeginReviewOfSurveyCommandHandler,
   FlagSurveyQuestionResponse,
+  FlagSurveyQuestionResponseCommandHandler,
   SubmitCompleteSurveyReview,
+  SubmitCompleteSurveyReviewCommandHandler,
   SubmitPartialSurveyReview,
   SubmitPartialSurveyReviewCommandHandler,
   SURVEY_REVIEW_COMMAND_REPOSITORY_INJECTION_TOKEN,
   SURVEY_REVIEW_QUERY_REPOSITORY_INJECTION_TOKEN,
   SurveyReview,
+  SurveyReviewQueryService,
 } from './survey-review';
 import { SurveyReviewController } from './survey-review.controller';
-import { AcknowledgeResponseForSurveyQuestionHasBeenViewedCommandHandler } from './survey-review/commands/acknowledge-response-for-survey-question-has-been-viewed.command-handler';
-import { AddGeneralNoteAboutSurveyResponseCommandHandler } from './survey-review/commands/add-general-note-about-survey-response.command-handler';
-import { AddNoteAboutQuestionResponseCommandHandler } from './survey-review/commands/add-note-about-question-response.command-handler';
-import { BeginReviewOfSurveyCommandHandler } from './survey-review/commands/begin-review-of-survey.command-handler';
-import { FlagSurveyQuestionResponseCommandHandler } from './survey-review/commands/flag-survey-question-response.command-handler';
-import { SubmitCompleteSurveyReviewCommandHandler } from './survey-review/commands/submit-complete-survey-review.command-handler';
-import { SurveyReviewQueryService } from './survey-review/queries/survey-review-query.service';
 import { SurveyController } from './survey.controller';
 
 // Is this necessary?

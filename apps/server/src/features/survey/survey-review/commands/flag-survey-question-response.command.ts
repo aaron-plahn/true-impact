@@ -11,7 +11,6 @@ import { SurveyReviewCompositeIdentifier } from '../survey-review.composite-iden
       type: 'survey review',
       id: '1',
     },
-    reviewId: '2',
     questionLabel: 'XX',
     flagId: '145',
   },
@@ -25,13 +24,6 @@ export class FlagSurveyQuestionResponse {
       'unique sytem-wide reference to the survey attempt being reviewed',
   })
   aggregateCompositeIdentifier: SurveyReviewCompositeIdentifier;
-
-  @NonEmptyString({
-    label: 'review ID',
-    description:
-      'uniquely identifies the review amongst other reviews of the same survey attempt',
-  })
-  reviewId: string;
 
   @NonEmptyString({
     label: 'question label',

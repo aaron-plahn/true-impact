@@ -1,6 +1,5 @@
 import {
   NestedDataType,
-  NonEmptyString,
   TrueImpactDataExample,
 } from '../../../../libs/data-types';
 import { SurveyResponseCompositeIdentifier } from '../../survey-completion';
@@ -11,7 +10,6 @@ import { SurveyResponseCompositeIdentifier } from '../../survey-completion';
       type: 'survey response record',
       id: '1',
     },
-    reviewId: '2',
   },
 })
 export class SubmitPartialSurveyReview {
@@ -23,11 +21,4 @@ export class SubmitPartialSurveyReview {
       'unique sytem-wide reference to the survey attempt being reviewed',
   })
   aggregateCompositeIdentifier: SurveyResponseCompositeIdentifier;
-
-  @NonEmptyString({
-    label: 'review ID',
-    description:
-      'uniquely identifies the review being submitted amongst other reviews of the same survey',
-  })
-  reviewId: string;
 }
