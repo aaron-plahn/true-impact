@@ -65,6 +65,7 @@ import {
   AddNoteAboutQuestionResponse,
   BeginReviewOfSurvey,
   FlagSurveyQuestionResponse,
+  SubmitCompleteSurveyReview,
   SubmitPartialSurveyReview,
   SubmitPartialSurveyReviewCommandHandler,
   SURVEY_REVIEW_COMMAND_REPOSITORY_INJECTION_TOKEN,
@@ -77,6 +78,7 @@ import { AddGeneralNoteAboutSurveyResponseCommandHandler } from './survey-review
 import { AddNoteAboutQuestionResponseCommandHandler } from './survey-review/commands/add-note-about-question-response.command-handler';
 import { BeginReviewOfSurveyCommandHandler } from './survey-review/commands/begin-review-of-survey.command-handler';
 import { FlagSurveyQuestionResponseCommandHandler } from './survey-review/commands/flag-survey-question-response.command-handler';
+import { SubmitCompleteSurveyReviewCommandHandler } from './survey-review/commands/submit-complete-survey-review.command-handler';
 import { SurveyReviewQueryService } from './survey-review/queries/survey-review-query.service';
 import { SurveyController } from './survey.controller';
 
@@ -109,6 +111,7 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
     AddGeneralNoteAboutSurveyResponseCommandHandler,
     FlagSurveyQuestionResponseCommandHandler,
     SubmitPartialSurveyReviewCommandHandler,
+    SubmitCompleteSurveyReviewCommandHandler,
     // services
     SurveyQueryService,
     SurveyResponseQueryService,
@@ -225,6 +228,10 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
           .register({
             CommandHandlerCtor: SubmitPartialSurveyReviewCommandHandler,
             CommandPayloadCtor: SubmitPartialSurveyReview,
+          })
+          .register({
+            CommandHandlerCtor: SubmitCompleteSurveyReviewCommandHandler,
+            CommandPayloadCtor: SubmitCompleteSurveyReview,
           });
 
         return commandHandlerService;

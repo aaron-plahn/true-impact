@@ -25,6 +25,7 @@ import {
   AddNoteAboutQuestionResponse,
   BeginReviewOfSurvey,
   FlagSurveyQuestionResponse,
+  SubmitCompleteSurveyReview,
   SubmitPartialSurveyReview,
 } from '../../../features/survey/survey-review';
 import {
@@ -71,6 +72,8 @@ const buildDetailQueryEndpoint = (indexEndpoint: string, id: string) =>
 const buildTestSetupEndpoint = (indexEndpoint: string) =>
   `${indexEndpoint}/test-setup`;
 
+const lastQuestionLabel = '3';
+
 const questions: (Omit<SurveyQuestionPersistenceDto, 'options'> & {
   options: Record<
     string,
@@ -112,7 +115,7 @@ const questions: (Omit<SurveyQuestionPersistenceDto, 'options'> & {
     },
   },
   {
-    label: '3',
+    label: lastQuestionLabel,
     prompt: 'will you take my other survey?',
     options: {
       a: {
@@ -146,6 +149,7 @@ describe(`when reviewing a survey (e.g. when a clinician reviews a client's resp
   let surveyResponseRecordId: string;
 
   let reviewAllButLastQuestion: TestCommandStream;
+  let reviewAllQuestions: TestCommandStream;
 
   beforeAll(async () => {
     await axios.patch(buildTestSetupEndpoint(indexEndpoints.communities));
@@ -243,7 +247,7 @@ describe(`when reviewing a survey (e.g. when a clinician reviews a client's resp
         chosenOptionLabel: 'b',
       })
       .andThen(AnswerSurveyQuestion, {
-        questionLabel: '3',
+        questionLabel: lastQuestionLabel,
         chosenOptionLabel: 'a',
       })
       .andThen(SubmitSurvey);
@@ -276,6 +280,13 @@ describe(`when reviewing a survey (e.g. when a clinician reviews a client's resp
         questionLabel: '1',
         flagId,
       });
+
+    reviewAllQuestions = reviewAllButLastQuestion.andThen(
+      AcknowledgeResponseForSurveyQuestionHasBeenViewed,
+      {
+        questionLabel: '3',
+      },
+    );
   });
 
   beforeEach(async () => {
@@ -370,52 +381,81 @@ describe(`when reviewing a survey (e.g. when a clinician reviews a client's resp
 
   describe(`when acknowledging the participant's response to a survey question`, () => {
     describe(`when the target in-progress review exists`, () => {
-      describe(`when the question has not yet been marked as viewed`, () => {
-        it(`should mark the question as viewed`, async () => {
-          await assertCommandScenarioSuccess({
-            endpoint: buildCommandEndpoint(indexEndpoints.surveys),
-            stream: TestCommandStream.first(BeginReviewOfSurvey, {
-              surveyResponseRecordId,
-            }).andThen(AcknowledgeResponseForSurveyQuestionHasBeenViewed, {
-              questionLabel: '1',
-            }),
-            assertSuccess: async (acks) => {
-              const updatedReviewRecord = (
-                await axios.get(
-                  buildDetailQueryEndpoint(indexEndpoints.reviews, acks[0].id),
-                )
-              ).data as SurveyQuestionReviewRecordViewModelClientDto;
-
-              expect(updatedReviewRecord);
-            },
-          });
-        });
-      });
-
-      describe(`when the question has already been marked as viewed`, () => {
-        const repeatedQuestionLabel = '1';
-
-        it(`should return the expected error response`, async () => {
+      describe(`when the target review has been submitted`, () => {
+        it(`should return the expected error`, async () => {
           await assertCommandScenarioError({
             endpoint: buildCommandEndpoint(indexEndpoints.surveys),
-            stream: TestCommandStream.first(BeginReviewOfSurvey, {
-              surveyResponseRecordId,
-            })
+            stream: reviewAllButLastQuestion
+              .andThen(SubmitPartialSurveyReview)
               .andThen(AcknowledgeResponseForSurveyQuestionHasBeenViewed, {
-                questionLabel: repeatedQuestionLabel,
-              })
-              .andThen(AcknowledgeResponseForSurveyQuestionHasBeenViewed, {
-                questionLabel: repeatedQuestionLabel,
+                questionLabel: lastQuestionLabel,
               }),
             assertErrorMessageAsExpected: (message) => {
               assertTextMatchesAll(
                 message,
-                surveyName,
-                repeatedQuestionLabel,
-                'cannot acknowledge review of question',
+                'cannot',
+                'review',
+                lastQuestionLabel,
                 'already',
+                'submitted',
               );
             },
+            // an interesting thought is that we might want to assert that the revision number of the aggregate has not changed
+          });
+        });
+      });
+
+      describe(`when the target review has not yet been submitted`, () => {
+        describe(`when the question has not yet been marked as viewed`, () => {
+          it(`should mark the question as viewed`, async () => {
+            await assertCommandScenarioSuccess({
+              endpoint: buildCommandEndpoint(indexEndpoints.surveys),
+              stream: TestCommandStream.first(BeginReviewOfSurvey, {
+                surveyResponseRecordId,
+              }).andThen(AcknowledgeResponseForSurveyQuestionHasBeenViewed, {
+                questionLabel: '1',
+              }),
+              assertSuccess: async (acks) => {
+                const updatedReviewRecord = (
+                  await axios.get(
+                    buildDetailQueryEndpoint(
+                      indexEndpoints.reviews,
+                      acks[0].id,
+                    ),
+                  )
+                ).data as SurveyQuestionReviewRecordViewModelClientDto;
+
+                expect(updatedReviewRecord);
+              },
+            });
+          });
+        });
+
+        describe(`when the question has already been marked as viewed`, () => {
+          const repeatedQuestionLabel = '1';
+
+          it(`should return the expected error response`, async () => {
+            await assertCommandScenarioError({
+              endpoint: buildCommandEndpoint(indexEndpoints.surveys),
+              stream: TestCommandStream.first(BeginReviewOfSurvey, {
+                surveyResponseRecordId,
+              })
+                .andThen(AcknowledgeResponseForSurveyQuestionHasBeenViewed, {
+                  questionLabel: repeatedQuestionLabel,
+                })
+                .andThen(AcknowledgeResponseForSurveyQuestionHasBeenViewed, {
+                  questionLabel: repeatedQuestionLabel,
+                }),
+              assertErrorMessageAsExpected: (message) => {
+                assertTextMatchesAll(
+                  message,
+                  surveyName,
+                  repeatedQuestionLabel,
+                  'cannot acknowledge review of question',
+                  'already',
+                );
+              },
+            });
           });
         });
       });
@@ -528,6 +568,31 @@ describe(`when reviewing a survey (e.g. when a clinician reviews a client's resp
               expect(updatedReviewRecord.size).toBe(1);
 
               expect(updatedReviewRecord.isComplete).toBe(false);
+            },
+          });
+        });
+      });
+
+      describe(`when the review has already been submitted`, () => {
+        it(`should return the expected error response`, async () => {
+          await assertCommandScenarioError({
+            // TODO should we make this endpoint a constant in case we change the API design? Right now, survey review commands are routed to the parent survey endpoint.
+            endpoint: buildCommandEndpoint(indexEndpoints.surveys),
+            stream: reviewAllButLastQuestion
+              .andThen(SubmitPartialSurveyReview)
+              .andThen(AddNoteAboutQuestionResponse, {
+                questionLabel: lastQuestionLabel,
+              }),
+            assertErrorMessageAsExpected: (message) => {
+              assertTextMatchesAll(
+                message,
+                'cannot',
+                'add a note',
+                lastQuestionLabel,
+                surveyName,
+                'already',
+                'submitted',
+              );
             },
           });
         });
@@ -666,6 +731,26 @@ describe(`when reviewing a survey (e.g. when a clinician reviews a client's resp
           });
         });
       });
+
+      describe(`when the review has already been submitted`, () => {
+        it(`should return the expected error response`, async () => {
+          await assertCommandScenarioError({
+            endpoint: buildCommandEndpoint(indexEndpoints.surveys),
+            stream: reviewAllButLastQuestion
+              .andThen(SubmitPartialSurveyReview)
+              .andThen(AddGeneralNoteAboutSurveyResponse),
+            assertErrorMessageAsExpected: (message) => {
+              assertTextMatchesAll(
+                message,
+                surveyName,
+                'cannot add a general note',
+                'already',
+                'submitted',
+              );
+            },
+          });
+        });
+      });
     });
   });
 
@@ -677,6 +762,30 @@ describe(`when reviewing a survey (e.g. when a clinician reviews a client's resp
     describe(`when the target survey review exists`, () => {
       describe(`when the question exists`, () => {
         describe(`when the flag exists`, () => {
+          describe(`when the survey has already been submitted`, () => {
+            it(`should return the expected error response`, async () => {
+              await assertCommandScenarioError({
+                endpoint: buildCommandEndpoint(indexEndpoints.surveys),
+                stream: reviewAllButLastQuestion
+                  .andThen(SubmitPartialSurveyReview)
+                  .andThen(FlagSurveyQuestionResponse, {
+                    flagId,
+                    questionLabel: lastQuestionLabel,
+                  }),
+                assertErrorMessageAsExpected: (message) => {
+                  assertTextMatchesAll(
+                    message,
+                    surveyName,
+                    'cannot flag',
+                    lastQuestionLabel,
+                    'already',
+                    'submitted',
+                  );
+                },
+              });
+            });
+          });
+
           describe(`when the question does not yet have the given flag`, () => {
             describe(`when the question has no existing flags`, () => {
               it(`should add the first flag`, async () => {
@@ -742,6 +851,8 @@ describe(`when reviewing a survey (e.g. when a clinician reviews a client's resp
                     const updatedQuestion = updatedReviewRecord.questions.find(
                       (q) => q.label === targetQuestion,
                     ) as SurveyQuestionReviewRecordViewModelClientDto;
+
+                    expect(updatedQuestion.hasBeenViewed).toBe(true);
 
                     const allFlagIds = Object.keys(updatedQuestion.flagsById);
 
@@ -866,7 +977,19 @@ describe(`when reviewing a survey (e.g. when a clinician reviews a client's resp
     describe(`when the target survey review exists`, () => {
       describe(`when the review has not yet been submitted`, () => {
         describe(`when the survey review is complete`, () => {
-          it.todo(`should return the expected error resposne`);
+          it(`should return the expected error resposne`, async () => {
+            await assertCommandScenarioError({
+              endpoint: buildCommandEndpoint(indexEndpoints.surveys),
+              stream: reviewAllQuestions.andThen(SubmitPartialSurveyReview),
+              assertErrorMessageAsExpected: (message) => {
+                assertTextMatchesAll(
+                  message,
+                  `cannot submit a parital review`,
+                  `complete`,
+                );
+              },
+            });
+          });
         });
 
         describe(`when the survey review is incomplete`, () => {
@@ -918,7 +1041,15 @@ describe(`when reviewing a survey (e.g. when a clinician reviews a client's resp
         });
 
         describe(`when a full review has been submitted`, () => {
-          it.todo(`should return the expected error response`);
+          it(`should return the expected error response`, async () => {
+            await assertCommandScenarioError({
+              endpoint: buildCommandEndpoint(indexEndpoints.surveys),
+              stream: reviewAllQuestions
+                .andThen(SubmitCompleteSurveyReview)
+                .andThen(SubmitPartialSurveyReview),
+              // We don't really care whether it errors out because the survey is incomplete and \ or the survey is already submitted
+            });
+          });
         });
       });
     });
@@ -944,21 +1075,104 @@ describe(`when reviewing a survey (e.g. when a clinician reviews a client's resp
     describe(`when the target survey review exists`, () => {
       describe(`when the review has not yet been submitted`, () => {
         describe(`when the survey review is complete`, () => {
-          it.todo(`should submit the review`);
+          it(`should submit the review`, async () => {
+            await assertCommandScenarioSuccess({
+              endpoint: buildCommandEndpoint(indexEndpoints.surveys),
+              stream: reviewAllQuestions.andThen(SubmitCompleteSurveyReview),
+              assertSuccess: async (acks) => {
+                const updatedReviewRecord = (
+                  await axios.get(
+                    buildDetailQueryEndpoint(
+                      indexEndpoints.reviews,
+                      acks[0].id,
+                    ),
+                  )
+                ).data as SurveyReviewViewModelClientDto;
+
+                expect(updatedReviewRecord.hasBeenSubmitted).toBe(true);
+
+                expect(updatedReviewRecord.isComplete).toBe(true);
+              },
+            });
+          });
         });
 
         describe(`when the survey review is incomplete`, () => {
-          it.todo(`should return the expected error resposne`);
+          it(`should return the expected error response`, async () => {
+            await assertCommandScenarioError({
+              endpoint: buildCommandEndpoint(indexEndpoints.surveys),
+              stream: reviewAllButLastQuestion.andThen(
+                SubmitCompleteSurveyReview,
+              ),
+              assertErrorMessageAsExpected: (message) => {
+                assertTextMatchesAll(
+                  message,
+                  'cannot submit',
+                  'complete review',
+                  '3', // question that has not been reviewed
+                  'not all questions have been reviewed',
+                );
+              },
+            });
+          });
         });
       });
 
       describe(`when the review has already been submitted`, () => {
-        it.todo(`should return the expected error response`);
+        describe(`when a partial review has been submitted`, () => {
+          it(`should return the expected error response`, async () => {
+            await assertCommandScenarioError({
+              endpoint: buildCommandEndpoint(indexEndpoints.surveys),
+              stream: reviewAllButLastQuestion
+                .andThen(SubmitPartialSurveyReview)
+                .andThen(SubmitCompleteSurveyReview),
+              assertErrorMessageAsExpected: (message) => {
+                assertTextMatchesAll(
+                  message,
+                  surveyName,
+                  'already',
+                  'submitted',
+                );
+              },
+            });
+          });
+        });
+
+        describe(`when a complete review has been submitted`, () => {
+          it(`should return the expected error response`, async () => {
+            await assertCommandScenarioError({
+              endpoint: buildCommandEndpoint(indexEndpoints.surveys),
+              stream: reviewAllQuestions
+                .andThen(SubmitCompleteSurveyReview)
+                .andThen(SubmitCompleteSurveyReview),
+              assertErrorMessageAsExpected: (message) => {
+                assertTextMatchesAll(
+                  message,
+                  surveyName,
+                  'already',
+                  'submitted',
+                );
+              },
+            });
+          });
+        });
       });
     });
 
     describe(`when the target survey review does not exist`, () => {
-      it.todo(`should return the expected error response`);
+      it(`should return the expected error response`, async () => {
+        await assertCommandError({
+          endpoint: buildCommandEndpoint(indexEndpoints.surveys),
+          commandFsa: TestCommandStream.buildOne(SubmitCompleteSurveyReview, {
+            aggregateCompositeIdentifier: {
+              id: missingAggregateId,
+            },
+          }),
+          assertErrorMessageAsExpected: (message) => {
+            assertTextMatchesAll(message, missingAggregateId, 'no such review');
+          },
+        });
+      });
     });
   });
 });

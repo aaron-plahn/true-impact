@@ -110,7 +110,9 @@ export class SurveyReview extends AggregateRoot<SurveyReviewPersistenceDto> {
     // Note that this is modified as an original array element by reference (a side-effect)
     questionSearchResult.hasBeenViewed = true;
 
-    return this;
+    return this.applyUpdateIfPossible(
+      `mark question [${questionLabel}] as viewed`,
+    );
   }
 
   @UpdateMethod()
@@ -150,7 +152,9 @@ export class SurveyReview extends AggregateRoot<SurveyReviewPersistenceDto> {
      */
     targetQuestion.hasBeenViewed = true;
 
-    return this;
+    return this.applyUpdateIfPossible(
+      `add a note about question [${questionLabel}]`,
+    );
   }
 
   @UpdateMethod()
@@ -175,7 +179,9 @@ export class SurveyReview extends AggregateRoot<SurveyReviewPersistenceDto> {
 
     this.generalNotes.push(multilingualTextBuildResult);
 
-    return this;
+    return this.applyUpdateIfPossible(
+      `add a general note about this client's survey response`,
+    );
   }
 
   @UpdateMethod()
@@ -207,7 +213,11 @@ export class SurveyReview extends AggregateRoot<SurveyReviewPersistenceDto> {
 
     targetQuestion.flagIds.add(flagId);
 
-    return this;
+    targetQuestion.hasBeenViewed = true;
+
+    return this.applyUpdateIfPossible(
+      `flag question [${questionLabel}] with flag [${flagId}]`,
+    );
   }
 
   @UpdateMethod()
@@ -218,9 +228,59 @@ export class SurveyReview extends AggregateRoot<SurveyReviewPersistenceDto> {
       );
     }
 
+    if (this.isComplete()) {
+      return new TrueImpactError(
+        `You cannot submit a parital review [${this.id}] of survey [${this.surveyName}], as the review is complete (i.e., every question's response has been marked as viewed).`,
+      );
+    }
+
     this.hasBeenSubmitted = true;
 
     return this;
+  }
+
+  @UpdateMethod()
+  submitCompleteReview() {
+    if (this.hasBeenSubmitted) {
+      return new TrueImpactError(
+        `You cannot submit review [${this.id}] of survey [${this.surveyName}], as it has already been submitted.`,
+      );
+    }
+
+    // TODO Do we want the same approach for submit partial review?
+    const unreviewedQuestions = this.questionsReviewed.filter(
+      (qr) => !qr.hasBeenViewed,
+    );
+
+    if (unreviewedQuestions.length > 0) {
+      return new TrueImpactError(
+        `You cannot submit complete review [${this.id}] of survey [${this.surveyName}], as not all questions have been reviewed. Please review questions: [${unreviewedQuestions
+          .map((q) => q.questionLabel)
+          .join(', ')}]`,
+      );
+    }
+
+    this.hasBeenSubmitted = true;
+
+    return this;
+  }
+
+  private applyUpdateIfPossible(action: string): this | TrueImpactError {
+    if (this.hasBeenSubmitted) {
+      return new TrueImpactError(
+        `You cannot ${action}, as review [${this.id}] of survey [${this.surveyName}] has already been submitted.`,
+      );
+    }
+
+    return this;
+  }
+
+  countQuestionsViewed(): number {
+    return this.questionsReviewed.filter((qr) => qr.hasBeenViewed).length;
+  }
+
+  isComplete(): boolean {
+    return this.countQuestionsViewed() === this.questionsReviewed.length;
   }
 
   toPersistenceDto(): SurveyReviewPersistenceDto {

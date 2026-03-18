@@ -1,6 +1,19 @@
-import { NestedDataType, NonEmptyString } from '../../../../libs/data-types';
+import {
+  NestedDataType,
+  NonEmptyString,
+  TrueImpactDataExample,
+} from '../../../../libs/data-types';
 import { SurveyReviewCompositeIdentifier } from '../survey-review.composite-identifier';
 
+@TrueImpactDataExample<SubmitCompleteSurveyReview>({
+  example: {
+    aggregateCompositeIdentifier: {
+      type: 'survey review',
+      id: '3',
+    },
+    reviewId: '4',
+  },
+})
 export class SubmitCompleteSurveyReview {
   static readonly type = 'SUBMIT_COMPLETE_SURVEY_REVIEW';
 
