@@ -20,7 +20,7 @@ export class InMemorySurveyResponseCommandRepository implements ISurveyResponseC
   }
 
   fetchMany(): Promise<SurveyResponseRecord[]> {
-    throw new Error('Method not implemented.');
+    return this.base.fetchMany();
   }
 
   create(

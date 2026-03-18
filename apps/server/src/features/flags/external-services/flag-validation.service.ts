@@ -9,6 +9,8 @@ export class FlagValidationService {
   ) {}
 
   exists(flagId: string): Promise<boolean> {
-    return this.commandRepository.exists(flagId);
+    const result = this.commandRepository.exists(flagId);
+
+    return result;
   }
 }

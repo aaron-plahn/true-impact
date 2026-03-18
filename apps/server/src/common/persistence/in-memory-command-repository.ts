@@ -172,7 +172,7 @@ export class InMemoryCommandRepository<
       id,
       // pull this from the entity?
       type: this.type,
-      revision: existingEntity.revision.toString(),
+      revision: instance.revision.toString(),
     });
   }
 
