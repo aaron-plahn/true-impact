@@ -63,6 +63,7 @@ export class SurveyController implements OnModuleInit {
     return result;
   }
 
+  // TODO Opt out of API docs for this one
   @TestSetupEndpoint()
   async testSetup(): Promise<'OK'> {
     if (process.env.NODE_ENV !== 'test') {
