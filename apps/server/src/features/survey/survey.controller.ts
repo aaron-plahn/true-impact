@@ -1,9 +1,18 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+import { OnModuleInit } from '@nestjs/common';
+import { ApiBody } from '@nestjs/swagger';
+import {
+  ExampleObject,
+  ExamplesObject,
+} from '@nestjs/swagger/dist/interfaces/open-api-spec.interface';
 import type { ICommandFsa } from '../../libs/cqrs-es';
 import { CommandHandlerService, CommandResult } from '../../libs/cqrs-es';
 import {
   TrueImpactError,
   TrueImpactRuntimeException,
 } from '../../libs/data-types';
+import { convertToOpenApiSchema } from '../../libs/data-types/schema-management/utilities/convert-to-open-api-schema';
 import {
   BadUserInputFilter,
   Body,
@@ -24,7 +33,7 @@ import { SurveyViewModelClientDto } from './queries/survey.view-model';
 @UseFilters(ResourceNotFoundFilter, BadUserInputFilter)
 @UseInterceptors(QueryResponseInterceptor)
 @Controller('surveys')
-export class SurveyController {
+export class SurveyController implements OnModuleInit {
   constructor(
     private readonly surveyQueryService: SurveyQueryService,
     private readonly commandHandlerService: CommandHandlerService,
@@ -69,5 +78,44 @@ export class SurveyController {
     await this.surveyQueryService.surveyCommandRepository.clear();
 
     return 'OK';
+  }
+
+  onModuleInit() {
+    const rawSchemas = this.commandHandlerService.getCommandFsaSchemas();
+
+    const commandFsaSchemasInOpenApiFormat = rawSchemas.map(
+      convertToOpenApiSchema,
+    );
+
+    const examples: Record<string, ExampleObject> = {};
+
+    rawSchemas.forEach((s) => {
+      Object.entries(s.examples).forEach(([exampleName, example]) => {
+        const proto = Object.getPrototypeOf(example);
+
+        const commandType = proto.constructor['type'];
+
+        examples[`${commandType} - [${exampleName}]`] = {
+          value: {
+            type: commandType,
+            payload: example,
+          },
+        };
+      });
+    });
+
+    ApiBody({
+      examples: examples as unknown as ExamplesObject,
+      schema: {
+        oneOf: commandFsaSchemasInOpenApiFormat,
+      },
+    })(
+      SurveyController.prototype,
+      'executeCommand',
+      Object.getOwnPropertyDescriptor(
+        SurveyController.prototype,
+        'executeCommand',
+      ) as PropertyDescriptor,
+    );
   }
 }

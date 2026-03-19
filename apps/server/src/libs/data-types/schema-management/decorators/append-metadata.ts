@@ -11,6 +11,11 @@ export type EnumeratedTypeSchemaPropertyMetadata = {
   valuesAndLabels: Record<string, string>;
 };
 
+export const isEnumeratedTypeSchemaPropertyMetadata = (
+  input: unknown,
+): input is EnumeratedTypeSchemaPropertyMetadata =>
+  (input as EnumeratedTypeSchemaPropertyMetadata).type === 'ENUMERATED_TYPE';
+
 export type ObjectSchemaPropertyMetadata = {
   type: 'object';
   isOptional: boolean;

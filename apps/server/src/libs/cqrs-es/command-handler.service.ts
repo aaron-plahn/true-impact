@@ -1,5 +1,8 @@
 import {
+  buildTestInstance,
   Ctor,
+  DataSchema,
+  EnumeratedTypeSchemaPropertyMetadata,
   getDataSchemaFromClassCtor,
   TrueImpactBadUserInputError,
   TrueImpactError,
@@ -138,6 +141,52 @@ export class CommandHandlerService {
       ]);
 
     return executionResult;
+  }
+
+  getCommandFsaSchemas(): (DataSchema<ICommandFsa> & {
+    examples: ICommandFsa[];
+  })[] {
+    const schemas: (DataSchema<ICommandFsa> & {
+      examples: ICommandFsa[];
+    })[] = [];
+
+    this.commandTypeToPayloads.forEach((Ctor, commandType) => {
+      const fsaTypePropertySchema: EnumeratedTypeSchemaPropertyMetadata = {
+        type: 'ENUMERATED_TYPE',
+        isOptional: false,
+        label: 'command type',
+        description: 'Specifies the command you would like to execute.',
+        enum: [],
+        valuesAndLabels: {
+          type: commandType,
+        },
+      };
+
+      const schemaForFsa = {
+        properties: {
+          type: fsaTypePropertySchema,
+          payload: {
+            type: 'object',
+            getCtor: () => Ctor,
+          },
+        },
+        /**
+         * TODO Eventually we should support registering multiple named examples in our
+         * codebase.
+         */
+        examples: {
+          default: buildTestInstance(Ctor),
+        },
+      };
+
+      schemas.push(
+        schemaForFsa as unknown as DataSchema<ICommandFsa> & {
+          examples: ICommandFsa[];
+        },
+      );
+    });
+
+    return schemas;
   }
 
   private buildTypeValidationError(
