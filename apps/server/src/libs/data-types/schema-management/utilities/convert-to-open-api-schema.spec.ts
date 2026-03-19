@@ -5,6 +5,7 @@ import {
   NonEmptyString,
   NonNegativeInteger,
 } from '../../schema-management/decorators';
+import { LookupTable } from '../../schema-management/decorators/lookup-table.decorator';
 import { convertToOpenApiSchema } from './convert-to-open-api-schema';
 
 const buildPropertyMeta = (propertyName: string) => ({
@@ -28,6 +29,14 @@ class Widget {
     isOptional: false, // i.e., cannot be empty
   })
   ratings: number[];
+}
+
+class Flag {
+  @NonEmptyString(buildPropertyMeta('id'))
+  id: string;
+
+  @NonEmptyString(buildPropertyMeta('label'))
+  label: string;
 }
 
 enum GadgetClass {
@@ -54,6 +63,12 @@ class Gadget {
     isOptional: true,
   })
   secondaryWidget?: Widget;
+
+  @LookupTable(() => Flag, buildPropertyMeta('flags by ID'))
+  flagsById: Record<string, Flag>;
+
+  @LookupTable('integer', buildPropertyMeta('user ratings by user ID'))
+  userRatingsByUserId: Record<string, number>;
 }
 
 describe(`convertToOpenApiSchema`, () => {

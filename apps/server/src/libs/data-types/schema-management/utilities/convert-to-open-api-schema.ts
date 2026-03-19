@@ -6,8 +6,10 @@ import {
   BOOLEAN,
   DataSchema,
   getDataSchemaFromClassCtor,
+  isArrayItemObjectSchema,
   isArraySchemaPropertyMetadata,
   isEnumeratedTypeSchemaPropertyMetadata,
+  isLookupTablePropertyMetadata,
   isObjectSchemaPropertyMetadata,
   NON_EMPTY_STRING,
   NON_NEGATIVE_INTEGER,
@@ -46,8 +48,28 @@ const convertPropertySchemaMetadataToOpenApiSchema = (
   }
 
   if (isArraySchemaPropertyMetadata(meta)) {
+    const { items } = meta;
+
+    if (isArrayItemObjectSchema(items)) {
+      const itemCtor = items.getCtor();
+
+      const rawItemSchema = getDataSchemaFromClassCtor(itemCtor);
+
+      const itemSchema = convertToOpenApiSchema(rawItemSchema);
+
+      const result: OpenApiSchema = {
+        type: 'array',
+        items: itemSchema,
+      };
+
+      return result;
+    }
+
     const result: OpenApiSchema = {
       type: 'array',
+      items: {
+        type: getOpenApiDataTypeForTrueImpactDataType(meta.items.type),
+      },
     };
 
     return result;
@@ -58,6 +80,24 @@ const convertPropertySchemaMetadataToOpenApiSchema = (
       type: 'string',
       // TODO Should this be labelsAndValues or labelsToValues?
       enum: Array.from(Object.values(meta.valuesAndLabels)),
+    };
+  }
+
+  if (isLookupTablePropertyMetadata(meta)) {
+    if (typeof meta.valueType === 'function') {
+      return {
+        type: 'object',
+        additionalProperties: convertToOpenApiSchema(
+          getDataSchemaFromClassCtor(meta.valueType()),
+        ),
+      };
+    }
+
+    return {
+      type: 'object',
+      additionalProperties: {
+        type: meta.valueType,
+      },
     };
   }
 

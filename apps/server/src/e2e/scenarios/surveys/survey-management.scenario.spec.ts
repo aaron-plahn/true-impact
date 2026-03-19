@@ -1,6 +1,9 @@
 import axios from 'axios';
 import { CreateFlag } from '../../../features/flags/commands';
-import { FlagViewModel } from '../../../features/flags/queries';
+import {
+  FlagViewModel,
+  FlagViewModelClientDto,
+} from '../../../features/flags/queries';
 import {
   SurveyViewModel,
   SurveyViewModelClientDto,
@@ -878,14 +881,20 @@ describe(`Survey Management Scenarios`, () => {
                         const parentOption = parentQuestion.options['a'];
 
                         const flaggedFollowUpQuestion =
-                          parentOption.followUpQuestions[
-                            labelOfFollowUpQuestionToFlag
-                          ];
+                          parentOption.followUpQuestions.find(
+                            (fuq) =>
+                              fuq.label === labelOfFollowUpQuestionToFlag,
+                          );
+
+                        const flaggedFollowUpOptions =
+                          flaggedFollowUpQuestion?.options ||
+                          ({} as Record<
+                            string,
+                            { flags: Record<string, FlagViewModelClientDto> }
+                          >);
 
                         const flaggedFollowUpOption =
-                          flaggedFollowUpQuestion.options[
-                            labelOfFollowUpOptionToFlag
-                          ];
+                          flaggedFollowUpOptions[labelOfFollowUpOptionToFlag];
 
                         expect(
                           Object.keys(flaggedFollowUpOption.flags),

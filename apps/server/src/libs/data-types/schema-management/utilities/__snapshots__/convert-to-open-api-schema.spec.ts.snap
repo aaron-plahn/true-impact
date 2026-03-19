@@ -1,3 +1,67 @@
 // Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
 
-exports[`convertToOpenApiSchema when given the schema for a test class should return the expected Open API schema 1`] = `{}`;
+exports[`convertToOpenApiSchema when given the schema for a test class should return the expected Open API schema 1`] = `
+{
+  "properties": {
+    "class": {
+      "enum": [
+        "PREM",
+        "MID",
+        "BUCKORTWO",
+      ],
+      "type": "string",
+    },
+    "flagsById": {
+      "additionalProperties": {
+        "properties": {
+          "id": {
+            "type": "string",
+          },
+          "label": {
+            "type": "string",
+          },
+        },
+      },
+      "type": "object",
+    },
+    "id": {
+      "type": "string",
+    },
+    "mainWidget": {
+      "properties": {
+        "count": {
+          "type": "string",
+        },
+        "label": {
+          "type": "string",
+        },
+        "ratings": {
+          "items": {
+            "type": "integer",
+          },
+          "type": "array",
+        },
+      },
+    },
+    "priority": {
+      "type": "integer",
+    },
+    "secondaryWidget": {
+      "properties": {
+        "count": {
+          "type": "string",
+        },
+        "label": {
+          "type": "string",
+        },
+        "ratings": {
+          "items": {
+            "type": "integer",
+          },
+          "type": "array",
+        },
+      },
+    },
+  },
+}
+`;

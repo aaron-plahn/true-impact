@@ -1,7 +1,11 @@
+import { ApiOkResponse } from '@nestjs/swagger';
 import type { CommandResult, ICommandFsa } from '../../libs/cqrs-es';
 import { CommandHandlerService } from '../../libs/cqrs-es';
 
 import {
+  buildTestInstance,
+  convertToOpenApiSchema,
+  getDataSchemaFromClassCtor,
   TrueImpactError,
   TrueImpactRuntimeException,
 } from '../../libs/data-types';
@@ -19,7 +23,14 @@ import {
   UseFilters,
   UseInterceptors,
 } from '../../libs/framework';
+import { ClientViewModelClientDto } from './queries';
 import { ClientQueryService } from './services/client-query.service';
+
+const schema = convertToOpenApiSchema(
+  getDataSchemaFromClassCtor(ClientViewModelClientDto),
+);
+
+const example = buildTestInstance(ClientViewModelClientDto);
 
 @UseFilters(ResourceNotFoundFilter, BadUserInputFilter)
 @UseInterceptors(QueryResponseInterceptor)
@@ -31,6 +42,10 @@ export class ClientController {
   ) {}
 
   @DetailQueryEndpoint()
+  @ApiOkResponse({
+    schema,
+    example,
+  })
   async fetchById(@IdParam() id: string) {
     const result = await this.clientsService.fetchById(id);
 
@@ -38,6 +53,11 @@ export class ClientController {
   }
 
   @IndexQueryEndpoint()
+  @ApiOkResponse({
+    isArray: true,
+    schema,
+    example,
+  })
   async fetchMany() {
     // TODO We need a client view model
     return this.clientsService.fetchMany();

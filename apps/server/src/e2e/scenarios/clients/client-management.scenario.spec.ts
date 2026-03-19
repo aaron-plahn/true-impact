@@ -451,9 +451,9 @@ describe(`Client Management Scenarios`, () => {
                   await axios.get(`${clientIndexEndpoint}/${acks[0].id}`)
                 ).data as ClientViewModelClientDto;
 
-                expect(Object.keys(updated.flags)).toContain(flagId);
+                expect(Object.keys(updated.flagsById)).toContain(flagId);
 
-                const flagSearch = updated.flags[flagId];
+                const flagSearch = updated.flagsById[flagId];
 
                 expect(flagSearch.label).toEqual(flagLabel);
               },

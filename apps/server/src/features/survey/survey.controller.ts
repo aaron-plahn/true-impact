@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { OnModuleInit } from '@nestjs/common';
-import { ApiBody } from '@nestjs/swagger';
+import { ApiBody, ApiOkResponse } from '@nestjs/swagger';
 import {
   ExampleObject,
   ExamplesObject,
@@ -9,10 +9,12 @@ import {
 import type { ICommandFsa } from '../../libs/cqrs-es';
 import { CommandHandlerService, CommandResult } from '../../libs/cqrs-es';
 import {
+  buildTestInstance,
+  convertToOpenApiSchema,
+  getDataSchemaFromClassCtor,
   TrueImpactError,
   TrueImpactRuntimeException,
 } from '../../libs/data-types';
-import { convertToOpenApiSchema } from '../../libs/data-types/schema-management/utilities/convert-to-open-api-schema';
 import {
   BadUserInputFilter,
   Body,
@@ -30,6 +32,12 @@ import {
 import { SurveyQueryService } from './queries/survey-query.service';
 import { SurveyViewModelClientDto } from './queries/survey.view-model';
 
+const schema = convertToOpenApiSchema(
+  getDataSchemaFromClassCtor(SurveyViewModelClientDto),
+);
+
+const example = buildTestInstance(SurveyViewModelClientDto);
+
 @UseFilters(ResourceNotFoundFilter, BadUserInputFilter)
 @UseInterceptors(QueryResponseInterceptor)
 @Controller('surveys')
@@ -40,6 +48,10 @@ export class SurveyController implements OnModuleInit {
   ) {}
 
   @DetailQueryEndpoint()
+  @ApiOkResponse({
+    schema,
+    example,
+  })
   // TODO every query should return a `ResultOrError`. This **could** be wrapped in a true `Either`.
   async fetchById(
     @IdParam() id: string,
@@ -50,6 +62,11 @@ export class SurveyController implements OnModuleInit {
   }
 
   @IndexQueryEndpoint()
+  @ApiOkResponse({
+    schema,
+    example,
+    isArray: true,
+  })
   async fetchMany() {
     const result = await this.surveyQueryService.fetchMany();
 

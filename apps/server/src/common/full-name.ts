@@ -1,16 +1,45 @@
-export type FullNameDto = {
+import { NonEmptyString } from 'src/libs/data-types';
+
+export class FullNameDto {
+  @NonEmptyString({
+    label: 'first name',
+    description: `the person's first name`,
+  })
   firstName: string;
 
+  @NonEmptyString({
+    label: 'middle name',
+    description: `the person's middle name`,
+  })
   middleName?: string;
 
+  @NonEmptyString({
+    label: 'last name',
+    description: `the person's last name`,
+  })
   lastName: string;
-};
+}
 
 export class FullName {
+  @NonEmptyString({
+    label: 'first name',
+    description: `the person's first name`,
+  })
   firstName: string;
 
+  @NonEmptyString({
+    label: 'middle name',
+    description: `the person's middle name`,
+    // TODO this should show up as optional in swagger
+    // TODO support many middle names
+    isOptional: true,
+  })
   middleName?: string;
 
+  @NonEmptyString({
+    label: 'last name',
+    description: `the person's last name`,
+  })
   lastName: string;
 
   constructor(dto: FullNameDto) {
@@ -50,7 +79,7 @@ export class FullName {
   }
 
   toString() {
-    return `${this.firstName} ${this.getMiddleInitial()} ${this.lastName}`;
+    return `${this.firstName} ${this.getMiddleInitial() || ''} ${this.lastName}`;
   }
 
   public static fromDto(dto: FullNameDto) {

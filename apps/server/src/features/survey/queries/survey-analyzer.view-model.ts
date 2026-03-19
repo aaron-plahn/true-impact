@@ -28,7 +28,7 @@ export class SurveyAnalyzerViewModelClientDto {
   })
   categories: Category[];
 
-  // TODO @LookupTable
+  // TODO @LookupTable - we need to support nested lookuptables here
   valuesByOptionByQuestion: Record<
     QuestionLabel,
     Record<OptionLabel, Record<Category, ValueForOption>>

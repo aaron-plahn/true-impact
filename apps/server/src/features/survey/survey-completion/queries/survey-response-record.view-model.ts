@@ -1,8 +1,11 @@
+import { CLIENT_AGGREGATE_TYPE } from '../../../../features/clients/client.composite-identifier';
 import {
   BooleanDataType,
   NestedDataType,
   NonEmptyString,
+  TrueImpactDataExample,
 } from '../../../../libs/data-types';
+import { LookupTable } from '../../../../libs/data-types/schema-management/decorators/lookup-table.decorator';
 import { DONE } from '../../constants';
 import { SurveyQuestion } from '../../survey-management/survey-question.entity';
 import { SurveyResponseRecord } from '../models';
@@ -43,6 +46,20 @@ export class ActiveSurveyQuestionViewModel {
   }
 }
 
+export class SurveyResponseOptionViewModelClientDto {
+  @NonEmptyString({
+    label: 'text',
+    description: 'the text for this option',
+  })
+  text: string;
+
+  @BooleanDataType({
+    label: 'was chosen',
+    description: 'Was this option selected by the user?',
+  })
+  wasChosen: boolean;
+}
+
 /**
  * We have an interesting design decision here. We can
  * 1. send back the questions and each question's options in arrays to
@@ -60,6 +77,28 @@ export class SurveyResponseOptionViewModel {
 
     this.wasChosen = wasChosen;
   }
+
+  toClientDto(): SurveyResponseOptionViewModelClientDto {
+    return {
+      text: 'because I feel this way in my gut',
+      wasChosen: true,
+    };
+  }
+}
+
+export class SurveyQuestionResponseViewModelClientDto {
+  @NonEmptyString({
+    label: 'question label',
+    description: 'label for this question',
+  })
+  questionLabel: string;
+
+  @LookupTable(() => SurveyResponseOptionViewModelClientDto, {
+    label: 'options',
+    description:
+      'a lookup table of all options that were available for this question',
+  })
+  options: Record<string, SurveyResponseOptionViewModelClientDto>;
 }
 
 export class SurveyQuestionResponseViewModel {
@@ -81,6 +120,150 @@ export class SurveyQuestionResponseViewModel {
   }
 
   // Once we have a dedicated query DB, we may want a `fromPersistenceDto`
+}
+
+@TrueImpactDataExample<SurveyResponseRecordViewModelClientDto>({
+  example: {
+    id: '1',
+    name: 'long survey',
+    revision: '5',
+    hasBeenSubmitted: false,
+    participantCompositeIdentifier: {
+      type: CLIENT_AGGREGATE_TYPE,
+      id: 'c99',
+    },
+    responses: [
+      {
+        questionLabel: '1',
+        options: {
+          a: {
+            text: 'yes',
+            wasChosen: false,
+          },
+          b: {
+            text: 'no',
+            wasChosen: true,
+          },
+          c: {
+            text: 'maybe',
+            wasChosen: false,
+          },
+        },
+      },
+      {
+        questionLabel: '2',
+        // TODO Don't we want the prompts here?
+        options: {
+          a: {
+            text: 'yes',
+            wasChosen: false,
+          },
+          b: {
+            text: 'no',
+            wasChosen: true,
+          },
+          c: {
+            text: 'maybe',
+            wasChosen: false,
+          },
+        },
+      },
+      {
+        questionLabel: '3',
+        options: {
+          a: {
+            text: 'yes',
+            wasChosen: false,
+          },
+          b: {
+            text: 'no',
+            wasChosen: true,
+          },
+          c: {
+            text: 'maybe',
+            wasChosen: false,
+          },
+        },
+      },
+    ],
+    nextQuestion: {
+      label: '4',
+      text: 'This is the next question that should be displayed in the UX.',
+      options: [
+        {
+          label: 'a',
+          text: 'sometimes',
+        },
+        {
+          label: 'b',
+          text: 'never',
+        },
+      ],
+    },
+  },
+})
+export class SurveyResponseRecordViewModelClientDto {
+  @NonEmptyString({
+    label: 'id',
+    description: `a unique identifier for this survey attempt`,
+  })
+  id: string;
+
+  @NonEmptyString({
+    label: 'name',
+    description: 'a top-level label for this survey attempt',
+  })
+  name: string;
+
+  @NonEmptyString({
+    label: 'revision ID',
+    description: `helps to identify when a survey attempt has been updated`,
+  })
+  revision: string;
+
+  /**
+   * TODO Support time stamps \ auditable completion history
+   */
+  // @NonEmptyString({
+  //   label: 'date started',
+  //   description:
+  //     'the date and time at which the user began completing the survey',
+  // })
+  // dateStarted: string;
+
+  // @NonEmptyString({
+  //   label: 'date completed',
+  //   description: 'the date and time at which the user submitted the survey',
+  // })
+  // dateCompleted?: string;
+
+  @BooleanDataType({
+    label: 'has been submitted',
+    description: 'has this survey been submitted by the participant?',
+  })
+  hasBeenSubmitted: boolean;
+
+  @NonEmptyString({
+    label: 'participant identifier',
+    description:
+      'a system-wide unique identifier for the participant who completed this survey',
+  })
+  participantCompositeIdentifier: SurveyParticipantCompositeIdentifier | null;
+
+  @NestedDataType(() => SurveyQuestionResponseViewModelClientDto, {
+    label: 'responses',
+    description: `an ordered list of user responses to this survey's question`,
+    isArray: true,
+    // A survey completion record is empty at first
+    isOptional: true, // i.e., can be empty
+  })
+  responses: SurveyQuestionResponseViewModelClientDto[];
+
+  @NestedDataType(() => ActiveSurveyQuestionViewModel, {
+    label: 'next question',
+    description: 'this is the next question the user should complete',
+  })
+  nextQuestion: ActiveSurveyQuestionViewModel | null;
 }
 
 export class SurveyResponseRecordViewModel {
