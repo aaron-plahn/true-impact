@@ -1,4 +1,3 @@
-import { LookupTable } from 'src/libs/data-types/schema-management/decorators/lookup-table.decorator';
 import { FlagViewModelClientDto } from '../../../features/flags/queries';
 import {
   NestedDataType,
@@ -6,6 +5,7 @@ import {
   NonNegativeInteger,
   TrueImpactDataExample,
 } from '../../../libs/data-types';
+import { LookupTable } from '../../../libs/data-types/schema-management/decorators/lookup-table.decorator';
 import { SurveyOption } from '../survey-management/survey-option.entity';
 import { SurveyQuestion } from '../survey-management/survey-question.entity';
 import { Survey } from '../survey-management/survey.aggregate-root';

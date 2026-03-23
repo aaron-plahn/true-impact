@@ -1,9 +1,9 @@
-import { LookupTable } from 'src/libs/data-types/schema-management/decorators/lookup-table.decorator';
 import {
   NestedDataType,
   NonEmptyString,
   TrueImpactDataExample,
 } from '../../../../libs/data-types';
+import { LookupTable } from '../../../../libs/data-types/schema-management/decorators/lookup-table.decorator';
 import { SurveyCompositeIdentifier } from '../../survey.composite-identifier';
 
 @TrueImpactDataExample<AddValueForSurveyOption>({

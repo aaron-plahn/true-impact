@@ -69,6 +69,15 @@ class Gadget {
 
   @LookupTable('integer', buildPropertyMeta('user ratings by user ID'))
   userRatingsByUserId: Record<string, number>;
+
+  @LookupTable('integer', {
+    ...buildPropertyMeta('reviewer score by reviewer ID by department ID'),
+    depth: 2,
+  })
+  reviewerScoreByReviewerIdByDepartmentId: Record<
+    string,
+    Record<string, number>
+  >;
 }
 
 describe(`convertToOpenApiSchema`, () => {

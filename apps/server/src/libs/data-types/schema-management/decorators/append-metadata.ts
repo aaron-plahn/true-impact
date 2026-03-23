@@ -78,6 +78,7 @@ export type LookupTablePropertyMetadata = {
   label: string;
   description: string;
   valueType: GetCtor | 'string' | 'number' | 'integer' | 'boolean';
+  depth: number;
 };
 
 export const isLookupTablePropertyMetadata = (

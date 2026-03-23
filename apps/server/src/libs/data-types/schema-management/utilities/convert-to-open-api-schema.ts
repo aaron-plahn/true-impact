@@ -84,6 +84,14 @@ const convertPropertySchemaMetadataToOpenApiSchema = (
   }
 
   if (isLookupTablePropertyMetadata(meta)) {
+    if (meta.depth !== 1) {
+      throw new TrueImpactRuntimeException([
+        new TrueImpactError(
+          `Lookup tables with a depth other than 1 are not yet supported.`,
+        ),
+      ]);
+    }
+
     if (typeof meta.valueType === 'function') {
       return {
         type: 'object',

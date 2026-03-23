@@ -1,4 +1,3 @@
-import { LookupTable } from 'src/libs/data-types/schema-management/decorators/lookup-table.decorator';
 import { FullName, FullNameDto } from '../../../common/full-name';
 import { CommunityViewModelClientDto } from '../../../features/communities/queries';
 import { FlagViewModelClientDto } from '../../../features/flags/queries';
@@ -10,6 +9,7 @@ import {
   NonEmptyString,
   TrueImpactDataExample,
 } from '../../../libs/data-types';
+import { LookupTable } from '../../../libs/data-types/schema-management/decorators/lookup-table.decorator';
 import { Client } from '../client.aggregate-root';
 
 @TrueImpactDataExample<ClientViewModelClientDto>({

@@ -4,6 +4,7 @@ import {
   TrueImpactError,
   UpdateMethod,
 } from '../../libs/data-types';
+import { LookupTable } from '../../libs/data-types/schema-management/decorators/lookup-table.decorator';
 import { MultilingualTextItemRole } from './multilingual-text-item-role.enum';
 import {
   MultilingualTextItem,
@@ -17,6 +18,11 @@ const allowedTranslationLanguageCodes = new Set(['clc']);
 type LanguageCode = string;
 
 export class MultilingualTextPersistenceDto {
+  @LookupTable(() => MultilingualTextItemPersistenceDto, {
+    label: 'items',
+    description:
+      'a 2-step lookup table from language code to translation type to text items',
+  })
   items: Record<
     LanguageCode,
     Partial<

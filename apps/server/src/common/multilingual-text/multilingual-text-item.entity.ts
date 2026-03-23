@@ -1,5 +1,6 @@
 import {
   Entity,
+  NonEmptyString,
   TrueImpactDataExample,
   TrueImpactError,
 } from '../../libs/data-types';
@@ -19,7 +20,16 @@ export class MultilingualTextItemPersistenceDto {
   },
 })
 export class MultilingualTextItem extends Entity<MultilingualTextItemPersistenceDto> {
+  @NonEmptyString({
+    label: 'text',
+    description: 'text in the given language',
+  })
   text: string;
+
+  @NonEmptyString({
+    label: 'language code',
+    description: 'specifies the language for a multilingual text item',
+  })
   languageCode: string;
 
   constructor({ text }: { text: string }) {
