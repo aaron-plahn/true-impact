@@ -26,12 +26,6 @@ export class MultilingualTextItem extends Entity<MultilingualTextItemPersistence
   })
   text: string;
 
-  @NonEmptyString({
-    label: 'language code',
-    description: 'specifies the language for a multilingual text item',
-  })
-  languageCode: string;
-
   constructor({ text }: { text: string }) {
     super();
 
@@ -44,7 +38,8 @@ export class MultilingualTextItem extends Entity<MultilingualTextItemPersistence
   }
 
   getId(): string {
-    return this.languageCode;
+    // TODO This is odd. Should this just be an ordinary value object?
+    return this.text;
   }
 
   getName(): string {
@@ -52,7 +47,7 @@ export class MultilingualTextItem extends Entity<MultilingualTextItemPersistence
   }
 
   override toString(): string {
-    return `${this.text} [${this.languageCode}]`;
+    return `${this.text}`;
   }
 
   toPersistenceDto(): MultilingualTextItemPersistenceDto {

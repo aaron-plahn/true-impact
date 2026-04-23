@@ -15,6 +15,7 @@ import {
   NON_NEGATIVE_INTEGER,
   SchemaPropertyMetadata,
 } from '../../schema-management/decorators';
+import { convertLookupTableToOpenApiStandard } from './convert-lookup-table-to-open-api-standard';
 import { SchemaObject as OpenApiSchema } from './open-api-spec.interface';
 
 const trueImpactDataTypeToOpenApiDataType = {
@@ -84,29 +85,7 @@ const convertPropertySchemaMetadataToOpenApiSchema = (
   }
 
   if (isLookupTablePropertyMetadata(meta)) {
-    if (meta.depth !== 1) {
-      throw new TrueImpactRuntimeException([
-        new TrueImpactError(
-          `Lookup tables with a depth other than 1 are not yet supported.`,
-        ),
-      ]);
-    }
-
-    if (typeof meta.valueType === 'function') {
-      return {
-        type: 'object',
-        additionalProperties: convertToOpenApiSchema(
-          getDataSchemaFromClassCtor(meta.valueType()),
-        ),
-      };
-    }
-
-    return {
-      type: 'object',
-      additionalProperties: {
-        type: meta.valueType,
-      },
-    };
+    return convertLookupTableToOpenApiStandard(meta);
   }
 
   // we have a simple-property definition here

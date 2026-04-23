@@ -151,7 +151,7 @@ export class MultilingualText extends Entity<MultilingualTextPersistenceDto> {
     return this.getOriginalTextItem()?.text || 'MultilingualText<EMPTY>';
   }
 
-  getOriginalTextItem(): { text: string; languageCode: LanguageCode } | null {
+  getOriginalTextItem(): { text: string } | null {
     const searchResult = Array.from(this.items.values()).flatMap(
       (textByTranslationRole) =>
         textByTranslationRole.has(MultilingualTextItemRole.original)

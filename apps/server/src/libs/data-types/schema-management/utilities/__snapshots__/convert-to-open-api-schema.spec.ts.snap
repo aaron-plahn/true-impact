@@ -46,6 +46,15 @@ exports[`convertToOpenApiSchema when given the schema for a test class should re
     "priority": {
       "type": "integer",
     },
+    "reviewerScoreByReviewerIdByDepartmentId": {
+      "additionalProperties": {
+        "additionalProperties": {
+          "type": "integer",
+        },
+        "type": "object",
+      },
+      "type": "object",
+    },
     "secondaryWidget": {
       "properties": {
         "count": {
@@ -61,6 +70,12 @@ exports[`convertToOpenApiSchema when given the schema for a test class should re
           "type": "array",
         },
       },
+    },
+    "userRatingsByUserId": {
+      "additionalProperties": {
+        "type": "integer",
+      },
+      "type": "object",
     },
   },
 }

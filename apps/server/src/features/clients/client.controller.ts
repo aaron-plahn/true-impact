@@ -59,8 +59,10 @@ export class ClientController {
     example,
   })
   async fetchMany() {
-    // TODO We need a client view model
-    return this.clientsService.fetchMany();
+    // TODO We should join these eagerly in a dedicated query DB
+    const clients = await this.clientsService.fetchMany();
+
+    return clients;
   }
 
   @Post('commands')
