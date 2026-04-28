@@ -11,6 +11,7 @@ import {
   DetailQueryEndpoint,
   IdParam,
   IndexQueryEndpoint,
+  OnModuleInit,
   Post,
   QueryResponseInterceptor,
   ResourceNotFoundFilter,
@@ -23,7 +24,7 @@ import { CommunityQueryService, CommunityViewModelClientDto } from './queries';
 @UseFilters(ResourceNotFoundFilter, BadUserInputFilter)
 @UseInterceptors(QueryResponseInterceptor)
 @Controller('communities')
-export class CommunityController {
+export class CommunityController implements OnModuleInit {
   constructor(
     private readonly commandHandlerService: CommandHandlerService,
     private readonly communityQueryService: CommunityQueryService,
@@ -68,5 +69,9 @@ export class CommunityController {
     await this.communityQueryService.commandRepository.clear();
 
     return 'OK';
+  }
+
+  onModuleInit() {
+    this.commandHandlerService.buildApiDocs(CommunityController);
   }
 }

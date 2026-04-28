@@ -1,11 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { OnModuleInit } from '@nestjs/common';
-import { ApiBody, ApiOkResponse } from '@nestjs/swagger';
-import {
-  ExampleObject,
-  ExamplesObject,
-} from '@nestjs/swagger/dist/interfaces/open-api-spec.interface';
 import type { ICommandFsa } from '../../libs/cqrs-es';
 import { CommandHandlerService, CommandResult } from '../../libs/cqrs-es';
 import {
@@ -16,12 +8,14 @@ import {
   TrueImpactRuntimeException,
 } from '../../libs/data-types';
 import {
+  ApiOkResponse,
   BadUserInputFilter,
   Body,
   Controller,
   DetailQueryEndpoint,
   IdParam,
   IndexQueryEndpoint,
+  OnModuleInit,
   Post,
   QueryResponseInterceptor,
   ResourceNotFoundFilter,
@@ -73,6 +67,7 @@ export class SurveyController implements OnModuleInit {
     return result;
   }
 
+  // TODO @CommandExecutionEndpoint()
   @Post('commands')
   async executeCommand(@Body() fsa: ICommandFsa): Promise<CommandResult> {
     const result = await this.commandHandlerService.execute(fsa);
@@ -80,7 +75,6 @@ export class SurveyController implements OnModuleInit {
     return result;
   }
 
-  // TODO Opt out of API docs for this one
   @TestSetupEndpoint()
   async testSetup(): Promise<'OK'> {
     if (process.env.NODE_ENV !== 'test') {
@@ -99,41 +93,7 @@ export class SurveyController implements OnModuleInit {
   }
 
   onModuleInit() {
-    const rawSchemas = this.commandHandlerService.getCommandFsaSchemas();
-
-    const commandFsaSchemasInOpenApiFormat = rawSchemas.map(
-      convertToOpenApiSchema,
-    );
-
-    const examples: Record<string, ExampleObject> = {};
-
-    rawSchemas.forEach((s) => {
-      Object.entries(s.examples).forEach(([exampleName, example]) => {
-        const proto = Object.getPrototypeOf(example);
-
-        const commandType = proto.constructor['type'];
-
-        examples[`${commandType} - [${exampleName}]`] = {
-          value: {
-            type: commandType,
-            payload: example,
-          },
-        };
-      });
-    });
-
-    ApiBody({
-      examples: examples as unknown as ExamplesObject,
-      schema: {
-        oneOf: commandFsaSchemasInOpenApiFormat,
-      },
-    })(
-      SurveyController.prototype,
-      'executeCommand',
-      Object.getOwnPropertyDescriptor(
-        SurveyController.prototype,
-        'executeCommand',
-      ) as PropertyDescriptor,
-    );
+    // TODO We should use reflection to find 1 and only 1 method decorated as `@CommandExecutionEndpoint`
+    this.commandHandlerService.buildApiDocs(SurveyController, 'executeCommand');
   }
 }

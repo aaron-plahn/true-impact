@@ -1,5 +1,7 @@
+import { ApiBody } from '@nestjs/swagger';
 import {
   buildTestInstance,
+  convertToOpenApiSchema,
   Ctor,
   DataSchema,
   EnumeratedTypeSchemaPropertyMetadata,
@@ -9,6 +11,7 @@ import {
   TrueImpactRuntimeException,
   validateObjectAgainstSchema,
 } from '../data-types';
+import { ExampleObject } from '../data-types/schema-management/utilities/open-api-spec.interface';
 import { Injectable } from '../framework';
 import {
   ICommandFsa,
@@ -187,6 +190,69 @@ export class CommandHandlerService {
     });
 
     return schemas;
+  }
+
+  buildApiDocs(
+    Controller: Ctor,
+    commandExecutionMethodName = 'executeCommand',
+  ) {
+    const rawSchemas = this.getCommandFsaSchemas();
+
+    const commandFsaSchemasInOpenApiFormat = rawSchemas.map(
+      convertToOpenApiSchema,
+    );
+
+    const examples: Record<string, ExampleObject> = {};
+
+    const classNameByDiscriminantType: Record<string, string> = {};
+
+    rawSchemas.forEach((s) => {
+      Object.entries(s.examples).forEach(([exampleName, example]) => {
+        const proto = Object.getPrototypeOf(example) as object;
+
+        const commandType = proto.constructor['type'] as string;
+
+        examples[`${commandType} - [${exampleName}]`] = {
+          value: {
+            type: commandType,
+            payload: example,
+          },
+        };
+
+        // @ts-expect-error We don't need type safety in this meta-programming layer. If this fails, the app will blow up during bootstrap.
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        const discriminant: string = proto.constructor.type;
+
+        classNameByDiscriminantType[discriminant] = proto.constructor.name;
+      });
+    });
+
+    ApiBody({
+      examples,
+      schema: {
+        oneOf: commandFsaSchemasInOpenApiFormat,
+        properties: {
+          type: {
+            type: 'string',
+          },
+        },
+        /**
+         * TODO This is not showing up properly in Swagger UI, although
+         * the examples come through paired with the command type, the schemas are still a union.
+         */
+        discriminator: {
+          propertyName: 'type',
+          mapping: classNameByDiscriminantType,
+        },
+      },
+    })(
+      Controller.prototype as object,
+      commandExecutionMethodName,
+      Object.getOwnPropertyDescriptor(
+        Controller.prototype,
+        commandExecutionMethodName,
+      ) as PropertyDescriptor,
+    );
   }
 
   private buildTypeValidationError(

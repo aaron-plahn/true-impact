@@ -13,34 +13,34 @@ import { SurveyParticipantCompositeIdentifier } from '../models/survey-participa
 
 export class ActiveSurveyOptionViewModel {
   label: string;
-  text: string;
+  prompt: string;
   // do we want the follow-up question here?
 
   constructor({ label, text }: { label: string; text: string }) {
     this.label = label;
 
-    this.text = text;
+    this.prompt = text;
   }
 }
 
 export class ActiveSurveyQuestionViewModel {
   label: string;
-  text: string;
+  prompt: string;
   // ordered
   options: ActiveSurveyOptionViewModel[];
 
   constructor({
     label,
-    text,
+    prompt,
     options,
   }: {
     label: string;
-    text: string;
+    prompt: string;
     options: ActiveSurveyOptionViewModel[];
   }) {
     this.label = label;
 
-    this.text = text;
+    this.prompt = prompt;
 
     this.options = options;
   }
@@ -93,6 +93,13 @@ export class SurveyQuestionResponseViewModelClientDto {
   })
   questionLabel: string;
 
+  @NonEmptyString({
+    label: 'prompt',
+    description:
+      'the wording of this question as it was presented to the participant',
+  })
+  prompt: string; // TODO ML Text
+
   @LookupTable(() => SurveyResponseOptionViewModelClientDto, {
     label: 'options',
     description:
@@ -135,6 +142,7 @@ export class SurveyQuestionResponseViewModel {
     responses: [
       {
         questionLabel: '1',
+        prompt: 'I like this question!',
         options: {
           a: {
             text: 'yes',
@@ -152,7 +160,7 @@ export class SurveyQuestionResponseViewModel {
       },
       {
         questionLabel: '2',
-        // TODO Don't we want the prompts here?
+        prompt: 'I like surveys in general.',
         options: {
           a: {
             text: 'yes',
@@ -170,6 +178,7 @@ export class SurveyQuestionResponseViewModel {
       },
       {
         questionLabel: '3',
+        prompt: 'I intend to respond to more of your surveys.',
         options: {
           a: {
             text: 'yes',
@@ -188,15 +197,15 @@ export class SurveyQuestionResponseViewModel {
     ],
     nextQuestion: {
       label: '4',
-      text: 'This is the next question that should be displayed in the UX.',
+      prompt: 'This is the next question that should be displayed in the UX.',
       options: [
         {
           label: 'a',
-          text: 'sometimes',
+          prompt: 'sometimes',
         },
         {
           label: 'b',
-          text: 'never',
+          prompt: 'never',
         },
       ],
     },
@@ -396,7 +405,7 @@ export class SurveyResponseRecordViewModel {
 
         nextQuestionViewModel = {
           label: nextQuestionDomainModel.label,
-          text: nextQuestionDomainModel.prompt,
+          prompt: nextQuestionDomainModel.prompt,
           options,
         };
       }

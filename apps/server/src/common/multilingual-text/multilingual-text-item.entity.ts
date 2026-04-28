@@ -6,6 +6,10 @@ import {
 } from '../../libs/data-types';
 
 export class MultilingualTextItemPersistenceDto {
+  @NonEmptyString({
+    label: 'text',
+    description: 'the text for this particular language and translation type',
+  })
   text: string;
 
   constructor({ text }: { text: string }) {
@@ -38,7 +42,6 @@ export class MultilingualTextItem extends Entity<MultilingualTextItemPersistence
   }
 
   getId(): string {
-    // TODO This is odd. Should this just be an ordinary value object?
     return this.text;
   }
 

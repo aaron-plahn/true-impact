@@ -1,4 +1,3 @@
-import { ApiOkResponse } from '@nestjs/swagger';
 import type { CommandResult, ICommandFsa } from '../../libs/cqrs-es';
 import { CommandHandlerService } from '../../libs/cqrs-es';
 
@@ -10,12 +9,14 @@ import {
   TrueImpactRuntimeException,
 } from '../../libs/data-types';
 import {
+  ApiOkResponse,
   BadUserInputFilter,
   Body,
   Controller,
   DetailQueryEndpoint,
   IdParam,
   IndexQueryEndpoint,
+  OnModuleInit,
   Post,
   QueryResponseInterceptor,
   ResourceNotFoundFilter,
@@ -35,7 +36,7 @@ const example = buildTestInstance(ClientViewModelClientDto);
 @UseFilters(ResourceNotFoundFilter, BadUserInputFilter)
 @UseInterceptors(QueryResponseInterceptor)
 @Controller('clients')
-export class ClientController {
+export class ClientController implements OnModuleInit {
   constructor(
     private readonly clientsService: ClientQueryService,
     private readonly commandHandlerService: CommandHandlerService,
@@ -87,5 +88,9 @@ export class ClientController {
     await this.clientsService.repository.clear();
 
     return 'OK';
+  }
+
+  onModuleInit() {
+    this.commandHandlerService.buildApiDocs(ClientController);
   }
 }

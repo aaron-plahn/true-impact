@@ -1,3 +1,4 @@
+import { OnModuleInit } from '@nestjs/common';
 import { ApiOkResponse } from '@nestjs/swagger';
 import type { ICommandFsa } from '../../libs/cqrs-es';
 import { CommandHandlerService, CommandResult } from '../../libs/cqrs-es';
@@ -33,7 +34,7 @@ const example = buildTestInstance(FlagViewModelClientDto);
 @UseFilters(ResourceNotFoundFilter, BadUserInputFilter)
 @UseInterceptors(QueryResponseInterceptor)
 @Controller('flags')
-export class FlagController {
+export class FlagController implements OnModuleInit {
   constructor(
     private readonly flagQueryService: FlagQueryService,
     private readonly commandHandlerService: CommandHandlerService,
@@ -89,5 +90,9 @@ export class FlagController {
     await this.flagQueryService.flagCommandRepository.clear();
 
     return 'OK';
+  }
+
+  onModuleInit() {
+    this.commandHandlerService.buildApiDocs(FlagController);
   }
 }

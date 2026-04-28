@@ -19,6 +19,7 @@ type LanguageCode = string;
 
 export class MultilingualTextPersistenceDto {
   @LookupTable(() => MultilingualTextItemPersistenceDto, {
+    depth: 2,
     label: 'items',
     description:
       'a 2-step lookup table from language code to translation type to text items',

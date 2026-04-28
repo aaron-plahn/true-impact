@@ -13,6 +13,7 @@ export type {
 export { NestFactory } from '@nestjs/core';
 export * from './config';
 export * from './controllers';
+export * from './documentation';
 export * from './exceptions';
 export * from './interceptors';
 export * from './modules';

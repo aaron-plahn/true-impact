@@ -9,9 +9,11 @@ export class FullNameDto {
 
   @NonEmptyString({
     label: 'middle name',
-    description: `the person's middle name`,
+    description: `the person's middle name(s)`,
+    isArray: true,
+    isOptional: true, // i.e., can be empty
   })
-  middleName?: string;
+  middleNames: string[];
 
   @NonEmptyString({
     label: 'last name',
@@ -27,14 +29,14 @@ export class FullName {
   })
   firstName: string;
 
+  // TODO all optional properties should show up as such in Swagger
   @NonEmptyString({
     label: 'middle name',
-    description: `the person's middle name`,
-    // TODO this should show up as optional in swagger
-    // TODO support many middle names
-    isOptional: true,
+    description: `a list of the person's middle names, if any`,
+    isArray: true,
+    isOptional: true, // i.e., can be empty
   })
-  middleName?: string;
+  middleNames: string[];
 
   @NonEmptyString({
     label: 'last name',
@@ -47,33 +49,39 @@ export class FullName {
       return;
     }
 
-    const { firstName, lastName, middleName } = dto;
+    const { firstName, lastName, middleNames: middleName } = dto;
 
     this.firstName = firstName;
 
     this.lastName = lastName;
 
     if (typeof middleName === 'string') {
-      this.middleName = middleName;
+      this.middleNames = middleName;
     }
   }
 
   public getMiddleInitial(): string | undefined {
-    if (this.middleName === null || typeof this.middleName === 'undefined') {
+    if (this.middleNames === null || typeof this.middleNames === 'undefined') {
       return undefined;
     }
 
-    if (this.middleName.length === 0) {
+    if (this.middleNames.length === 0) {
       return undefined;
     }
 
-    return this.middleName.charAt(0);
+    const primaryMiddleName = this.middleNames[0];
+
+    if (primaryMiddleName.length === 0) {
+      return undefined;
+    }
+
+    return primaryMiddleName.charAt(0);
   }
 
   toDto(): FullNameDto {
     return {
       firstName: this.firstName,
-      middleName: this.middleName,
+      middleNames: this.middleNames,
       lastName: this.lastName,
     };
   }

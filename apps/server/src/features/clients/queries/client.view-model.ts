@@ -19,7 +19,7 @@ import { Client } from '../client.aggregate-root';
     revision: '7',
     fullName: {
       firstName: 'John',
-      middleName: 'Bob',
+      middleNames: ['Bob'],
       lastName: 'Deer',
     },
     isIndigenous: 'No',
