@@ -12,6 +12,13 @@ import {
   ICommandHandlerResolver,
 } from './command-handler.service';
 
+interface UpdateCommandPayload {
+  aggregateCompositeIdentifier: {
+    type: string;
+    id: string;
+  };
+}
+
 describe(`CommandHandlerService`, () => {
   let commandHandlerService: CommandHandlerService;
 
@@ -36,7 +43,7 @@ describe(`CommandHandlerService`, () => {
       payload: {
         aggregateCompositeIdentifier: { id },
       },
-    }: ICommandFsa) {
+    }: ICommandFsa<UpdateCommandPayload>) {
       return Promise.resolve({
         id,
         revision: dummyRevisionId,
@@ -52,9 +59,9 @@ describe(`CommandHandlerService`, () => {
   class SadHandler implements ICommandHandler {
     async handle({
       payload: {
-        aggregateCompositeIdentifier: { type, id },
+        aggregateCompositeIdentifier: { id, type },
       },
-    }: ICommandFsa) {
+    }: ICommandFsa<UpdateCommandPayload>) {
       return Promise.resolve(
         new TrueImpactError(
           `Failed as usual when attempting to update [${type}/${id}]`,
