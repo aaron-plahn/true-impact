@@ -1,4 +1,8 @@
+import { ApiOkResponse } from '@nestjs/swagger';
 import {
+  buildTestInstance,
+  convertToOpenApiSchema,
+  getDataSchemaFromClassCtor,
   TrueImpactError,
   TrueImpactRuntimeException,
 } from '../../libs/data-types';
@@ -15,6 +19,13 @@ import {
   UseInterceptors,
 } from '../../libs/framework';
 import { SurveyResponseQueryService } from './survey-completion/queries';
+import { SurveyResponseRecordViewModelClientDto } from './survey-completion/queries/survey-response-record.view-model';
+
+const schema = convertToOpenApiSchema(
+  getDataSchemaFromClassCtor(SurveyResponseRecordViewModelClientDto),
+);
+
+const example = buildTestInstance(SurveyResponseRecordViewModelClientDto);
 
 @UseFilters(ResourceNotFoundFilter, BadUserInputFilter)
 @UseInterceptors(QueryResponseInterceptor)
@@ -27,11 +38,19 @@ export class SurveyResponseController {
   // commands are routed through the base /surveys endpoint
 
   @IndexQueryEndpoint()
+  @ApiOkResponse({
+    schema,
+    example: [example],
+  })
   fetchCompletionAttempts() {
     return this.surveyCompletionQueryService.fetchMany();
   }
 
   @DetailQueryEndpoint()
+  @ApiOkResponse({
+    schema,
+    example,
+  })
   fetchCompletionByAttemptId(@IdParam() id: string) {
     return this.surveyCompletionQueryService.fetchById(id);
   }

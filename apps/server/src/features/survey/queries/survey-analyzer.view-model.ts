@@ -1,3 +1,4 @@
+import { LookupTable } from 'src/libs/data-types/schema-management/decorators/lookup-table.decorator';
 import {
   deepConvertMapToObject,
   NonEmptyString,
@@ -28,7 +29,12 @@ export class SurveyAnalyzerViewModelClientDto {
   })
   categories: Category[];
 
-  // TODO @LookupTable
+  @LookupTable('number', {
+    depth: 3,
+    label: 'values by category, by option, by question',
+    description:
+      'a lookup table with values for one or more analysis categories for this option of the given question',
+  })
   valuesByOptionByQuestion: Record<
     QuestionLabel,
     Record<OptionLabel, Record<Category, ValueForOption>>

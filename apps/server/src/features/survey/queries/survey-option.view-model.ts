@@ -67,7 +67,7 @@ export class SurveyOptionViewModelClientDto {
 
   text: string;
 
-  followUpQuestions: Record<string, FollowUpQuestionViewModelClientDto>;
+  followUpQuestions: FollowUpQuestionViewModelClientDto[];
 
   flags: Record<string, SurveyFlagViewModelClientDto>;
 }
@@ -106,14 +106,9 @@ export class SurveyOptionViewModel {
   }
 
   toClientDto(): SurveyOptionViewModelClientDto {
-    const followUpQuestions: Record<
-      string,
-      FollowUpQuestionViewModelClientDto
-    > = {};
-
-    this.followUpQuestions.forEach((q) => {
-      followUpQuestions[q.label] = q.toClientDto();
-    });
+    const followUpQuestions = this.followUpQuestions.map((fuq) =>
+      fuq.toClientDto(),
+    );
 
     return {
       label: this.label,

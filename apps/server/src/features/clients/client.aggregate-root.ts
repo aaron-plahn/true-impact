@@ -40,7 +40,7 @@ export class ClientPersistenceDto {
     revision: 2,
     fullName: {
       firstName: 'James',
-      middleName: 'Bob',
+      middleNames: ['Bob'],
       lastName: 'Deer',
     },
     dateOfBirth: '2020-10-01',
@@ -219,7 +219,7 @@ export class Client
     } = command;
 
     const unverifiedInstance = new Client({
-      fullName: { firstName, lastName },
+      fullName: { firstName, lastName, middleNames: [] },
       dateOfBirth,
       isIndigenous,
       communityId: community,

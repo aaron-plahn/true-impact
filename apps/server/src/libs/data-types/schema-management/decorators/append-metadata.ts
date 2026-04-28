@@ -2,6 +2,8 @@ const SCHEMA_PROPERTY_METADATA_KEY = '__SCHEMA_PROPERTY_METADATA_KEY__';
 import { Ctor, DataKeys } from '../../utility-types';
 import { SimpleDataTypeDecoratorOptions } from './type-decorator-options';
 
+type GetCtor = () => Ctor;
+
 export type EnumeratedTypeSchemaPropertyMetadata = {
   type: 'ENUMERATED_TYPE';
   isOptional: boolean;
@@ -10,6 +12,11 @@ export type EnumeratedTypeSchemaPropertyMetadata = {
   enum: string[];
   valuesAndLabels: Record<string, string>;
 };
+
+export const isEnumeratedTypeSchemaPropertyMetadata = (
+  input: unknown,
+): input is EnumeratedTypeSchemaPropertyMetadata =>
+  (input as EnumeratedTypeSchemaPropertyMetadata).type === 'ENUMERATED_TYPE';
 
 export type ObjectSchemaPropertyMetadata = {
   type: 'object';
@@ -48,6 +55,14 @@ export type ArrayItemSimpleSchema = {
 
 export type ArrayItemSchema = ArrayItemObjectSchema | ArrayItemSimpleSchema;
 
+export const isArrayItemObjectSchema = (
+  input: ArrayItemSchema,
+): input is ArrayItemObjectSchema => {
+  const test = input as ArrayItemObjectSchema;
+
+  return test.type === 'object' && typeof test.getCtor === 'function';
+};
+
 export type ArraySchemaPropertyMetadata = {
   type: 'array';
   canBeEmpty: boolean;
@@ -58,12 +73,26 @@ export type ArraySchemaPropertyMetadata = {
   items: ArrayItemSchema;
 };
 
+export type LookupTablePropertyMetadata = {
+  type: 'lookup-table-object';
+  label: string;
+  description: string;
+  valueType: GetCtor | 'string' | 'number' | 'integer' | 'boolean';
+  depth: number;
+};
+
+export const isLookupTablePropertyMetadata = (
+  input: unknown,
+): input is LookupTablePropertyMetadata =>
+  (input as LookupTablePropertyMetadata).type === 'lookup-table-object';
+
 // This will be a union with `EnumPropertyMetadata`, `NestedSchemaMetadata`, and `UnionValuedSchemaPropertyMetadata`
 export type SchemaPropertyMetadata =
   | SimpleSchemaPropertyMetadata
   | ObjectSchemaPropertyMetadata
   | ArraySchemaPropertyMetadata
-  | EnumeratedTypeSchemaPropertyMetadata;
+  | EnumeratedTypeSchemaPropertyMetadata
+  | LookupTablePropertyMetadata;
 
 export type DataSchema<T = object> = {
   properties: DataKeys<T> extends never

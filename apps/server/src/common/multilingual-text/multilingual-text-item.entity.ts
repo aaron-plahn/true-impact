@@ -1,10 +1,15 @@
 import {
   Entity,
+  NonEmptyString,
   TrueImpactDataExample,
   TrueImpactError,
 } from '../../libs/data-types';
 
 export class MultilingualTextItemPersistenceDto {
+  @NonEmptyString({
+    label: 'text',
+    description: 'the text for this particular language and translation type',
+  })
   text: string;
 
   constructor({ text }: { text: string }) {
@@ -19,8 +24,11 @@ export class MultilingualTextItemPersistenceDto {
   },
 })
 export class MultilingualTextItem extends Entity<MultilingualTextItemPersistenceDto> {
+  @NonEmptyString({
+    label: 'text',
+    description: 'text in the given language',
+  })
   text: string;
-  languageCode: string;
 
   constructor({ text }: { text: string }) {
     super();
@@ -34,7 +42,7 @@ export class MultilingualTextItem extends Entity<MultilingualTextItemPersistence
   }
 
   getId(): string {
-    return this.languageCode;
+    return this.text;
   }
 
   getName(): string {
@@ -42,7 +50,7 @@ export class MultilingualTextItem extends Entity<MultilingualTextItemPersistence
   }
 
   override toString(): string {
-    return `${this.text} [${this.languageCode}]`;
+    return `${this.text}`;
   }
 
   toPersistenceDto(): MultilingualTextItemPersistenceDto {
