@@ -8,6 +8,7 @@ import {
   NestedDataType,
   NonEmptyString,
   NonNegativeInteger,
+  TrueImpactDataExample,
 } from '../../../../libs/data-types';
 import { SURVEY_REVIEW_AGGREGATE_TYPE } from '../constants';
 import { SurveyReview } from '../survey-review.aggregate-root';
@@ -16,6 +17,67 @@ import {
   SurveyQuestionReviewRecordViewModelClientDto,
 } from './survey-question-review-record.view-model';
 
+@TrueImpactDataExample<SurveyReviewViewModelClientDto>({
+  example: {
+    id: '1',
+    revision: '',
+    questions: [
+      {
+        label: '1',
+        chosenOptionLabel: 'b',
+        hasBeenViewed: true,
+        notes: [
+          {
+            items: {
+              en: {
+                original: {
+                  text: 'We may want to keep an eye on the client because of X.',
+                },
+              },
+            },
+          },
+        ],
+        flagsById: {
+          f123: {
+            id: 'f123',
+            revision: '3',
+            label: 'social anxiety',
+            description:
+              'inidicates that the client may be uncomfortable in common social settings',
+          },
+        },
+      },
+      {
+        label: '2',
+        chosenOptionLabel: 'c',
+        hasBeenViewed: false,
+        notes: [],
+        flagsById: {},
+      },
+    ],
+    surveyName: 'Client Evaluation',
+    surveyParticipantLabel: 'REDACTED',
+    generalNotes: [
+      {
+        items: {
+          clc: {
+            original: {
+              text: 'SOME NOTE MADE IN CHILCOTIN',
+            },
+          },
+          en: {
+            'free translation': {
+              text: 'Translation of the note to English',
+            },
+          },
+        },
+      },
+    ],
+    hasBeenSubmitted: false,
+    isComplete: false,
+    numberOfQuestionsViewed: 1,
+  },
+})
 export class SurveyReviewViewModelClientDto {
   static readonly type = SURVEY_REVIEW_AGGREGATE_TYPE;
 
@@ -32,7 +94,12 @@ export class SurveyReviewViewModelClientDto {
   })
   revision: string;
 
-  // @LookupTable
+  @NestedDataType(() => SurveyQuestionReviewRecordViewModelClientDto, {
+    isArray: true,
+    isOptional: false, // i.e., will never be empty
+    label: 'questions',
+    description: 'an ordered list of the questions for the survey under review',
+  })
   questions: SurveyQuestionReviewRecordViewModelClientDto[];
 
   @NonEmptyString({

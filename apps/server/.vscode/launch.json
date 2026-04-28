@@ -8,7 +8,7 @@
       "type": "node",
       "request": "launch",
       "name": "Node debug server locally",
-      "cwd": "${workspaceFolder}/apps/server",
+      "cwd": "${workspaceFolder}",
       "runtimeExecutable": "yarn",
       "runtimeArgs": ["run", "start:debug"],
       "autoAttachChildProcesses": true,
@@ -20,7 +20,7 @@
       "type": "node",
       "request": "launch",
       "name": "Jest test server",
-      "cwd": "${workspaceFolder}/apps/server",
+      "cwd": "${workspaceFolder}",
       "runtimeExecutable": "yarn",
       "runtimeArgs": [
         "jest",

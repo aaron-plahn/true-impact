@@ -1,16 +1,47 @@
-export type FullNameDto = {
+import { NonEmptyString } from '../libs/data-types';
+
+export class FullNameDto {
+  @NonEmptyString({
+    label: 'first name',
+    description: `the person's first name`,
+  })
   firstName: string;
 
-  middleName?: string;
+  @NonEmptyString({
+    label: 'middle name',
+    description: `the person's middle name(s)`,
+    isArray: true,
+    isOptional: true, // i.e., can be empty
+  })
+  middleNames: string[];
 
+  @NonEmptyString({
+    label: 'last name',
+    description: `the person's last name`,
+  })
   lastName: string;
-};
+}
 
 export class FullName {
+  @NonEmptyString({
+    label: 'first name',
+    description: `the person's first name`,
+  })
   firstName: string;
 
-  middleName?: string;
+  // TODO all optional properties should show up as such in Swagger
+  @NonEmptyString({
+    label: 'middle name',
+    description: `a list of the person's middle names, if any`,
+    isArray: true,
+    isOptional: true, // i.e., can be empty
+  })
+  middleNames: string[];
 
+  @NonEmptyString({
+    label: 'last name',
+    description: `the person's last name`,
+  })
   lastName: string;
 
   constructor(dto: FullNameDto) {
@@ -18,39 +49,45 @@ export class FullName {
       return;
     }
 
-    const { firstName, lastName, middleName } = dto;
+    const { firstName, lastName, middleNames: middleName } = dto;
 
     this.firstName = firstName;
 
     this.lastName = lastName;
 
     if (typeof middleName === 'string') {
-      this.middleName = middleName;
+      this.middleNames = middleName;
     }
   }
 
   public getMiddleInitial(): string | undefined {
-    if (this.middleName === null || typeof this.middleName === 'undefined') {
+    if (this.middleNames === null || typeof this.middleNames === 'undefined') {
       return undefined;
     }
 
-    if (this.middleName.length === 0) {
+    if (this.middleNames.length === 0) {
       return undefined;
     }
 
-    return this.middleName.charAt(0);
+    const primaryMiddleName = this.middleNames[0];
+
+    if (primaryMiddleName.length === 0) {
+      return undefined;
+    }
+
+    return primaryMiddleName.charAt(0);
   }
 
   toDto(): FullNameDto {
     return {
       firstName: this.firstName,
-      middleName: this.middleName,
+      middleNames: this.middleNames,
       lastName: this.lastName,
     };
   }
 
   toString() {
-    return `${this.firstName} ${this.getMiddleInitial()} ${this.lastName}`;
+    return `${this.firstName} ${this.getMiddleInitial() || ''} ${this.lastName}`;
   }
 
   public static fromDto(dto: FullNameDto) {

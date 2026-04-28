@@ -1,16 +1,21 @@
 import type { ICommandFsa } from '../../libs/cqrs-es';
 import { CommandHandlerService, CommandResult } from '../../libs/cqrs-es';
 import {
+  buildTestInstance,
+  convertToOpenApiSchema,
+  getDataSchemaFromClassCtor,
   TrueImpactError,
   TrueImpactRuntimeException,
 } from '../../libs/data-types';
 import {
+  ApiOkResponse,
   BadUserInputFilter,
   Body,
   Controller,
   DetailQueryEndpoint,
   IdParam,
   IndexQueryEndpoint,
+  OnModuleInit,
   Post,
   QueryResponseInterceptor,
   ResourceNotFoundFilter,
@@ -21,16 +26,26 @@ import {
 import { SurveyQueryService } from './queries/survey-query.service';
 import { SurveyViewModelClientDto } from './queries/survey.view-model';
 
+const schema = convertToOpenApiSchema(
+  getDataSchemaFromClassCtor(SurveyViewModelClientDto),
+);
+
+const example = buildTestInstance(SurveyViewModelClientDto);
+
 @UseFilters(ResourceNotFoundFilter, BadUserInputFilter)
 @UseInterceptors(QueryResponseInterceptor)
 @Controller('surveys')
-export class SurveyController {
+export class SurveyController implements OnModuleInit {
   constructor(
     private readonly surveyQueryService: SurveyQueryService,
     private readonly commandHandlerService: CommandHandlerService,
   ) {}
 
   @DetailQueryEndpoint()
+  @ApiOkResponse({
+    schema,
+    example,
+  })
   // TODO every query should return a `ResultOrError`. This **could** be wrapped in a true `Either`.
   async fetchById(
     @IdParam() id: string,
@@ -41,12 +56,18 @@ export class SurveyController {
   }
 
   @IndexQueryEndpoint()
+  @ApiOkResponse({
+    schema,
+    example,
+    isArray: true,
+  })
   async fetchMany() {
     const result = await this.surveyQueryService.fetchMany();
 
     return result;
   }
 
+  // TODO @CommandExecutionEndpoint()
   @Post('commands')
   async executeCommand(@Body() fsa: ICommandFsa): Promise<CommandResult> {
     const result = await this.commandHandlerService.execute(fsa);
@@ -69,5 +90,10 @@ export class SurveyController {
     await this.surveyQueryService.surveyCommandRepository.clear();
 
     return 'OK';
+  }
+
+  onModuleInit() {
+    // TODO We should use reflection to find 1 and only 1 method decorated as `@CommandExecutionEndpoint`
+    this.commandHandlerService.buildApiDocs(SurveyController, 'executeCommand');
   }
 }

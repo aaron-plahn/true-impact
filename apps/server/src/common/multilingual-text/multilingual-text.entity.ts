@@ -4,6 +4,7 @@ import {
   TrueImpactError,
   UpdateMethod,
 } from '../../libs/data-types';
+import { LookupTable } from '../../libs/data-types/schema-management/decorators/lookup-table.decorator';
 import { MultilingualTextItemRole } from './multilingual-text-item-role.enum';
 import {
   MultilingualTextItem,
@@ -17,6 +18,12 @@ const allowedTranslationLanguageCodes = new Set(['clc']);
 type LanguageCode = string;
 
 export class MultilingualTextPersistenceDto {
+  @LookupTable(() => MultilingualTextItemPersistenceDto, {
+    depth: 2,
+    label: 'items',
+    description:
+      'a 2-step lookup table from language code to translation type to text items',
+  })
   items: Record<
     LanguageCode,
     Partial<
@@ -145,7 +152,7 @@ export class MultilingualText extends Entity<MultilingualTextPersistenceDto> {
     return this.getOriginalTextItem()?.text || 'MultilingualText<EMPTY>';
   }
 
-  getOriginalTextItem(): { text: string; languageCode: LanguageCode } | null {
+  getOriginalTextItem(): { text: string } | null {
     const searchResult = Array.from(this.items.values()).flatMap(
       (textByTranslationRole) =>
         textByTranslationRole.has(MultilingualTextItemRole.original)

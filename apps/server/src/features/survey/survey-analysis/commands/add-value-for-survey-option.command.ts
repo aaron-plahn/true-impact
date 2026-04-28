@@ -3,6 +3,7 @@ import {
   NonEmptyString,
   TrueImpactDataExample,
 } from '../../../../libs/data-types';
+import { LookupTable } from '../../../../libs/data-types/schema-management/decorators/lookup-table.decorator';
 import { SurveyCompositeIdentifier } from '../../survey.composite-identifier';
 
 @TrueImpactDataExample<AddValueForSurveyOption>({
@@ -44,7 +45,11 @@ export class AddValueForSurveyOption {
   })
   optionLabel: string;
 
-  // TODO @LookupTable
+  @LookupTable('number', {
+    label: 'values by category',
+    description:
+      'holds values for zero or more of the categories used to analyze this survey',
+  })
   // TSurveyAnalysisValue?
   valuesByCategory: Record<string, number>;
 }

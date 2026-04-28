@@ -60,7 +60,7 @@ export class ClientQueryService {
     const view = this.buildView(domainModelSearchResult, {
       communities: communitiesById,
       flags: flagsById,
-    }).toClientDto();
+    });
 
     return view;
   }
@@ -93,7 +93,7 @@ export class ClientQueryService {
       this.buildView(dm, {
         communities: communitiesById,
         flags: flagsById,
-      }).toClientDto(),
+      }),
     );
 
     return viewModels;
@@ -105,9 +105,9 @@ export class ClientQueryService {
       communities: Map<string, CommunityViewModelClientDto>;
       flags: Map<string, FlagViewModelClientDto>;
     },
-  ) {
+  ): ClientViewModelClientDto {
     const result = ClientViewModel.fromDomainModel(domainModel, context);
 
-    return result;
+    return result.toClientDto();
   }
 }

@@ -1,5 +1,11 @@
 import { Get } from './get.decorator';
 
 export function DetailQueryEndpoint(): MethodDecorator {
-  return Get(`:id`);
+  return function (
+    target: object,
+    propertyKey: string | symbol,
+    descriptor: TypedPropertyDescriptor<unknown>,
+  ) {
+    Get(`:id`)(target, propertyKey, descriptor);
+  };
 }

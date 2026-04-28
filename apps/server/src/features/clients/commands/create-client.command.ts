@@ -9,7 +9,7 @@ import type { YesNoOrUnknown } from '../../../libs/data-types';
 @TrueImpactDataExample<CreateClient>({
   example: {
     firstName: 'Jane',
-    // middle name?
+    middleNames: [],
     lastName: 'Jones',
 
     dateOfBirth: '2010-11-04',
@@ -35,6 +35,14 @@ export class CreateClient {
     description: `the new client's first name`,
   })
   firstName: string;
+
+  @NonEmptyString({
+    label: 'middle names',
+    description: `a list of the new client's middle names`,
+    isArray: true,
+    isOptional: true, // i.e., can be empty
+  })
+  middleNames: string[];
 
   @NonEmptyString({
     label: 'last name',

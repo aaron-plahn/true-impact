@@ -1,5 +1,11 @@
 import { FlagViewModelClientDto } from '../../../features/flags/queries';
-import { NestedDataType, NonEmptyString } from '../../../libs/data-types';
+import {
+  NestedDataType,
+  NonEmptyString,
+  NonNegativeInteger,
+  TrueImpactDataExample,
+} from '../../../libs/data-types';
+import { LookupTable } from '../../../libs/data-types/schema-management/decorators/lookup-table.decorator';
 import { SurveyOption } from '../survey-management/survey-option.entity';
 import { SurveyQuestion } from '../survey-management/survey-question.entity';
 import { Survey } from '../survey-management/survey.aggregate-root';
@@ -20,15 +26,158 @@ import { SurveyQuestionViewModel } from './survey-question.view-model';
  * work with more convenient structures (e.g. Maps instead of Records) and remove \ transform data
  * before sending a client response.
  */
+@TrueImpactDataExample<SurveyViewModelClientDto>({
+  example: {
+    id: '1',
+    isPublished: false,
+    name: 'Food Allergies Survey',
+    size: 10,
+    analyzersByName: {},
+    questions: Array(10)
+      .fill(null)
+      .map((_, index) => ({
+        label: `label for test question ${index + 1}`,
+        prompt: `How would you like to answer question ${index + 1}`,
+        options: {
+          a: {
+            label: 'a',
+            text: `strongly agree`,
+            followUpQuestions: [
+              {
+                label: `${index + 1}-fu-1`,
+                prompt: `Why do you agree with everything I say?`,
+                options: {
+                  a: {
+                    label: 'a',
+                    text: 'I am weak.',
+                    followUpQuestions: [],
+                    flags: {},
+                  },
+                  b: {
+                    label: 'b',
+                    text: 'I do not take this survey seriously.',
+                    followUpQuestions: [
+                      {
+                        label: `${index + 1}-fu-1.1`,
+                        prompt: `Do you ever take anything seriously?`,
+                        options: {
+                          a: {
+                            label: 'a',
+                            text: 'yes',
+                            flags: {},
+                            followUpQuestions: [],
+                          },
+                          b: {
+                            label: 'b',
+                            text: 'no',
+                            flags: {
+                              f101: {
+                                id: 'f101',
+                                label: 'chill',
+                                description: 'this client is super chill',
+                              },
+                            },
+                            followUpQuestions: [],
+                          },
+                        },
+                      },
+                    ],
+                    flags: {},
+                  },
+                  c: {
+                    label: 'c',
+                    text: 'You are really smart.',
+                    followUpQuestions: [],
+                    flags: {},
+                  },
+                  d: {
+                    label: 'c',
+                    text: 'I was sent here to annoy you.',
+                    followUpQuestions: [],
+                    flags: {
+                      f55: {
+                        id: 'f55',
+                        label: 'sarcasm',
+                        description: 'this client is always being sarcastic',
+                      },
+                    },
+                  },
+                },
+              },
+            ],
+            flags: {
+              f123: {
+                id: 'f123',
+                label: 'too aggreeable',
+                description: 'will say yes to any question asked',
+              },
+            },
+          },
+          b: {
+            label: 'b',
+            text: `agree`,
+            followUpQuestions: [],
+            flags: {},
+          },
+          c: {
+            label: 'c',
+            text: `disagree`,
+            followUpQuestions: [],
+            flags: {},
+          },
+          d: {
+            label: 'd',
+            text: `strongly disagree`,
+            flags: {
+              f123: {
+                id: 'f125',
+                label: 'grumpy',
+                description: 'always in a bad moody',
+              },
+              f199: {
+                id: 'f199',
+                label: 'dangerous',
+                description: 'this one is fiesty!',
+              },
+            },
+            followUpQuestions: [],
+          },
+        },
+      })),
+  },
+})
 export class SurveyViewModelClientDto {
+  @NonEmptyString({
+    label: 'ID',
+    description: 'unique identifier for this survey',
+  })
   id: string;
 
+  @NonEmptyString({
+    label: 'is published',
+    description:
+      'once published, a survey is available for completion by eligible participants',
+  })
   isPublished: boolean;
 
+  // TODO Multilingual Text
+  @NonEmptyString({
+    label: 'name',
+    description: 'name of this survey',
+  })
   name: string;
 
+  @NonNegativeInteger({
+    label: 'size',
+    description: 'the current number of questions in this survey',
+  })
   size: number;
 
+  @LookupTable(() => SurveyAnalyzerViewModelClientDto, {
+    label: 'analyzers by name',
+    description:
+      'a lookup table of all available approaches to quantify responses to this survey',
+  })
   analyzersByName: Record<string, SurveyAnalyzerViewModelClientDto> = {};
 
   questions: {
