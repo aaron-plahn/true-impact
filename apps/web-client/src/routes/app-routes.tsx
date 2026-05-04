@@ -8,6 +8,10 @@ import {
   UserManagementDashboard,
   UserProfile,
 } from "../components/user-management";
+import { SurveyCompletionIndex } from "../components/surveys/completion";
+import { SurveyManagementIndex } from "../components/surveys/management";
+import { SurveyReviewIndex } from "../components/surveys/review";
+import { ClientIndex } from "../components/clients";
 
 export const AppRoutes = () => {
   const authRoutes = getSuperTokensRoutesForReactRouterDom(reactRouterDom, [
@@ -28,7 +32,7 @@ export const AppRoutes = () => {
     // App-specific routes go here
     {
       path: "/",
-      Component: Home,
+      element: <Home />,
     },
     {
       path: "/users",
@@ -46,6 +50,24 @@ export const AppRoutes = () => {
         </SessionAuth>
       ),
     },
+    {
+      path: "/surveys/complete",
+      element: (
+        <SurveyCompletionIndex />
+      )
+    },
+    {
+      path: "/surveys/manage",
+      element: (<SurveyManagementIndex />)
+    },
+    {
+      path: "/surveys/review",
+      element: (<SurveyReviewIndex />)
+    },
+    {
+      path: "/clients",
+      element: (<ClientIndex />)
+    }
   ]);
 
   return routes;
