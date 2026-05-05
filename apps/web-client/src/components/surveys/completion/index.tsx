@@ -1,5 +1,5 @@
-import { JSX } from "react"
+import { JSX } from "react";
 
-export const SurveyCompletionIndex = (): JSX.Element =>{
-    return <div>Survey Completion Index works!</div>
-}
+export const SurveyCompletionIndex = (): JSX.Element => {
+  return <div>Survey Completion Index works!</div>;
+};

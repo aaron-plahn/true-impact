@@ -1,25 +1,25 @@
-import { JSX, useState } from "react";
-import { Link, NavLink, useNavigate } from "react-router-dom";
-import AppBar from "@mui/material/AppBar";
-import Box from "@mui/material/Box";
-import Toolbar from "@mui/material/Toolbar";
-import IconButton from "@mui/material/IconButton";
-import Typography from "@mui/material/Typography";
-import Menu from "@mui/material/Menu";
-import Container from "@mui/material/Container";
-import Avatar from "@mui/material/Avatar";
-import Button from "@mui/material/Button";
-import Tooltip from "@mui/material/Tooltip";
 import AdbIcon from "@mui/icons-material/Adb";
-import { NavMenuSection } from "./navmenu.interface";
-import { NavMenuXs } from "./navmenu.xs";
-import { NavMenuMd } from "./navmenu.md";
-import { MenuItem } from "@mui/material";
-import PersonIcon from "@mui/icons-material/Person";
 import LoginIcon from "@mui/icons-material/Login";
+import PersonIcon from "@mui/icons-material/Person";
+import { MenuItem } from "@mui/material";
+import AppBar from "@mui/material/AppBar";
+import Avatar from "@mui/material/Avatar";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Container from "@mui/material/Container";
+import IconButton from "@mui/material/IconButton";
+import Menu from "@mui/material/Menu";
+import Toolbar from "@mui/material/Toolbar";
+import Tooltip from "@mui/material/Tooltip";
+import Typography from "@mui/material/Typography";
+import { JSX, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useSessionContext } from "supertokens-auth-react/recipe/session";
-import { Loading } from "../loading";
 import { signOut } from "supertokens-web-js/recipe/emailpassword";
+import { Loading } from "../loading";
+import { NavMenuSection } from "./navmenu.interface";
+import { NavMenuMd } from "./navmenu.md";
+import { NavMenuXs } from "./navmenu.xs";
 
 const surveyMenu: NavMenuSection = {
   label: "Surveys",
@@ -91,31 +91,6 @@ export const NavBar = (): JSX.Element => {
     setAnchorElUser(null);
   };
 
-  // return (
-  //   <nav className="nav-bar">
-  //     <div className="nav-bar-left">
-  //       <Link to="/" className="logo">True Impact</Link>
-  //     </div>
-  //     <ul className="nav-menu">
-  //       <li>
-  //         <NavLink to="/">Home</NavLink>
-  //       </li>
-  //       <li>
-  //         <NavLink to="/surveys/complete">Complete a Survey</NavLink>
-  //       </li>
-  //       <li>
-  //         <NavLink to="/surveys/manage">Build a Survey</NavLink>
-  //       </li>
-  //       <li>
-  //         <NavLink to="/surveys/review">Review a Survey</NavLink>
-  //       </li>
-  //       <li>
-  //         <NavLink to="/clients">Manage Clients</NavLink>
-  //       </li>
-  //     </ul>
-  //   </nav>
-  // );
-
   return (
     <AppBar position="static">
       <Container maxWidth="xl">
@@ -175,7 +150,11 @@ export const NavBar = (): JSX.Element => {
           </Box>
           <Box sx={{ flexGrow: 0 }}>
             <Tooltip title="Open settings">
-              <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }} data-testid="avatar-button">
+              <IconButton
+                onClick={handleOpenUserMenu}
+                sx={{ p: 0 }}
+                data-testid="avatar-button"
+              >
                 {session.doesSessionExist ? (
                   <Avatar sx={{ bgcolor: "darkgrey" }}>
                     <PersonIcon />
@@ -204,7 +183,12 @@ export const NavBar = (): JSX.Element => {
               {session.doesSessionExist ? (
                 <MenuItem>
                   <Typography sx={{ textAlign: "center" }}>
-                    <Button onClick={logOutWithRedirect} data-testid="sign-out-button">Sign Out</Button>
+                    <Button
+                      onClick={logOutWithRedirect}
+                      data-testid="sign-out-button"
+                    >
+                      Sign Out
+                    </Button>
                   </Typography>
                 </MenuItem>
               ) : (

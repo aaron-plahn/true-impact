@@ -1,5 +1,5 @@
-import { JSX } from "react"
+import { JSX } from "react";
 
-export const ClientIndex = (): JSX.Element =>{
-    return <div>Client Index Works!</div>
-}
+export const ClientIndex = (): JSX.Element => {
+  return <div>Client Index Works!</div>;
+};
