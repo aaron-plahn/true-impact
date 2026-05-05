@@ -1,7 +1,7 @@
-import { Given, When, Then } from "@wdio/cucumber-framework";
+import { Given, Then, When } from "@wdio/cucumber-framework";
 import { expect } from "@wdio/globals";
 
-import loginPage from "../pageobjects/login.page.js";
+import loginPage from "./login.page.js";
 
 const pages = {
   login: loginPage,

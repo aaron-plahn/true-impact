@@ -1,0 +1,16 @@
+{
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.formatOnSave": true,
+  "editor.renderFinalNewline": "on",
+  "editor.codeActionsOnSave": {
+    "source.organizeImports": "always"
+  },
+  "cucumberautocomplete.steps": ["features/**/*.steps.ts"],
+  "cucumberautocomplete.syncfeatures": "features/*.feature",
+  "cucumberautocomplete.strictGherkinCompletion": true,
+  "editor.quickSuggestions": {
+    "comments": false,
+    "strings": true,
+    "other": true
+  }
+}

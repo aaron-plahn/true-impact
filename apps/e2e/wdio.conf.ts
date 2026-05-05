@@ -1,10 +1,10 @@
 import axios from "axios";
 import * as dotenv from "dotenv";
-import path from 'path'
+import path from "path";
 import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-dotenv.config({ path: path.resolve(__dirname,'./.env.test') });
+dotenv.config({ path: path.resolve(__dirname, "./.env.test") });
 
 export const config: WebdriverIO.Config = {
   //
@@ -138,7 +138,7 @@ export const config: WebdriverIO.Config = {
   // If you are using Cucumber you need to specify the location of your step definitions.
   cucumberOpts: {
     // <string[]> (file/dir) require files before executing features
-    require: ["./features/step-definitions/steps.ts"],
+    require: ["./features/**/*.steps.ts"],
     // <boolean> show full backtrace for errors
     backtrace: false,
     // <string[]> ("extension:module") require files with the given EXTENSION after requiring MODULE (repeatable)
