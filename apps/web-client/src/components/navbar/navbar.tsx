@@ -1,5 +1,5 @@
 import { JSX, useState } from "react";
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
 import Toolbar from "@mui/material/Toolbar";
@@ -11,12 +11,15 @@ import Avatar from "@mui/material/Avatar";
 import Button from "@mui/material/Button";
 import Tooltip from "@mui/material/Tooltip";
 import AdbIcon from "@mui/icons-material/Adb";
-import {NavMenuSection} from './navmenu.interface'
+import { NavMenuSection } from "./navmenu.interface";
 import { NavMenuXs } from "./navmenu.xs";
 import { NavMenuMd } from "./navmenu.md";
 import { MenuItem } from "@mui/material";
-import PersonIcon from '@mui/icons-material/Person'
-
+import PersonIcon from "@mui/icons-material/Person";
+import LoginIcon from "@mui/icons-material/Login";
+import { useSessionContext } from "supertokens-auth-react/recipe/session";
+import { Loading } from "../loading";
+import { signOut } from "supertokens-web-js/recipe/emailpassword";
 
 const surveyMenu: NavMenuSection = {
   label: "Surveys",
@@ -46,11 +49,31 @@ const _clientMenu: NavMenuSection = {
   ],
 };
 
-const settings = ["Profile", "Account", "Dashboard", "Logout"];
+const publicSettings: NavMenuSection = {
+  label: "Sign In",
+  items: [
+    {
+      label: "Sign In",
+      route: "/auth",
+    },
+  ],
+};
 
 export const NavBar = (): JSX.Element => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [anchorElUser, setAnchorElUser] = useState<null | HTMLElement>(null);
+  const navigate = useNavigate();
+  const session = useSessionContext();
+
+  async function logOutWithRedirect() {
+    await signOut();
+
+    navigate("/");
+  }
+
+  if (session.loading) {
+    return <Loading />;
+  }
 
   const handleOpenNavMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -116,7 +139,12 @@ export const NavBar = (): JSX.Element => {
             <Link to="/">LOGO</Link>
           </Typography>
           <Box sx={{ flexGrow: 1, display: { xs: "flex", md: "none" } }}>
-            <NavMenuXs sections={[surveyMenu]} handleOpen={handleOpenNavMenu} handleClose={handleCloseNavMenu} anchorEl={anchorEl}></NavMenuXs>
+            <NavMenuXs
+              sections={[surveyMenu]}
+              handleOpen={handleOpenNavMenu}
+              handleClose={handleCloseNavMenu}
+              anchorEl={anchorEl}
+            ></NavMenuXs>
           </Box>
           <AdbIcon sx={{ display: { xs: "flex", md: "none" }, mr: 1 }} />
           <Typography
@@ -138,14 +166,23 @@ export const NavBar = (): JSX.Element => {
             LOGO
           </Typography>
           <Box sx={{ flexGrow: 1, display: { xs: "none", md: "flex" } }}>
-            <NavMenuMd sections={[surveyMenu]} handleOpen={handleOpenNavMenu} handleClose={handleCloseNavMenu} anchorEl={anchorEl}></NavMenuMd>
+            <NavMenuMd
+              sections={[surveyMenu]}
+              handleOpen={handleOpenNavMenu}
+              handleClose={handleCloseNavMenu}
+              anchorEl={anchorEl}
+            ></NavMenuMd>
           </Box>
           <Box sx={{ flexGrow: 0 }}>
             <Tooltip title="Open settings">
-              <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                <Avatar sx={{ bgcolor: 'darkgrey' }}>
-                  <PersonIcon />
-                </Avatar>
+              <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }} data-testid="avatar-button">
+                {session.doesSessionExist ? (
+                  <Avatar sx={{ bgcolor: "darkgrey" }}>
+                    <PersonIcon />
+                  </Avatar>
+                ) : (
+                  <LoginIcon data-testid="sign-in-menu-control" />
+                )}
               </IconButton>
             </Tooltip>
             <Menu
@@ -164,13 +201,21 @@ export const NavBar = (): JSX.Element => {
               open={Boolean(anchorElUser)}
               onClose={handleCloseUserMenu}
             >
-              {settings.map((setting) => (
-                <MenuItem key={setting} onClick={handleCloseUserMenu}>
+              {session.doesSessionExist ? (
+                <MenuItem>
                   <Typography sx={{ textAlign: "center" }}>
-                    {setting}
+                    <Button onClick={logOutWithRedirect} data-testid="sign-out-button">Sign Out</Button>
                   </Typography>
                 </MenuItem>
-              ))}
+              ) : (
+                publicSettings.items.map(({ label, route }) => (
+                  <MenuItem key={label} onClick={handleCloseUserMenu}>
+                    <Typography sx={{ textAlign: "center" }}>
+                      <Link to={route}>{label}</Link>
+                    </Typography>
+                  </MenuItem>
+                ))
+              )}
             </Menu>
           </Box>
         </Toolbar>

@@ -1,6 +1,6 @@
 import { JSX, useEffect, useState } from "react";
 import { config } from "../../config/config.local";
-import { Loading } from "../Loading";
+import { Loading } from "../loading";
 
 type UserInfo = {};
 
