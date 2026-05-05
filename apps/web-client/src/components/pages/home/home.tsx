@@ -1,5 +1,4 @@
 import { JSX } from "react";
-import { Link } from "react-router-dom";
 
 export const Home = (): JSX.Element => {
   return (
@@ -12,9 +11,6 @@ export const Home = (): JSX.Element => {
         />
         True Impact
       </header>
-      <Link to={"/users/current"}>Manage Users</Link>
-      <br />
-      <Link to={"/auth"}>Log In</Link>
     </div>
   );
 };
