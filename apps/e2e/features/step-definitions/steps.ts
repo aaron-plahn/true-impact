@@ -1,23 +1,23 @@
-import { Given, When, Then } from '@wdio/cucumber-framework';
-import { expect, $ } from '@wdio/globals'
+import { Given, When, Then } from "@wdio/cucumber-framework";
+import { expect } from "@wdio/globals";
 
-import loginPage from '../pageobjects/login.page.js';
-import SecurePage from '../pageobjects/secure.page.js';
+import loginPage from "../pageobjects/login.page.js";
 
-const pages= {
-    login: loginPage
+const pages = {
+  login: loginPage,
 } as const;
 
 Given("I am on the login page", async () => {
-    await pages.login.open()
+  await pages.login.open();
 });
 
-When("When I login with valid admin credentials", async (username, password) => {
-    await loginPage.login(username, password)
+When("I login with valid admin credentials", async () => {
+  await loginPage.login(
+    process.env.TRUE_IMPACT_ADMIN_USERNAME as string,
+    process.env.TRUE_IMPACT_ADMIN_PASSWORD as string,
+  );
 });
 
-Then("Then I should see a flash message saying: 'Logged In'", async (message) => {
-    await expect(SecurePage.flashAlert).toBeExisting();
-    await expect(SecurePage.flashAlert).toHaveText(expect.stringContaining(message));
+Then("I should see the log out icon", async () => {
+  await expect(loginPage.logoutIcon).toBeExisting();
 });
-

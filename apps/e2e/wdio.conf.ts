@@ -1,5 +1,10 @@
 import axios from "axios";
-import "dotenv/config";
+import * as dotenv from "dotenv";
+import path from 'path'
+import { fileURLToPath } from "url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: path.resolve(__dirname,'./.env.test') });
 
 export const config: WebdriverIO.Config = {
   //
@@ -83,7 +88,7 @@ export const config: WebdriverIO.Config = {
   //
   // If you only want to run your tests until a specific amount of tests have failed use
   // bail (default is 0 - don't bail, run all tests).
-  bail: 0,
+  bail: 1,
   //
   // Set a base URL in order to shorten url command calls. If your `url` parameter starts
   // with `/`, the base url gets prepended, not including the path portion of your baseUrl.
@@ -105,7 +110,7 @@ export const config: WebdriverIO.Config = {
   // Services take over a specific job you don't want to take care of. They enhance
   // your test setup with almost no effort. Unlike plugins, they don't add new
   // commands. Instead, they hook themselves up into the test process.
-  // services: [],
+  services: ["chromedriver"],
   //
   // Framework you want to run your specs with.
   // The following are supported: Mocha, Jasmine, and Cucumber
@@ -204,13 +209,21 @@ export const config: WebdriverIO.Config = {
   beforeSession: async function (_config, _capabilities, _specs, _cid) {
     const data = { email: "user@digiteched.com", password: "superSECRET1" };
 
+    const apiKey = process.env.SUPERTOKENS_API_KEYS;
+
+    if (apiKey === null || typeof apiKey !== "string" || apiKey.length === 0) {
+      throw new Error(
+        `WDIO failed to obtain Supertokens API Key from process.env in order to seed test user in Supertokens.`,
+      );
+    }
+
     const headers = {
-      "api-key": process.env.SAPIK,
+      "api-key": process.env.SUPERTOKENS_API_KEYS,
       "Content-Type": "application/json",
     };
 
     // TODO from environment or a config
-    const supertokensDashboardEndpoint = `http://localhost:3567:/recipe/signup`;
+    const supertokensDashboardEndpoint = `http://localhost:3567/recipe/signup`;
 
     try {
       await axios.post(supertokensDashboardEndpoint, data, { headers });
@@ -273,8 +286,11 @@ export const config: WebdriverIO.Config = {
    * @param {number}             result.duration  duration of scenario in milliseconds
    * @param {object}             context          Cucumber World object
    */
-  // afterStep: function (step, scenario, result, context) {
-  // },
+  afterStep: async function (_step, scenario, { error }, _context) {
+    if (error) {
+      await browser.saveScreenshot(`./errorScreenShots/${scenario.name}.png`);
+    }
+  },
   /**
    *
    * Runs after a Cucumber Scenario.

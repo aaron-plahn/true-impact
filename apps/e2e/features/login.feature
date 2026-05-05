@@ -4,4 +4,4 @@ Feature: User login
 
     Given I am on the login page
     When I login with valid admin credentials
-    Then I should see a flash message saying: 'Logged In'
+    Then I should see the log out icon
