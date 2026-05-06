@@ -1,0 +1,3 @@
+# Copy this to `.env.{environment_name}`, e.g., `.env.test` and update it with real values
+TRUE_IMPACT_ADMIN_USERNAME=admin
+TRUE_IMPACT_ADMIN_PASSWORD=specialPASSWORD1234
