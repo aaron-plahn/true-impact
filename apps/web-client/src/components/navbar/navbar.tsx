@@ -160,7 +160,9 @@ export const NavBar = (): JSX.Element => {
                     <PersonIcon />
                   </Avatar>
                 ) : (
-                  <LoginIcon data-testid="sign-in-menu-control" />
+                  <div data-testid="sign-in-menu-control">
+                    <LoginIcon />
+                  </div>
                 )}
               </IconButton>
             </Tooltip>
