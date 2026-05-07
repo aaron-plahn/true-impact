@@ -28,6 +28,7 @@ interface CommandResponse {
 export interface SurveyDetailResponse {
   name: string;
   size: number;
+  isPublished: boolean;
   questions: SurveyQuestion[];
 }
 

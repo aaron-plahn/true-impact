@@ -1,0 +1,82 @@
+import { JSX, useState } from "react";
+import { ErrorInfo } from "../error-handling";
+import { Loading } from "../loading";
+import { useExecuteCommandMutation } from "../surveys/store";
+
+interface AddQuestionCommandFormProps {
+  context: {
+    type: string;
+    id: string;
+  };
+}
+
+export const AddQuestionCommandForm = ({
+  context,
+}: AddQuestionCommandFormProps): JSX.Element => {
+  const [questionLabel, setQuestionLabel] = useState("");
+
+  const [prompt, setPrompt] = useState("");
+
+  const [executeCommand, { isLoading: isRequestInProgress, error }] =
+    useExecuteCommandMutation();
+
+  if (isRequestInProgress) {
+    return <Loading />;
+  }
+
+  if (error) {
+    console.log({ error });
+
+    return (
+      <ErrorInfo
+        // @ts-expect-error Enough with React \ Redux TS madness!
+        status={error?.status || 500}
+        // @ts-expect-error Enough with React \ Redux TS madness!
+        message={error?.data?.message || "unknown error"}
+      />
+    );
+  }
+
+  const fsa = {
+    type: "ADD_QUESTION_TO_SURVEY",
+    payload: {
+      aggregateCompositeIdentifier: {
+        type: context.type,
+        id: context.id,
+      },
+      prompt,
+      label: questionLabel,
+    },
+  };
+
+  return (
+    <form
+      onSubmit={() => {
+        executeCommand(fsa);
+      }}
+    >
+      <label htmlFor="label-input">
+        Label:
+        <input
+          id="label-input"
+          type="text"
+          value={questionLabel}
+          onChange={(e) => {
+            setQuestionLabel(e.target.value);
+          }}
+        />
+      </label>
+      <label htmlFor="prompt-input">
+        <input
+          id="prompt-input"
+          type="text"
+          value={prompt}
+          onChange={(e) => {
+            setPrompt(e.target.value);
+          }}
+        />
+      </label>
+      <button type="submit">Add Question</button>
+    </form>
+  );
+};
