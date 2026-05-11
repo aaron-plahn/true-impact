@@ -15,7 +15,6 @@ export const CommandExecutor = ({
   type: commandType,
   label,
   description,
-  //   type,
   form: ProvidedForm,
 }: CommandExecutorProps): JSX.Element => {
   const [isFormOpen, setIsFormOpen] = useState(false);

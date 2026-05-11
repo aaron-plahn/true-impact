@@ -28,8 +28,6 @@ export const AddOptionToSurveyQuestionCommandForm = ({
   }
 
   if (error) {
-    console.log({ error });
-
     return (
       <ErrorInfo
         // @ts-expect-error Enough with React \ Redux TS madness!

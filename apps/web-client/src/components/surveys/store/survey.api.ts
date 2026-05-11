@@ -47,8 +47,6 @@ export const surveyApi = createApi({
       providesTags: (result, error, id) => {
         const tag = { type: "survey", id } as const;
 
-        console.log({ providing: tag });
-
         return [tag];
       },
     }),
@@ -80,7 +78,6 @@ export const surveyApi = createApi({
         }
 
         const tag = { type: "survey", id: result.id };
-        console.log(`invalidated: ${tag}`);
         return [tag];
       },
     }),

@@ -6,3 +6,4 @@ Feature: Start a new Survey template
     And I am on the survey management index page
     When I start a new survey
     Then It should display the newly created survey
+    

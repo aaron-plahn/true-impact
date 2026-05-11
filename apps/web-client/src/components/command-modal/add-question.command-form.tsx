@@ -27,8 +27,6 @@ export const AddQuestionCommandForm = ({
   }
 
   if (error) {
-    console.log({ error });
-
     return (
       <ErrorInfo
         // @ts-expect-error Enough with React \ Redux TS madness!

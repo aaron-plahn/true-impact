@@ -31,8 +31,6 @@ export const NewSurveyPage = () => {
 
       const result = (await response.json()) as { id: string };
 
-      console.log({ result });
-
       navigate(`/surveys/manage/${result.id}`);
     } catch (error) {
       setError(error as Error);
@@ -50,7 +48,6 @@ export const NewSurveyPage = () => {
             type="text"
             value={surveyName}
             onChange={(e) => {
-              console.log("set it!");
               setSurveyName(e.target.value);
             }}
           />
