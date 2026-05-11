@@ -5,4 +5,4 @@ Feature: Start a new Survey template
     Given I am logged in as an admin
     And I am on the survey management index page
     When I start a new survey
-    Then It should display the newly created survey````
+    Then It should display the newly created survey

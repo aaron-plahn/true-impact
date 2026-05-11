@@ -30,8 +30,10 @@ export const SurveyDetailPage = (): JSX.Element => {
 
   const { name, questions, isPublished } = data;
 
+  const isEditable = !isPublished;
+
   return (
-    <div>
+    <div data-testid="survey-management-detail-page">
       <Typography variant="h2">{name}</Typography>
       {isPublished ? (
         <Typography variant="body1">** PUBLISHED FOR USE**</Typography>
@@ -40,12 +42,13 @@ export const SurveyDetailPage = (): JSX.Element => {
           type={"PUBLISH_SURVEY"}
           label={"Publish Survey"}
           description={"Finalize this Survey for use"}
-          form={() => (
+          form={({ onClose }) => (
             <PublishSurveyCommandForm
               context={{
                 type: "survey",
                 id: id || "",
               }}
+              onClose={onClose}
             />
           )}
         />
@@ -65,36 +68,43 @@ export const SurveyDetailPage = (): JSX.Element => {
                 </Typography>
               </div>
             ))}
-            <CommandExecutor
-              type={"ADD_OPTION_TO_SURVEY_QUESTION"}
-              label={"Add Option"}
-              description={"Add a new option for the target question"}
-              form={() => (
-                <AddOptionToSurveyQuestionCommandForm
-                  context={{
-                    type: "survey",
-                    id: id || "",
-                    questionLabel,
-                  }}
-                />
-              )}
-            />
+            {isEditable ? (
+              <CommandExecutor
+                type={"ADD_OPTION_TO_SURVEY_QUESTION"}
+                label={"Add Option"}
+                description={"Add a new option for the target question"}
+                form={({ onClose }) => (
+                  <AddOptionToSurveyQuestionCommandForm
+                    context={{
+                      type: "survey",
+                      id: id || "",
+                      questionLabel,
+                    }}
+                    onClose={onClose}
+                  />
+                )}
+              />
+            ) : null}
+            <br />
           </div>
         ))}
       </div>
-      <CommandExecutor
-        type={"ADD_QUESTION_TO_SURVEY"}
-        label={"Add Question"}
-        description={"Add a question to an existing survey."}
-        form={() => (
-          <AddQuestionCommandForm
-            context={{
-              type: "survey",
-              id: id || "",
-            }}
-          />
-        )}
-      />
+      {isEditable ? (
+        <CommandExecutor
+          type={"ADD_QUESTION_TO_SURVEY"}
+          label={"Add Question"}
+          description={"Add a question to an existing survey."}
+          form={({ onClose }) => (
+            <AddQuestionCommandForm
+              context={{
+                type: "survey",
+                id: id || "",
+              }}
+              onClose={onClose}
+            />
+          )}
+        />
+      ) : null}
     </div>
   );
 };

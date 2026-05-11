@@ -10,10 +10,12 @@ interface AddOptionToSurveyQuestionCommandFormProps {
     id: string;
     questionLabel: string;
   };
+  onClose: () => void;
 }
 
 export const AddOptionToSurveyQuestionCommandForm = ({
   context,
+  onClose,
 }: AddOptionToSurveyQuestionCommandFormProps): JSX.Element => {
   const [optionLabel, setOptionLabel] = useState("");
   const [text, setText] = useState("");
@@ -55,12 +57,15 @@ export const AddOptionToSurveyQuestionCommandForm = ({
     <form
       onSubmit={() => {
         executeCommand(fsa);
+
+        // TODO Show the result and require acknowledgement first?
+        onClose();
       }}
     >
       <label htmlFor="option-label-input">
         Option Label:
         <input
-          id="option-label-input"
+          id="optionLabel-input"
           type="text"
           value={optionLabel}
           onChange={(e) => {

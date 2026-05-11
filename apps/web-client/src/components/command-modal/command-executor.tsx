@@ -1,7 +1,7 @@
 import { Button, Tooltip } from "@mui/material";
-import React, { JSX, useState } from "react";
+import { JSX, useState } from "react";
 
-type Form = React.FunctionComponent;
+type Form = ({ onClose }: { onClose: () => void }) => JSX.Element;
 
 interface CommandExecutorProps {
   type: string;
@@ -12,6 +12,7 @@ interface CommandExecutorProps {
 }
 
 export const CommandExecutor = ({
+  type: commandType,
   label,
   description,
   //   type,
@@ -20,11 +21,12 @@ export const CommandExecutor = ({
   const [isFormOpen, setIsFormOpen] = useState(false);
 
   return (
-    <div data-testid="command-executor">
+    <div>
       {!isFormOpen ? (
         <Tooltip title={description}>
           <Button
-            id="command-executor-button"
+            id={`${commandType}_command-executor-button`}
+            className="command-executor-button"
             onClick={() => {
               setIsFormOpen(true);
             }}
@@ -33,7 +35,11 @@ export const CommandExecutor = ({
           </Button>
         </Tooltip>
       ) : (
-        <ProvidedForm />
+        <ProvidedForm
+          onClose={() => {
+            setIsFormOpen(false);
+          }}
+        />
       )}
     </div>
   );

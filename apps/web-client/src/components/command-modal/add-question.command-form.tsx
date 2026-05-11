@@ -8,10 +8,12 @@ interface AddQuestionCommandFormProps {
     type: string;
     id: string;
   };
+  onClose: () => void;
 }
 
 export const AddQuestionCommandForm = ({
   context,
+  onClose,
 }: AddQuestionCommandFormProps): JSX.Element => {
   const [questionLabel, setQuestionLabel] = useState("");
 
@@ -53,6 +55,8 @@ export const AddQuestionCommandForm = ({
     <form
       onSubmit={() => {
         executeCommand(fsa);
+
+        onClose();
       }}
     >
       <label htmlFor="label-input">

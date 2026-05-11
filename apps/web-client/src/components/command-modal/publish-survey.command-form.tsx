@@ -9,10 +9,12 @@ interface PublishSurveyCommandFormProps {
     type: string;
     id: string;
   };
+  onClose: () => void;
 }
 
 export const PublishSurveyCommandForm = ({
   context: { type, id },
+  onClose,
 }: PublishSurveyCommandFormProps): JSX.Element => {
   const [executeCommand, { isLoading: isRequestInProgress, error }] =
     useExecuteCommandMutation();
@@ -45,14 +47,17 @@ export const PublishSurveyCommandForm = ({
   };
 
   return (
-    <form
-      onSubmit={() => {
-        executeCommand(fsa);
-      }}
-    >
-      <Tooltip title="publish this survey">
-        <button type="submit">Publish</button>
-      </Tooltip>
-    </form>
+    <Tooltip title="publish this survey">
+      <button
+        type="submit"
+        onClick={() => {
+          executeCommand(fsa);
+
+          onClose();
+        }}
+      >
+        Publish
+      </button>
+    </Tooltip>
   );
 };
