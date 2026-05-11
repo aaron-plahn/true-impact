@@ -3,15 +3,17 @@ import { useRoutes } from "react-router-dom";
 import { EmailPasswordPreBuiltUI } from "supertokens-auth-react/recipe/emailpassword/prebuiltui";
 import { SessionAuth } from "supertokens-auth-react/recipe/session";
 import { getSuperTokensRoutesForReactRouterDom } from "supertokens-auth-react/ui";
+import { ClientIndex } from "../components/clients";
 import { Home } from "../components/pages";
+import { SurveyCompletionIndex } from "../components/surveys/completion";
+import { SurveyManagementIndex } from "../components/surveys/management";
+import { NewSurveyPage } from "../components/surveys/management/new-survey.page";
+import { SurveyDetailPage } from "../components/surveys/management/survey-detail.page";
+import { SurveyReviewIndex } from "../components/surveys/review";
 import {
   UserManagementDashboard,
   UserProfile,
 } from "../components/user-management";
-import { SurveyCompletionIndex } from "../components/surveys/completion";
-import { SurveyManagementIndex } from "../components/surveys/management";
-import { SurveyReviewIndex } from "../components/surveys/review";
-import { ClientIndex } from "../components/clients";
 
 export const AppRoutes = () => {
   const authRoutes = getSuperTokensRoutesForReactRouterDom(reactRouterDom, [
@@ -52,22 +54,28 @@ export const AppRoutes = () => {
     },
     {
       path: "/surveys/complete",
-      element: (
-        <SurveyCompletionIndex />
-      )
+      element: <SurveyCompletionIndex />,
+    },
+    {
+      path: "/surveys/manage/:id",
+      element: <SurveyDetailPage />,
     },
     {
       path: "/surveys/manage",
-      element: (<SurveyManagementIndex />)
+      element: <SurveyManagementIndex />,
+    },
+    {
+      path: "/surveys/manage/new",
+      element: <NewSurveyPage />,
     },
     {
       path: "/surveys/review",
-      element: (<SurveyReviewIndex />)
+      element: <SurveyReviewIndex />,
     },
     {
       path: "/clients",
-      element: (<ClientIndex />)
-    }
+      element: <ClientIndex />,
+    },
   ]);
 
   return routes;

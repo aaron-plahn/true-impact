@@ -4,5 +4,8 @@
   "editor.renderFinalNewline": "on",
   "editor.codeActionsOnSave": {
     "source.organizeImports": "always"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
   }
 }
