@@ -1,4 +1,5 @@
 import { ApiOkResponse } from '@nestjs/swagger';
+import { tiSduiToHtml } from 'src/libs/server-driven-ui';
 import {
   buildTestInstance,
   convertToOpenApiSchema,
@@ -10,6 +11,7 @@ import {
   BadUserInputFilter,
   Controller,
   DetailQueryEndpoint,
+  Get,
   IdParam,
   IndexQueryEndpoint,
   QueryResponseInterceptor,
@@ -20,6 +22,7 @@ import {
 } from '../../libs/framework';
 import { SurveyResponseQueryService } from './survey-completion/queries';
 import { SurveyResponseRecordViewModelClientDto } from './survey-completion/queries/survey-response-record.view-model';
+import { StartSurveyPage } from './survey-completion/views';
 
 const schema = convertToOpenApiSchema(
   getDataSchemaFromClassCtor(SurveyResponseRecordViewModelClientDto),
@@ -35,7 +38,18 @@ export class SurveyResponseController {
     private readonly surveyCompletionQueryService: SurveyResponseQueryService,
   ) {}
 
-  // commands are routed through the base /surveys endpoint
+  // commands are routed through the base /surveys command controller
+
+  @Get('participate/:id')
+  beginSurvey(@IdParam() surveyId: string) {
+    const dataView = new StartSurveyPage({ id: surveyId, name: 'Aro Survey' });
+
+    const sduiView = dataView.render();
+
+    const htmlView = tiSduiToHtml(sduiView);
+
+    return htmlView;
+  }
 
   @IndexQueryEndpoint()
   @ApiOkResponse({
