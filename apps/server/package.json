@@ -25,10 +25,13 @@
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.0.1",
     "@nestjs/platform-express": "^11.0.1",
+    "@nestjs/platform-socket.io": "^11.1.19",
     "@nestjs/swagger": "^11.2.5",
+    "@nestjs/websockets": "^11.1.19",
     "class-transformer": "^0.5.1",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
+    "socket.io": "^4.8.3",
     "supertokens-nestjs": "^1.0.0",
     "supertokens-node": "^24.0.0"
   },

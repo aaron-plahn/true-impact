@@ -1,7 +1,7 @@
-import { TISduiForm } from '../forms';
+import { ActionContentNode } from '../content-node';
 
-export const formToHtml = (form: TISduiForm) => {
-  const { id, title, label, fields, action } = form;
+export const actionToHtml = ({ id, title, label, form }: ActionContentNode) => {
+  const { fields, action } = form;
 
   const renderedFields = fields
     .map((field) => {
@@ -21,8 +21,24 @@ export const formToHtml = (form: TISduiForm) => {
     })
     .join('\n');
 
+  const _onSubmit = `
+    (e) =>{
+      console.log({e});
+
+      e.preventDefault();
+
+      const formData = new FormData(e.target);
+
+      const fsa = {
+        payload: Object.fromEntries(formData.entries())
+      };
+
+      fetch('${action.path}', { method: ${action.method}, body: fsa });
+    }
+  `;
+
   return `
- <form id=${id} class="ti-form" action=${action.path}>
+ <form id=${id} class="ti-form" onsubmit="submitCommandForm(event)">
     <h3>${title}</h3>
     ${renderedFields}
     <button type="submit">${label}</button>
