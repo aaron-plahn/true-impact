@@ -25,6 +25,7 @@ import {
 } from '../../libs/framework';
 import { SurveyQueryService } from './queries/survey-query.service';
 import { SurveyViewModelClientDto } from './queries/survey.view-model';
+import { SurveyEventsGateway } from './survey-events.gateway';
 
 const schema = convertToOpenApiSchema(
   getDataSchemaFromClassCtor(SurveyViewModelClientDto),
@@ -39,6 +40,11 @@ export class SurveyController implements OnModuleInit {
   constructor(
     private readonly surveyQueryService: SurveyQueryService,
     private readonly commandHandlerService: CommandHandlerService,
+    /**
+     * This doesn't belong here. In the long run, we want on out-of-band messaging queue
+     * that will publish events async after the command ack \ nack has already been returned in-band.
+     */
+    private readonly eventPublisher: SurveyEventsGateway,
   ) {}
 
   @DetailQueryEndpoint()
@@ -51,6 +57,14 @@ export class SurveyController implements OnModuleInit {
     @IdParam() id: string,
   ): Promise<SurveyViewModelClientDto | TrueImpactError> {
     const result = await this.surveyQueryService.fetchById(id);
+
+    // TODO The command handler needs a way to emit events.
+    this.eventPublisher.publishEvent({
+      type: 'SURVEY_UPDATED',
+      payload: {
+        ...result,
+      },
+    });
 
     return result;
   }
@@ -70,6 +84,10 @@ export class SurveyController implements OnModuleInit {
   // TODO @CommandExecutionEndpoint()
   @Post('commands')
   async executeCommand(@Body() fsa: ICommandFsa): Promise<CommandResult> {
+    if (!fsa) {
+      throw new Error(`Missing fsa!`);
+    }
+
     const result = await this.commandHandlerService.execute(fsa);
 
     return result;

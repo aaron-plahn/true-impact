@@ -1,4 +1,10 @@
-import { Section, TextContentNode, TIScreen } from 'src/libs/server-driven-ui';
+import {
+  ActionContentNode,
+  Section,
+  TextContentNode,
+  TIScreen,
+} from 'src/libs/server-driven-ui';
+import { TISduiFormField } from 'src/libs/server-driven-ui/forms';
 
 export class StartSurveyPage {
   id: string;
@@ -17,14 +23,36 @@ export class StartSurveyPage {
     const textNode: TextContentNode = {
       id: `${screenId}_1_1`,
       type: 'TEXT',
-      text: 'Hello World',
+      text: 'Complete Survey',
+    };
+
+    const textField: TISduiFormField = {
+      type: 'TEXT_INPUT',
+      label: 'Survey ID',
+      name: 'surveyId',
+    };
+
+    const beginSurveyAction: ActionContentNode = {
+      type: 'ACTION',
+      id: `${screenId}_1_2`,
+      title: 'Begin Survey',
+      label: 'Begin',
+      description: 'Begin a new attempt of the given survey',
+      form: {
+        fields: [textField],
+        context: {},
+        action: {
+          path: '/surveys/commands',
+          method: 'POST',
+        },
+      },
     };
 
     const firstSection: Section = {
       id: `${screenId}_1`,
       type: 'PLAIN',
       classes: new Set(),
-      nodes: [textNode],
+      nodes: [textNode, beginSurveyAction],
     };
 
     // TODO escape all text
