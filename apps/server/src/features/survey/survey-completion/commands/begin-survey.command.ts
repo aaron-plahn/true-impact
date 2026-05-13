@@ -27,11 +27,11 @@ export class BeginSurvey {
 
   // versionId: string; // an identifier specifying which version of this survey you are completing
 
-  // TODO Should we have a separate `BeginAnonymousSurvey`?
   @NestedDataType(() => SurveyParticipantCompositeIdentifier, {
     label: 'participant ID',
     description:
       'a system-wide unique reference to the person who is completing this survey',
+    isOptional: true,
   })
-  participantCompositeIdentifier: SurveyParticipantCompositeIdentifier;
+  participantCompositeIdentifier?: SurveyParticipantCompositeIdentifier;
 }
