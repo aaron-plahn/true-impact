@@ -203,7 +203,6 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
   })
   surveySchemaVersion = '1.0.0';
 
-  // Surveys may be anonymous in the future
   @NestedDataType(() => SurveyParticipantCompositeIdentifier, {
     label: 'participant identifier',
     description:
@@ -587,6 +586,18 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
         questionResponseErrors,
       );
     }
+
+    /**
+     * In the future, we will want to validate
+     * survey.isParticipantAllowed(participantCompositeIdentifier).
+     *
+     * While it might seem like we want to inject a full `participant` for validation,
+     * we should avoid this because participants are out-of-process and there are no
+     * transactionality guarantees that the specific attributes of a participant won't
+     * change from under our feet. We validate that a participant of the given type exists
+     * at the time the survey is started. If the participant is removed later, we can decide
+     * upstream how to handle or whether to disregard the given survey.
+     */
 
     return new SurveyResponseRecord({
       id,
