@@ -6,7 +6,7 @@ import {
   AddQuestionCommandForm,
   CommandExecutor,
   PublishSurveyCommandForm,
-} from "../../command-modal";
+} from "../../command-execution";
 import { Loading } from "../../loading";
 import { useFetchSurveyByIdQuery } from "../store/survey.api";
 
