@@ -30,11 +30,15 @@ import { CommunityQueryService, CommunityViewModel } from './queries';
     {
       provide: CommandHandlerService,
       useFactory: (moduleRef: ModuleRef) => {
-        const commandHandlerService = new CommandHandlerService({
-          resolve(injectionToken) {
-            return moduleRef.get(injectionToken);
+        const commandHandlerService = new CommandHandlerService(
+          {
+            resolve(injectionToken) {
+              return moduleRef.get(injectionToken);
+            },
           },
-        });
+          // TODO CommunityEventsGateway
+          { publishEvent: (_e) => {} },
+        );
 
         commandHandlerService
           .register({

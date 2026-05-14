@@ -23,6 +23,8 @@ export interface ActionContentNode {
   // this is meant to appear as a tooltip
   description: string;
   form: TISduiForm;
+  // these are inspired by [htmx](https://htmx.org/docs/#introduction)'s `hx-swap` attribute \ corresponding strategies
+  swap: 'inner' | 'outer' | 'first' | 'last' | 'delete' | 'none';
 }
 
 export type ContentNode =

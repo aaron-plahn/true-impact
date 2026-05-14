@@ -28,21 +28,58 @@ export const tiSduiToHtml = (input: TIScreen): string => {
         <body>
             ${text}
             <script>
-                const submitCommandForm = (e) =>{
-                    console.log({e});
+                const submitCommandForm = async (e) => {
+                console.log({ e });
 
-                    e.preventDefault();
+                e.preventDefault();
 
-                    const formData = new FormData(e.target);
+                const formData = new FormData(e.target);
 
-                    const fsa = {
-                        type: 'BEGIN_SURVEY',
-                        payload: Object.fromEntries(formData.entries())
-                    };
+                const fsa = {
+                    type: 'BEGIN_SURVEY',
+                    payload: Object.fromEntries(formData.entries()),
+                };
+
+                const render = (newHtml) => {
+                    e.target.outerHTML = newHtml;
+                };
+
+                try {
+                    const response = await fetch('/surveys/commands-html', {
+                    method: 'POST',
+                    body: JSON.stringify(fsa),
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Accept: 'text/html',
+                    },
+                    });
+
+                    const result = await response.text();
+
+                    if (response.status !== 201) {
+                    render('<div>Shoot! Fix me.</div>');
+                    }
+
+                    console.log({result,response});
 
 
-                    fetch('/surveys/commands',{ method: 'POST', body: JSON.stringify(fsa), headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' } });
+                    render(result);
+
+                    return;
+                } catch (error) {
+                    const msg = error?.message || 'Unexpected Server Error';
+
+                    const msgAsHtml =
+                    '<div><h2>Server Error</h2><p>' +
+                    msg +
+                    '</p><p>Please try again later.</p></div>';
+
+                    render(msgAsHtml);
+
+                    return;
                 }
+                };
+
             </script>
         </body>
     </html>

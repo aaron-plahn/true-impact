@@ -6,6 +6,7 @@ import {
 } from 'src/libs/server-driven-ui';
 import { TISduiFormField } from 'src/libs/server-driven-ui/forms';
 
+// TODO Rename this!
 export class StartSurveyPage {
   id: string;
 
@@ -32,12 +33,14 @@ export class StartSurveyPage {
       name: 'surveyId',
     };
 
+    // TODO inject the command metadata and use that here
     const beginSurveyAction: ActionContentNode = {
       type: 'ACTION',
-      id: `${screenId}_1_2`,
+      id: `BEGIN_SURVEY_${this.id}`,
       title: 'Begin Survey',
       label: 'Begin',
       description: 'Begin a new attempt of the given survey',
+      swap: 'outer',
       form: {
         fields: [textField],
         context: {},
