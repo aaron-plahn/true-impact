@@ -23,6 +23,7 @@ import {
 import { SurveyResponseQueryService } from './survey-completion/queries';
 import { SurveyResponseRecordViewModelClientDto } from './survey-completion/queries/survey-response-record.view-model';
 import { StartSurveyPage } from './survey-completion/views';
+import { SurveyQuestionCompletionPage } from './survey-completion/views/survey-question-completion-page';
 
 const schema = convertToOpenApiSchema(
   getDataSchemaFromClassCtor(SurveyResponseRecordViewModelClientDto),
@@ -52,8 +53,25 @@ export class SurveyResponseController {
   }
 
   @Get('participate/:id')
-  participate(@IdParam() surveyId: string) {
-    return `<div>Next fucking question for survey: [${surveyId}], please!</div>`;
+  async participate(@IdParam() attemptId: string) {
+    const target = await this.fetchCompletionByAttemptId(attemptId);
+
+    if (target === null) {
+      return `<div>Not Found</div>`;
+    }
+
+    const { nextQuestion } = target;
+
+    if (nextQuestion === null) {
+      return `<div>TODO submit survey action</div>`;
+    }
+
+    const sduiView = new SurveyQuestionCompletionPage({
+      question: nextQuestion,
+      attemptId,
+    });
+
+    return tiSduiToHtml(sduiView.render());
   }
 
   @Get('test-ws')
@@ -95,6 +113,8 @@ export class SurveyResponseController {
           });
 
           socket.on('SURVEY_UPDATED', (e)=>{
+            console.log({updatedWith: e});
+
             const elToUpdate = document.getElementById(e.target);
 
             if(!elToUpdate){

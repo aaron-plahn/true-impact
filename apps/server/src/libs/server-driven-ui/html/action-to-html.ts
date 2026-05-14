@@ -1,5 +1,6 @@
 import { TrueImpactError } from 'src/libs/data-types';
 import { ActionContentNode } from '../content-node';
+import { TISduiFormField } from '../forms';
 
 export const actionToHtml = ({
   id,
@@ -8,7 +9,7 @@ export const actionToHtml = ({
   form,
   swap,
 }: ActionContentNode) => {
-  const { fields, action } = form;
+  const { fields, action, context } = form;
 
   if (swap !== 'outer') {
     throw new TrueImpactError(`Unsupported TISdui swap operation: ${swap}`);
@@ -16,19 +17,51 @@ export const actionToHtml = ({
 
   const renderedFields = fields
     .map((field) => {
-      const { name, label } = field;
+      const { name: fieldName, label: fieldLabel } = field;
 
-      const fieldId = `${id}_${name}`;
+      const fieldId = `${id}_${fieldName}`;
+
+      const hiddenFieldsFromContext = Array.from(Object.entries(context))
+        .map(([key, value]: [string, unknown]) => {
+          const serializedValue =
+            typeof value === 'boolean' ||
+            typeof value === 'string' ||
+            typeof value === 'number' ||
+            typeof value === 'undefined' ||
+            value === null
+              ? value
+              : JSON.stringify(value);
+
+          return `<input type="hidden" name="${key}" value='${serializedValue}'/>`;
+        })
+        .join('');
 
       if (field.type === 'TEXT_INPUT') {
-        return `<label for=${fieldId}>
-                ${label}
+        return `<label for="${fieldId}">
+                ${fieldLabel}
                 </label>
-                <input type="text" name=${name} id=${fieldId} />
+                <input type="text" name="${fieldName}" id="${fieldId}" />
+                ${hiddenFieldsFromContext}
                 `;
       }
 
-      return `<div>Unsupported field type: ${field.type}</div>`;
+      if (field.type === 'SINGLE_SELECT_INPUT') {
+        return `<fieldset>
+          <legend>${fieldLabel}</legend>
+          ${field.options
+            .map(
+              (o, optionIndex) =>
+                // TODO use a fully qualified ID here
+                `<div><input type="radio" name="${fieldName}" id=${o.value} value=${o.value} ${optionIndex === 0 ? 'checked' : ''}/>${o.label}<label for=${o.label}></label></div>`,
+            )
+            .join('')}
+            ${hiddenFieldsFromContext}
+        </fieldset>`;
+      }
+
+      const exhaustiveCheck: never = field;
+
+      return `<div>Unsupported type for form field: ${JSON.stringify(exhaustiveCheck as unknown as TISduiFormField)}</div>`;
     })
     .join('\n');
 
@@ -49,7 +82,7 @@ export const actionToHtml = ({
   `;
 
   return `
- <form id=${id} class="ti-form" onsubmit="submitCommandForm(event)">
+ <form id=${id} class="ti-form" onsubmit="submitCommandForm(event)" data-command-type="${action.type}">
     <h3>${title}</h3>
     ${renderedFields}
     <button type="submit">${label}</button>

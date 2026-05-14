@@ -1,5 +1,8 @@
 import { ApiBody } from '@nestjs/swagger';
-import { BeginSurvey } from 'src/features/survey/survey-completion';
+import {
+  AnswerSurveyQuestion,
+  BeginSurvey,
+} from 'src/features/survey/survey-completion';
 import {
   buildTestInstance,
   convertToOpenApiSchema,
@@ -57,7 +60,9 @@ export class CommandHandlerService {
      * This doesn't belong here. In the long run, we want on out-of-band messaging queue
      * that will publish events async after the command ack \ nack has already been returned in-band.
      */
-    private readonly eventPublisher: { publishEvent: (event: unknown) => void },
+    private readonly eventPublisher: {
+      publishEvent: (event: unknown) => Promise<void>;
+    },
   ) {}
 
   register({
@@ -168,6 +173,23 @@ export class CommandHandlerService {
               type: executionResult.type,
             },
             surveyId: (userRequest.payload as BeginSurvey).surveyId,
+          },
+        });
+      }
+
+      if (commandType === 'ANSWER_SURVEY_QUESTION') {
+        const { questionLabel, chosenOptionLabel } =
+          userRequest.payload as AnswerSurveyQuestion;
+
+        this.eventPublisher.publishEvent({
+          type: 'SURVEY_QUESTION_ANSWERED',
+          payload: {
+            aggregateCompositeIdentifier: {
+              id: executionResult.id,
+              type: executionResult.type,
+            },
+            questionLabel,
+            chosenOptionLabel,
           },
         });
       }

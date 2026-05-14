@@ -42,7 +42,7 @@ const buildViewDiffForEvent = (e: BaseEvent): ViewDiff => {
 
   if (type === 'SURVEY_BEGAN') {
     const {
-      surveyId,
+      // surveyId,
       aggregateCompositeIdentifier: { id: attemptId },
     } = payload as BaseEventPayload & { surveyId: string };
 
@@ -51,10 +51,26 @@ const buildViewDiffForEvent = (e: BaseEvent): ViewDiff => {
      * As such, we need to redirect to the new page.
      */
     return {
-      target: `BEGIN_SURVEY_${surveyId}`,
+      target: `BEGIN_SURVEY_1_1`,
       swap: 'outer',
       // We should do this in 2 steps - first build the SDUI then convert this fragment to HTML
       content: `<button><a href="/surveys/responses/participate/${attemptId}">GO</a></button>`,
+    };
+  }
+
+  if (type === 'SURVEY_QUESTION_ANSWERED') {
+    const {
+      aggregateCompositeIdentifier: { id: attemptId },
+    } = payload as BaseEventPayload & {
+      questionLabel: string;
+      chosenOptionLabel: string;
+    };
+
+    return {
+      target: 'COMMAND_SUCCESS_1', // `surveys/attempts/${attemptId}`,
+      swap: 'outer',
+      // We should do this in 2 steps - first build the SDUI then convert this fragment to HTML
+      content: `<button><a href="/surveys/responses/participate/${attemptId}">NEXT</a></button>`,
     };
   }
 
@@ -76,8 +92,18 @@ export class SurveyEventsGateway implements OnGatewayConnection {
   @WebSocketServer()
   server: Server;
 
-  publishEvent<T extends BaseEvent = BaseEvent>(event: T): void {
-    this.server.emit('SURVEY_UPDATED', buildViewDiffForEvent(event));
+  /**
+   * We force this to be async to
+   * 1. avoid race-conditions with command success acknowledgements
+   * 2. be consistent with the ultimate behaviour, which is an out-of-process publisher
+   */
+  async publishEvent<T extends BaseEvent = BaseEvent>(event: T): Promise<void> {
+    try {
+      await Promise.resolve();
+      this.server.emit('SURVEY_UPDATED', buildViewDiffForEvent(event));
+    } catch (_) {
+      throw new Error(`Failed to publish event of type ${event.type}`);
+    }
   }
 
   @SubscribeMessage('SOME_EVENT')

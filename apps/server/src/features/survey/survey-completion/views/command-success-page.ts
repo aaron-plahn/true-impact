@@ -5,7 +5,7 @@ export class CommandSuccessPage {
   constructor(private readonly response: PersistenceAcknowledgement) {}
 
   render(): TIScreen {
-    const screenId = `${this.response.type}/${this.response.id}/${this.response.revision}`;
+    const screenId = 'COMMAND_SUCCESS'; // `${this.response.type}/${this.response.id}/${this.response.revision}`;
 
     const textNode: TextContentNode = {
       id: `${screenId}_1_1`,

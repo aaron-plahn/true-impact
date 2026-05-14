@@ -44,7 +44,11 @@ import { FlagQueryService, FlagViewModel } from './queries';
             },
           },
           // TODO FlagEventsGateway
-          { publishEvent: (_e) => {} },
+          {
+            publishEvent: (_e) => {
+              return Promise.resolve();
+            },
+          },
         );
 
         commandHandlerService

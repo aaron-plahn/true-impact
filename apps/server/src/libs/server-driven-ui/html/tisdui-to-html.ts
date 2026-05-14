@@ -1,23 +1,7 @@
 import { TIScreen } from '../ti-screen';
-import { actionToHtml } from './action-to-html';
+import { tiSduiToHtmlFragment } from './tisdui-to-html-fragment';
 
 export const tiSduiToHtml = (input: TIScreen): string => {
-  const sections = Array.from(Object.values(input.sectionsById));
-
-  const section = sections[0];
-
-  const text = section.nodes.reduce((acc, node) => {
-    if (node.type === 'TEXT') {
-      acc += `\n${node.text}`;
-    }
-
-    if (node.type === 'ACTION') {
-      acc += `\n${actionToHtml(node)}`;
-    }
-
-    return acc;
-  }, '');
-
   return `
     <!Doctype html>
     <html>
@@ -26,7 +10,7 @@ export const tiSduiToHtml = (input: TIScreen): string => {
             <title>${input.title}</title>
         </head>
         <body>
-            ${text}
+            ${tiSduiToHtmlFragment(input)}
             <script>
                 const submitCommandForm = async (e) => {
                 console.log({ e });
@@ -35,9 +19,25 @@ export const tiSduiToHtml = (input: TIScreen): string => {
 
                 const formData = new FormData(e.target);
 
+                const payload = Object.fromEntries(formData.entries());
+
+                console.log({payload});
+
+                console.log({aci: payload.aggregateCompositeIdentifier});
+
+                if("aggregateCompositeIdentifier" in payload){
+                    payload.aggregateCompositeIdentifier = JSON.parse(payload.aggregateCompositeIdentifier);
+                }
+
+                const commandType = e.target.dataset.commandType;
+
+                if(typeof commandType !== 'string' || commandType.length === 0){
+                    console.warn("Invalid command type: " + commandType);
+                }
+
                 const fsa = {
-                    type: 'BEGIN_SURVEY',
-                    payload: Object.fromEntries(formData.entries()),
+                    type: commandType,
+                    payload,
                 };
 
                 const render = (newHtml) => {
@@ -80,6 +80,41 @@ export const tiSduiToHtml = (input: TIScreen): string => {
                 }
                 };
 
+            </script>
+            <script src="https://cdn.socket.io/3.1.3/socket.io.min.js" integrity="sha384-cPwlPLvBTa3sKAgddT6krw0cJat7egBga3DJepJyrLl4Q9/5WLra3rrnMcyTyOnh" crossorigin="anonymous"></script>
+            <script>
+                      const target = document.getElementById('root');
+
+          const wsUri = 'ws://localhost:3234/survey-events';
+          const socket = io(wsUri, { transports: ['websocket'], autoConnect: true });
+
+          const send = () =>{
+            socket.emit("SOME_EVENT",{message: 'Another one bites the dust!'});
+
+            console.log("EMITTED");
+          };
+
+
+          socket.on('SOME_EVENT', ({ message }) => {
+            target.innerHTML += ", " +message;
+          });
+
+          socket.on('SURVEY_UPDATED', (e)=>{
+            console.log({updatedWith: e});
+
+            const elToUpdate = document.getElementById(e.target);
+
+            if(!elToUpdate){
+              throw new Error('Failed to update target element with ID:' + e.target)
+            }
+
+            if(e.swap === "outer"){
+              elToUpdate.outerHTML = e.content;
+              return;
+            }
+
+            console.log({unsupportedEvent: e});
+          })
             </script>
         </body>
     </html>

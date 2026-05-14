@@ -37,7 +37,11 @@ import { CommunityQueryService, CommunityViewModel } from './queries';
             },
           },
           // TODO CommunityEventsGateway
-          { publishEvent: (_e) => {} },
+          {
+            publishEvent: (_e) => {
+              return Promise.resolve();
+            },
+          },
         );
 
         commandHandlerService

@@ -37,7 +37,11 @@ import { ClientQueryService } from './services/client-query.service';
             },
           },
           // TODO Should this be a generic events gateway or a client events gateway?
-          { publishEvent: (_e) => {} },
+          {
+            publishEvent: (_e) => {
+              return Promise.resolve();
+            },
+          },
         );
 
         commandHandlerService

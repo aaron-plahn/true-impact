@@ -47,6 +47,7 @@ export class StartSurveyPage {
         action: {
           path: '/surveys/commands',
           method: 'POST',
+          type: 'BEGIN_SURVEY',
         },
       },
     };

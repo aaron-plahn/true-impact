@@ -23,6 +23,7 @@ export class ActiveSurveyOptionViewModel {
   }
 }
 
+// TODO we need a client DTO for this
 export class ActiveSurveyQuestionViewModel {
   label: string;
   prompt: string;
