@@ -1,7 +1,18 @@
+import { TrueImpactError } from 'src/libs/data-types';
 import { ActionContentNode } from '../content-node';
 
-export const actionToHtml = ({ id, title, label, form }: ActionContentNode) => {
+export const actionToHtml = ({
+  id,
+  title,
+  label,
+  form,
+  swap,
+}: ActionContentNode) => {
   const { fields, action } = form;
+
+  if (swap !== 'outer') {
+    throw new TrueImpactError(`Unsupported TISdui swap operation: ${swap}`);
+  }
 
   const renderedFields = fields
     .map((field) => {

@@ -141,11 +141,14 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
       provide: CommandHandlerService,
       // TODO We need to ensure we can acces the child module's providers in this context
       useFactory: (moduleRef: ModuleRef) => {
-        const commandHandlerService = new CommandHandlerService({
-          resolve(injectionToken) {
-            return moduleRef.get(injectionToken);
+        const commandHandlerService = new CommandHandlerService(
+          {
+            resolve(injectionToken) {
+              return moduleRef.get(injectionToken);
+            },
           },
-        });
+          moduleRef.get(SurveyEventsGateway),
+        );
 
         commandHandlerService
           .register({

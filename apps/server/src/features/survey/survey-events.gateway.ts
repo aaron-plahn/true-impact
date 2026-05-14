@@ -1,17 +1,106 @@
-import { WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
-import { Server } from 'socket.io';
+import {
+  ConnectedSocket,
+  MessageBody,
+  OnGatewayConnection,
+  SubscribeMessage,
+  WebSocketGateway,
+  WebSocketServer,
+} from '@nestjs/websockets';
+import { Server, Socket } from 'socket.io';
 
-interface DomainEvent {
-  type: string;
-  payload: unknown;
+interface ViewDiff {
+  target: string; // element ID
+  swap: 'outer';
+  content: string; // HTML
 }
 
-@WebSocketGateway(3999, { namespace: 'survey-events' })
-export class SurveyEventsGateway {
+interface BaseEventPayload {
+  aggregateCompositeIdentifier: {
+    type: string;
+    id: string;
+  };
+}
+
+interface BaseEvent<TPayload extends BaseEventPayload = BaseEventPayload> {
+  type: string;
+  payload: {
+    aggregateCompositeIdentifier: {
+      type: string;
+      id: string;
+    };
+  } & TPayload;
+}
+
+/**
+ * This pattern is for POC only. If we move ahead with this, we want to
+ * have a dedicated event consumer that
+ * - calculates the diff to the given view (in TISdui format)
+ * - and uses a web-socket to notify clients who have sufficient privileges
+ */
+const buildViewDiffForEvent = (e: BaseEvent): ViewDiff => {
+  const { type, payload } = e;
+
+  if (type === 'SURVEY_BEGAN') {
+    const {
+      surveyId,
+      aggregateCompositeIdentifier: { id: attemptId },
+    } = payload as BaseEventPayload & { surveyId: string };
+
+    /**
+     * This is a creation command for a survey completion record.
+     * As such, we need to redirect to the new page.
+     */
+    return {
+      target: `BEGIN_SURVEY_${surveyId}`,
+      swap: 'outer',
+      // We should do this in 2 steps - first build the SDUI then convert this fragment to HTML
+      content: `<button><a href="/surveys/responses/participate/${attemptId}">GO</a></button>`,
+    };
+  }
+
+  return {
+    target: `root`,
+    swap: 'outer',
+    content: `<div><p>Something went wrong!</p><p>Unsupported event type: ${type}</p></div>`,
+  };
+};
+
+@WebSocketGateway({
+  namespace: 'survey-events',
+  // TODO let's decide how to deal with this
+  cors: {
+    origin: 'http://localhost:3001',
+  },
+})
+export class SurveyEventsGateway implements OnGatewayConnection {
   @WebSocketServer()
   server: Server;
 
-  publishEvent(event: DomainEvent): void {
-    this.server.emit('Survey Updated', event);
+  publishEvent<T extends BaseEvent = BaseEvent>(event: T): void {
+    this.server.emit('SURVEY_UPDATED', buildViewDiffForEvent(event));
+  }
+
+  @SubscribeMessage('SOME_EVENT')
+  handleClientEvent(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() body: any,
+  ) {
+    const message =
+      (body as { message?: string })?.message ||
+      'body only: ${JSON.stringify(body)}';
+
+    console.log({ incomingMessage: message });
+
+    const response = { message: `You said: ${message}` };
+
+    client.emit('SOME_EVENT', response);
+  }
+
+  handleConnection(client: Socket) {
+    client.onAny((eventName, ...args) => {
+      console.log(
+        `Received an event: ${eventName} with data: ${JSON.stringify(args)}`,
+      );
+    });
   }
 }

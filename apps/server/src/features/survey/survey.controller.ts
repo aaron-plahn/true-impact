@@ -1,3 +1,4 @@
+import { tiSduiToHtml } from 'src/libs/server-driven-ui';
 import type { ICommandFsa } from '../../libs/cqrs-es';
 import { CommandHandlerService, CommandResult } from '../../libs/cqrs-es';
 import {
@@ -25,7 +26,8 @@ import {
 } from '../../libs/framework';
 import { SurveyQueryService } from './queries/survey-query.service';
 import { SurveyViewModelClientDto } from './queries/survey.view-model';
-import { SurveyEventsGateway } from './survey-events.gateway';
+import { CommandSuccessPage } from './survey-completion/views';
+import { CommandErrorPage } from './survey-completion/views/command-error-page';
 
 const schema = convertToOpenApiSchema(
   getDataSchemaFromClassCtor(SurveyViewModelClientDto),
@@ -40,11 +42,6 @@ export class SurveyController implements OnModuleInit {
   constructor(
     private readonly surveyQueryService: SurveyQueryService,
     private readonly commandHandlerService: CommandHandlerService,
-    /**
-     * This doesn't belong here. In the long run, we want on out-of-band messaging queue
-     * that will publish events async after the command ack \ nack has already been returned in-band.
-     */
-    private readonly eventPublisher: SurveyEventsGateway,
   ) {}
 
   @DetailQueryEndpoint()
@@ -57,14 +54,6 @@ export class SurveyController implements OnModuleInit {
     @IdParam() id: string,
   ): Promise<SurveyViewModelClientDto | TrueImpactError> {
     const result = await this.surveyQueryService.fetchById(id);
-
-    // TODO The command handler needs a way to emit events.
-    this.eventPublisher.publishEvent({
-      type: 'SURVEY_UPDATED',
-      payload: {
-        ...result,
-      },
-    });
 
     return result;
   }
@@ -81,6 +70,13 @@ export class SurveyController implements OnModuleInit {
     return result;
   }
 
+  /**
+   * TODO Commands should be part of a separate controller that can be deployed
+   * and scaled independently from query endpoints. This allows us to leverage the
+   * independent horizontal scaling of queries from commands that CQRS provides. It
+   * also allows us to do things like shut-down command endpoints, putting our system in
+   * a read-only state for certain deployment strategies or maintenance windows.
+   */
   // TODO @CommandExecutionEndpoint()
   @Post('commands')
   async executeCommand(@Body() fsa: ICommandFsa): Promise<CommandResult> {
@@ -91,6 +87,37 @@ export class SurveyController implements OnModuleInit {
     const result = await this.commandHandlerService.execute(fsa);
 
     return result;
+  }
+
+  /**
+   * Note that in the long run, we need to decide how to handle separating
+   * - internal API (SDUI approach)
+   * - external API (Data API)
+   *
+   * Currently, we only use the internal API for survey completion. This is because
+   * there is a fundamentally different privacy model for survey completion. Often
+   * participants are anonymous or known clients but not system users. As such, we
+   * decided to go with a separate approach for this workflow, allowing for us to
+   * experiment with alternative front-end architectures while at it.
+   *
+   * The benfit to the internal, SDUI approach is that we could in principle
+   * write native iOS, Android, <insert platform> clients that interpret our
+   * SDUI (JSON DSL) to UX without any domain knowledge.
+   */
+  @Post('commands-html')
+  async executeCommandWithSduiResponse(@Body() fsa: ICommandFsa) {
+    const result = await this.executeCommand(fsa);
+
+    if (result instanceof TrueImpactError) {
+      return tiSduiToHtml(
+        new CommandErrorPage({
+          fsa: fsa,
+          error: new TrueImpactError(result.toString()),
+        }).render(),
+      );
+    }
+
+    return tiSduiToHtml(new CommandSuccessPage(result).render());
   }
 
   @TestSetupEndpoint()

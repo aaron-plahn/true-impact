@@ -40,7 +40,7 @@ export class SurveyResponseController {
 
   // commands are routed through the base /surveys command controller
 
-  @Get('participate/:id')
+  @Get('begin/:id')
   beginSurvey(@IdParam() surveyId: string) {
     const dataView = new StartSurveyPage({ id: surveyId, name: 'Aro Survey' });
 
@@ -49,6 +49,69 @@ export class SurveyResponseController {
     const htmlView = tiSduiToHtml(sduiView);
 
     return htmlView;
+  }
+
+  @Get('participate/:id')
+  participate(@IdParam() surveyId: string) {
+    return `<div>Next fucking question for survey: [${surveyId}], please!</div>`;
+  }
+
+  @Get('test-ws')
+  testWS() {
+    return `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>WSs are dope!</title>
+        
+    </head>
+    <body>
+        <p id="root">Loading</p>
+        <p id="BEGIN_SURVEY_1">PLACEHOLDER</p>
+        <button id="send-button">SEND</button>
+        <script src="https://cdn.socket.io/3.1.3/socket.io.min.js" integrity="sha384-cPwlPLvBTa3sKAgddT6krw0cJat7egBga3DJepJyrLl4Q9/5WLra3rrnMcyTyOnh" crossorigin="anonymous"></script>
+        <script>
+          const target = document.getElementById('root');
+
+          const wsUri = 'ws://localhost:3234/survey-events';
+          const socket = io(wsUri, { transports: ['websocket'], autoConnect: true });
+
+          const send = () =>{
+            socket.emit("SOME_EVENT",{message: 'Another one bites the dust!'});
+
+            console.log("EMITTED");
+          };
+
+          socket.on('connect', () => {
+            document.getElementById("send-button").addEventListener("click",send);
+
+            send();
+          });
+
+          socket.on('SOME_EVENT', ({ message }) => {
+            target.innerHTML += ", " +message;
+          });
+
+          socket.on('SURVEY_UPDATED', (e)=>{
+            const elToUpdate = document.getElementById(e.target);
+
+            if(!elToUpdate){
+              throw new Error('Failed to update target element with ID:' + e.target)
+            }
+
+            if(e.swap === "outer"){
+              elToUpdate.outerHTML = e.content;
+              return;
+            }
+
+            console.log({unsupportedEvent: e});
+          })
+        </script>
+    </body>
+    </html>
+      `;
   }
 
   @IndexQueryEndpoint()
