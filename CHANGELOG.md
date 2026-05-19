@@ -1,6 +1,10 @@
 # <next>
 
 This first release of the True Impact platform introduces a working model for user management, client management, and survey creation and completion.
+## 22
+In this commit, we updated the CHANGELOG to reflect the previous several commits. We will aim to 
+update the CHANGELOG with every commit going forward.
+
 ## 20
 In this commit, we introduce an admin UX for building flat surveys.
 
