@@ -320,6 +320,54 @@ describe(`Survey Completion Scenarios`, () => {
           });
         });
       });
+
+      describe(`when completing the survey anonymously`, () => {
+        beforeEach(async () => {
+          await seedPublishedSurvey();
+        });
+
+        it(`should add a complete survey response record`, async () => {
+          const { id: surveyId } = (
+            (await axios.get(surveyIndexEndpoint)).data as SurveyViewModel[]
+          )[0];
+
+          await assertCommandScenarioSuccess({
+            endpoint: surveyCompletionCommandsEndpoint,
+            stream: TestCommandStream.first(BeginSurvey, {
+              surveyId,
+              // This survey is being completed anonymously
+              participantCompositeIdentifier: undefined,
+            })
+              .andThen(AnswerSurveyQuestion, {
+                questionLabel: 'q1',
+                chosenOptionLabel: 'a',
+              })
+              .andThen(AnswerSurveyQuestion, {
+                questionLabel: 'q2',
+                chosenOptionLabel: 'b',
+              })
+              .andThen(AnswerSurveyQuestion, {
+                questionLabel: 'q2.a',
+                chosenOptionLabel: 'a',
+              })
+              .andThen(AnswerSurveyQuestion, {
+                questionLabel: 'q3',
+                chosenOptionLabel: 'b',
+              })
+              .andThen(SubmitSurvey, {}),
+            assertSuccess: async (acks) => {
+              await assertQueryResponse({
+                endpoint: `${surveyResponseRecordIndexEndpoint}/${acks[0].id}`,
+                assertResponseBody: (body: SurveyResponseRecordViewModel) => {
+                  expect(body.hasBeenSubmitted).toBe(true);
+
+                  expect(body.participantCompositeIdentifier).toBeFalsy();
+                },
+              });
+            },
+          });
+        });
+      });
     });
 
     describe(`when the scenario is invalid`, () => {

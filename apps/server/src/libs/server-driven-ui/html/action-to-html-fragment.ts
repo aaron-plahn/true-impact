@@ -2,7 +2,7 @@ import { TrueImpactError } from 'src/libs/data-types';
 import { ActionContentNode } from '../content-node';
 import { TISduiFormField } from '../forms';
 
-export const actionToHtml = ({
+export const actionToHtmlFragment = ({
   id,
   title,
   label,

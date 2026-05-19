@@ -6,7 +6,6 @@ import {
 } from 'src/libs/server-driven-ui';
 import { TISduiFormField } from 'src/libs/server-driven-ui/forms';
 
-// TODO Rename this!
 export class BeginSurveyPage {
   id: string;
 
@@ -65,8 +64,14 @@ export class BeginSurveyPage {
       title: 'Begin Survey',
       style: {},
       layoutsBySize: {
-        s: {},
-        l: {},
+        s: {
+          type: 'stack',
+          items: [firstSection.id],
+        },
+        l: {
+          type: 'stack',
+          items: [],
+        },
       },
       classes: new Set(),
       sectionsById: {

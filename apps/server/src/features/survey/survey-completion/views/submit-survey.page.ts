@@ -53,8 +53,14 @@ export class SubmitSurveyPage {
       title: 'Submit Survey',
       style: {},
       layoutsBySize: {
-        s: {},
-        l: {},
+        s: {
+          type: 'stack',
+          items: [firstSection.id],
+        },
+        l: {
+          type: 'stack',
+          items: [],
+        },
       },
       classes: new Set(),
       sectionsById: {

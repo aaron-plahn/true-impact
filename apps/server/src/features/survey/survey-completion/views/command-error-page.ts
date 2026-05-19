@@ -5,7 +5,6 @@ interface CommandErrorPageProps {
   error: TrueImpactError;
   fsa: {
     type: string;
-    // payload
   };
 }
 
@@ -39,8 +38,14 @@ export class CommandErrorPage {
       title: `Update Failed`,
       style: {},
       layoutsBySize: {
-        s: {},
-        l: {},
+        s: {
+          type: 'stack',
+          items: [section.id],
+        },
+        l: {
+          type: 'stack',
+          items: [],
+        },
       },
       classes: new Set(),
       sectionsById: {

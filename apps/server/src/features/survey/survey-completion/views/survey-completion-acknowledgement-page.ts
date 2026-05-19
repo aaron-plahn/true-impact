@@ -30,8 +30,14 @@ export class SurveyCompletionAcknowledgementPage {
       title: 'Survey Submitted Successfully',
       style: {},
       layoutsBySize: {
-        s: {},
-        l: {},
+        s: {
+          type: 'stack',
+          items: [firstSection.id],
+        },
+        l: {
+          type: 'stack',
+          items: [],
+        },
       },
       classes: new Set(),
       sectionsById: {

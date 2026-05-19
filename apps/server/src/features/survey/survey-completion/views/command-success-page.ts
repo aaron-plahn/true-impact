@@ -28,8 +28,14 @@ export class CommandSuccessPage {
       title: 'Update Succeeded',
       style: {},
       layoutsBySize: {
-        s: {},
-        l: {},
+        s: {
+          type: 'stack',
+          items: [sectionId],
+        },
+        l: {
+          type: 'stack',
+          items: [],
+        },
       },
       classes: new Set(),
       sectionsById: {

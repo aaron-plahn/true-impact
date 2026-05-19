@@ -13,6 +13,7 @@ import { SurveyCompletionAcknowledgementPage } from './survey-completion/views/s
 interface ViewDiff {
   target: string; // element ID
   swap: 'outer';
+  // TODO make this an SDUI fragment
   content: string; // HTML
 }
 

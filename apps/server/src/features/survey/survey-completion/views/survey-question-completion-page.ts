@@ -30,8 +30,7 @@ export class SurveyQuestionCompletionPage {
 
     const selectOptions = Array.from(Object.values(options)).map((o) => ({
       value: o.label,
-      // TODO this should be o.text!
-      label: o.prompt,
+      label: o.text,
     }));
 
     const field: TISduiFormField = {
@@ -80,8 +79,14 @@ export class SurveyQuestionCompletionPage {
       title: `Question ${label}`,
       style: {},
       layoutsBySize: {
-        s: {},
-        l: {},
+        s: {
+          type: 'stack',
+          items: [section.id],
+        },
+        l: {
+          type: 'stack',
+          items: [],
+        },
       },
       classes: new Set(),
       sectionsById: {
