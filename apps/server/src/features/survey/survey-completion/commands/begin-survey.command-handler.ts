@@ -39,14 +39,6 @@ export class BeginSurveyCommandHandler implements ICommandHandler<BeginSurvey> {
   }: {
     payload: BeginSurvey;
   }): Promise<CommandResult> {
-    if (!participantCompositeIdentifier) {
-      return new TrueImpactBadUserInputError([
-        new TrueImpactError(
-          `Completing surveys anonymously is not yet supported.`,
-        ),
-      ]);
-    }
-
     const targetSurvey = await this.surveyCommandRepository.fetchById(surveyId);
 
     if (!targetSurvey) {
@@ -57,21 +49,28 @@ export class BeginSurveyCommandHandler implements ICommandHandler<BeginSurvey> {
       ]);
     }
 
-    const participantManager =
-      this.participantValidationServiceProvider.forEntity(
-        participantCompositeIdentifier.type,
-      );
+    if (
+      participantCompositeIdentifier !== null &&
+      typeof participantCompositeIdentifier !== 'undefined'
+    ) {
+      const participantManager =
+        this.participantValidationServiceProvider.forEntity(
+          participantCompositeIdentifier.type,
+        );
 
-    if (participantManager instanceof TrueImpactError) {
-      return participantManager;
-    }
+      if (participantManager instanceof TrueImpactError) {
+        return participantManager;
+      }
 
-    if (!(await participantManager.exists(participantCompositeIdentifier.id))) {
-      return new TrueImpactBadUserInputError([
-        new TrueImpactError(
-          `Failed to begin survey [${targetSurvey.name}] on behalf of ${participantCompositeIdentifier.type}/${participantCompositeIdentifier.id}, as the participant does not exist`,
-        ),
-      ]);
+      if (
+        !(await participantManager.exists(participantCompositeIdentifier.id))
+      ) {
+        return new TrueImpactBadUserInputError([
+          new TrueImpactError(
+            `Failed to begin survey [${targetSurvey.name}] on behalf of ${participantCompositeIdentifier.type}/${participantCompositeIdentifier.id}, as the participant does not exist`,
+          ),
+        ]);
+      }
     }
 
     const emptyCompletionRecord = SurveyResponseRecord.begin(

@@ -1,6 +1,11 @@
 # <next>
 
 This first release of the True Impact platform introduces a working model for user management, client management, and survey creation and completion.
+
+## 23
+In this commit, we introduce an independent web client for survey completion. At first pass, this client supports anonymous
+completion of open surveys. In the future, pass codes will be used to allow one-time completion or non-anonymous surveys.
+
 ## 22
 In this commit, we updated the CHANGELOG to reflect the previous several commits. We will aim to 
 update the CHANGELOG with every commit going forward.

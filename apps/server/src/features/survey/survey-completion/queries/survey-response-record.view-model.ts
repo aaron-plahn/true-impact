@@ -1,6 +1,7 @@
 import { CLIENT_AGGREGATE_TYPE } from '../../../../features/clients/client.composite-identifier';
 import {
   BooleanDataType,
+  deepConvertMapToObject,
   NestedDataType,
   NonEmptyString,
   TrueImpactDataExample,
@@ -11,22 +12,49 @@ import { SurveyQuestion } from '../../survey-management/survey-question.entity';
 import { SurveyResponseRecord } from '../models';
 import { SurveyParticipantCompositeIdentifier } from '../models/survey-participant.composite-identifier';
 
+export class ActiveSurveyOptionViewModelClientDto {
+  @NonEmptyString({
+    label: 'label',
+    description: 'a label for this option',
+  })
+  label: string;
+  @NonEmptyString({
+    label: 'text',
+    description: 'the text for this option',
+  })
+  text: string;
+}
+
 export class ActiveSurveyOptionViewModel {
   label: string;
-  prompt: string;
+  text: string;
   // do we want the follow-up question here?
 
   constructor({ label, text }: { label: string; text: string }) {
     this.label = label;
 
-    this.prompt = text;
+    this.text = text;
   }
+
+  toClientDto(): ActiveSurveyOptionViewModelClientDto {
+    return {
+      label: this.label,
+      text: this.text,
+    };
+  }
+}
+
+export class ActiveSurveyQuestionViewModelClientDto {
+  label: string;
+  // This is an array because order is important to the client
+  prompt: string;
+  options: ActiveSurveyOptionViewModelClientDto[];
 }
 
 export class ActiveSurveyQuestionViewModel {
   label: string;
   prompt: string;
-  // ordered
+  // We use an array here because order is important to the client
   options: ActiveSurveyOptionViewModel[];
 
   constructor({
@@ -111,19 +139,33 @@ export class SurveyQuestionResponseViewModelClientDto {
 export class SurveyQuestionResponseViewModel {
   questionLabel: string;
 
+  prompt: string;
+
   options: Map<string, SurveyResponseOptionViewModel>;
 
   constructor({
     questionLabel,
+    prompt,
     options,
   }: {
     questionLabel: string;
+    prompt: string;
     options: Map<string, SurveyResponseOptionViewModel>;
   }) {
     this.questionLabel = questionLabel;
 
     // clone
     this.options = new Map(options.entries());
+
+    this.prompt = prompt;
+  }
+
+  toClientDto(): SurveyQuestionResponseViewModelClientDto {
+    return {
+      questionLabel: this.questionLabel,
+      prompt: this.prompt,
+      options: deepConvertMapToObject(this.options),
+    };
   }
 
   // Once we have a dedicated query DB, we may want a `fromPersistenceDto`
@@ -201,11 +243,11 @@ export class SurveyQuestionResponseViewModel {
       options: [
         {
           label: 'a',
-          prompt: 'sometimes',
+          text: 'sometimes',
         },
         {
           label: 'b',
-          prompt: 'never',
+          text: 'never',
         },
       ],
     },
@@ -272,7 +314,7 @@ export class SurveyResponseRecordViewModelClientDto {
     label: 'next question',
     description: 'this is the next question the user should complete',
   })
-  nextQuestion: ActiveSurveyQuestionViewModel | null;
+  nextQuestion: ActiveSurveyQuestionViewModelClientDto | null;
 }
 
 export class SurveyResponseRecordViewModel {
@@ -382,6 +424,18 @@ export class SurveyResponseRecordViewModel {
     this.hasBeenSubmitted = hasBeenSubmitted;
   }
 
+  toClientDto(): SurveyResponseRecordViewModelClientDto {
+    return {
+      id: this.id,
+      name: this.name,
+      revision: this.revision,
+      hasBeenSubmitted: this.hasBeenSubmitted,
+      participantCompositeIdentifier: this.participantCompositeIdentifier,
+      responses: this.responses.map((response) => response.toClientDto()),
+      nextQuestion: this.nextQuestion,
+    };
+  }
+
   static fromDomainModel(
     domainModel: SurveyResponseRecord,
   ): SurveyResponseRecordViewModel {
@@ -434,10 +488,11 @@ export class SurveyResponseRecordViewModel {
           options.set(o.label, view);
         });
 
-        const view: SurveyQuestionResponseViewModel = {
+        const view = new SurveyQuestionResponseViewModel({
           questionLabel: r.questionLabel,
           options,
-        };
+          prompt: targetQuestion.prompt,
+        });
 
         return view;
       }),

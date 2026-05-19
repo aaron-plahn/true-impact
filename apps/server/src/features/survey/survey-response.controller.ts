@@ -1,4 +1,5 @@
 import { ApiOkResponse } from '@nestjs/swagger';
+import { tiSduiToHtml } from 'src/libs/server-driven-ui';
 import {
   buildTestInstance,
   convertToOpenApiSchema,
@@ -10,6 +11,7 @@ import {
   BadUserInputFilter,
   Controller,
   DetailQueryEndpoint,
+  Get,
   IdParam,
   IndexQueryEndpoint,
   QueryResponseInterceptor,
@@ -20,6 +22,10 @@ import {
 } from '../../libs/framework';
 import { SurveyResponseQueryService } from './survey-completion/queries';
 import { SurveyResponseRecordViewModelClientDto } from './survey-completion/queries/survey-response-record.view-model';
+import { BeginSurveyPage } from './survey-completion/views';
+import { SubmitSurveyPage } from './survey-completion/views/submit-survey.page';
+import { SurveyCompletionAcknowledgementPage } from './survey-completion/views/survey-completion-acknowledgement-page';
+import { SurveyQuestionCompletionPage } from './survey-completion/views/survey-question-completion-page';
 
 const schema = convertToOpenApiSchema(
   getDataSchemaFromClassCtor(SurveyResponseRecordViewModelClientDto),
@@ -35,7 +41,110 @@ export class SurveyResponseController {
     private readonly surveyCompletionQueryService: SurveyResponseQueryService,
   ) {}
 
-  // commands are routed through the base /surveys endpoint
+  // commands are routed through the base /surveys command controller
+
+  @Get('begin/:id')
+  beginSurvey(@IdParam() surveyId: string) {
+    const dataView = new BeginSurveyPage({ id: surveyId, name: 'Aro Survey' });
+
+    const sduiView = dataView.render();
+
+    const htmlView = tiSduiToHtml(sduiView);
+
+    return htmlView;
+  }
+
+  @Get('participate/:id')
+  async participate(@IdParam() attemptId: string) {
+    const target = await this.fetchCompletionByAttemptId(attemptId);
+
+    if (target === null) {
+      return `<div>Not Found</div>`;
+    }
+
+    const { nextQuestion, hasBeenSubmitted } = target;
+
+    if (hasBeenSubmitted) {
+      const sdui = new SurveyCompletionAcknowledgementPage({
+        name: attemptId,
+      }).render();
+
+      return tiSduiToHtml(sdui);
+    }
+
+    if (nextQuestion === null) {
+      const sdui = new SubmitSurveyPage({ id: attemptId }).render();
+
+      return tiSduiToHtml(sdui);
+    }
+
+    const sduiView = new SurveyQuestionCompletionPage({
+      question: nextQuestion,
+      attemptId,
+    });
+
+    return tiSduiToHtml(sduiView.render());
+  }
+
+  @Get('test-ws')
+  testWS() {
+    return `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>WSs are dope!</title>
+        
+    </head>
+    <body>
+        <p id="root">Loading</p>
+        <p id="BEGIN_SURVEY_1">PLACEHOLDER</p>
+        <button id="send-button">SEND</button>
+        <script src="https://cdn.socket.io/3.1.3/socket.io.min.js" integrity="sha384-cPwlPLvBTa3sKAgddT6krw0cJat7egBga3DJepJyrLl4Q9/5WLra3rrnMcyTyOnh" crossorigin="anonymous"></script>
+        <script>
+          const target = document.getElementById('root');
+
+          const wsUri = 'ws://localhost:3234/survey-events';
+          const socket = io(wsUri, { transports: ['websocket'], autoConnect: true });
+
+          const send = () =>{
+            socket.emit("SOME_EVENT",{message: 'Another one bites the dust!'});
+
+            console.log("EMITTED");
+          };
+
+          socket.on('connect', () => {
+            document.getElementById("send-button").addEventListener("click",send);
+
+            send();
+          });
+
+          socket.on('SOME_EVENT', ({ message }) => {
+            target.innerHTML += ", " +message;
+          });
+
+          socket.on('SURVEY_UPDATED', (e)=>{
+            console.log({updatedWith: e});
+
+            const elToUpdate = document.getElementById(e.target);
+
+            if(!elToUpdate){
+              throw new Error('Failed to update target element with ID:' + e.target)
+            }
+
+            if(e.swap === "outer"){
+              elToUpdate.outerHTML = e.content;
+              return;
+            }
+
+            console.log({unsupportedEvent: e});
+          })
+        </script>
+    </body>
+    </html>
+      `;
+  }
 
   @IndexQueryEndpoint()
   @ApiOkResponse({

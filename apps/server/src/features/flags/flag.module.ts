@@ -37,11 +37,19 @@ import { FlagQueryService, FlagViewModel } from './queries';
     {
       provide: CommandHandlerService,
       useFactory: (moduleRef: ModuleRef) => {
-        const commandHandlerService = new CommandHandlerService({
-          resolve(injectionToken) {
-            return moduleRef.get(injectionToken);
+        const commandHandlerService = new CommandHandlerService(
+          {
+            resolve(injectionToken) {
+              return moduleRef.get(injectionToken);
+            },
           },
-        });
+          // TODO FlagEventsGateway
+          {
+            publishEvent: (_e) => {
+              return Promise.resolve();
+            },
+          },
+        );
 
         commandHandlerService
           .register({

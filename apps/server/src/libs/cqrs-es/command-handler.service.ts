@@ -1,5 +1,9 @@
 import { ApiBody } from '@nestjs/swagger';
 import {
+  AnswerSurveyQuestion,
+  BeginSurvey,
+} from 'src/features/survey/survey-completion';
+import {
   buildTestInstance,
   convertToOpenApiSchema,
   Ctor,
@@ -50,7 +54,16 @@ export class CommandHandlerService {
    * a strategy pattern for dry runs, or potentially to have tenant-scoped requests that
    * leverage different databases at run-time.
    */
-  constructor(private readonly resolver: ICommandHandlerResolver) {}
+  constructor(
+    private readonly resolver: ICommandHandlerResolver,
+    /**
+     * This doesn't belong here. In the long run, we want on out-of-band messaging queue
+     * that will publish events async after the command ack \ nack has already been returned in-band.
+     */
+    private readonly eventPublisher: {
+      publishEvent: (event: unknown) => Promise<void>;
+    },
+  ) {}
 
   register({
     CommandPayloadCtor,
@@ -142,6 +155,53 @@ export class CommandHandlerService {
           `Failed to execute command of unknown type [${commandType}]`,
         ),
       ]);
+
+    if (!(executionResult instanceof Error)) {
+      const aggregateCompositeIdentifier = {
+        id: executionResult.id,
+        type: executionResult.type,
+      };
+
+      /**
+       * Better patterns
+       * 1. Make the command handler responsible for `buildEvent` and publish
+       * the event after writing to the event store (domain DB).
+       * 2. (Better yet) Pull events from the event store and publish
+       * via a proper messaging queue for more robustness.
+       */
+      if (commandType === 'BEGIN_SURVEY') {
+        this.eventPublisher.publishEvent({
+          type: 'SURVEY_BEGAN',
+          payload: {
+            aggregateCompositeIdentifier,
+            surveyId: (userRequest.payload as BeginSurvey).surveyId,
+          },
+        });
+      }
+
+      if (commandType === 'ANSWER_SURVEY_QUESTION') {
+        const { questionLabel, chosenOptionLabel } =
+          userRequest.payload as AnswerSurveyQuestion;
+
+        this.eventPublisher.publishEvent({
+          type: 'SURVEY_QUESTION_ANSWERED',
+          payload: {
+            aggregateCompositeIdentifier,
+            questionLabel,
+            chosenOptionLabel,
+          },
+        });
+      }
+
+      if (commandType === 'SUBMIT_SURVEY') {
+        this.eventPublisher.publishEvent({
+          type: 'SURVEY_SUBMITTED',
+          payload: {
+            aggregateCompositeIdentifier,
+          },
+        });
+      }
+    }
 
     return executionResult;
   }
