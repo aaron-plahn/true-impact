@@ -7,7 +7,7 @@ import {
 import { TISduiFormField } from 'src/libs/server-driven-ui/forms';
 
 // TODO Rename this!
-export class StartSurveyPage {
+export class BeginSurveyPage {
   id: string;
 
   name: string;

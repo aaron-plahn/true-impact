@@ -7,6 +7,8 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
+import { tiSduiToHtmlFragment } from 'src/libs/server-driven-ui/html/tisdui-to-html-fragment';
+import { SurveyCompletionAcknowledgementPage } from './survey-completion/views/survey-completion-acknowledgement-page';
 
 interface ViewDiff {
   target: string; // element ID
@@ -67,10 +69,27 @@ const buildViewDiffForEvent = (e: BaseEvent): ViewDiff => {
     };
 
     return {
-      target: 'COMMAND_SUCCESS_1', // `surveys/attempts/${attemptId}`,
+      target: `surveys/attempts/${attemptId}_1`,
       swap: 'outer',
       // We should do this in 2 steps - first build the SDUI then convert this fragment to HTML
       content: `<button><a href="/surveys/responses/participate/${attemptId}">NEXT</a></button>`,
+    };
+  }
+
+  if (type === 'SURVEY_SUBMITTED') {
+    const {
+      aggregateCompositeIdentifier: { id: attemptId },
+    } = payload as BaseEventPayload;
+
+    // TODO We may need to fetch the survey name from the DB here
+    const sduiContent = new SurveyCompletionAcknowledgementPage({
+      name: attemptId,
+    }).render();
+
+    return {
+      target: `SUBMIT_SURVEY_1`,
+      swap: 'outer',
+      content: tiSduiToHtmlFragment(sduiContent),
     };
   }
 

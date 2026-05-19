@@ -15,33 +15,32 @@ export const actionToHtml = ({
     throw new TrueImpactError(`Unsupported TISdui swap operation: ${swap}`);
   }
 
+  const hiddenFieldsFromContext = Array.from(Object.entries(context))
+    .map(([key, value]: [string, unknown]) => {
+      const serializedValue =
+        typeof value === 'boolean' ||
+        typeof value === 'string' ||
+        typeof value === 'number' ||
+        typeof value === 'undefined' ||
+        value === null
+          ? value
+          : JSON.stringify(value);
+
+      return `<input type="hidden" name="${key}" value='${serializedValue}'/>`;
+    })
+    .join('');
+
   const renderedFields = fields
     .map((field) => {
       const { name: fieldName, label: fieldLabel } = field;
 
       const fieldId = `${id}_${fieldName}`;
 
-      const hiddenFieldsFromContext = Array.from(Object.entries(context))
-        .map(([key, value]: [string, unknown]) => {
-          const serializedValue =
-            typeof value === 'boolean' ||
-            typeof value === 'string' ||
-            typeof value === 'number' ||
-            typeof value === 'undefined' ||
-            value === null
-              ? value
-              : JSON.stringify(value);
-
-          return `<input type="hidden" name="${key}" value='${serializedValue}'/>`;
-        })
-        .join('');
-
       if (field.type === 'TEXT_INPUT') {
         return `<label for="${fieldId}">
                 ${fieldLabel}
                 </label>
                 <input type="text" name="${fieldName}" id="${fieldId}" />
-                ${hiddenFieldsFromContext}
                 `;
       }
 
@@ -55,7 +54,6 @@ export const actionToHtml = ({
                 `<div><input type="radio" name="${fieldName}" id=${o.value} value=${o.value} ${optionIndex === 0 ? 'checked' : ''}/>${o.label}<label for=${o.label}></label></div>`,
             )
             .join('')}
-            ${hiddenFieldsFromContext}
         </fieldset>`;
       }
 
@@ -63,6 +61,7 @@ export const actionToHtml = ({
 
       return `<div>Unsupported type for form field: ${JSON.stringify(exhaustiveCheck as unknown as TISduiFormField)}</div>`;
     })
+    .concat(hiddenFieldsFromContext)
     .join('\n');
 
   const _onSubmit = `

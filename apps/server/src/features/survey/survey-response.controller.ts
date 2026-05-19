@@ -22,7 +22,9 @@ import {
 } from '../../libs/framework';
 import { SurveyResponseQueryService } from './survey-completion/queries';
 import { SurveyResponseRecordViewModelClientDto } from './survey-completion/queries/survey-response-record.view-model';
-import { StartSurveyPage } from './survey-completion/views';
+import { BeginSurveyPage } from './survey-completion/views';
+import { SubmitSurveyPage } from './survey-completion/views/submit-survey.page';
+import { SurveyCompletionAcknowledgementPage } from './survey-completion/views/survey-completion-acknowledgement-page';
 import { SurveyQuestionCompletionPage } from './survey-completion/views/survey-question-completion-page';
 
 const schema = convertToOpenApiSchema(
@@ -43,7 +45,7 @@ export class SurveyResponseController {
 
   @Get('begin/:id')
   beginSurvey(@IdParam() surveyId: string) {
-    const dataView = new StartSurveyPage({ id: surveyId, name: 'Aro Survey' });
+    const dataView = new BeginSurveyPage({ id: surveyId, name: 'Aro Survey' });
 
     const sduiView = dataView.render();
 
@@ -60,10 +62,20 @@ export class SurveyResponseController {
       return `<div>Not Found</div>`;
     }
 
-    const { nextQuestion } = target;
+    const { nextQuestion, hasBeenSubmitted } = target;
+
+    if (hasBeenSubmitted) {
+      const sdui = new SurveyCompletionAcknowledgementPage({
+        name: attemptId,
+      }).render();
+
+      return tiSduiToHtml(sdui);
+    }
 
     if (nextQuestion === null) {
-      return `<div>TODO submit survey action</div>`;
+      const sdui = new SubmitSurveyPage({ id: attemptId }).render();
+
+      return tiSduiToHtml(sdui);
     }
 
     const sduiView = new SurveyQuestionCompletionPage({

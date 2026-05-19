@@ -157,6 +157,11 @@ export class CommandHandlerService {
       ]);
 
     if (!(executionResult instanceof Error)) {
+      const aggregateCompositeIdentifier = {
+        id: executionResult.id,
+        type: executionResult.type,
+      };
+
       /**
        * Better patterns
        * 1. Make the command handler responsible for `buildEvent` and publish
@@ -168,10 +173,7 @@ export class CommandHandlerService {
         this.eventPublisher.publishEvent({
           type: 'SURVEY_BEGAN',
           payload: {
-            aggregateCompositeIdentifier: {
-              id: executionResult.id,
-              type: executionResult.type,
-            },
+            aggregateCompositeIdentifier,
             surveyId: (userRequest.payload as BeginSurvey).surveyId,
           },
         });
@@ -184,12 +186,18 @@ export class CommandHandlerService {
         this.eventPublisher.publishEvent({
           type: 'SURVEY_QUESTION_ANSWERED',
           payload: {
-            aggregateCompositeIdentifier: {
-              id: executionResult.id,
-              type: executionResult.type,
-            },
+            aggregateCompositeIdentifier,
             questionLabel,
             chosenOptionLabel,
+          },
+        });
+      }
+
+      if (commandType === 'SUBMIT_SURVEY') {
+        this.eventPublisher.publishEvent({
+          type: 'SURVEY_SUBMITTED',
+          payload: {
+            aggregateCompositeIdentifier,
           },
         });
       }
