@@ -1,6 +1,21 @@
 # <next>
 
 This first release of the True Impact platform introduces a working model for user management, client management, and survey creation and completion.
+## 22
+In this commit, we updated the CHANGELOG to reflect the previous several commits. We will aim to 
+update the CHANGELOG with every commit going forward.
+
+## 20
+In this commit, we introduce an admin UX for building flat surveys.
+
+## 19
+In this commit, we implement an e2e (automated browser) testing framework with webdriver.io and use this to test the login workflow.
+
+## 18
+In this commit, we introduce a navbar and login functionality for the web client.
+
+## 17
+In this commit, we expose command schemas in our API documentation.
 
 ## #16
 
