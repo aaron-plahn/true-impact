@@ -12,7 +12,9 @@ export const actionToHtmlFragment = ({
   const { fields, action, context } = form;
 
   if (swap !== 'outer') {
-    throw new TrueImpactError(`Unsupported TISdui swap operation: ${swap}`);
+    throw new TrueImpactError(
+      `Unsupported TISdui swap operation: ${swap as unknown as string}`,
+    );
   }
 
   const hiddenFieldsFromContext = Array.from(Object.entries(context))
