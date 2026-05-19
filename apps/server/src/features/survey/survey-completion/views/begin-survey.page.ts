@@ -4,13 +4,13 @@ import {
   TextContentNode,
   TIScreen,
 } from 'src/libs/server-driven-ui';
-import { TISduiFormField } from 'src/libs/server-driven-ui/forms';
 
 export class BeginSurveyPage {
   id: string;
 
   name: string;
 
+  // TODO call these `props` collectively
   constructor({ id, name }: { id: string; name: string }) {
     this.id = id;
 
@@ -26,12 +26,6 @@ export class BeginSurveyPage {
       text: 'Complete Survey',
     };
 
-    const textField: TISduiFormField = {
-      type: 'TEXT_INPUT',
-      label: 'Survey ID',
-      name: 'surveyId',
-    };
-
     // TODO inject the command metadata and use that here
     const beginSurveyAction: ActionContentNode = {
       type: 'ACTION',
@@ -41,8 +35,10 @@ export class BeginSurveyPage {
       description: 'Begin a new attempt of the given survey',
       swap: 'outer',
       form: {
-        fields: [textField],
-        context: {},
+        fields: [],
+        context: {
+          surveyId: this.id,
+        },
         action: {
           path: '/surveys/commands',
           method: 'POST',

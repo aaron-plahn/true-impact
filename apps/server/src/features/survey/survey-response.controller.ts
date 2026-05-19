@@ -62,6 +62,8 @@ export class SurveyResponseController {
       return `<div>Not Found</div>`;
     }
 
+    console.log({ targetSurvey: target });
+
     const { nextQuestion, hasBeenSubmitted } = target;
 
     if (hasBeenSubmitted) {
