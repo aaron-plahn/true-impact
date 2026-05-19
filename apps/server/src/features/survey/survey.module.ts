@@ -43,6 +43,7 @@ import {
 import { SurveyResponseRecordViewModel } from './survey-completion/queries/survey-response-record.view-model';
 import { SURVEY_RESPONSE_COMMAND_REPOSITORY_INJECTION_TOKEN } from './survey-completion/repositories';
 import { InMemorySurveyResponseCommandRepository } from './survey-completion/repositories/in-memory-survey-response.command-repository';
+import { SurveyEventsGateway } from './survey-events.gateway';
 import {
   AddFollowUpQuestionForSurveyOptionCommandHandler,
   AddOptionToSurveyQuestion,
@@ -87,6 +88,7 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
 @Module({
   imports: [ClientModule, FlagModule],
   providers: [
+    SurveyEventsGateway,
     // core survey commands
     CreateSurveyCommandHandler,
     AddQuestionToSurveyCommandHandler,
@@ -139,11 +141,14 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
       provide: CommandHandlerService,
       // TODO We need to ensure we can acces the child module's providers in this context
       useFactory: (moduleRef: ModuleRef) => {
-        const commandHandlerService = new CommandHandlerService({
-          resolve(injectionToken) {
-            return moduleRef.get(injectionToken);
+        const commandHandlerService = new CommandHandlerService(
+          {
+            resolve(injectionToken) {
+              return moduleRef.get(injectionToken);
+            },
           },
-        });
+          moduleRef.get(SurveyEventsGateway),
+        );
 
         commandHandlerService
           .register({

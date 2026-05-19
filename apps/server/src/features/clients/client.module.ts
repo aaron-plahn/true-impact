@@ -30,11 +30,19 @@ import { ClientQueryService } from './services/client-query.service';
     {
       provide: CommandHandlerService,
       useFactory: (moduleRef: ModuleRef) => {
-        const commandHandlerService = new CommandHandlerService({
-          resolve(injectionToken) {
-            return moduleRef.get(injectionToken);
+        const commandHandlerService = new CommandHandlerService(
+          {
+            resolve(injectionToken) {
+              return moduleRef.get(injectionToken);
+            },
           },
-        });
+          // TODO Should this be a generic events gateway or a client events gateway?
+          {
+            publishEvent: (_e) => {
+              return Promise.resolve();
+            },
+          },
+        );
 
         commandHandlerService
           .register({
