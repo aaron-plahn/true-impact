@@ -58,7 +58,6 @@ export class BeginSurveyPage {
       nodes: [textNode, beginSurveyAction],
     };
 
-    // TODO escape all text
     const result: TIScreen = {
       id: screenId,
       title: 'Begin Survey',

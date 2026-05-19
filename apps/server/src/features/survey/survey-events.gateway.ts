@@ -110,6 +110,7 @@ const buildViewDiffForEvent = (e: BaseEvent): ViewDiff => {
 })
 export class SurveyEventsGateway implements OnGatewayConnection {
   @WebSocketServer()
+  // @ts-expect-error TS is unaware of the decorator's effect
   server: Server;
 
   /**
