@@ -27,7 +27,15 @@ export interface ActionContentNode {
   swap: 'outer'; // | 'inner' | 'first' | 'last' | 'delete' | 'none';
 }
 
+export interface LinkContentNode {
+  type: 'LINK';
+  id: string;
+  title: string;
+  href: string;
+}
+
 export type ContentNode =
   | TextContentNode
   | ImageContentNode
-  | ActionContentNode;
+  | ActionContentNode
+  | LinkContentNode;

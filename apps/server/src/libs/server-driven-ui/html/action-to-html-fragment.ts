@@ -68,8 +68,6 @@ export const actionToHtmlFragment = ({
 
   const _onSubmit = `
     (e) =>{
-      console.log({e});
-
       e.preventDefault();
 
       const formData = new FormData(e.target);

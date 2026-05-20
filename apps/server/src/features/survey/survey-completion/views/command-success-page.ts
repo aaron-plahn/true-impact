@@ -1,16 +1,25 @@
-import { PersistenceAcknowledgement } from 'src/libs/cqrs-es';
 import { Section, TextContentNode, TIScreen } from 'src/libs/server-driven-ui';
 
+interface CommandSuccessPageProps {
+  commandType: string;
+  aggregateCompositeIdentifier: {
+    type: string;
+    id: string;
+  };
+  revision: string;
+}
+
 export class CommandSuccessPage {
-  constructor(private readonly response: PersistenceAcknowledgement) {}
+  constructor(private readonly props: CommandSuccessPageProps) {}
 
   render(): TIScreen {
-    const screenId = 'COMMAND_SUCCESS'; // `${this.response.type}/${this.response.id}/${this.response.revision}`;
+    const screenId = this.props.commandType;
 
     const textNode: TextContentNode = {
       id: `${screenId}_1_1`,
       type: 'TEXT',
-      text: `${this.response.type} succeded. Loading updates.`,
+      // TODO Use the command label here
+      text: `${this.props.commandType} succeded. Loading updates.`,
     };
 
     const sectionId = `${screenId}_1`;
