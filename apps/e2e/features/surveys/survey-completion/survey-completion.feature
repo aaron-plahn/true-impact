@@ -8,7 +8,7 @@ Feature: Completing a survey
     And Question "1" has an option "b": "Anything"
     And Question "1" has an option "c": "Wouldn't you like to know"
     And The survey is published
-    When I begin the survey
+    When I begin the survey "Some Questions by Aaron"
     Then It should display the question "1": "What would you do for a Klondike bar?"
 
     Scenario: As an anonymous participant answering all questions in an open survey
@@ -19,7 +19,7 @@ Feature: Completing a survey
     And Question "i" has an option "b": "Hard enuff"
     And Question "i" has an option "c": "Who Cares"
     And The survey is published
-    When I begin the survey
+    When I begin the survey "Staff Questionnaire"
     And I answer question "1" by choosing option "b"
     Then It should display the survey submission button
 
@@ -35,7 +35,7 @@ Feature: Completing a survey
     And Question "ii" has an option "b": "No"
     And Question "ii" has an option "c": "Maybe"
     And The survey is published
-    When I begin the survey
+    When I begin the survey "Staff Evaluation"
     And I answer question "i" by choosing option "a"
     And I answer question "ii" by choosing option "b"
     And I submit the survey

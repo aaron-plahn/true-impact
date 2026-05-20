@@ -117,7 +117,16 @@ export class SurveyController implements OnModuleInit {
       );
     }
 
-    return tiSduiToHtml(new CommandSuccessPage(result).render());
+    return tiSduiToHtml(
+      new CommandSuccessPage({
+        commandType: fsa.type,
+        aggregateCompositeIdentifier: {
+          type: result.type,
+          id: result.id,
+        },
+        revision: result.revision,
+      }).render(),
+    );
   }
 
   @TestSetupEndpoint()

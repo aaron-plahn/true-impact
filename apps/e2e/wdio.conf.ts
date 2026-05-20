@@ -133,7 +133,16 @@ export const config: WebdriverIO.Config = {
   // Test reporter for stdout.
   // The only one supported by default is 'dot'
   // see also: https://webdriver.io/docs/dot-reporter
-  reporters: ["spec"],
+  reporters: [
+    "spec",
+    [
+      "video",
+      {
+        saveAllVideos: false,
+        videoSlowdownMultiplier: 3,
+      },
+    ],
+  ],
 
   // If you are using Cucumber you need to specify the location of your step definitions.
   cucumberOpts: {

@@ -26,6 +26,7 @@ interface CommandResponse {
 }
 
 export interface SurveyDetailResponse {
+  id: string;
   name: string;
   size: number;
   isPublished: boolean;
@@ -84,4 +85,8 @@ export const surveyApi = createApi({
   }),
 });
 
-export const { useFetchSurveyByIdQuery, useExecuteCommandMutation } = surveyApi;
+export const {
+  useFetchSurveyByIdQuery,
+  useFetchSurveysQuery,
+  useExecuteCommandMutation,
+} = surveyApi;

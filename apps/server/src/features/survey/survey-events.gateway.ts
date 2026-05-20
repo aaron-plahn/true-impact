@@ -54,7 +54,7 @@ const buildViewDiffForEvent = (e: BaseEvent): ViewDiff => {
      * As such, we need to redirect to the new page.
      */
     return {
-      target: `BEGIN_SURVEY_1_1`,
+      target: `BEGIN_SURVEY`,
       swap: 'outer',
       // We should do this in 2 steps - first build the SDUI then convert this fragment to HTML
       content: `<button><a href="/surveys/responses/participate/${attemptId}">GO</a></button>`,

@@ -32,9 +32,8 @@ Given("The survey is published", async () => {
   await surveyPage.publish();
 });
 
-When("I begin the survey", async () => {
-  // TODO Use the survey name
-  await surveyCompletionPage.open("1");
+When("I begin the survey {string}", async (surveyName: string) => {
+  await surveyCompletionPage.open(surveyName);
 
   await surveyCompletionPage.beginSurvey();
 });

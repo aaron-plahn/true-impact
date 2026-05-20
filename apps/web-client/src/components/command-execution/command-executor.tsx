@@ -9,6 +9,7 @@ interface CommandExecutorProps {
   description: string;
   // TODO Build this from the schema
   form: Form;
+  customId?: string;
 }
 
 export const CommandExecutor = ({
@@ -16,15 +17,18 @@ export const CommandExecutor = ({
   label,
   description,
   form: ProvidedForm,
+  customId,
 }: CommandExecutorProps): JSX.Element => {
   const [isFormOpen, setIsFormOpen] = useState(false);
+
+  const buttonId = customId || `${commandType}_command-executor-button`;
 
   return (
     <div>
       {!isFormOpen ? (
         <Tooltip title={description}>
           <Button
-            id={`${commandType}_command-executor-button`}
+            id={buttonId}
             className="command-executor-button"
             onClick={() => {
               setIsFormOpen(true);

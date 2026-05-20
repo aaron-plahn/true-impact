@@ -18,7 +18,7 @@ export class BeginSurveyPage {
   }
 
   render(): TIScreen {
-    const screenId = `BEGIN_SURVEY_${this.id}`;
+    const screenId = `BEGIN_SURVEY`;
 
     const textNode: TextContentNode = {
       id: `${screenId}_1_1`,

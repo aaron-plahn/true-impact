@@ -30,15 +30,15 @@ class SurveyCompletionPage extends Page {
   }
 
   public get submissionAcknowledgement() {
-    return $("*=Fuck yeah@!");
+    return $("*=Succesfully submitted survey");
   }
 
-  public async open(surveyId: string) {
-    // await super.open(`surveys/begin/${surveyId}`);
+  public async open(surveyName: string) {
+    const path = `surveys/responses/participate`;
 
-    const path = `surveys/responses/begin/${surveyId}`;
+    await browser.url(`http://localhost:3234/${path}`);
 
-    return browser.url(`http://localhost:3234/${path}`);
+    await $(`*=${surveyName}`).click();
   }
 }
 

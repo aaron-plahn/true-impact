@@ -6,6 +6,7 @@ import { TIScreen } from '../ti-screen';
 import { TiSduiLayout } from '../tisdui-layout';
 import { actionToHtmlFragment } from './action-to-html-fragment';
 import { escape } from './escape';
+import { linkToHtmlFragment } from './link-to-html-fragment';
 
 export const tiSduiToHtmlFragment = (
   input: TIScreen,
@@ -34,6 +35,12 @@ export const tiSduiToHtmlFragment = (
 
       if (node.type === 'ACTION') {
         children.push(actionToHtmlFragment(node));
+
+        continue;
+      }
+
+      if (node.type === 'LINK') {
+        children.push(linkToHtmlFragment(node));
 
         continue;
       }
@@ -78,7 +85,8 @@ export const tiSduiToHtmlFragment = (
       result += `\n${sectionsById.get(sectionId)}`;
     }
 
-    return result;
+    // This is important for outer swaps to work
+    return `<div id="${input.id}">${result}</div>`;
   }
 
   const exhaustiveCheck: never = layout.type;
