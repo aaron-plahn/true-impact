@@ -60,16 +60,15 @@ export class SurveyResponseController {
   @Get('participate')
   async chooseSurveyToComplete() {
     // TODO Put `fetchAvailableSurveys()` on the survey query service
-    const all = await this.surveyQueryService.fetchMany();
+    const available = await this.surveyQueryService.fetchAvailable();
 
-    if (all instanceof Error) {
+    if (available instanceof Error) {
       return `<div>Failed to fetch a list of available surveys from the database. Please try again!</div>`;
     }
 
     /**
      * Eventually, we may want to inject the user context to make this decision.
      */
-    const available = all.filter((a) => a.isPublished);
 
     const sdui = new SurveyIndexPage({
       entities: available,
@@ -85,8 +84,6 @@ export class SurveyResponseController {
     if (target === null) {
       return `<div>Not Found</div>`;
     }
-
-    console.log({ targetSurvey: target });
 
     const { nextQuestion, hasBeenSubmitted } = target;
 

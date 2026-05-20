@@ -13,7 +13,6 @@ export const tiSduiToHtml = (input: TIScreen): string => {
             ${tiSduiToHtmlFragment(input)}
             <script>
                 const submitCommandForm = async (e) => {
-                console.log({ e });
 
                 e.preventDefault();
 
@@ -21,9 +20,6 @@ export const tiSduiToHtml = (input: TIScreen): string => {
 
                 const payload = Object.fromEntries(formData.entries());
 
-                console.log({payload});
-
-                console.log({aci: payload.aggregateCompositeIdentifier});
 
                 if("aggregateCompositeIdentifier" in payload){
                     payload.aggregateCompositeIdentifier = JSON.parse(payload.aggregateCompositeIdentifier);
@@ -60,7 +56,6 @@ export const tiSduiToHtml = (input: TIScreen): string => {
                     render('<div>Shoot! Fix me.</div>');
                     }
 
-                    console.log({result,response});
 
 
                     render(result);

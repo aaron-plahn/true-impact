@@ -18,6 +18,7 @@ export class CommandSuccessPage {
     const textNode: TextContentNode = {
       id: `${screenId}_1_1`,
       type: 'TEXT',
+      // TODO Use the command label here
       text: `${this.props.commandType} succeded. Loading updates.`,
     };
 

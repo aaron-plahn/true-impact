@@ -86,12 +86,6 @@ export class BeginSurveyCommandHandler implements ICommandHandler<BeginSurvey> {
       emptyCompletionRecord,
     );
 
-    console.log({
-      persistenceResult,
-      emptyCompletionRecord,
-      size: targetSurvey.size(),
-    });
-
     return persistenceResult;
   }
 }

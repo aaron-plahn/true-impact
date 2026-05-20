@@ -6,7 +6,13 @@ import { fileURLToPath } from "url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.resolve(__dirname, "./.env.test") });
 
+const patternsToMask = [
+  process.env.TRUE_IMPACT_ADMIN_USERNAME,
+  process.env.TRUE_IMPACT_ADMIN_PASSWORD,
+].filter((val) => typeof val === "string" && val.length > 0);
+
 export const config: WebdriverIO.Config = {
+  maskingPatterns: patternsToMask.join(","),
   //
   // ====================
   // Runner Configuration

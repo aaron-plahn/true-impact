@@ -77,8 +77,6 @@ export const tiSduiToHtmlFragment = (
 
     for (const sectionId of layout.items) {
       if (!sectionsById.has(sectionId)) {
-        console.log({ sectionId, sectionsById });
-
         return `<div>Missing section ID: ${sectionId}. Available: ${Array.from(Object.keys(sectionsById)).join(', ')}.</div>`;
       }
 

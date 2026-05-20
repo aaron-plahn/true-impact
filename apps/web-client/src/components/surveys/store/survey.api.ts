@@ -51,7 +51,7 @@ export const surveyApi = createApi({
         return [tag];
       },
     }),
-    fetchSurveys: builder.query<SurveyDetailResponse[], string>({
+    fetchSurveys: builder.query<SurveyDetailResponse[], void>({
       // TODO inject user pagination and filter options
       query: () => `surveys`,
     }),

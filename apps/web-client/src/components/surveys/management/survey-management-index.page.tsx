@@ -6,11 +6,18 @@ import { Loading } from "../../loading";
 import { useFetchSurveysQuery } from "../store";
 
 export const SurveyManagementIndex = (): JSX.Element => {
-  //   TODO remove `""` as an arg below
-  const { data, isLoading, error } = useFetchSurveysQuery("");
+  const { data, isLoading, error } = useFetchSurveysQuery();
 
   if (error) {
-    return <ErrorInfo status={500} message={"A network request failed"} />;
+    // TODO RTK Query Fetch Error Presenter?
+    return (
+      <ErrorInfo
+        // @ts-expect-error Enough with React \ Redux TS madness!
+        status={error?.status || 500}
+        // @ts-expect-error Enough with React \ Redux TS madness!
+        message={error?.data?.message || "unknown error"}
+      />
+    );
   }
 
   if (isLoading || !data) {
@@ -20,7 +27,7 @@ export const SurveyManagementIndex = (): JSX.Element => {
   return (
     <Stack>
       {data.map((survey) => (
-        <Typography variant="body1">
+        <Typography variant="body1" key={survey.id}>
           <Link to={`/surveys/manage/${survey.id}`}>{survey.name}</Link>
         </Typography>
       ))}

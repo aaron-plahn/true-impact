@@ -5,17 +5,13 @@ import {
   TIScreen,
 } from 'src/libs/server-driven-ui';
 
-export class BeginSurveyPage {
+interface BeginSurveyPageProps {
   id: string;
-
   name: string;
+}
 
-  // TODO call these `props` collectively
-  constructor({ id, name }: { id: string; name: string }) {
-    this.id = id;
-
-    this.name = name;
-  }
+export class BeginSurveyPage {
+  constructor(private readonly props: BeginSurveyPageProps) {}
 
   render(): TIScreen {
     const screenId = `BEGIN_SURVEY`;
@@ -29,7 +25,7 @@ export class BeginSurveyPage {
     // TODO inject the command metadata and use that here
     const beginSurveyAction: ActionContentNode = {
       type: 'ACTION',
-      id: `BEGIN_SURVEY_${this.id}`,
+      id: `BEGIN_SURVEY_${this.props.id}`,
       title: 'Begin Survey',
       label: 'Begin',
       description: 'Begin a new attempt of the given survey',
@@ -37,7 +33,7 @@ export class BeginSurveyPage {
       form: {
         fields: [],
         context: {
-          surveyId: this.id,
+          surveyId: this.props.id,
         },
         action: {
           path: '/surveys/commands',
