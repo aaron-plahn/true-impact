@@ -87,6 +87,23 @@ export class SurveyQueryService {
     return domainModels.map((dm) => this.buildViewModel(dm, context));
   }
 
+  async fetchAvailable(): Promise<
+    SurveyViewModelClientDto[] | TrueImpactError
+  > {
+    const all = await this.fetchMany();
+
+    if (all instanceof Error) {
+      return all;
+    }
+
+    /**
+     * TODO
+     * 1. filter in the DB
+     * 2. make this depend upon a participant context
+     */
+    return all.filter((survey) => survey.isPublished);
+  }
+
   private buildViewModel(
     domainModel: Survey,
     context: { flags: Map<string, FlagViewModelClientDto> },

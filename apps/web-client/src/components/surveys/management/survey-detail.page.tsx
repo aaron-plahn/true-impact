@@ -55,7 +55,7 @@ export const SurveyDetailPage = (): JSX.Element => {
       )}
       <div>
         {questions.map(({ label: questionLabel, prompt, options }) => (
-          <div key={questionLabel}>
+          <div key={questionLabel} data-testid={`questions/${questionLabel}`}>
             <Typography variant="h3">{questionLabel}</Typography>
             <br />
             <Typography variant="body1">{prompt}</Typography>
@@ -71,6 +71,8 @@ export const SurveyDetailPage = (): JSX.Element => {
             {isEditable ? (
               <CommandExecutor
                 type={"ADD_OPTION_TO_SURVEY_QUESTION"}
+                key={`ADD_OPTION_TO_SURVEY_QUESTION_${questionLabel}`}
+                customId={`ADD_OPTION_TO_SURVEY_QUESTION_${questionLabel}`}
                 label={"Add Option"}
                 description={"Add a new option for the target question"}
                 form={({ onClose }) => (

@@ -4,6 +4,7 @@ import {
   deepConvertMapToObject,
   NestedDataType,
   NonEmptyString,
+  NonNegativeInteger,
   TrueImpactDataExample,
 } from '../../../../libs/data-types';
 import { LookupTable } from '../../../../libs/data-types/schema-management/decorators/lookup-table.decorator';
@@ -174,6 +175,7 @@ export class SurveyQuestionResponseViewModel {
 @TrueImpactDataExample<SurveyResponseRecordViewModelClientDto>({
   example: {
     id: '1',
+    size: 5,
     name: 'long survey',
     revision: '5',
     hasBeenSubmitted: false,
@@ -272,6 +274,13 @@ export class SurveyResponseRecordViewModelClientDto {
   })
   revision: string;
 
+  @NonNegativeInteger({
+    label: 'size',
+    description:
+      'total number of questions in this survey (including optional questions)',
+  })
+  size: number;
+
   /**
    * TODO Support time stamps \ auditable completion history
    */
@@ -336,6 +345,13 @@ export class SurveyResponseRecordViewModel {
   })
   revision: string;
 
+  @NonNegativeInteger({
+    label: 'size',
+    description:
+      'the total number of questions in this survey (including optional questions)',
+  })
+  size: number;
+
   /**
    * TODO Support time stamps \ auditable completion history
    */
@@ -388,6 +404,7 @@ export class SurveyResponseRecordViewModel {
     hasBeenSubmitted,
     responses,
     nextQuestion,
+    size,
   }: {
     id: string;
     name: string;
@@ -399,6 +416,7 @@ export class SurveyResponseRecordViewModel {
     } | null;
     responses: SurveyQuestionResponseViewModel[];
     nextQuestion: ActiveSurveyQuestionViewModel | null;
+    size: number;
   }) {
     this.name = name;
 
@@ -422,6 +440,8 @@ export class SurveyResponseRecordViewModel {
       : null;
 
     this.hasBeenSubmitted = hasBeenSubmitted;
+
+    this.size = size;
   }
 
   toClientDto(): SurveyResponseRecordViewModelClientDto {
@@ -433,6 +453,7 @@ export class SurveyResponseRecordViewModel {
       participantCompositeIdentifier: this.participantCompositeIdentifier,
       responses: this.responses.map((response) => response.toClientDto()),
       nextQuestion: this.nextQuestion,
+      size: this.size,
     };
   }
 
@@ -467,6 +488,7 @@ export class SurveyResponseRecordViewModel {
 
     return new SurveyResponseRecordViewModel({
       id: domainModel.id as string,
+      size: domainModel.survey.size(),
       revision: domainModel.revision.toString(),
       name: `${domainModel.survey.getName()}`, // TODO - participant name - attempt # or date started
       participantCompositeIdentifier: domainModel.participant || null,

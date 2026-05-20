@@ -20,11 +20,13 @@ import {
   UseFilters,
   UseInterceptors,
 } from '../../libs/framework';
+import { SurveyQueryService } from './queries/survey-query.service';
 import { SurveyResponseQueryService } from './survey-completion/queries';
 import { SurveyResponseRecordViewModelClientDto } from './survey-completion/queries/survey-response-record.view-model';
 import { BeginSurveyPage } from './survey-completion/views';
 import { SubmitSurveyPage } from './survey-completion/views/submit-survey.page';
 import { SurveyCompletionAcknowledgementPage } from './survey-completion/views/survey-completion-acknowledgement-page';
+import { SurveyIndexPage } from './survey-completion/views/survey-index-page';
 import { SurveyQuestionCompletionPage } from './survey-completion/views/survey-question-completion-page';
 
 const schema = convertToOpenApiSchema(
@@ -39,6 +41,7 @@ const example = buildTestInstance(SurveyResponseRecordViewModelClientDto);
 export class SurveyResponseController {
   constructor(
     private readonly surveyCompletionQueryService: SurveyResponseQueryService,
+    private readonly surveyQueryService: SurveyQueryService,
   ) {}
 
   // commands are routed through the base /surveys command controller
@@ -52,6 +55,26 @@ export class SurveyResponseController {
     const htmlView = tiSduiToHtml(sduiView);
 
     return htmlView;
+  }
+
+  @Get('participate')
+  async chooseSurveyToComplete() {
+    // TODO Put `fetchAvailableSurveys()` on the survey query service
+    const available = await this.surveyQueryService.fetchAvailable();
+
+    if (available instanceof Error) {
+      return `<div>Failed to fetch a list of available surveys from the database. Please try again!</div>`;
+    }
+
+    /**
+     * Eventually, we may want to inject the user context to make this decision.
+     */
+
+    const sdui = new SurveyIndexPage({
+      entities: available,
+    }).render();
+
+    return tiSduiToHtml(sdui);
   }
 
   @Get('participate/:id')

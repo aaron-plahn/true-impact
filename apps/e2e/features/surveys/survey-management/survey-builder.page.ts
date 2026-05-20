@@ -30,7 +30,7 @@ class SurveyBuilderPage extends Page {
   }
 
   public async addOptionForQuestion({
-    questionLabel: _,
+    questionLabel,
     optionLabel,
     text,
   }: {
@@ -38,7 +38,7 @@ class SurveyBuilderPage extends Page {
     optionLabel: string;
     text: string;
   }) {
-    await $("#ADD_OPTION_TO_SURVEY_QUESTION_command-executor-button").click();
+    await $(`#ADD_OPTION_TO_SURVEY_QUESTION_${questionLabel}`).click();
 
     await $("#optionLabel-input").click();
     await $("#optionLabel-input").setValue(optionLabel);

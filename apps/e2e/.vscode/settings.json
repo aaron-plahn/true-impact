@@ -12,5 +12,8 @@
     "comments": false,
     "strings": true,
     "other": true
+  },
+  "[feature]": {
+    "editor.defaultFormatter": "alexkrechik.cucumberautocomplete"
   }
 }

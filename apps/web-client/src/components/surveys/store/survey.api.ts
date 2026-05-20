@@ -26,6 +26,7 @@ interface CommandResponse {
 }
 
 export interface SurveyDetailResponse {
+  id: string;
   name: string;
   size: number;
   isPublished: boolean;
@@ -50,7 +51,7 @@ export const surveyApi = createApi({
         return [tag];
       },
     }),
-    fetchSurveys: builder.query<SurveyDetailResponse[], string>({
+    fetchSurveys: builder.query<SurveyDetailResponse[], void>({
       // TODO inject user pagination and filter options
       query: () => `surveys`,
     }),
@@ -84,4 +85,8 @@ export const surveyApi = createApi({
   }),
 });
 
-export const { useFetchSurveyByIdQuery, useExecuteCommandMutation } = surveyApi;
+export const {
+  useFetchSurveyByIdQuery,
+  useFetchSurveysQuery,
+  useExecuteCommandMutation,
+} = surveyApi;
