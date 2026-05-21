@@ -1,3 +1,4 @@
+import { EncryptionService } from 'src/libs/auth';
 import {
   InMemoryCommandRepository,
   InMemoryQueryRepositoryProvider,
@@ -58,6 +59,8 @@ import {
   PublishSurveyCommandHandler,
   Survey,
 } from './survey-management';
+import { OpenSurveyToAnonymousIndividual } from './survey-management/commands/open-survey-to-anonymous-individual.command';
+import { OpenSurveyToAnonymousIndividualCommandHandler } from './survey-management/commands/open-survey-to-anonymous-individual.command-handler';
 import { SurveyResponseController } from './survey-response.controller';
 import {
   AcknowledgeResponseForSurveyQuestionHasBeenViewed,
@@ -96,6 +99,7 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
     AddFollowUpQuestionForSurveyOptionCommandHandler,
     PublishSurveyCommandHandler,
     FlagSurveyOptionCommandHandler,
+    OpenSurveyToAnonymousIndividualCommandHandler,
     // Survey Completion Commands
     BeginSurveyCommandHandler,
     AnswerSurveyQuestionCommandHandler,
@@ -236,8 +240,11 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
           .register({
             CommandHandlerCtor: SubmitCompleteSurveyReviewCommandHandler,
             CommandPayloadCtor: SubmitCompleteSurveyReview,
+          })
+          .register({
+            CommandHandlerCtor: OpenSurveyToAnonymousIndividualCommandHandler,
+            CommandPayloadCtor: OpenSurveyToAnonymousIndividual,
           });
-
         return commandHandlerService;
       },
       inject: [ModuleRef],
@@ -288,6 +295,7 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
       },
       inject: [ClientValidationService],
     },
+    EncryptionService,
   ],
   // Exposing data classes allows us to drive them via repl
   exports: [...dataClasses],
@@ -298,4 +306,13 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
     SurveyController,
   ],
 })
-export class SurveyModule {}
+// TODO `configurable`
+export class SurveyModule {
+  // configure(consumer: MiddlewareConsumer) {
+  //   consumer
+  //     .apply(PasscodeMiddleware)
+  //     // TODO can we tighten this up?
+  //     .forRoutes({ path: 'surveys/commands', method: RequestMethod.POST });
+  //   console.log('woohoo');
+  // }
+}

@@ -1,4 +1,3 @@
-import { tiSduiToHtml } from 'src/libs/server-driven-ui';
 import type { ICommandFsa } from '../../libs/cqrs-es';
 import { CommandHandlerService, CommandResult } from '../../libs/cqrs-es';
 import {
@@ -24,6 +23,7 @@ import {
   UseFilters,
   UseInterceptors,
 } from '../../libs/framework';
+import { tiSduiToHtml } from '../../libs/server-driven-ui';
 import { SurveyQueryService } from './queries/survey-query.service';
 import { SurveyViewModelClientDto } from './queries/survey.view-model';
 import { CommandSuccessPage } from './survey-completion/views';
@@ -79,10 +79,17 @@ export class SurveyController implements OnModuleInit {
    */
   // TODO @CommandExecutionEndpoint()
   @Post('commands')
-  async executeCommand(@Body() fsa: ICommandFsa): Promise<CommandResult> {
+  async executeCommand(
+    @Body() fsa: ICommandFsa,
+    // @HashedPasscode() hashedAccessCode?: string,
+  ): Promise<CommandResult> {
     if (!fsa) {
       throw new Error(`Missing fsa!`);
     }
+
+    // if (hashedAccessCode && fsa.type === 'BEGIN_SURVEY') {
+    //   Object.assign(fsa.payload, { hashedPasscode: hashedAccessCode });
+    // }
 
     const result = await this.commandHandlerService.execute(fsa);
 

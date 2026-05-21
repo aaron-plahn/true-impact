@@ -3,7 +3,7 @@ import {
   Section,
   TextContentNode,
   TIScreen,
-} from 'src/libs/server-driven-ui';
+} from '../../../../libs/server-driven-ui';
 
 interface BeginSurveyPageProps {
   id: string;

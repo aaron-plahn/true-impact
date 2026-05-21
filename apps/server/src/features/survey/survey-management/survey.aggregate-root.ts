@@ -1,6 +1,7 @@
 import {
   AggregateRoot,
   BooleanDataType,
+  deepConvertMapToObject,
   InvariantValidationError,
   isPositiveNumber,
   NonEmptyString,
@@ -11,11 +12,13 @@ import {
   TrueImpactRuntimeException,
   UpdateMethod,
 } from '../../../libs/data-types';
+import { LookupTable } from '../../../libs/data-types/schema-management/decorators/lookup-table.decorator';
 import { DONE, SURVEY_AGGREGATE_TYPE } from '../constants';
 import {
   SurveyAnalyzer,
   SurveyAnalyzerPersistenceDto,
 } from '../survey-analysis';
+import { SurveyAccessToken } from './survey-access-token.entity';
 import { SurveyOption } from './survey-option.entity';
 import {
   SurveyQuestion,
@@ -30,6 +33,7 @@ export class SurveyPersistenceDto {
   topLevelQuestionLabels: string[];
   revision: number;
   analyzers: Record<string, SurveyAnalyzerPersistenceDto>;
+  accessTokensByHash: Record<string, SurveyAccessToken>;
 }
 
 // TODO We need to track schema versions
@@ -45,6 +49,7 @@ export class SurveyPersistenceDto {
     topLevelQuestionLabels: [],
     revision: 12,
     analyzers: {},
+    accessTokensByHash: {},
     // firstQuestionLabel:
   },
 })
@@ -106,6 +111,12 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
 
   analyzersByName: Map<string, SurveyAnalyzer> = new Map();
 
+  @LookupTable(() => SurveyAccessToken, {
+    label: 'access tokens by hash',
+    description: 'provide access to a user',
+  })
+  accessTokensByHash: Map<string, SurveyAccessToken> = new Map();
+
   constructor({
     id,
     isPublished,
@@ -114,6 +125,7 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
     questionLabels,
     revision,
     analyzersByName,
+    accessTokensByHash,
   }: {
     id: string;
     isPublished: boolean;
@@ -122,6 +134,7 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
     questions?: Record<string, SurveyQuestion>;
     questionLabels?: string[];
     analyzersByName: Map<string, SurveyAnalyzer>;
+    accessTokensByHash: Map<string, SurveyAccessToken>;
   }) {
     super();
 
@@ -145,6 +158,8 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
     this.questionBank = new Map(Object.entries(questions || {}));
 
     this.analyzersByName = new Map(analyzersByName.entries());
+
+    this.accessTokensByHash = new Map(accessTokensByHash.entries());
   }
 
   getId(): string {
@@ -160,6 +175,10 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
    */
   size(): number {
     return this.questionBank.size;
+  }
+
+  hasAccessCode(hashedAccessCode: string): boolean {
+    return this.accessTokensByHash.has(hashedAccessCode);
   }
 
   toPersistenceDto(): SurveyPersistenceDto {
@@ -191,6 +210,7 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
       revision: this.revision,
       topLevelQuestionLabels: this.topLevelQuestionLabels,
       analyzers,
+      accessTokensByHash: deepConvertMapToObject(this.accessTokensByHash),
     };
 
     return result;
@@ -416,6 +436,11 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
     this.topLevelQuestionLabels.push(questionBuildResult.label);
 
     return this.preventEditIfPublished();
+  }
+
+  requiresPasscode(): boolean {
+    // In the future, we may open surveys to the public.
+    return true;
   }
 
   find(
@@ -914,6 +939,33 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
     return this;
   }
 
+  // TODO deal with dates consistently
+  openToAnonymousIndividual({
+    dateOfExpiry,
+    dateOpened,
+    hash,
+  }: {
+    dateOpened: string;
+    dateOfExpiry: string;
+    hash: string;
+  }): Survey | TrueImpactError {
+    const buildResult = SurveyAccessToken.openAnonymousIndividualAccess({
+      dateCreated: dateOpened,
+      hash,
+      algorithm: 'TODO add me',
+      dateExpires: dateOfExpiry,
+    });
+
+    if (buildResult instanceof TrueImpactError) {
+      return buildResult;
+    }
+
+    // TODO avoid collisions
+    this.accessTokensByHash.set(hash, buildResult);
+
+    return this;
+  }
+
   static buildEmpty({
     name,
   }: {
@@ -926,6 +978,7 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
       questions: {},
       revision: 0,
       analyzersByName: new Map(),
+      accessTokensByHash: new Map(),
     });
 
     const result = instance.validateInvariants();
@@ -942,6 +995,7 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
       topLevelQuestionLabels: questionLabels,
       revision,
       analyzers,
+      accessTokensByHash,
     }: SurveyPersistenceDto,
     buildOptions: { shouldValidate?: boolean } = {},
   ): Survey | TrueImpactError {
@@ -995,6 +1049,20 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
       );
     }
 
+    const accessTokenBuildResult = new Map<string, SurveyAccessToken>();
+
+    const accessTokenBuildErrors: TrueImpactError[] = [];
+
+    Object.entries(accessTokensByHash).forEach(([_, value]) => {
+      const buildResult = SurveyAccessToken.fromPersistenceDto(value);
+
+      accessTokenBuildResult.set(buildResult.hash, buildResult);
+    });
+
+    if (accessTokenBuildErrors.length > 0) {
+      return new InvariantValidationError(Survey, name, accessTokenBuildErrors);
+    }
+
     const survey = new Survey({
       id,
       revision,
@@ -1008,6 +1076,7 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
         ]),
       ),
       analyzersByName: analyzersBuildResult,
+      accessTokensByHash: accessTokenBuildResult,
     });
 
     if (buildOptions.shouldValidate) {

@@ -6,9 +6,10 @@ import { CommandErrorResponseBody } from './command-responses';
 export class RestCommandStreamExecutor {
   constructor(private readonly endpoint: string) {}
 
-  async execute(fsa: ICommandFsa) {
+  async execute(fsa: ICommandFsa, headers: Record<string, unknown> = {}) {
     const response = await axios
-      .post(this.endpoint, fsa)
+      // @ts-expect-error TODO How should we type this?
+      .post(this.endpoint, fsa, { headers })
       .catch(
         (e: {
           status: HttpStatus;

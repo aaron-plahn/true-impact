@@ -1,5 +1,4 @@
 import { ApiOkResponse } from '@nestjs/swagger';
-import { tiSduiToHtml } from 'src/libs/server-driven-ui';
 import {
   buildTestInstance,
   convertToOpenApiSchema,
@@ -20,6 +19,7 @@ import {
   UseFilters,
   UseInterceptors,
 } from '../../libs/framework';
+import { tiSduiToHtml } from '../../libs/server-driven-ui';
 import { SurveyQueryService } from './queries/survey-query.service';
 import { SurveyResponseQueryService } from './survey-completion/queries';
 import { SurveyResponseRecordViewModelClientDto } from './survey-completion/queries/survey-response-record.view-model';

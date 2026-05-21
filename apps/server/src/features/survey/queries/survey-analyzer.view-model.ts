@@ -1,8 +1,8 @@
-import { LookupTable } from 'src/libs/data-types/schema-management/decorators/lookup-table.decorator';
 import {
   deepConvertMapToObject,
   NonEmptyString,
 } from '../../../libs/data-types';
+import { LookupTable } from '../../../libs/data-types/schema-management/decorators/lookup-table.decorator';
 import { SurveyAnalyzer } from '../survey-analysis';
 
 type QuestionLabel = string;

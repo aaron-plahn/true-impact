@@ -1,4 +1,5 @@
-import { Inject } from '@nestjs/common';
+import { Inject, NotFoundException } from '@nestjs/common';
+import { EncryptionService } from '../../../../libs/auth';
 import { CommandResult, ICommandHandler } from '../../../../libs/cqrs-es';
 import {
   TrueImpactBadUserInputError,
@@ -32,23 +33,33 @@ export class BeginSurveyCommandHandler implements ICommandHandler<BeginSurvey> {
     private readonly surveyCommandRepository: ISurveyCommandRepository,
     @Inject('SURVEY_PARTICIPANT_VALIDATION_SERVICE_PROVIDER_INJECTION_TOKEN')
     private readonly participantValidationServiceProvider: ISurveyParticipantManagementServiceProvider,
+    private readonly cryptoService: EncryptionService,
   ) {}
 
   async handle({
-    payload: { surveyId, participantCompositeIdentifier },
+    payload: { surveyId, participantCompositeIdentifier, accessCode },
   }: {
     payload: BeginSurvey;
   }): Promise<CommandResult> {
     const targetSurvey = await this.surveyCommandRepository.fetchById(surveyId);
 
     if (!targetSurvey) {
-      return new TrueImpactBadUserInputError([
-        new TrueImpactError(
-          `You cannot begin survey [${surveyId}], as there is no survey with the given ID.`,
-        ),
-      ]);
+      throw new NotFoundException();
     }
 
+    if (targetSurvey.requiresPasscode()) {
+      if (!accessCode) {
+        throw new NotFoundException();
+      }
+
+      const hashedAccessCode = this.cryptoService.encrypt(accessCode);
+
+      if (!targetSurvey.hasAccessCode(hashedAccessCode)) {
+        throw new NotFoundException();
+      }
+    }
+
+    // TODO How does the participant interact with the access code?
     if (
       participantCompositeIdentifier !== null &&
       typeof participantCompositeIdentifier !== 'undefined'
@@ -73,10 +84,18 @@ export class BeginSurveyCommandHandler implements ICommandHandler<BeginSurvey> {
       }
     }
 
-    const emptyCompletionRecord = SurveyResponseRecord.begin(
-      targetSurvey,
-      participantCompositeIdentifier,
+    const userAccessTokenForSurveyCompletion =
+      this.cryptoService.generatePasscode();
+
+    const hashedUserAccessTokenForSurveyCompletion = this.cryptoService.encrypt(
+      userAccessTokenForSurveyCompletion,
     );
+
+    const emptyCompletionRecord = SurveyResponseRecord.begin({
+      survey: targetSurvey,
+      participantCompositeIdentifier,
+      hashedAccessCode: hashedUserAccessTokenForSurveyCompletion,
+    });
 
     if (emptyCompletionRecord instanceof TrueImpactError) {
       return emptyCompletionRecord;
@@ -85,6 +104,10 @@ export class BeginSurveyCommandHandler implements ICommandHandler<BeginSurvey> {
     const persistenceResult = await this.surveyCompletionRepository.begin(
       emptyCompletionRecord,
     );
+
+    Object.assign(persistenceResult, {
+      accessCode: hashedUserAccessTokenForSurveyCompletion,
+    });
 
     return persistenceResult;
   }

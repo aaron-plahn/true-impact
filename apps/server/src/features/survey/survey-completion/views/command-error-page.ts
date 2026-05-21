@@ -1,5 +1,9 @@
-import { TrueImpactError } from 'src/libs/data-types';
-import { Section, TextContentNode, TIScreen } from 'src/libs/server-driven-ui';
+import { TrueImpactError } from '../../../../libs/data-types';
+import {
+  Section,
+  TextContentNode,
+  TIScreen,
+} from '../../../../libs/server-driven-ui';
 
 interface CommandErrorPageProps {
   error: TrueImpactError;

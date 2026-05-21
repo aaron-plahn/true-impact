@@ -14,6 +14,7 @@ import {
 } from '../../../../libs/data-types';
 import { CLIENT_AGGREGATE_TYPE } from '../../../clients/client.composite-identifier';
 import { DONE, SURVEY_RESPONSE_AGGREGATE_TYPE } from '../../constants';
+import { SurveyAccessToken } from '../../survey-management/survey-access-token.entity';
 import { SurveyQuestion } from '../../survey-management/survey-question.entity';
 import {
   Survey,
@@ -174,6 +175,13 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
   })
   revision: number;
 
+  @NestedDataType(() => SurveyAccessToken, {
+    label: 'access token',
+    description: `resprents the user session for completing this survey`,
+    // TODO isInternal: true or isPrivate: true
+  })
+  accessToken?: SurveyAccessToken;
+
   /**
    * Note that when a participant begins a survey, the target survey is copied here
    * as a value object. Surveys are currently immutable and in the future will be fully
@@ -251,6 +259,7 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
     responses,
     hasBeenSubmitted,
     participant,
+    accessToken,
   }: {
     id?: string;
     revision: number;
@@ -260,6 +269,7 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
     participant?: SurveyParticipantCompositeIdentifier;
     responses: SurveyQuestionResponse[];
     hasBeenSubmitted?: boolean;
+    accessToken?: SurveyAccessToken;
   }) {
     super();
 
@@ -306,6 +316,8 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
     } else {
       this.nextQuestionLabel = DONE;
     }
+
+    this.accessToken = accessToken;
   }
 
   @UpdateMethod()
@@ -610,10 +622,15 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
     });
   }
 
-  static begin(
-    survey: Survey,
-    participantCompositeIdentifier?: SurveyParticipantCompositeIdentifier,
-  ): SurveyResponseRecord | TrueImpactError {
+  static begin({
+    survey,
+    hashedAccessCode,
+    participantCompositeIdentifier,
+  }: {
+    survey: Survey;
+    hashedAccessCode: string;
+    participantCompositeIdentifier?: SurveyParticipantCompositeIdentifier;
+  }): SurveyResponseRecord | TrueImpactError {
     const allowedParticipantTypes = [CLIENT_AGGREGATE_TYPE];
 
     if (
@@ -633,6 +650,25 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
       ]);
     }
 
+    const accessTokenBuildResult =
+      SurveyAccessToken.openAnonymousIndividualAccess({
+        dateCreated: '123',
+        dateExpires: '1234',
+        hash: hashedAccessCode,
+        algorithm: 'TODO MAN',
+      });
+
+    if (accessTokenBuildResult instanceof TrueImpactError) {
+      return new TrueImpactBadUserInputError([
+        new TrueImpactError(
+          `Failed to create a session to complete survey ${survey.name}.`,
+        ),
+        new TrueImpactError(
+          `Failed to create an access code for survey [${survey.name}].`,
+        ),
+      ]);
+    }
+
     return new SurveyResponseRecord({
       survey,
       responses: [],
@@ -640,6 +676,7 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
       hasBeenAbandoned: false,
       hasBeenSubmitted: false,
       participant: participantCompositeIdentifier,
+      accessToken: accessTokenBuildResult,
     });
   }
 }
