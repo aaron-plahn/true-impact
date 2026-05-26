@@ -2,7 +2,11 @@
 
 ## About
 
-This is the web client for the admin panel of the True Impact platform. It is built with React and communicates with the NestJS back-end via an RPC style API over http (I'm intentionally avoiding calling it a REST API, because it's not).
+This is the web client for the admin panel of the True Impact platform. It is built with React and communicates with the NestJS back-end via an RPC style JSON API over http (I'm intentionally avoiding calling it a [REST API](https://ics.uci.edu/~fielding/pubs/dissertation/top.htm), [because it's not](https://htmx.org/essays/how-did-rest-come-to-mean-the-opposite-of-rest/)).
+
+The core UX is intended for the tenant's employees and administrators. This UX allows users to build new surveys, open surveys for completion by clients, general public, or via a one-time link, review survey responses, and create and view reports based on survey results. 
+
+We considered leveraging a `Server Driven UI` for our core web client, but decided for speed to go with known tools (React + Redux Toolkit). 
 
 Note that a distinct client is provided for survey completion. This is because the survey completion flow is anonymous or semi-anonymous and needs to be sandboxed for security. Also, there are requirements to eventually support a mobile client for survey completion while no such requirements exist for the admin dashboard.
 

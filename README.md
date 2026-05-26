@@ -13,8 +13,6 @@ git clone git@github.com:aaron-plahn/true-impact.git
 cd true-impact
 ```
 
-
-
 ### 2. Populate your `.env`
 
 Run:
@@ -64,9 +62,7 @@ At present, we intercept the `SDUI` response and generate `html` on the server u
 
 ##### Web Admin Panel
 
-The core UX is intended for the tenant's employees and administrators. This UX allows users to build new surveys, open surveys for completion by clients, general public, or via a one-time link, review survey responses, and create and view reports based on survey results. 
-
-We considered leveraging a `Server Driven UI` for our core web client, but decided for speed to go with known tools (React + Redux Toolkit). Read more about this component of the system [here](./apps/web-client/README.md).
+Read more about this component of the system [here](./apps/web-client/README.md).
 
 ##### UI end-to-end tests
-We use [WebDriver.io](https://webdriver.io/) for automated UI tests of the entire system. We maintain these e2e tests as a separate project with its own dependencies as we want to ensure our e2e tests are completely independent of our implementation. See [here](./apps/e2e/README.md) for more information.
+ See [here](./apps/e2e/README.md) for more information.
