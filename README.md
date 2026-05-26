@@ -1,69 +1,68 @@
 # True Impact
 
-True Impact is an open-source platform for tracking an organization's impact on its clients and communities.
+True Impact is an open-source platform for tracking an organization's impact on its clients and communities. The initial focus is to support client and program evaluation via a robust survey module.
 
 ## Getting Started
 
-### 1. Clone this repo
+This repo contains several independent projects each with their own separate build processes. We may eventually move to using true monorepo tooling. You can spin up the platform locally using Docker.
 
-> > > git clone git@github.com:aaron-plahn/true-impact.git
-> > > cd true-impact
+### 1. Clone this repo
+``` bash
+git clone git@github.com:aaron-plahn/true-impact.git
+
+cd true-impact
+```
 
 ### 2. Populate your `.env`
 
 Run:
-
-> > > cp sample.env env.local
+```bash
+cp sample.env env.local
+```
 
 Then replace the placeholders with your own environment variables. You will need to [generate a Supertoken API key](https://supertokens.com/docs/platform-configuration/supertokens-core/api-keys).
 
 ### 3. Run Locally with Docker
 
 After you [install Docker on your machine]() you can run the application locally in Docker containers by running:
-
-> > > docker compose up --build
+```bash
+docker compose --env-file env.local up --build
+```
 
 Note that this will create a persistant volume for the PostgreSQL data.
 
 See the [Docker compose file](docker-compose.yaml) for more details.
 
-### 4. Run Locally for development
+## Components
 
-Docker provides a slower feedback loop. You can also run the server and\or web-client locally, starting them in watch mode. To do this, you'll need to install the npm dependencies locally.
+### External
+#### Supertokens
+We currently user [Supertokens IO](https://supertokens.com/) as our auth server. Supertokens is self-hostable and available as a Docker image. Our [Docker build](./docker-compose.yaml) includes Supertokens.
 
-This project uses node `24.13.0`. You should install this using [nvm](https://github.com/nvm-sh/nvm) as follows.
+#### PostgreSQL
+Currently, we use [PostgreSQL](https://www.postgresql.org/) for the auth database. It is a dependency of Supertokens. We may end up using Postgres for persistence for state and \ or views. This decision has not yet been made. See below for more info.
 
-> > > nvm install 24.13.0
-> > > nvm use 24.13.0
-
-[Yarn](https://yarnpkg.com/) is the recommended package manager. You can install it with:
-
-> > > npm i -g yarn
-
-Once you have node and yarn, you can install the dependencies as follows.
-
-> > > yarn install --frozen-lock-file
-
-Once you have done this, you should be able to run the server or web-client locally using the scripts in the relevant package.json.
-
-## Monorepo
-
-This repository is structured as a monorepo using yarn workspaces. This provides the ability to share code (and dependencies) and interfaces between server and clients while avoiding the complexity of more full-featured monorepo solutions that solve scalability and large-scale dev-ops issues that we do not have.
-
-This monorepo is broken down into `apps` and `libs`, the latter including code that can be shared across multiple apps.
+#### Additional Databases
+In the current stage of development, we have implemented in-memory databases that are abstracted behind repository interfaces persisting domain models (writes) and view models (reads). We may implement persistence for these with Postgres or a different database. In the latter case, we will include the additional database(s) as part of the Docker build.
 
 ### Apps
 
-#### @true-impact/server
+#### Server
+See the [back-end docs](./apps/server/README.md).
 
-The [server](apps/web-client/README.md) is built with [NestJS](https://nestjs.com/) and exposes a REST API.
+#### Clients
 
-#### @true-impact/web-client
+##### Survey Completion Web Client
+We have introduced a novel client for survey completion, distinct from our main admin web client. This is because participants will often be anonymous or at least known clients who do not have system accounts. The survey client uses a "Server Driven UI" (SDUI) approach.
 
-The [web-client](apps/web-client/README.md) is built with [React](https://react.dev/).
+SDUI opens a path towards easier sharing of logic with native mobile (iOS and Android app) clients, which are a good fit for survey completion. As such, and given the small scope of the survey completion flow, we decided to leverage a custom, small-scale SDUI framework for this work flow.
 
-### Libs
+At present, we intercept the `SDUI` response and generate `html` on the server using SSR inside our back-end query controllers. However, we may move this logic client side in the near future to ensure a consistent approach with future mobile clients.
 
-#### @true-impact/low-level-utilities
 
-The [low-level-utilities](libs/low-level-utils/README.md) library contains reuseable utility functions and classes that we find ourselves rewriting in every project.
+##### Web Admin Panel
+
+Read more about this component of the system [here](./apps/web-client/README.md).
+
+##### UI end-to-end tests
+ See [here](./apps/e2e/README.md) for more information.
