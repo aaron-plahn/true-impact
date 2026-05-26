@@ -1,4 +1,3 @@
-import { isDeepStrictEqual } from 'node:util';
 import {
   PersistenceAcknowledgement,
   TestCommandStream,
@@ -23,10 +22,6 @@ export const assertCommandScenarioSuccess = async ({
 }) => {
   const results: PersistenceAcknowledgement[] = [];
 
-  if (!isDeepStrictEqual(headers, {})) {
-    console.log('daaaaaaaaaaaaaaaaaaang');
-  }
-
   const fsasAndResults = await stream.execute(
     new RestCommandStreamExecutor(endpoint),
     headers,
@@ -40,10 +35,10 @@ export const assertCommandScenarioSuccess = async ({
     const id = (result as PersistenceAcknowledgement).id;
 
     if (!id) {
-      console.log("It's gonna fawking fail!");
+      console.log('Command Scenario Test Failed');
     }
 
-    expect((result as PersistenceAcknowledgement).id).toBeTruthy();
+    expect(id).toBeTruthy();
 
     results.push(result as PersistenceAcknowledgement);
   });

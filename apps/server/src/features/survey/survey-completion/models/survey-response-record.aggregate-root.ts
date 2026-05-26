@@ -134,6 +134,8 @@ export class SurveyResponseRecordPersistenceDto {
   participantCompositeIdentifier?: SurveyParticipantCompositeIdentifier;
 
   responses: SurveyQuestionResponse[];
+
+  accessToken?: SurveyAccessToken;
 }
 
 const testSurveyExample = buildTestInstance(Survey, {
@@ -156,6 +158,7 @@ const testSurveyExample = buildTestInstance(Survey, {
     },
     // empty by default
     responses: [],
+    accessToken: buildTestInstance(SurveyAccessToken),
   },
 })
 export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPersistenceDto> {
@@ -178,6 +181,7 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
   @NestedDataType(() => SurveyAccessToken, {
     label: 'access token',
     description: `resprents the user session for completing this survey`,
+    isOptional: true,
     // TODO isInternal: true or isPrivate: true
   })
   accessToken?: SurveyAccessToken;
@@ -408,6 +412,8 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
 
     this.hasBeenSubmitted = true;
 
+    delete this.accessToken;
+
     return this;
   }
 
@@ -562,6 +568,7 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
       hasBeenSubmitted: this.hasBeenSubmitted,
       participantCompositeIdentifier: this.participant,
       responses: this.responses,
+      accessToken: this.accessToken,
     };
   }
 
@@ -574,6 +581,7 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
       survey,
       responses,
       participantCompositeIdentifier,
+      accessToken,
     }: SurveyResponseRecordPersistenceDto,
     buildOptions: { shouldValidate?: boolean } = {},
   ): SurveyResponseRecord | TrueImpactError {
@@ -619,6 +627,7 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
       survey: surveyBuildResult,
       responses: questionResponses as SurveyQuestionResponse[],
       participant: participantCompositeIdentifier,
+      accessToken,
     });
   }
 

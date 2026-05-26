@@ -1,6 +1,10 @@
 import axios from 'axios';
 import { SurveyViewModel } from '../../../features/survey/queries/survey.view-model';
-import { BeginSurvey } from '../../../features/survey/survey-completion';
+import {
+  AnswerSurveyQuestion,
+  BeginSurvey,
+  SubmitSurvey,
+} from '../../../features/survey/survey-completion';
 import { AddFollowUpQuestionForSurveyOption } from '../../../features/survey/survey-management/commands/add-follow-up-question-for-survey-option.command';
 import { AddOptionToSurveyQuestion } from '../../../features/survey/survey-management/commands/add-option-to-survey-question.command';
 import { AddQuestionToSurvey } from '../../../features/survey/survey-management/commands/add-question-to-survey.command';
@@ -8,7 +12,10 @@ import { CreateSurvey } from '../../../features/survey/survey-management/command
 import { OpenSurveyToAnonymousIndividual } from '../../../features/survey/survey-management/commands/open-survey-to-anonymous-individual.command';
 import { PublishSurvey } from '../../../features/survey/survey-management/commands/publish-survey.command';
 import { TestCommandStream } from '../../../libs/cqrs-es';
-import { assertCommandScenarioSuccess } from '../utils';
+import {
+  assertCommandScenarioError,
+  assertCommandScenarioSuccess,
+} from '../utils';
 
 // TODO From env.e2e
 const port = '3001';
@@ -108,15 +115,17 @@ describe(`Survey Completion Scenarios: Anonymous Individual Participant`, () => 
   let surveyId: string;
   // let passcodeToBeginSurvey: string;
 
-  describe(`when the user has a valid access code`, () => {
+  beforeEach(async () => {
+    // clear all test data between runs
+    await axios.patch(surveyCompletionTestSetupEndpoint);
+
+    await axios.patch(surveyTestSetupEndpoint);
+  });
+
+  describe(`when an admin has opened the survey for anonymous completion`, () => {
     let accessCodeToBeginSurvey: string;
 
     beforeEach(async () => {
-      // clear all test data between runs
-      await axios.patch(surveyCompletionTestSetupEndpoint);
-
-      await axios.patch(surveyTestSetupEndpoint);
-
       await assertCommandScenarioSuccess({
         endpoint: surveyCompletionCommandsEndpoint,
         stream: buildAndPublishSurveyPriorToOpenning.andThen(
@@ -137,37 +146,149 @@ describe(`Survey Completion Scenarios: Anonymous Individual Participant`, () => 
       surveyId = surveys[0].id;
     });
 
-    it(`should begin the survey`, async () => {
-      await assertCommandScenarioSuccess({
-        endpoint: surveyCompletionCommandsEndpoint,
-        // we need to append the one-time passcode to headers
-        stream: TestCommandStream.first(BeginSurvey, {
-          surveyId,
-          accessCode: accessCodeToBeginSurvey,
-        }),
+    describe(`when the user has a valid access code`, () => {
+      it(`should begin the survey`, async () => {
+        await assertCommandScenarioSuccess({
+          endpoint: surveyCompletionCommandsEndpoint,
+          // we need to append the one-time passcode to headers
+          stream: TestCommandStream.first(BeginSurvey, {
+            surveyId,
+            accessCode: accessCodeToBeginSurvey,
+          }),
 
-        assertSuccess: (acks) => {
-          const { accessCode } = acks[0];
+          assertSuccess: (acks) => {
+            const { accessCode } = acks[0];
 
-          expect(accessCode).toBeTruthy();
-        },
+            expect(accessCode).toBeTruthy();
+          },
+        });
+      });
+    });
+
+    describe(`when an invalid access code is provided`, () => {
+      it(`should return not found (for obscurity)`, async () => {
+        await assertCommandScenarioError({
+          endpoint: surveyCompletionCommandsEndpoint,
+          stream: TestCommandStream.first(BeginSurvey, {
+            surveyId,
+            accessCode: 'Invalid access code from user',
+          }),
+          // can we validate the status code?
+          assertErrorMessageAsExpected: (message) => {
+            expect(message).toBe('Not Found');
+          },
+        });
+      });
+    });
+
+    describe(`when an expired access code is provided`, () => {
+      // we'll need to do some magic to set this up
+      it.todo(`should return unauthorized`);
+    });
+
+    describe(`when the survey has already been started`, () => {
+      beforeEach(async () => {
+        await assertCommandScenarioSuccess({
+          endpoint: surveyCompletionCommandsEndpoint,
+          stream: TestCommandStream.first(BeginSurvey, {
+            surveyId,
+            accessCode: accessCodeToBeginSurvey,
+          }),
+        });
+      });
+
+      it(`should return Not Found`, async () => {
+        await assertCommandScenarioError({
+          endpoint: surveyCompletionCommandsEndpoint,
+          stream: TestCommandStream.first(BeginSurvey, {
+            surveyId,
+            accessCode: accessCodeToBeginSurvey,
+          }),
+          assertErrorMessageAsExpected: (message) => {
+            expect(message).toBe('Not Found');
+          },
+        });
+      });
+    });
+
+    describe(`when the survey has already been completed`, () => {
+      it(`should return the expected error`, async () => {
+        await assertCommandScenarioError({
+          endpoint: surveyCompletionCommandsEndpoint,
+          stream: TestCommandStream.first(BeginSurvey, {
+            surveyId,
+            accessCode: accessCodeToBeginSurvey,
+          })
+            // TODO The cookie with the access code should be set for each request
+            .andThen(AnswerSurveyQuestion, {
+              questionLabel: 'q1',
+              chosenOptionLabel: 'a',
+            })
+            .andThen(AnswerSurveyQuestion, {
+              questionLabel: 'q2',
+              chosenOptionLabel: 'b',
+            })
+            .andThen(AnswerSurveyQuestion, {
+              questionLabel: 'q2.a',
+              chosenOptionLabel: 'b',
+            })
+            .andThen(AnswerSurveyQuestion, {
+              questionLabel: 'q3',
+              chosenOptionLabel: 'a',
+            })
+            .andThen(SubmitSurvey, {})
+            .andThen(AnswerSurveyQuestion, {
+              questionLabel: 'q4',
+              chosenOptionLabel: 'a',
+            }),
+          assertErrorMessageAsExpected: (message) => {
+            expect(message).toContain('has already been submitted');
+          },
+        });
+      });
+    });
+
+    describe(`when no access code is provided`, () => {
+      it(`should return not found (for obscurity)`, async () => {
+        await assertCommandScenarioError({
+          endpoint: surveyCompletionCommandsEndpoint,
+          stream: TestCommandStream.first(BeginSurvey, {
+            surveyId,
+            accessCode: undefined,
+          }),
+          assertErrorMessageAsExpected: (message) => {
+            expect(message).toBe('Not Found');
+          },
+        });
       });
     });
   });
 
-  describe(`when an invalid access code is provided`, () => {
-    it.todo(`should return unauthorized`);
-  });
+  describe(`when the survey has not been opened for completion`, () => {
+    beforeEach(async () => {
+      await assertCommandScenarioSuccess({
+        endpoint: surveyCompletionCommandsEndpoint,
+        stream: buildAndPublishSurveyPriorToOpenning,
+      });
 
-  describe(`when an expired access code is provided`, () => {
-    it.todo(`should return unauthorized`);
-  });
+      const surveys = (await axios.get(surveyIndexEndpoint))
+        .data as SurveyViewModel[];
 
-  describe(`when the survey has already been completed`, () => {
-    it.todo(`should return unauthorized`);
-  });
+      // This survey is published (Finalized) but not yet open for user completion. No access codes are available.
+      surveyId = surveys[0].id;
+    });
 
-  describe(`when no access code is provided`, () => {
-    it.todo(`should return unauthorized`);
+    it(`should return not found (for obscurity)`, async () => {
+      await assertCommandScenarioError({
+        endpoint: surveyCompletionCommandsEndpoint,
+        stream: TestCommandStream.first(BeginSurvey, {
+          surveyId,
+          accessCode: 'BOGUS ACCESS CODE',
+        }),
+        assertErrorMessageAsExpected: (message) => {
+          expect(message).toBe('Not Found');
+        },
+      });
+    });
   });
 });

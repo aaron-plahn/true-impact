@@ -940,6 +940,7 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
   }
 
   // TODO deal with dates consistently
+  @UpdateMethod()
   openToAnonymousIndividual({
     dateOfExpiry,
     dateOpened,
@@ -962,6 +963,17 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
 
     // TODO avoid collisions
     this.accessTokensByHash.set(hash, buildResult);
+
+    return this;
+  }
+
+  @UpdateMethod()
+  revokeAccessdCode(hashedAccessCode: string): Survey | TrueImpactError {
+    if (!this.accessTokensByHash.has(hashedAccessCode)) {
+      return new TrueImpactError('Failed to revoke unknown access code.');
+    }
+
+    this.accessTokensByHash.delete(hashedAccessCode);
 
     return this;
   }

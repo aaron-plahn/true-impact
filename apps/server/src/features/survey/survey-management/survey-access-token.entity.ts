@@ -1,5 +1,6 @@
 import {
   TrueImpactBadUserInputError,
+  TrueImpactDataExample,
   TrueImpactError,
 } from '../../../libs/data-types';
 
@@ -13,6 +14,15 @@ export class SurveyAccessTokenPersistenceDto {
   // participantCompositeIdentifier
 }
 
+@TrueImpactDataExample<SurveyAccessTokenPersistenceDto>({
+  example: {
+    algorithm: 'sha-123',
+    hash: 'abc1234fake-hashed-access-token',
+    dateCreated: '12345',
+    dateExpires: '34567',
+    usesRemaining: 0,
+  },
+})
 export class SurveyAccessToken {
   algorithm: string;
   // we use a salt as part of the secrets

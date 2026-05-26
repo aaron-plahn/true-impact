@@ -27,6 +27,7 @@ interface ISurveyParticipantManagementServiceProvider {
 
 export class BeginSurveyCommandHandler implements ICommandHandler<BeginSurvey> {
   constructor(
+    // TODO wrap a service interface around this
     @Inject(SURVEY_RESPONSE_COMMAND_REPOSITORY_INJECTION_TOKEN)
     private readonly surveyCompletionRepository: ISurveyResponseCommandRepository,
     @Inject(SURVEY_COMMAND_REPOSITORY_DEPENDENCY_TOKEN)
@@ -57,6 +58,21 @@ export class BeginSurveyCommandHandler implements ICommandHandler<BeginSurvey> {
       if (!targetSurvey.hasAccessCode(hashedAccessCode)) {
         throw new NotFoundException();
       }
+
+      const updatedSurvey = targetSurvey.revokeAccessdCode(hashedAccessCode);
+
+      if (updatedSurvey instanceof TrueImpactError) {
+        return updatedSurvey;
+      }
+
+      /**
+       * Note that this command crosses service boundaries. As such, it consists of 2 transactions.
+       * 1. ACCESS_CODE_REVOKED -> Survey
+       * 2. SURVEY_BEGAN -> Survey Completion Record
+       *
+       * If somehow the `Survey Response` creation fails, a new code must be generated for the participant.
+       */
+      await this.surveyCommandRepository.update(updatedSurvey);
     }
 
     // TODO How does the participant interact with the access code?
@@ -106,7 +122,7 @@ export class BeginSurveyCommandHandler implements ICommandHandler<BeginSurvey> {
     );
 
     Object.assign(persistenceResult, {
-      accessCode: hashedUserAccessTokenForSurveyCompletion,
+      accessCode: userAccessTokenForSurveyCompletion,
     });
 
     return persistenceResult;
