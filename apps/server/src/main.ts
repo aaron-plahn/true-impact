@@ -1,8 +1,10 @@
 // TODO wrap NestJS Swagger?
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import session from 'express-session';
 import { SuperTokensExceptionFilter } from 'supertokens-nestjs';
 import supertokens from 'supertokens-node';
 import { AppModule } from './app.module';
+import { SurveyResponseSessionStore } from './features/survey/survey-completion/repositories/survey-response.session-store';
 import { TrueImpactError, TrueImpactRuntimeException } from './libs/data-types';
 import { ConfigService, NestFactory } from './libs/framework';
 
@@ -30,6 +32,40 @@ async function bootstrap() {
   });
 
   app.useGlobalFilters(new SuperTokensExceptionFilter());
+
+  const cookiesSecret = configService.get<string>('TI_COOKIES_SECRET'); // process.env.TI_COOKIES_SECRET;
+
+  // TODO Make this part of a config
+  // TODO Use a `vault` for this
+  // TODO Use strength validation rules in prod
+  if (typeof cookiesSecret !== 'string' || cookiesSecret.length === 0) {
+    throw new TrueImpactRuntimeException([
+      new TrueImpactError(
+        'Failed to bootstrap the applicaiton. Did you remember to set your cookie secret?',
+      ),
+    ]);
+  }
+
+  const maxCookieAgeDays = 1;
+
+  // TODO make this part of the config
+  const maxCookieAgeMs = maxCookieAgeDays * 24 * 60 * 60 * 1000; // * h * min * s * ms / day
+
+  app.use(
+    session({
+      secret: cookiesSecret,
+      resave: false,
+      store: app.get(SurveyResponseSessionStore),
+      saveUninitialized: false,
+      cookie: {
+        // domain // TODO set this
+        path: 'survey-response-session',
+        maxAge: maxCookieAgeMs,
+        secure: process.env.NODE_ENV === 'production',
+        httpOnly: true, // not available via JS in the browser
+      },
+    }),
+  );
 
   const config = new DocumentBuilder()
     .setTitle('True Impact API')

@@ -1,10 +1,11 @@
-import { Typography } from "@mui/material";
+import { Stack, Typography } from "@mui/material";
 import { JSX } from "react";
 import { useParams } from "react-router-dom";
 import {
   AddOptionToSurveyQuestionCommandForm,
   AddQuestionCommandForm,
   CommandExecutor,
+  OpenSurveyToAnonymousIndividualForm,
   PublishSurveyCommandForm,
 } from "../../command-execution";
 import { Loading } from "../../loading";
@@ -35,24 +36,7 @@ export const SurveyDetailPage = (): JSX.Element => {
   return (
     <div data-testid="survey-management-detail-page">
       <Typography variant="h2">{name}</Typography>
-      {isPublished ? (
-        <Typography variant="body1">** PUBLISHED FOR USE**</Typography>
-      ) : (
-        <CommandExecutor
-          type={"PUBLISH_SURVEY"}
-          label={"Publish Survey"}
-          description={"Finalize this Survey for use"}
-          form={({ onClose }) => (
-            <PublishSurveyCommandForm
-              context={{
-                type: "survey",
-                id: id || "",
-              }}
-              onClose={onClose}
-            />
-          )}
-        />
-      )}
+
       <div>
         {questions.map(({ label: questionLabel, prompt, options }) => (
           <div key={questionLabel} data-testid={`questions/${questionLabel}`}>
@@ -107,6 +91,39 @@ export const SurveyDetailPage = (): JSX.Element => {
           )}
         />
       ) : null}
+      {isPublished ? (
+        <Stack>
+          <Typography variant="body1">** PUBLISHED FOR USE**</Typography>
+          <CommandExecutor
+            type={"OPEN_SURVEY_TO_ANONYMOUS_INDIVIDUAL"}
+            label={"Open to Anonymous Participant"}
+            description={"Generate a one-time access code for a participant"}
+            form={({ onClose }) => (
+              <OpenSurveyToAnonymousIndividualForm
+                context={{
+                  id: id || "",
+                }}
+                onClose={onClose}
+              />
+            )}
+          />
+        </Stack>
+      ) : (
+        <CommandExecutor
+          type={"PUBLISH_SURVEY"}
+          label={"Publish Survey"}
+          description={"Finalize this Survey for use"}
+          form={({ onClose }) => (
+            <PublishSurveyCommandForm
+              context={{
+                type: "survey",
+                id: id || "",
+              }}
+              onClose={onClose}
+            />
+          )}
+        />
+      )}
     </div>
   );
 };

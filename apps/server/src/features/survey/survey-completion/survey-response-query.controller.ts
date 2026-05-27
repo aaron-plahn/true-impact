@@ -5,7 +5,7 @@ import {
   getDataSchemaFromClassCtor,
   TrueImpactError,
   TrueImpactRuntimeException,
-} from '../../libs/data-types';
+} from '../../../libs/data-types';
 import {
   BadUserInputFilter,
   Controller,
@@ -18,16 +18,16 @@ import {
   TestSetupEndpoint,
   UseFilters,
   UseInterceptors,
-} from '../../libs/framework';
-import { tiSduiToHtml } from '../../libs/server-driven-ui';
-import { SurveyQueryService } from './queries/survey-query.service';
-import { SurveyResponseQueryService } from './survey-completion/queries';
-import { SurveyResponseRecordViewModelClientDto } from './survey-completion/queries/survey-response-record.view-model';
-import { BeginSurveyPage } from './survey-completion/views';
-import { SubmitSurveyPage } from './survey-completion/views/submit-survey.page';
-import { SurveyCompletionAcknowledgementPage } from './survey-completion/views/survey-completion-acknowledgement-page';
-import { SurveyIndexPage } from './survey-completion/views/survey-index-page';
-import { SurveyQuestionCompletionPage } from './survey-completion/views/survey-question-completion-page';
+} from '../../../libs/framework';
+import { tiSduiToHtml } from '../../../libs/server-driven-ui';
+import { SurveyQueryService } from '../queries/survey-query.service';
+import { SurveyResponseQueryService } from './queries';
+import { SurveyResponseRecordViewModelClientDto } from './queries/survey-response-record.view-model';
+import { BeginSurveyPage } from './views';
+import { SubmitSurveyPage } from './views/submit-survey.page';
+import { SurveyCompletionAcknowledgementPage } from './views/survey-completion-acknowledgement-page';
+import { SurveyIndexPage } from './views/survey-index-page';
+import { SurveyQuestionCompletionPage } from './views/survey-question-completion-page';
 
 const schema = convertToOpenApiSchema(
   getDataSchemaFromClassCtor(SurveyResponseRecordViewModelClientDto),
@@ -38,7 +38,7 @@ const example = buildTestInstance(SurveyResponseRecordViewModelClientDto);
 @UseFilters(ResourceNotFoundFilter, BadUserInputFilter)
 @UseInterceptors(QueryResponseInterceptor)
 @Controller('surveys/responses')
-export class SurveyResponseController {
+export class SurveyResponseQueryController {
   constructor(
     private readonly surveyCompletionQueryService: SurveyResponseQueryService,
     private readonly surveyQueryService: SurveyQueryService,

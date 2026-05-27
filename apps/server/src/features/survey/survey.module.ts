@@ -1,3 +1,6 @@
+import { NestModule, RequestMethod } from '@nestjs/common';
+import { AuthModule } from 'src/auth/auth.module';
+import { SurveyCompletionMiddleware } from 'src/auth/survey-completion.middleware';
 import { EncryptionService } from 'src/libs/auth';
 import {
   InMemoryCommandRepository,
@@ -8,7 +11,7 @@ import {
   TrueImpactBadUserInputError,
   TrueImpactError,
 } from '../../libs/data-types';
-import { Module, ModuleRef } from '../../libs/framework';
+import { MiddlewareConsumer, Module, ModuleRef } from '../../libs/framework';
 import { CLIENT_AGGREGATE_TYPE } from '../clients/client.composite-identifier';
 import { ClientModule } from '../clients/client.module';
 import { ClientValidationService } from '../clients/services';
@@ -18,6 +21,8 @@ import { SURVEY_COMMAND_REPOSITORY_DEPENDENCY_TOKEN } from './constants';
 import { SURVEY_QUERY_REPOSITORY_PROVIDER_TOKEN } from './queries/survey-query-repository.interface';
 import { SurveyQueryService } from './queries/survey-query.service';
 import { SurveyViewModel } from './queries/survey.view-model';
+import { InMemorySurveyCommandRepository } from './repositories/in-memory-survey-command-repository';
+import { ISurveyCommandRepository } from './repositories/survey-command-repository.interface';
 import {
   AddCategoryToSurveyAnalyzer,
   AddCategoryToSurveyAnalyzerCommandHandler,
@@ -33,6 +38,7 @@ import {
   AnswerSurveyQuestionCommandHandler,
   BeginSurvey,
   BeginSurveyCommandHandler,
+  ISurveyValidationServiceForSurveyResponses,
   SubmitSurvey,
   SubmitSurveyCommandHandler,
   SURVEY_PARTICIPANT_VALIDATION_SERVICE_PROVIDER_INJECTION_TOKEN,
@@ -44,6 +50,9 @@ import {
 import { SurveyResponseRecordViewModel } from './survey-completion/queries/survey-response-record.view-model';
 import { SURVEY_RESPONSE_COMMAND_REPOSITORY_INJECTION_TOKEN } from './survey-completion/repositories';
 import { InMemorySurveyResponseCommandRepository } from './survey-completion/repositories/in-memory-survey-response.command-repository';
+import { SurveyResponseValidationService } from './survey-completion/services';
+import { SurveyResponseCommandController } from './survey-completion/survey-response-command.controller';
+import { SurveyResponseQueryController } from './survey-completion/survey-response-query.controller';
 import { SurveyEventsGateway } from './survey-events.gateway';
 import {
   AddFollowUpQuestionForSurveyOptionCommandHandler,
@@ -61,7 +70,6 @@ import {
 } from './survey-management';
 import { OpenSurveyToAnonymousIndividual } from './survey-management/commands/open-survey-to-anonymous-individual.command';
 import { OpenSurveyToAnonymousIndividualCommandHandler } from './survey-management/commands/open-survey-to-anonymous-individual.command-handler';
-import { SurveyResponseController } from './survey-response.controller';
 import {
   AcknowledgeResponseForSurveyQuestionHasBeenViewed,
   AcknowledgeResponseForSurveyQuestionHasBeenViewedCommandHandler,
@@ -89,7 +97,7 @@ import { SurveyController } from './survey.controller';
 const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
 
 @Module({
-  imports: [ClientModule, FlagModule],
+  imports: [ClientModule, FlagModule, AuthModule],
   providers: [
     SurveyEventsGateway,
     // core survey commands
@@ -251,7 +259,7 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
     },
     {
       provide: SURVEY_COMMAND_REPOSITORY_DEPENDENCY_TOKEN,
-      useFactory: () => new InMemoryCommandRepository(Survey),
+      useClass: InMemorySurveyCommandRepository,
     },
     {
       provide: SURVEY_RESPONSE_COMMAND_REPOSITORY_INJECTION_TOKEN,
@@ -295,24 +303,71 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
       },
       inject: [ClientValidationService],
     },
+    {
+      provide: 'SURVEY_VALIDATION_SERVICE_FOR_RESPONSES_INJECTION_TOKEN',
+      useFactory: (repo: ISurveyCommandRepository) => {
+        const validator: ISurveyValidationServiceForSurveyResponses = {
+          fetchSurveyForParticipant: async function (
+            surveyId: string,
+            hashedAccessCode: string | undefined,
+          ): Promise<Survey | TrueImpactError> {
+            const target = await repo.fetchById(surveyId);
+
+            if (
+              !target?.isPublished ||
+              !hashedAccessCode ||
+              !target?.hasAccessCode(hashedAccessCode)
+            ) {
+              return new TrueImpactError(
+                `Survey: ${surveyId} is not available for completion.`,
+              );
+            }
+
+            /**
+             * TODO We need to support reuseable codes for group use.
+             */
+            const updated = target.revokeAccessdCode(hashedAccessCode);
+
+            if (updated instanceof Error) {
+              return updated;
+            }
+
+            await repo.update(updated);
+
+            return updated;
+          },
+        };
+
+        return validator;
+      },
+      inject: [SURVEY_COMMAND_REPOSITORY_DEPENDENCY_TOKEN],
+    },
+    {
+      provide: 'SURVEY_RESPONSE_VALIDATION_SERVICE_INJECTION_TOKEN',
+      useClass: SurveyResponseValidationService,
+    },
     EncryptionService,
   ],
   // Exposing data classes allows us to drive them via repl
   exports: [...dataClasses],
   controllers: [
-    SurveyResponseController,
+    SurveyResponseCommandController,
+    SurveyResponseQueryController,
     SurveyReviewController,
     // this must come last so that `survey/responses` is not routed to its `surveys/:id` with `{ id:responses }`, for example
     SurveyController,
   ],
 })
 // TODO `configurable`
-export class SurveyModule {
-  // configure(consumer: MiddlewareConsumer) {
-  //   consumer
-  //     .apply(PasscodeMiddleware)
-  //     // TODO can we tighten this up?
-  //     .forRoutes({ path: 'surveys/commands', method: RequestMethod.POST });
-  //   console.log('woohoo');
-  // }
+export class SurveyModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    /**
+     * This ensures that the user based on the cookie obtained from the
+     * original survey access token is appended to survey completion requests.
+     */
+    consumer.apply(SurveyCompletionMiddleware).forRoutes({
+      path: 'surveys/responses/commands',
+      method: RequestMethod.POST,
+    });
+  }
 }

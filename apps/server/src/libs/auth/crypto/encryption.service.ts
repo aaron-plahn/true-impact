@@ -1,17 +1,22 @@
+import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import crypto from 'node:crypto';
 import {
   TrueImpactError,
   TrueImpactRuntimeException,
 } from '../../../libs/data-types';
 
+@Injectable()
 export class EncryptionService {
   readonly #key;
 
   readonly #iv = crypto.randomBytes(16);
 
   // TODO - algorithm
-  constructor() {
-    if (!process.env.TI_ENCRYPTION_KEY) {
+  constructor(private readonly configService: ConfigService) {
+    const encryptionKey = this.configService.get<string>('TI_ENCRYPTION_KEY');
+
+    if (!encryptionKey) {
       throw new TrueImpactRuntimeException([
         new TrueImpactError(`Missing encryption key for passcode generation`),
       ]);
@@ -19,7 +24,7 @@ export class EncryptionService {
 
     this.#key = crypto
       .createHash('sha512')
-      .update(process.env.TI_ENCRYPTION_KEY)
+      .update(encryptionKey)
       .digest('hex')
       .substring(0, 32);
   }
@@ -29,6 +34,10 @@ export class EncryptionService {
     const passcodeLengthInBytes = 16;
 
     return crypto.randomBytes(passcodeLengthInBytes).toString('hex');
+  }
+
+  generateSessionId(): string {
+    return this.generatePasscode();
   }
 
   encrypt(plain: string): string {

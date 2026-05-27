@@ -1,3 +1,4 @@
+import { TISduiTextInput } from 'src/libs/server-driven-ui/forms';
 import {
   ActionContentNode,
   Section,
@@ -22,6 +23,12 @@ export class BeginSurveyPage {
       text: 'Complete Survey',
     };
 
+    const accessCodeTextInputField: TISduiTextInput = {
+      type: 'TEXT_INPUT',
+      label: 'Access Code',
+      name: 'accessCode',
+    };
+
     // TODO inject the command metadata and use that here
     const beginSurveyAction: ActionContentNode = {
       type: 'ACTION',
@@ -31,7 +38,7 @@ export class BeginSurveyPage {
       description: 'Begin a new attempt of the given survey',
       swap: 'outer',
       form: {
-        fields: [],
+        fields: [accessCodeTextInputField],
         context: {
           surveyId: this.props.id,
         },

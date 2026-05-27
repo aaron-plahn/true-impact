@@ -156,10 +156,9 @@ describe(`Survey Completion Scenarios: Anonymous Individual Participant`, () => 
             accessCode: accessCodeToBeginSurvey,
           }),
 
-          assertSuccess: (acks) => {
-            const { accessCode } = acks[0];
-
-            expect(accessCode).toBeTruthy();
+          assertSuccess: (_acks) => {
+            // TODO check for a cookie
+            expect(1).toBe('Check for the cookie already!');
           },
         });
       });

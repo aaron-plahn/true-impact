@@ -1,12 +1,11 @@
-import { Inject, NotFoundException } from '@nestjs/common';
+import { Inject } from '@nestjs/common';
 import { EncryptionService } from '../../../../libs/auth';
 import { CommandResult, ICommandHandler } from '../../../../libs/cqrs-es';
 import {
   TrueImpactBadUserInputError,
   TrueImpactError,
 } from '../../../../libs/data-types';
-import { SURVEY_COMMAND_REPOSITORY_DEPENDENCY_TOKEN } from '../../constants';
-import type { ISurveyCommandRepository } from '../../repositories';
+import { Survey } from '../../survey-management';
 import { SurveyResponseRecord } from '../models/survey-response-record.aggregate-root';
 import type { ISurveyResponseCommandRepository } from '../repositories';
 import { SURVEY_RESPONSE_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../repositories';
@@ -25,13 +24,19 @@ interface ISurveyParticipantManagementServiceProvider {
   ): ISurveyParticipantManagementService | TrueImpactError;
 }
 
+export interface ISurveyValidationServiceForSurveyResponses {
+  fetchSurveyForParticipant(
+    surveyId: string,
+    hashedAccessCode: string | undefined,
+  ): Promise<Survey | TrueImpactError>;
+}
+
 export class BeginSurveyCommandHandler implements ICommandHandler<BeginSurvey> {
   constructor(
-    // TODO wrap a service interface around this
     @Inject(SURVEY_RESPONSE_COMMAND_REPOSITORY_INJECTION_TOKEN)
     private readonly surveyCompletionRepository: ISurveyResponseCommandRepository,
-    @Inject(SURVEY_COMMAND_REPOSITORY_DEPENDENCY_TOKEN)
-    private readonly surveyCommandRepository: ISurveyCommandRepository,
+    @Inject('SURVEY_VALIDATION_SERVICE_FOR_RESPONSES_INJECTION_TOKEN')
+    private readonly surveyValidationService: ISurveyValidationServiceForSurveyResponses,
     @Inject('SURVEY_PARTICIPANT_VALIDATION_SERVICE_PROVIDER_INJECTION_TOKEN')
     private readonly participantValidationServiceProvider: ISurveyParticipantManagementServiceProvider,
     private readonly cryptoService: EncryptionService,
@@ -42,40 +47,22 @@ export class BeginSurveyCommandHandler implements ICommandHandler<BeginSurvey> {
   }: {
     payload: BeginSurvey;
   }): Promise<CommandResult> {
-    const targetSurvey = await this.surveyCommandRepository.fetchById(surveyId);
+    const hashedAccessCode = accessCode
+      ? this.cryptoService.encrypt(accessCode)
+      : undefined;
 
-    if (!targetSurvey) {
-      throw new NotFoundException();
-    }
+    const targetSurvey =
+      await this.surveyValidationService.fetchSurveyForParticipant(
+        surveyId,
+        hashedAccessCode,
+      );
 
-    if (targetSurvey.requiresPasscode()) {
-      if (!accessCode) {
-        throw new NotFoundException();
-      }
-
-      const hashedAccessCode = this.cryptoService.encrypt(accessCode);
-
-      if (!targetSurvey.hasAccessCode(hashedAccessCode)) {
-        throw new NotFoundException();
-      }
-
-      const updatedSurvey = targetSurvey.revokeAccessdCode(hashedAccessCode);
-
-      if (updatedSurvey instanceof TrueImpactError) {
-        return updatedSurvey;
-      }
-
-      /**
-       * Note that this command crosses service boundaries. As such, it consists of 2 transactions.
-       * 1. ACCESS_CODE_REVOKED -> Survey
-       * 2. SURVEY_BEGAN -> Survey Completion Record
-       *
-       * If somehow the `Survey Response` creation fails, a new code must be generated for the participant.
-       */
-      await this.surveyCommandRepository.update(updatedSurvey);
+    if (targetSurvey instanceof TrueImpactError) {
+      return targetSurvey;
     }
 
     // TODO How does the participant interact with the access code?
+    // can we pass this into the validator method?
     if (
       participantCompositeIdentifier !== null &&
       typeof participantCompositeIdentifier !== 'undefined'
@@ -100,6 +87,7 @@ export class BeginSurveyCommandHandler implements ICommandHandler<BeginSurvey> {
       }
     }
 
+    // TODO remove this
     const userAccessTokenForSurveyCompletion =
       this.cryptoService.generatePasscode();
 

@@ -1,5 +1,6 @@
 import { SuperTokensAuthGuard, SuperTokensModule } from 'supertokens-nestjs';
 import { AppController } from './app.controller';
+import { AuthModule } from './auth/auth.module';
 import { SupertokensConfigService } from './auth/supertokens-config.service';
 import { SupertokensMiddleware } from './auth/supertokens.middleware';
 import { ClientModule } from './features/clients/client.module';
@@ -28,6 +29,7 @@ import {
         ).createSuperTokensModuleOptions(),
       inject: [ConfigService],
     }),
+    AuthModule,
     ClientModule,
     SurveyModule,
     FlagModule,
@@ -38,6 +40,7 @@ import {
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
+    // TODO we can implement our own auth solution now
     consumer.apply(SupertokensMiddleware).forRoutes('*');
   }
 }

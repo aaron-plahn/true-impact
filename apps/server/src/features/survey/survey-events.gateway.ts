@@ -135,7 +135,6 @@ export class SurveyEventsGateway implements OnGatewayConnection {
       (body as { message?: string })?.message ||
       'body only: ${JSON.stringify(body)}';
 
-
     const response = { message: `You said: ${message}` };
 
     client.emit('SOME_EVENT', response);

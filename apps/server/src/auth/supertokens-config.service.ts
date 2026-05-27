@@ -21,6 +21,7 @@ export class SupertokensConfigService implements SuperTokensModuleOptionsFactory
         ),
         apiKey: this.configService.get(
           'SUPERTOKENS_API_KEYS',
+          // remove default and validate this
           'abcdefghijklmnop123456xyz',
         ),
       },
