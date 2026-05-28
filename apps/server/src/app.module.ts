@@ -1,4 +1,4 @@
-import { SuperTokensAuthGuard, SuperTokensModule } from 'supertokens-nestjs';
+import { SuperTokensAuthGuard } from 'supertokens-nestjs';
 import { AppController } from './app.controller';
 import { AuthModule } from './auth/auth.module';
 import { SupertokensConfigService } from './auth/supertokens-config.service';
@@ -9,7 +9,6 @@ import { FlagModule } from './features/flags/flag.module';
 import { SurveyModule } from './features/survey/survey.module';
 import {
   ConfigModule,
-  ConfigService,
   MiddlewareConsumer,
   Module,
   NestModule,
