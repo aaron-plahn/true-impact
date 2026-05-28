@@ -23,6 +23,7 @@ interface CommandResponse {
   type: string;
   id: string;
   revision: string;
+  accessCode?: string;
 }
 
 export interface SurveyDetailResponse {
@@ -31,6 +32,7 @@ export interface SurveyDetailResponse {
   size: number;
   isPublished: boolean;
   questions: SurveyQuestion[];
+  accessCode?: string;
 }
 
 interface CommandFsa {
@@ -45,6 +47,12 @@ export const surveyApi = createApi({
   endpoints: (builder) => ({
     fetchSurveyById: builder.query<SurveyDetailResponse, string>({
       query: (id: string) => `surveys/${id}`,
+      merge: (currentData, next) => {
+        return {
+          ...currentData,
+          ...next,
+        };
+      },
       providesTags: (result, error, id) => {
         const tag = { type: "survey", id } as const;
 
@@ -80,6 +88,25 @@ export const surveyApi = createApi({
 
         const tag = { type: "survey", id: result.id };
         return [tag];
+      },
+      onQueryStarted: async (_, { dispatch, queryFulfilled }) => {
+        const { data: commandAcknowledgement } = await queryFulfilled;
+
+        if (commandAcknowledgement.accessCode) {
+          dispatch(
+            surveyApi.util.updateQueryData(
+              "fetchSurveyById",
+              commandAcknowledgement.id,
+              (draft) => {
+                if (draft) {
+                  Object.assign(draft, {
+                    accessCode: commandAcknowledgement.accessCode,
+                  });
+                }
+              },
+            ),
+          );
+        }
       },
     }),
   }),

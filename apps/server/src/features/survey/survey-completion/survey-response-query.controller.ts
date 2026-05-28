@@ -1,3 +1,4 @@
+import { Session } from '@nestjs/common';
 import { ApiOkResponse } from '@nestjs/swagger';
 import {
   buildTestInstance,
@@ -20,6 +21,7 @@ import {
   UseInterceptors,
 } from '../../../libs/framework';
 import { tiSduiToHtml } from '../../../libs/server-driven-ui';
+import { SURVEY_RESPONSE_AGGREGATE_TYPE } from '../constants';
 import { SurveyQueryService } from '../queries/survey-query.service';
 import { SurveyResponseQueryService } from './queries';
 import { SurveyResponseRecordViewModelClientDto } from './queries/survey-response-record.view-model';
@@ -57,6 +59,7 @@ export class SurveyResponseQueryController {
     return htmlView;
   }
 
+  // TODO Ensure that only surveys open to the public appear here.
   @Get('participate')
   async chooseSurveyToComplete() {
     // TODO Put `fetchAvailableSurveys()` on the survey query service
@@ -78,7 +81,29 @@ export class SurveyResponseQueryController {
   }
 
   @Get('participate/:id')
-  async participate(@IdParam() attemptId: string) {
+  async participate(
+    @IdParam() attemptId: string,
+    @Session() session: Record<string, any>,
+  ) {
+    /**
+     * TODO Move this logic to a route guard
+     * @SurveyResponseGuard()
+     */
+    if (!session.subject) {
+      return null;
+    }
+
+    if (
+      (session.subject as { type: string }).type !==
+      SURVEY_RESPONSE_AGGREGATE_TYPE
+    ) {
+      return null;
+    }
+
+    if ((session.subject as { id: string }).id !== attemptId) {
+      return null;
+    }
+
     const target = await this.fetchCompletionByAttemptId(attemptId);
 
     if (target === null) {
@@ -183,6 +208,7 @@ export class SurveyResponseQueryController {
     schema,
     example,
   })
+  // TODO route guards
   fetchCompletionByAttemptId(@IdParam() id: string) {
     return this.surveyCompletionQueryService.fetchById(id);
   }

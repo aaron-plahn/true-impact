@@ -57,9 +57,10 @@ async function bootstrap() {
       resave: false,
       store: app.get(SurveyResponseSessionStore),
       saveUninitialized: false,
+      // TODO better name?
+      name: 'survey-response-session',
       cookie: {
         // domain // TODO set this
-        path: 'survey-response-session',
         maxAge: maxCookieAgeMs,
         secure: process.env.NODE_ENV === 'production',
         httpOnly: true, // not available via JS in the browser

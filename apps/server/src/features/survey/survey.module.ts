@@ -1,6 +1,4 @@
-import { NestModule, RequestMethod } from '@nestjs/common';
 import { AuthModule } from 'src/auth/auth.module';
-import { SurveyCompletionMiddleware } from 'src/auth/survey-completion.middleware';
 import { EncryptionService } from 'src/libs/auth';
 import {
   InMemoryCommandRepository,
@@ -11,7 +9,7 @@ import {
   TrueImpactBadUserInputError,
   TrueImpactError,
 } from '../../libs/data-types';
-import { MiddlewareConsumer, Module, ModuleRef } from '../../libs/framework';
+import { Module, ModuleRef } from '../../libs/framework';
 import { CLIENT_AGGREGATE_TYPE } from '../clients/client.composite-identifier';
 import { ClientModule } from '../clients/client.module';
 import { ClientValidationService } from '../clients/services';
@@ -359,15 +357,16 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
   ],
 })
 // TODO `configurable`
-export class SurveyModule implements NestModule {
-  configure(consumer: MiddlewareConsumer) {
-    /**
-     * This ensures that the user based on the cookie obtained from the
-     * original survey access token is appended to survey completion requests.
-     */
-    consumer.apply(SurveyCompletionMiddleware).forRoutes({
-      path: 'surveys/responses/commands',
-      method: RequestMethod.POST,
-    });
-  }
+export class SurveyModule {
+  //implements NestModule {
+  // configure(consumer: MiddlewareConsumer) {
+  //   /**
+  //    * This ensures that the user based on the cookie obtained from the
+  //    * original survey access token is appended to survey completion requests.
+  //    */
+  //   consumer.apply(SurveyCompletionMiddleware).forRoutes({
+  //     path: 'surveys/commands',
+  //     method: RequestMethod.POST,
+  //   });
+  // }
 }

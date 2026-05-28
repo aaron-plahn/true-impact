@@ -1,3 +1,6 @@
+import { Session } from '@nestjs/common';
+import { isDeepStrictEqual } from 'util';
+import { EncryptionService } from '../../libs/auth';
 import type { ICommandFsa } from '../../libs/cqrs-es';
 import { CommandHandlerService, CommandResult } from '../../libs/cqrs-es';
 import {
@@ -15,6 +18,7 @@ import {
   DetailQueryEndpoint,
   IdParam,
   IndexQueryEndpoint,
+  Inject,
   OnModuleInit,
   Post,
   QueryResponseInterceptor,
@@ -24,8 +28,11 @@ import {
   UseInterceptors,
 } from '../../libs/framework';
 import { tiSduiToHtml } from '../../libs/server-driven-ui';
+import { SURVEY_RESPONSE_AGGREGATE_TYPE } from './constants';
 import { SurveyQueryService } from './queries/survey-query.service';
 import { SurveyViewModelClientDto } from './queries/survey.view-model';
+import type { ISurveyResponseSessionRepository } from './survey-completion/repositories/survey-response.session-repository.interface';
+import { SURVEY_RESPONSE_SESSION_REPOSITORY_TOKEN } from './survey-completion/repositories/survey-response.session-repository.interface';
 import { CommandSuccessPage } from './survey-completion/views';
 import { CommandErrorPage } from './survey-completion/views/command-error-page';
 
@@ -42,6 +49,9 @@ export class SurveyController implements OnModuleInit {
   constructor(
     private readonly surveyQueryService: SurveyQueryService,
     private readonly commandHandlerService: CommandHandlerService,
+    @Inject(SURVEY_RESPONSE_SESSION_REPOSITORY_TOKEN)
+    private readonly sessionRepository: ISurveyResponseSessionRepository,
+    private readonly cryptoService: EncryptionService,
   ) {}
 
   @DetailQueryEndpoint()
@@ -80,18 +90,64 @@ export class SurveyController implements OnModuleInit {
   // TODO @CommandExecutionEndpoint()
   @Post('commands')
   async executeCommand(
-    @Body() fsa: ICommandFsa,
-    // @HashedPasscode() hashedAccessCode?: string,
+    @Body()
+    fsa: ICommandFsa<{
+      aggregateCompositeIdentifier?: { type: string; id: string };
+    }>,
+    // TODO inject the user instead
+    @Session() session: Record<string, any>,
   ): Promise<CommandResult> {
     if (!fsa) {
       throw new Error(`Missing fsa!`);
     }
 
-    // if (hashedAccessCode && fsa.type === 'BEGIN_SURVEY') {
-    //   Object.assign(fsa.payload, { hashedPasscode: hashedAccessCode });
-    // }
+    if (
+      fsa.payload.aggregateCompositeIdentifier &&
+      fsa.payload.aggregateCompositeIdentifier.type ==
+        SURVEY_RESPONSE_AGGREGATE_TYPE
+    ) {
+      /**
+       * The permissions model for survey completion allows users to exchange
+       * an access code for access to a particular survey attempt (specified as the `subject` on the session).
+       *
+       * A better way to handle this is to inject a `user` model onto the session, allowing that the
+       * user may be an `AnonymousSurveyParticipantUser` instead of a `TiSystemUser`.
+       *
+       * TODO Remove the subject or clear the session entirely after the survey is submitted.
+       */
+      if (!session) {
+        // 404
+        return new TrueImpactError('Not Found');
+      }
+
+      if (
+        /**
+         * We know that we have a non-empty `aggregateCompositeIdentifier` and that the `type`
+         * is for a survey response. If the ID is invalid, no survey response will be updated.
+         * So only if a valid ID is provided on the FSA **and** the signed cookie states that
+         * the user has the authority to update that survey attempt will the request succeed.
+         */
+        !isDeepStrictEqual(
+          fsa.payload.aggregateCompositeIdentifier,
+          session.subject,
+        )
+      ) {
+        return new TrueImpactError('Not Found');
+      }
+    }
 
     const result = await this.commandHandlerService.execute(fsa);
+
+    if (!(result instanceof TrueImpactError)) {
+      if (fsa.type === 'BEGIN_SURVEY') {
+        session.subject = {
+          type: SURVEY_RESPONSE_AGGREGATE_TYPE,
+          id: result.id,
+        };
+      }
+
+      return result;
+    }
 
     return result;
   }
@@ -112,8 +168,17 @@ export class SurveyController implements OnModuleInit {
    * SDUI (JSON DSL) to UX without any domain knowledge.
    */
   @Post('commands-html')
-  async executeCommandWithSduiResponse(@Body() fsa: ICommandFsa) {
-    const result = await this.executeCommand(fsa);
+  async executeCommandWithSduiResponse(
+    @Body()
+    fsa: ICommandFsa<{
+      aggregateCompositeIdentifier?: { type: string; id: string };
+    }>,
+    // TODO inject the user instead
+    @Session() session: Record<string, unknown>,
+  ) {
+    const result = await this.executeCommand(fsa, session);
+
+    console.log({ commandUser: session?.user, session });
 
     if (result instanceof TrueImpactError) {
       return tiSduiToHtml(

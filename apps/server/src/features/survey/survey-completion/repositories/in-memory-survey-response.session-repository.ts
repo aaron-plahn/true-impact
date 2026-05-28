@@ -12,7 +12,7 @@ export class InMemorySurveyResponseSessionRepository implements ISurveyResponseS
   get(sessionId: string): Promise<SurveyResponseSession | TrueImpactError> {
     if (!this.sessionsById.has(sessionId)) {
       const result = new TrueImpactError(
-        `Survey completion session not found.`,
+        `Survey completion session [${sessionId}] not found.`,
       );
 
       return Promise.resolve(result);
@@ -31,6 +31,8 @@ export class InMemorySurveyResponseSessionRepository implements ISurveyResponseS
     }
 
     this.sessionsById.set(session.id, session);
+
+    console.log({ iSet: session.id });
 
     return Promise.resolve({ id: session.id });
   }

@@ -10,6 +10,7 @@ import {
 } from "../../command-execution";
 import { Loading } from "../../loading";
 import { useFetchSurveyByIdQuery } from "../store/survey.api";
+import { AccessCodeClipboard } from "./access-code-clipboard";
 
 export const SurveyDetailPage = (): JSX.Element => {
   const { id } = useParams();
@@ -29,9 +30,11 @@ export const SurveyDetailPage = (): JSX.Element => {
     return <div>Something went wrong.</div>;
   }
 
-  const { name, questions, isPublished } = data;
+  const { name, questions, isPublished, accessCode } = data;
 
   const isEditable = !isPublished;
+
+  const shouldShowOpenAccessButton = isPublished && !accessCode;
 
   return (
     <div data-testid="survey-management-detail-page">
@@ -91,7 +94,7 @@ export const SurveyDetailPage = (): JSX.Element => {
           )}
         />
       ) : null}
-      {isPublished ? (
+      {shouldShowOpenAccessButton ? (
         <Stack>
           <Typography variant="body1">** PUBLISHED FOR USE**</Typography>
           <CommandExecutor
@@ -108,7 +111,11 @@ export const SurveyDetailPage = (): JSX.Element => {
             )}
           />
         </Stack>
-      ) : (
+      ) : null}
+      {accessCode ? (
+        <AccessCodeClipboard accessCode={accessCode} attemptId={id || ""} />
+      ) : null}
+      {!isPublished ? (
         <CommandExecutor
           type={"PUBLISH_SURVEY"}
           label={"Publish Survey"}
@@ -123,7 +130,7 @@ export const SurveyDetailPage = (): JSX.Element => {
             />
           )}
         />
-      )}
+      ) : null}
     </div>
   );
 };
