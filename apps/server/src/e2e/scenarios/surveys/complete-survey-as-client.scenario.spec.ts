@@ -28,7 +28,7 @@ import {
 } from '../utils';
 
 // TODO From env.e2e
-const port = '3001';
+const port = '3234';
 
 const baseEndpoint = `http://localhost:${port}`;
 
@@ -155,7 +155,11 @@ const seedPublishedSurvey = async () => {
 
 const communityName = 'Big Community';
 
-describe(`Survey Completion Scenarios`, () => {
+/**
+ * We have currently disabled completion of surveys by known clients. We can circle back
+ * once we have completed support for anonymous survey completion.
+ */
+describe.skip(`Survey Completion Scenarios`, () => {
   let communityId: string;
 
   beforeEach(async () => {

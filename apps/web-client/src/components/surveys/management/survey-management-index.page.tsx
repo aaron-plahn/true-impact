@@ -1,7 +1,7 @@
 import { Button, Stack, Typography } from "@mui/material";
 import { JSX } from "react";
 import { Link } from "react-router-dom";
-import { ErrorInfo } from "../../error-handling";
+import { ApiResponseErrorInfo } from "../../error-handling";
 import { Loading } from "../../loading";
 import { useFetchSurveysQuery } from "../store";
 
@@ -11,7 +11,7 @@ export const SurveyManagementIndex = (): JSX.Element => {
   if (error) {
     // TODO RTK Query Fetch Error Presenter?
     return (
-      <ErrorInfo
+      <ApiResponseErrorInfo
         // @ts-expect-error Enough with React \ Redux TS madness!
         status={error?.status || 500}
         // @ts-expect-error Enough with React \ Redux TS madness!

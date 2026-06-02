@@ -32,6 +32,14 @@ Given("The survey is published", async () => {
   await surveyPage.publish();
 });
 
+Given("The survey is open with a one-time passcode", async () => {
+  await surveyPage.openToAnonymousParticipant();
+});
+
+Given("I am on the survey response page", async () => {
+  await surveyPage.goToResponsePage();
+});
+
 When("I begin the survey {string}", async (surveyName: string) => {
   await surveyCompletionPage.open(surveyName);
 
@@ -65,6 +73,11 @@ Then("It should display the survey submission button", async () => {
 
 When("I submit the survey", async () => {
   await surveyCompletionPage.surveySubmissionButton.click();
+
+  const cookies = await browser.getCookies(["survey-response-session"]);
+
+  // Ensure that sucessfully submitting the survey logs the user out of the session
+  expect(cookies).toHaveLength(0);
 });
 
 Then(

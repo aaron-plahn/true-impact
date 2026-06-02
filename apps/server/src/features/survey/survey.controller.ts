@@ -1,10 +1,13 @@
-import { tiSduiToHtml } from 'src/libs/server-driven-ui';
+import { Req, Res, Session } from '@nestjs/common';
+import type { Request, Response } from 'express';
+import { isDeepStrictEqual } from 'util';
 import type { ICommandFsa } from '../../libs/cqrs-es';
 import { CommandHandlerService, CommandResult } from '../../libs/cqrs-es';
 import {
   buildTestInstance,
   convertToOpenApiSchema,
   getDataSchemaFromClassCtor,
+  TrueImpactBadUserInputError,
   TrueImpactError,
   TrueImpactRuntimeException,
 } from '../../libs/data-types';
@@ -16,6 +19,7 @@ import {
   DetailQueryEndpoint,
   IdParam,
   IndexQueryEndpoint,
+  Inject,
   OnModuleInit,
   Post,
   QueryResponseInterceptor,
@@ -24,8 +28,12 @@ import {
   UseFilters,
   UseInterceptors,
 } from '../../libs/framework';
+import { tiSduiToHtml } from '../../libs/server-driven-ui';
+import { SURVEY_RESPONSE_AGGREGATE_TYPE } from './constants';
 import { SurveyQueryService } from './queries/survey-query.service';
 import { SurveyViewModelClientDto } from './queries/survey.view-model';
+import type { ISurveyResponseSessionRepository } from './survey-completion/repositories/survey-response.session-repository.interface';
+import { SURVEY_RESPONSE_SESSION_REPOSITORY_TOKEN } from './survey-completion/repositories/survey-response.session-repository.interface';
 import { CommandSuccessPage } from './survey-completion/views';
 import { CommandErrorPage } from './survey-completion/views/command-error-page';
 
@@ -42,6 +50,8 @@ export class SurveyController implements OnModuleInit {
   constructor(
     private readonly surveyQueryService: SurveyQueryService,
     private readonly commandHandlerService: CommandHandlerService,
+    @Inject(SURVEY_RESPONSE_SESSION_REPOSITORY_TOKEN)
+    private readonly sessionRepository: ISurveyResponseSessionRepository,
   ) {}
 
   @DetailQueryEndpoint()
@@ -52,7 +62,7 @@ export class SurveyController implements OnModuleInit {
   // TODO every query should return a `ResultOrError`. This **could** be wrapped in a true `Either`.
   async fetchById(
     @IdParam() id: string,
-  ): Promise<SurveyViewModelClientDto | TrueImpactError> {
+  ): Promise<SurveyViewModelClientDto | TrueImpactError | null> {
     const result = await this.surveyQueryService.fetchById(id);
 
     return result;
@@ -79,12 +89,115 @@ export class SurveyController implements OnModuleInit {
    */
   // TODO @CommandExecutionEndpoint()
   @Post('commands')
-  async executeCommand(@Body() fsa: ICommandFsa): Promise<CommandResult> {
+  async executeCommand(
+    @Body()
+    fsa: ICommandFsa<{
+      aggregateCompositeIdentifier?: { type: string; id: string };
+    }>,
+    // TODO inject the user instead
+    @Session() session: Record<string, any>,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<CommandResult | null> {
     if (!fsa) {
       throw new Error(`Missing fsa!`);
     }
 
+    if (
+      fsa.payload.aggregateCompositeIdentifier &&
+      fsa.payload.aggregateCompositeIdentifier.type ==
+        SURVEY_RESPONSE_AGGREGATE_TYPE
+    ) {
+      /**
+       * The permissions model for survey completion allows users to exchange
+       * an access code for access to a particular survey attempt (specified as the `subject` on the session).
+       *
+       * A better way to handle this is to inject a `user` model onto the session, allowing that the
+       * user may be an `AnonymousSurveyParticipantUser` instead of a `TiSystemUser`.
+       *
+       * TODO Remove the subject or clear the session entirely after the survey is submitted.
+       */
+      if (!session) {
+        // 404
+        return null;
+      }
+
+      if (
+        /**
+         * We know that we have a non-empty `aggregateCompositeIdentifier` and that the `type`
+         * is for a survey response. If the ID is invalid, no survey response will be updated.
+         * So only if a valid ID is provided on the FSA **and** the signed cookie states that
+         * the user has the authority to update that survey attempt will the request succeed.
+         */
+        !isDeepStrictEqual(
+          fsa.payload.aggregateCompositeIdentifier,
+          session.subject,
+        )
+      ) {
+        return null;
+      }
+    }
+
     const result = await this.commandHandlerService.execute(fsa);
+
+    if (!(result instanceof Error)) {
+      if (fsa.type === 'BEGIN_SURVEY') {
+        if (session.subject) {
+          throw new TrueImpactError(
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+            `The previous session for attempt ${session.subject.id} was not cleared ahead of starting survey ${result.id}`,
+          );
+        }
+
+        session.subject = {
+          type: SURVEY_RESPONSE_AGGREGATE_TYPE,
+          id: result.id,
+        };
+
+        try {
+          req.session.save((err) => {
+            throw new TrueImpactRuntimeException([
+              new TrueImpactError(`Failed to persist survey response session.`),
+              new TrueImpactError(
+                (err as { message?: string }).message || 'Unknown Error',
+              ),
+            ]);
+          });
+        } catch (_error) {
+          throw new Error(`Something went wrong!`);
+        }
+
+        return result;
+      }
+
+      if (fsa.type === 'SUBMIT_SURVEY') {
+        /**
+         * Submitting a survey successfully amounts to logging out of the session
+         * to complete a survey.
+         */
+        session.subject = null;
+
+        res.clearCookie('survey-response-session');
+
+        req.session.destroy((err) => {
+          throw new TrueImpactRuntimeException([
+            new TrueImpactError(`Logout failed after submitting a survey`),
+            new TrueImpactError(
+              (err as { message?: string })?.message || 'Unknown error',
+            ),
+          ]);
+        });
+
+        return result;
+      }
+
+      return result;
+    }
+
+    // TODO sort out where we wrap this in
+    if (!(result instanceof TrueImpactBadUserInputError)) {
+      return new TrueImpactBadUserInputError([result]);
+    }
 
     return result;
   }
@@ -105,14 +218,25 @@ export class SurveyController implements OnModuleInit {
    * SDUI (JSON DSL) to UX without any domain knowledge.
    */
   @Post('commands-html')
-  async executeCommandWithSduiResponse(@Body() fsa: ICommandFsa) {
-    const result = await this.executeCommand(fsa);
+  async executeCommandWithSduiResponse(
+    @Body()
+    fsa: ICommandFsa<{
+      aggregateCompositeIdentifier?: { type: string; id: string };
+    }>,
+    // TODO inject the user instead
+    @Session() session: Record<string, unknown>,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const result = await this.executeCommand(fsa, session, req, res);
 
-    if (result instanceof TrueImpactError) {
+    if (result instanceof TrueImpactError || result === null) {
       return tiSduiToHtml(
         new CommandErrorPage({
           fsa: fsa,
-          error: new TrueImpactError(result.toString()),
+          error: result
+            ? new TrueImpactError(result.toString())
+            : new TrueImpactError('Not Found'),
         }).render(),
       );
     }

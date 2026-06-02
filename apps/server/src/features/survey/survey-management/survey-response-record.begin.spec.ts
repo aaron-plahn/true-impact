@@ -40,7 +40,10 @@ const clientCompositeIdentifier = {
 describe(`SurveyResponseRecord.begin`, () => {
   describe(`when the request is valid`, () => {
     it(`should return an empty response record with the associated survey`, () => {
-      const result = SurveyResponseRecord.begin(publishedSurvey);
+      const result = SurveyResponseRecord.begin({
+        survey: publishedSurvey,
+        hashedAccessCode: 'DUMMY-ACCESS-CODE',
+      });
 
       expect(result).toBeInstanceOf(SurveyResponseRecord);
 
@@ -64,10 +67,11 @@ describe(`SurveyResponseRecord.begin`, () => {
       ) as Survey;
 
       it(`should return the expected error`, () => {
-        const result = SurveyResponseRecord.begin(
-          unpublishedSurvey,
-          clientCompositeIdentifier,
-        );
+        const result = SurveyResponseRecord.begin({
+          survey: unpublishedSurvey,
+          hashedAccessCode: 'DUMMY-ACCESS-CODE',
+          participantCompositeIdentifier: clientCompositeIdentifier,
+        });
 
         expect(result).toBeInstanceOf(TrueImpactError);
 
@@ -83,9 +87,13 @@ describe(`SurveyResponseRecord.begin`, () => {
       const invalidParticipantType = 'ROBOT';
 
       it(`should return the expected error`, () => {
-        const result = SurveyResponseRecord.begin(publishedSurvey, {
-          type: invalidParticipantType,
-          id: '555',
+        const result = SurveyResponseRecord.begin({
+          survey: publishedSurvey,
+          hashedAccessCode: 'DUMMY-ACCESS-CODE-123',
+          participantCompositeIdentifier: {
+            type: invalidParticipantType,
+            id: '555',
+          },
         });
 
         expect(result).toBeInstanceOf(TrueImpactError);

@@ -1,11 +1,11 @@
 import { Inject } from '@nestjs/common';
+import { EncryptionService } from '../../../../libs/auth';
 import { CommandResult, ICommandHandler } from '../../../../libs/cqrs-es';
 import {
   TrueImpactBadUserInputError,
   TrueImpactError,
 } from '../../../../libs/data-types';
-import { SURVEY_COMMAND_REPOSITORY_DEPENDENCY_TOKEN } from '../../constants';
-import type { ISurveyCommandRepository } from '../../repositories';
+import { Survey } from '../../survey-management';
 import { SurveyResponseRecord } from '../models/survey-response-record.aggregate-root';
 import type { ISurveyResponseCommandRepository } from '../repositories';
 import { SURVEY_RESPONSE_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../repositories';
@@ -24,31 +24,45 @@ interface ISurveyParticipantManagementServiceProvider {
   ): ISurveyParticipantManagementService | TrueImpactError;
 }
 
+export interface ISurveyValidationServiceForSurveyResponses {
+  fetchSurveyForParticipant(
+    surveyId: string,
+    hashedAccessCode: string | undefined,
+  ): Promise<Survey | TrueImpactError>;
+}
+
 export class BeginSurveyCommandHandler implements ICommandHandler<BeginSurvey> {
   constructor(
     @Inject(SURVEY_RESPONSE_COMMAND_REPOSITORY_INJECTION_TOKEN)
     private readonly surveyCompletionRepository: ISurveyResponseCommandRepository,
-    @Inject(SURVEY_COMMAND_REPOSITORY_DEPENDENCY_TOKEN)
-    private readonly surveyCommandRepository: ISurveyCommandRepository,
+    @Inject('SURVEY_VALIDATION_SERVICE_FOR_RESPONSES_INJECTION_TOKEN')
+    private readonly surveyValidationService: ISurveyValidationServiceForSurveyResponses,
     @Inject('SURVEY_PARTICIPANT_VALIDATION_SERVICE_PROVIDER_INJECTION_TOKEN')
     private readonly participantValidationServiceProvider: ISurveyParticipantManagementServiceProvider,
+    private readonly cryptoService: EncryptionService,
   ) {}
 
   async handle({
-    payload: { surveyId, participantCompositeIdentifier },
+    payload: { surveyId, participantCompositeIdentifier, accessCode },
   }: {
     payload: BeginSurvey;
   }): Promise<CommandResult> {
-    const targetSurvey = await this.surveyCommandRepository.fetchById(surveyId);
+    const hashedAccessCode = accessCode
+      ? this.cryptoService.encrypt(accessCode)
+      : undefined;
 
-    if (!targetSurvey) {
-      return new TrueImpactBadUserInputError([
-        new TrueImpactError(
-          `You cannot begin survey [${surveyId}], as there is no survey with the given ID.`,
-        ),
-      ]);
+    const targetSurvey =
+      await this.surveyValidationService.fetchSurveyForParticipant(
+        surveyId,
+        hashedAccessCode,
+      );
+
+    if (targetSurvey instanceof TrueImpactError) {
+      return targetSurvey;
     }
 
+    // TODO How does the participant interact with the access code?
+    // can we pass this into the validator method?
     if (
       participantCompositeIdentifier !== null &&
       typeof participantCompositeIdentifier !== 'undefined'
@@ -73,10 +87,10 @@ export class BeginSurveyCommandHandler implements ICommandHandler<BeginSurvey> {
       }
     }
 
-    const emptyCompletionRecord = SurveyResponseRecord.begin(
-      targetSurvey,
+    const emptyCompletionRecord = SurveyResponseRecord.begin({
+      survey: targetSurvey,
       participantCompositeIdentifier,
-    );
+    });
 
     if (emptyCompletionRecord instanceof TrueImpactError) {
       return emptyCompletionRecord;

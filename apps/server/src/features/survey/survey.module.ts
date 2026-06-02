@@ -1,3 +1,5 @@
+import { AuthModule } from 'src/auth/auth.module';
+import { EncryptionService } from 'src/libs/auth';
 import {
   InMemoryCommandRepository,
   InMemoryQueryRepositoryProvider,
@@ -17,6 +19,8 @@ import { SURVEY_COMMAND_REPOSITORY_DEPENDENCY_TOKEN } from './constants';
 import { SURVEY_QUERY_REPOSITORY_PROVIDER_TOKEN } from './queries/survey-query-repository.interface';
 import { SurveyQueryService } from './queries/survey-query.service';
 import { SurveyViewModel } from './queries/survey.view-model';
+import { InMemorySurveyCommandRepository } from './repositories/in-memory-survey-command-repository';
+import { ISurveyCommandRepository } from './repositories/survey-command-repository.interface';
 import {
   AddCategoryToSurveyAnalyzer,
   AddCategoryToSurveyAnalyzerCommandHandler,
@@ -32,6 +36,7 @@ import {
   AnswerSurveyQuestionCommandHandler,
   BeginSurvey,
   BeginSurveyCommandHandler,
+  ISurveyValidationServiceForSurveyResponses,
   SubmitSurvey,
   SubmitSurveyCommandHandler,
   SURVEY_PARTICIPANT_VALIDATION_SERVICE_PROVIDER_INJECTION_TOKEN,
@@ -43,6 +48,8 @@ import {
 import { SurveyResponseRecordViewModel } from './survey-completion/queries/survey-response-record.view-model';
 import { SURVEY_RESPONSE_COMMAND_REPOSITORY_INJECTION_TOKEN } from './survey-completion/repositories';
 import { InMemorySurveyResponseCommandRepository } from './survey-completion/repositories/in-memory-survey-response.command-repository';
+import { SurveyResponseValidationService } from './survey-completion/services';
+import { SurveyResponseQueryController } from './survey-completion/survey-response-query.controller';
 import { SurveyEventsGateway } from './survey-events.gateway';
 import {
   AddFollowUpQuestionForSurveyOptionCommandHandler,
@@ -58,7 +65,8 @@ import {
   PublishSurveyCommandHandler,
   Survey,
 } from './survey-management';
-import { SurveyResponseController } from './survey-response.controller';
+import { OpenSurveyToAnonymousIndividual } from './survey-management/commands/open-survey-to-anonymous-individual.command';
+import { OpenSurveyToAnonymousIndividualCommandHandler } from './survey-management/commands/open-survey-to-anonymous-individual.command-handler';
 import {
   AcknowledgeResponseForSurveyQuestionHasBeenViewed,
   AcknowledgeResponseForSurveyQuestionHasBeenViewedCommandHandler,
@@ -86,7 +94,7 @@ import { SurveyController } from './survey.controller';
 const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
 
 @Module({
-  imports: [ClientModule, FlagModule],
+  imports: [ClientModule, FlagModule, AuthModule],
   providers: [
     SurveyEventsGateway,
     // core survey commands
@@ -96,6 +104,7 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
     AddFollowUpQuestionForSurveyOptionCommandHandler,
     PublishSurveyCommandHandler,
     FlagSurveyOptionCommandHandler,
+    OpenSurveyToAnonymousIndividualCommandHandler,
     // Survey Completion Commands
     BeginSurveyCommandHandler,
     AnswerSurveyQuestionCommandHandler,
@@ -236,15 +245,18 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
           .register({
             CommandHandlerCtor: SubmitCompleteSurveyReviewCommandHandler,
             CommandPayloadCtor: SubmitCompleteSurveyReview,
+          })
+          .register({
+            CommandHandlerCtor: OpenSurveyToAnonymousIndividualCommandHandler,
+            CommandPayloadCtor: OpenSurveyToAnonymousIndividual,
           });
-
         return commandHandlerService;
       },
       inject: [ModuleRef],
     },
     {
       provide: SURVEY_COMMAND_REPOSITORY_DEPENDENCY_TOKEN,
-      useFactory: () => new InMemoryCommandRepository(Survey),
+      useClass: InMemorySurveyCommandRepository,
     },
     {
       provide: SURVEY_RESPONSE_COMMAND_REPOSITORY_INJECTION_TOKEN,
@@ -288,11 +300,55 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
       },
       inject: [ClientValidationService],
     },
+    {
+      provide: 'SURVEY_VALIDATION_SERVICE_FOR_RESPONSES_INJECTION_TOKEN',
+      useFactory: (repo: ISurveyCommandRepository) => {
+        const validator: ISurveyValidationServiceForSurveyResponses = {
+          fetchSurveyForParticipant: async function (
+            surveyId: string,
+            hashedAccessCode: string | undefined,
+          ): Promise<Survey | TrueImpactError> {
+            const target = await repo.fetchById(surveyId);
+
+            if (
+              !target?.isPublished ||
+              !hashedAccessCode ||
+              !target?.hasAccessCode(hashedAccessCode)
+            ) {
+              return new TrueImpactError(
+                `Survey: ${surveyId} is not available for completion.`,
+              );
+            }
+
+            /**
+             * TODO We need to support reuseable codes for group use.
+             */
+            const updated = target.revokeAccessdCode(hashedAccessCode);
+
+            if (updated instanceof Error) {
+              return updated;
+            }
+
+            await repo.update(updated);
+
+            return updated;
+          },
+        };
+
+        return validator;
+      },
+      inject: [SURVEY_COMMAND_REPOSITORY_DEPENDENCY_TOKEN],
+    },
+    {
+      provide: 'SURVEY_RESPONSE_VALIDATION_SERVICE_INJECTION_TOKEN',
+      useClass: SurveyResponseValidationService,
+    },
+    EncryptionService,
   ],
   // Exposing data classes allows us to drive them via repl
   exports: [...dataClasses],
   controllers: [
-    SurveyResponseController,
+    SurveyResponseQueryController,
     SurveyReviewController,
     // this must come last so that `survey/responses` is not routed to its `surveys/:id` with `{ id:responses }`, for example
     SurveyController,

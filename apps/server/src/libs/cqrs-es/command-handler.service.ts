@@ -2,7 +2,7 @@ import { ApiBody } from '@nestjs/swagger';
 import {
   AnswerSurveyQuestion,
   BeginSurvey,
-} from 'src/features/survey/survey-completion';
+} from '../../features/survey/survey-completion';
 import {
   buildTestInstance,
   convertToOpenApiSchema,

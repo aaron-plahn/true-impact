@@ -1,4 +1,3 @@
-import { CLIENT_AGGREGATE_TYPE } from '../../../../features/clients/client.composite-identifier';
 import {
   NestedDataType,
   NonEmptyString,
@@ -9,10 +8,12 @@ import { SurveyParticipantCompositeIdentifier } from '../models';
 @TrueImpactDataExample<BeginSurvey>({
   example: {
     surveyId: '303',
-    participantCompositeIdentifier: {
-      type: CLIENT_AGGREGATE_TYPE,
-      id: '55',
-    },
+    accessCode: '123456',
+    // You must append this if you need it, as it is optional.
+    // participantCompositeIdentifier: {
+    //   type: CLIENT_AGGREGATE_TYPE,
+    //   id: '55',
+    // },
   },
 })
 export class BeginSurvey {
@@ -34,4 +35,7 @@ export class BeginSurvey {
     isOptional: true,
   })
   participantCompositeIdentifier?: SurveyParticipantCompositeIdentifier;
+
+  // Should this be appended by middleware?
+  accessCode: string;
 }

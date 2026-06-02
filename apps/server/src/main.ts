@@ -1,8 +1,10 @@
 // TODO wrap NestJS Swagger?
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import session from 'express-session';
 import { SuperTokensExceptionFilter } from 'supertokens-nestjs';
 import supertokens from 'supertokens-node';
 import { AppModule } from './app.module';
+import { SurveyResponseSessionStore } from './features/survey/survey-completion/repositories/survey-response.session-store';
 import { TrueImpactError, TrueImpactRuntimeException } from './libs/data-types';
 import { ConfigService, NestFactory } from './libs/framework';
 
@@ -31,6 +33,42 @@ async function bootstrap() {
 
   app.useGlobalFilters(new SuperTokensExceptionFilter());
 
+  const cookiesSecret = configService.get<string>('TI_COOKIES_SECRET'); // process.env.TI_COOKIES_SECRET;
+
+  // TODO Make this part of a config
+  // TODO Use a `vault` for this
+  // TODO Use strength validation rules in prod
+  if (typeof cookiesSecret !== 'string' || cookiesSecret.length === 0) {
+    throw new TrueImpactRuntimeException([
+      new TrueImpactError(
+        'Failed to bootstrap the applicaiton. Did you remember to set your cookie secret?',
+      ),
+    ]);
+  }
+
+  const maxCookieAgeHours = 1;
+
+  // TODO make this part of the config
+  const maxCookieAgeMs = maxCookieAgeHours * 60 * 60 * 1000; // * h * min * s * ms / day
+
+  app.use(
+    session({
+      secret: cookiesSecret,
+      resave: false,
+      store: app.get(SurveyResponseSessionStore),
+      saveUninitialized: false,
+      // TODO If we end up using the same cookie for all user sessions, we should rename this.
+      // TODO make a constant for this
+      name: 'survey-response-session',
+      cookie: {
+        // domain // TODO set this from the config
+        maxAge: maxCookieAgeMs,
+        secure: process.env.NODE_ENV === 'production',
+        httpOnly: true, // not available via JS in the browser
+      },
+    }),
+  );
+
   const config = new DocumentBuilder()
     .setTitle('True Impact API')
     .setDescription('Internal Rest API for the True Impact Platform')
@@ -42,6 +80,8 @@ async function bootstrap() {
   const documentFactory = () => SwaggerModule.createDocument(app, config);
 
   SwaggerModule.setup('api/docs', app, documentFactory);
+
+  app.enableShutdownHooks();
 
   await app.listen(NODE_PORT);
 

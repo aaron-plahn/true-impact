@@ -20,7 +20,7 @@ import {
 } from '../utils';
 
 // TODO From env.e2e
-const port = '3001';
+const port = '3234';
 
 const baseEndpoint = `http://localhost:${port}`;
 

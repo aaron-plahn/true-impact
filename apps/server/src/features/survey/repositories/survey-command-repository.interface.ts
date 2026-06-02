@@ -17,6 +17,11 @@ export interface ISurveyCommandRepository {
   // Error[] ?
   createMany(instances: Survey[]): Promise<void>;
 
+  revokeAccess(
+    id: string,
+    hashedAccessCode: string,
+  ): Promise<PersistenceAcknowledgement | TrueImpactError>;
+
   update(
     instance: Survey,
   ): Promise<PersistenceAcknowledgement | TrueImpactError>;

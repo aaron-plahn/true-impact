@@ -103,7 +103,7 @@ export const config: WebdriverIO.Config = {
   // baseUrl: 'http://localhost:8080',
   //
   // Default timeout for all waitFor* commands.
-  waitforTimeout: 10000,
+  waitforTimeout: 120000,
   //
   // Default timeout in milliseconds for request
   // if browser driver or grid doesn't send response
@@ -264,6 +264,9 @@ export const config: WebdriverIO.Config = {
    */
   // beforeCommand: function (commandName, args) {
   // },
+  beforeTest: async function (_test, _context) {
+    await browser.deleteCookies();
+  },
   /**
    * Cucumber Hooks
    *
@@ -301,11 +304,11 @@ export const config: WebdriverIO.Config = {
    * @param {number}             result.duration  duration of scenario in milliseconds
    * @param {object}             context          Cucumber World object
    */
-  afterStep: async function (_step, scenario, { error }, _context) {
-    if (error) {
-      await browser.saveScreenshot(`./errorScreenShots/${scenario.name}.png`);
-    }
-  },
+  // afterStep: async function (_step, scenario, { error }, _context) {
+  //   if (error) {
+  //     await browser.saveScreenshot(`./errorScreenShots/${scenario.name}.png`);
+  //   }
+  // },
   /**
    *
    * Runs after a Cucumber Scenario.

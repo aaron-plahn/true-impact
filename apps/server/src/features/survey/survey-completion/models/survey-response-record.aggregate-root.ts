@@ -610,10 +610,13 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
     });
   }
 
-  static begin(
-    survey: Survey,
-    participantCompositeIdentifier?: SurveyParticipantCompositeIdentifier,
-  ): SurveyResponseRecord | TrueImpactError {
+  static begin({
+    survey,
+    participantCompositeIdentifier,
+  }: {
+    survey: Survey;
+    participantCompositeIdentifier?: SurveyParticipantCompositeIdentifier;
+  }): SurveyResponseRecord | TrueImpactError {
     const allowedParticipantTypes = [CLIENT_AGGREGATE_TYPE];
 
     if (

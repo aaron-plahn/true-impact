@@ -1,14 +1,16 @@
-import { Typography } from "@mui/material";
+import { Stack, Typography } from "@mui/material";
 import { JSX } from "react";
 import { useParams } from "react-router-dom";
 import {
   AddOptionToSurveyQuestionCommandForm,
   AddQuestionCommandForm,
   CommandExecutor,
+  OpenSurveyToAnonymousIndividualForm,
   PublishSurveyCommandForm,
 } from "../../command-execution";
 import { Loading } from "../../loading";
 import { useFetchSurveyByIdQuery } from "../store/survey.api";
+import { AccessCodeClipboard } from "./access-code-clipboard";
 
 export const SurveyDetailPage = (): JSX.Element => {
   const { id } = useParams();
@@ -28,31 +30,16 @@ export const SurveyDetailPage = (): JSX.Element => {
     return <div>Something went wrong.</div>;
   }
 
-  const { name, questions, isPublished } = data;
+  const { name, questions, isPublished, accessCode } = data;
 
   const isEditable = !isPublished;
+
+  const shouldShowOpenAccessButton = isPublished && !accessCode;
 
   return (
     <div data-testid="survey-management-detail-page">
       <Typography variant="h2">{name}</Typography>
-      {isPublished ? (
-        <Typography variant="body1">** PUBLISHED FOR USE**</Typography>
-      ) : (
-        <CommandExecutor
-          type={"PUBLISH_SURVEY"}
-          label={"Publish Survey"}
-          description={"Finalize this Survey for use"}
-          form={({ onClose }) => (
-            <PublishSurveyCommandForm
-              context={{
-                type: "survey",
-                id: id || "",
-              }}
-              onClose={onClose}
-            />
-          )}
-        />
-      )}
+
       <div>
         {questions.map(({ label: questionLabel, prompt, options }) => (
           <div key={questionLabel} data-testid={`questions/${questionLabel}`}>
@@ -98,6 +85,43 @@ export const SurveyDetailPage = (): JSX.Element => {
           description={"Add a question to an existing survey."}
           form={({ onClose }) => (
             <AddQuestionCommandForm
+              context={{
+                type: "survey",
+                id: id || "",
+              }}
+              onClose={onClose}
+            />
+          )}
+        />
+      ) : null}
+      {shouldShowOpenAccessButton ? (
+        <Stack>
+          <Typography variant="body1">** PUBLISHED FOR USE**</Typography>
+          <CommandExecutor
+            type={"OPEN_SURVEY_TO_ANONYMOUS_INDIVIDUAL"}
+            label={"Open to Anonymous Participant"}
+            description={"Generate a one-time access code for a participant"}
+            form={({ onClose }) => (
+              <OpenSurveyToAnonymousIndividualForm
+                context={{
+                  id: id || "",
+                }}
+                onClose={onClose}
+              />
+            )}
+          />
+        </Stack>
+      ) : null}
+      {accessCode ? (
+        <AccessCodeClipboard accessCode={accessCode} attemptId={id || ""} />
+      ) : null}
+      {!isPublished ? (
+        <CommandExecutor
+          type={"PUBLISH_SURVEY"}
+          label={"Publish Survey"}
+          description={"Finalize this Survey for use"}
+          form={({ onClose }) => (
+            <PublishSurveyCommandForm
               context={{
                 type: "survey",
                 id: id || "",

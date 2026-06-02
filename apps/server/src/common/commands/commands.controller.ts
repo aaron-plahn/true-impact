@@ -1,9 +1,6 @@
 import type { ICommandFsa } from '../../libs/cqrs-es';
 import { CommandHandlerService, CommandResult } from '../../libs/cqrs-es';
-import {
-  TrueImpactBadUserInputError,
-  TrueImpactError,
-} from '../../libs/data-types';
+import { TrueImpactBadUserInputError } from '../../libs/data-types';
 import {
   BadUserInputFilter,
   Body,
@@ -31,10 +28,6 @@ export class CommandsController {
     }
 
     const result = await this.commandHandlerService.execute(fsa);
-
-    if (result instanceof TrueImpactError) {
-      console.log(`I told you!`);
-    }
 
     return result;
   }

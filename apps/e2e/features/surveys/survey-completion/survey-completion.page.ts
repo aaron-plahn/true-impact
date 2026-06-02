@@ -1,9 +1,8 @@
+import { Key } from "webdriverio";
 import Page from "../../login/page";
 
 class SurveyCompletionPage extends Page {
   public async beginSurvey() {
-    await $("button*=Begin").click();
-
     await $("button*=GO").click();
   }
 
@@ -33,12 +32,18 @@ class SurveyCompletionPage extends Page {
     return $("*=Succesfully submitted survey");
   }
 
-  public async open(surveyName: string) {
-    const path = `surveys/responses/participate`;
+  public async open(_surveyName: string) {
+    await $('[name="accessCode"]').click();
 
-    await browser.url(`http://localhost:3234/${path}`);
+    const isMac = process.platform == "darwin";
 
-    await $(`*=${surveyName}`).click();
+    await browser.keys([isMac ? Key.Ctrl : Key.Control, "v"]);
+
+    await $("button*=Begin").click();
+
+    const cookies = await browser.getCookies(["survey-response-session"]);
+
+    expect(cookies.length).toBeGreaterThan(0);
   }
 }
 
