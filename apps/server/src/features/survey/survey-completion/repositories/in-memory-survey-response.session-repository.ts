@@ -23,16 +23,14 @@ export class InMemorySurveyResponseSessionRepository implements ISurveyResponseS
     );
   }
 
+  getAll(): Promise<SurveyResponseSession[] | TrueImpactError> {
+    return Promise.resolve(Array.from(this.sessionsById.values()));
+  }
+
   set(
     session: SurveyResponseSession,
   ): Promise<{ id: string } | TrueImpactError> {
-    if (this.sessionsById.has(session.id)) {
-      return Promise.resolve(new TrueImpactError('Session ID collision.'));
-    }
-
     this.sessionsById.set(session.id, session);
-
-    console.log({ iSet: session.id });
 
     return Promise.resolve({ id: session.id });
   }
@@ -47,5 +45,15 @@ export class InMemorySurveyResponseSessionRepository implements ISurveyResponseS
     this.sessionsById.delete(sessionId);
 
     return Promise.resolve({ id: sessionId });
+  }
+
+  async clear(): Promise<void> {
+    for (const k of this.sessionsById.keys()) {
+      await this.revoke(k);
+    }
+  }
+
+  count(): Promise<number> {
+    return Promise.resolve(this.sessionsById.size);
   }
 }

@@ -438,11 +438,6 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
     return this.preventEditIfPublished();
   }
 
-  requiresPasscode(): boolean {
-    // In the future, we may open surveys to the public.
-    return true;
-  }
-
   find(
     questionPredicate: (question: SurveyQuestion) => boolean,
     rootQuestionLabel?: string,

@@ -356,17 +356,4 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
     SurveyController,
   ],
 })
-// TODO `configurable`
-export class SurveyModule {
-  //implements NestModule {
-  // configure(consumer: MiddlewareConsumer) {
-  //   /**
-  //    * This ensures that the user based on the cookie obtained from the
-  //    * original survey access token is appended to survey completion requests.
-  //    */
-  //   consumer.apply(SurveyCompletionMiddleware).forRoutes({
-  //     path: 'surveys/commands',
-  //     method: RequestMethod.POST,
-  //   });
-  // }
-}
+export class SurveyModule {}

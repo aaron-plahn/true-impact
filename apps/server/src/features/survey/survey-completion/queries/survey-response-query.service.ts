@@ -10,7 +10,7 @@ export class SurveyResponseQueryService {
     private readonly surveyCompletionCommandRepository: ISurveyResponseCommandRepository,
   ) {}
 
-  async fetchById(id: string) {
+  async fetchById(id: string): Promise<SurveyResponseRecordViewModel | null> {
     const domainModel =
       await this.surveyCompletionCommandRepository.fetchById(id);
 

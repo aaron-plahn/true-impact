@@ -77,11 +77,54 @@ export class SurveyResponseSessionStore extends session.Store {
       });
   }
 
-  // TODO implement optional methods
+  all(
+    callback: (
+      err: any,
+      obj?:
+        | session.SessionData[]
+        | { [sid: string]: session.SessionData }
+        | null,
+    ) => void,
+  ): void {
+    this.sessionRepository
+      .getAll()
+      .then((result) => {
+        if (result instanceof TrueImpactError) {
+          return callback(result);
+        }
+
+        return callback(null, result);
+      })
+      .catch((err) => {
+        callback(err);
+      });
+  }
+
+  clear(callback?: (err?: any) => void): void {
+    this.sessionRepository.clear().catch((err) => {
+      if (typeof callback === 'function') {
+        callback(err);
+      }
+    });
+  }
+
+  length(callback: (err: any, length?: number) => void): void {
+    this.sessionRepository
+      .count()
+      .then((result) => {
+        if (result instanceof Error) {
+          return callback(result);
+        }
+
+        return callback(null, result);
+      })
+      .catch((err) => {
+        return callback(err);
+      });
+  }
+
+  // TODO implement remaining optional methods
   /**
    * touch(sid, session, callback): Resets the session's max age timer on new requests so active sessions do not expire.
-   * all(callback): Fetches all active sessions as an array or object.
-   * clear(callback): Deletes all sessions from the store.
-   * length(callback): Returns the total count of active sessions.
    */
 }

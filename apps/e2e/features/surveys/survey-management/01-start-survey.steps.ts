@@ -64,6 +64,8 @@ When("I start a new survey", async () => {
   });
 
   await surveyPage.publish();
+
+  await surveyPage.openToAnonymousParticipant();
 });
 
 Then("It should display the newly created survey", async () => {

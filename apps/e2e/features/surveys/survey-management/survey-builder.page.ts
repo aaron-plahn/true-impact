@@ -54,6 +54,30 @@ class SurveyBuilderPage extends Page {
     await $("*=Publish").click();
   }
 
+  public async openToAnonymousParticipant() {
+    await $(
+      "#OPEN_SURVEY_TO_ANONYMOUS_INDIVIDUAL_command-executor-button",
+    ).click();
+
+    await $("*=Open for Anonymous Individual").click();
+  }
+
+  public async goToResponsePage() {
+    await $("#copyAccessCode").click();
+
+    const responsePageLink = await $("#surveyResponseLink");
+
+    const responsePageUrl = await responsePageLink.getAttribute("href");
+
+    if (responsePageUrl === null) {
+      throw Error(
+        `The test has failed because the link element with ID #surveyResponseLink is missing an href attribute`,
+      );
+    }
+
+    await browser.url(responsePageUrl);
+  }
+
   public async open() {
     // an alternative is to drill through the UX to get here
     await super.open("surveys/manage");

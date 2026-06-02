@@ -30,7 +30,7 @@ export class SurveyQueryService {
 
   async fetchById(
     id: string,
-  ): Promise<SurveyViewModelClientDto | TrueImpactError> {
+  ): Promise<SurveyViewModelClientDto | TrueImpactError | null> {
     const searchResult =
       (await this.surveyCommandRepository.fetchById(id)) ||
       // Does this lead to a 404?

@@ -1,4 +1,3 @@
-import { isDeepStrictEqual } from 'node:util';
 import {
   buildTestInstance,
   clonePlainObject,
@@ -88,10 +87,6 @@ export class TestCommandStream {
     });
 
     for (const fsa of updateCommandFsasToExecute) {
-      if (!isDeepStrictEqual(headers, {})) {
-        console.log('gawdddaggg@');
-      }
-
       const result = await executor.execute(fsa, headers || {});
 
       allResults.push([fsa, result]);

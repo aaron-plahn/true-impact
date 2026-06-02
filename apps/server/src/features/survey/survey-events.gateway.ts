@@ -1,7 +1,6 @@
 import {
   ConnectedSocket,
   MessageBody,
-  OnGatewayConnection,
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
@@ -108,7 +107,7 @@ const buildViewDiffForEvent = (e: BaseEvent): ViewDiff => {
     origin: 'http://localhost:3001',
   },
 })
-export class SurveyEventsGateway implements OnGatewayConnection {
+export class SurveyEventsGateway {
   @WebSocketServer()
   server: Server;
 
@@ -138,13 +137,5 @@ export class SurveyEventsGateway implements OnGatewayConnection {
     const response = { message: `You said: ${message}` };
 
     client.emit('SOME_EVENT', response);
-  }
-
-  handleConnection(client: Socket) {
-    client.onAny((eventName, ...args) => {
-      console.log(
-        `Received an event: ${eventName} with data: ${JSON.stringify(args)}`,
-      );
-    });
   }
 }

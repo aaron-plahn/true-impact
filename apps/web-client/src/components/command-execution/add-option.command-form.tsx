@@ -1,6 +1,6 @@
 import { Tooltip } from "@mui/material";
 import { JSX, useState } from "react";
-import { ErrorInfo } from "../error-handling";
+import { ApiResponseErrorInfo } from "../error-handling";
 import { Loading } from "../loading";
 import { useExecuteCommandMutation } from "../surveys/store";
 
@@ -29,7 +29,7 @@ export const AddOptionToSurveyQuestionCommandForm = ({
 
   if (error) {
     return (
-      <ErrorInfo
+      <ApiResponseErrorInfo
         // @ts-expect-error Enough with React \ Redux TS madness!
         status={error?.status || 500}
         // @ts-expect-error Enough with React \ Redux TS madness!

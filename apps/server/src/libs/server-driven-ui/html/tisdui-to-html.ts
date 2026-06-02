@@ -86,7 +86,6 @@ export const tiSduiToHtml = (input: TIScreen): string => {
           const send = () =>{
             socket.emit("SOME_EVENT",{message: 'Another one bites the dust!'});
 
-            console.log("EMITTED");
           };
 
 
@@ -95,7 +94,6 @@ export const tiSduiToHtml = (input: TIScreen): string => {
           });
 
           socket.on('SURVEY_UPDATED', (e)=>{
-            console.log({updatedWith: e});
 
             const elToUpdate = document.getElementById(e.target);
 

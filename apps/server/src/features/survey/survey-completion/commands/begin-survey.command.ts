@@ -8,6 +8,7 @@ import { SurveyParticipantCompositeIdentifier } from '../models';
 @TrueImpactDataExample<BeginSurvey>({
   example: {
     surveyId: '303',
+    accessCode: '123456',
     // You must append this if you need it, as it is optional.
     // participantCompositeIdentifier: {
     //   type: CLIENT_AGGREGATE_TYPE,
@@ -36,5 +37,5 @@ export class BeginSurvey {
   participantCompositeIdentifier?: SurveyParticipantCompositeIdentifier;
 
   // Should this be appended by middleware?
-  accessCode?: string;
+  accessCode: string;
 }

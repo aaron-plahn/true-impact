@@ -20,7 +20,11 @@ import {
 @Module({
   imports: [
     // TODO Make the dot-env file path configurable by environment
-    ConfigModule.forRoot({ isGlobal: true, envFilePath: '.env.local' }),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      // TODO Support a different env per environment. Use a different NODE_ENV for Docker runs vs. local npm runs.
+      envFilePath: ['.env.local', '../../.env.local'],
+    }),
     SuperTokensModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) =>

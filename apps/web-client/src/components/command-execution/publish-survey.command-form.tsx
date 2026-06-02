@@ -1,6 +1,6 @@
 import { Tooltip } from "@mui/material";
 import { JSX } from "react";
-import { ErrorInfo } from "../error-handling";
+import { ApiResponseErrorInfo } from "../error-handling";
 import { Loading } from "../loading";
 import { useExecuteCommandMutation } from "../surveys/store";
 
@@ -24,14 +24,7 @@ export const PublishSurveyCommandForm = ({
   }
 
   if (error) {
-    return (
-      <ErrorInfo
-        // @ts-expect-error Enough with React \ Redux TS madness!
-        status={error?.status || 500}
-        // @ts-expect-error Enough with React \ Redux TS madness!
-        message={error?.data?.message || "unknown error"}
-      />
-    );
+    return <ApiResponseErrorInfo error={error} />;
   }
 
   const fsa = {

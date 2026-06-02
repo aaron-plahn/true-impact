@@ -62,6 +62,13 @@ export class InMemorySurveyCommandRepository implements ISurveyCommandRepository
       );
     }
 
+    const uniquenessConstraintsValidationResult =
+      this.validateUniquenessConstraints(instance);
+
+    if (uniquenessConstraintsValidationResult instanceof TrueImpactError) {
+      return Promise.resolve(uniquenessConstraintsValidationResult);
+    }
+
     instance.id = id;
 
     instance.revision = 1;
@@ -217,5 +224,9 @@ export class InMemorySurveyCommandRepository implements ISurveyCommandRepository
 
   private getNextId() {
     return (++this._nextId).toString();
+  }
+
+  clear() {
+    this.entititesById = new Map();
   }
 }

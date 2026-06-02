@@ -87,18 +87,9 @@ export class BeginSurveyCommandHandler implements ICommandHandler<BeginSurvey> {
       }
     }
 
-    // TODO remove this
-    const userAccessTokenForSurveyCompletion =
-      this.cryptoService.generatePasscode();
-
-    const hashedUserAccessTokenForSurveyCompletion = this.cryptoService.encrypt(
-      userAccessTokenForSurveyCompletion,
-    );
-
     const emptyCompletionRecord = SurveyResponseRecord.begin({
       survey: targetSurvey,
       participantCompositeIdentifier,
-      hashedAccessCode: hashedUserAccessTokenForSurveyCompletion,
     });
 
     if (emptyCompletionRecord instanceof TrueImpactError) {
@@ -108,10 +99,6 @@ export class BeginSurveyCommandHandler implements ICommandHandler<BeginSurvey> {
     const persistenceResult = await this.surveyCompletionRepository.begin(
       emptyCompletionRecord,
     );
-
-    Object.assign(persistenceResult, {
-      accessCode: userAccessTokenForSurveyCompletion,
-    });
 
     return persistenceResult;
   }

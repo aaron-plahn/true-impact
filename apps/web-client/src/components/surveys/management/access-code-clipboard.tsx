@@ -1,6 +1,7 @@
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import { Box, Button, Paper, Tooltip, Typography } from "@mui/material";
 import { JSX } from "react";
+import { ClearAccessCodeButton } from "./clear-access-button";
 
 interface AccessCodeClipboardProps {
   attemptId: string;
@@ -29,7 +30,7 @@ export const AccessCodeClipboard = ({
         </Typography>
         <Typography variant="body1">{accessCode}</Typography>
         <Tooltip title="Copy to Clipboard">
-          <Button onClick={copyCodeToKeyboard}>
+          <Button id="copyAccessCode" onClick={copyCodeToKeyboard}>
             <ContentCopyIcon sx={{ height: "24px" }} />
           </Button>
         </Tooltip>
@@ -39,12 +40,14 @@ export const AccessCodeClipboard = ({
         </Typography>
         {/* TODO We need to host the SPA on the same server as the back-end or else store the back-end URL in the config and deal with CORS */}
         <a
+          id="surveyResponseLink"
           href={`http://localhost:3234/surveys/responses/begin/${attemptId}`}
           rel="noopener noreferrer"
           target="_blank"
         >
           Survey Link
         </a>
+        <ClearAccessCodeButton attemptId={attemptId}></ClearAccessCodeButton>
       </Box>
     </Paper>
   );

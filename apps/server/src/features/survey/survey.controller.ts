@@ -1,12 +1,13 @@
-import { Session } from '@nestjs/common';
+import { Req, Res, Session } from '@nestjs/common';
+import type { Request, Response } from 'express';
 import { isDeepStrictEqual } from 'util';
-import { EncryptionService } from '../../libs/auth';
 import type { ICommandFsa } from '../../libs/cqrs-es';
 import { CommandHandlerService, CommandResult } from '../../libs/cqrs-es';
 import {
   buildTestInstance,
   convertToOpenApiSchema,
   getDataSchemaFromClassCtor,
+  TrueImpactBadUserInputError,
   TrueImpactError,
   TrueImpactRuntimeException,
 } from '../../libs/data-types';
@@ -51,7 +52,6 @@ export class SurveyController implements OnModuleInit {
     private readonly commandHandlerService: CommandHandlerService,
     @Inject(SURVEY_RESPONSE_SESSION_REPOSITORY_TOKEN)
     private readonly sessionRepository: ISurveyResponseSessionRepository,
-    private readonly cryptoService: EncryptionService,
   ) {}
 
   @DetailQueryEndpoint()
@@ -62,7 +62,7 @@ export class SurveyController implements OnModuleInit {
   // TODO every query should return a `ResultOrError`. This **could** be wrapped in a true `Either`.
   async fetchById(
     @IdParam() id: string,
-  ): Promise<SurveyViewModelClientDto | TrueImpactError> {
+  ): Promise<SurveyViewModelClientDto | TrueImpactError | null> {
     const result = await this.surveyQueryService.fetchById(id);
 
     return result;
@@ -96,7 +96,9 @@ export class SurveyController implements OnModuleInit {
     }>,
     // TODO inject the user instead
     @Session() session: Record<string, any>,
-  ): Promise<CommandResult> {
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<CommandResult | null> {
     if (!fsa) {
       throw new Error(`Missing fsa!`);
     }
@@ -117,7 +119,7 @@ export class SurveyController implements OnModuleInit {
        */
       if (!session) {
         // 404
-        return new TrueImpactError('Not Found');
+        return null;
       }
 
       if (
@@ -132,21 +134,69 @@ export class SurveyController implements OnModuleInit {
           session.subject,
         )
       ) {
-        return new TrueImpactError('Not Found');
+        return null;
       }
     }
 
     const result = await this.commandHandlerService.execute(fsa);
 
-    if (!(result instanceof TrueImpactError)) {
+    if (!(result instanceof Error)) {
       if (fsa.type === 'BEGIN_SURVEY') {
+        if (session.subject) {
+          throw new TrueImpactError(
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+            `The previous session for attempt ${session.subject.id} was not cleared ahead of starting survey ${result.id}`,
+          );
+        }
+
         session.subject = {
           type: SURVEY_RESPONSE_AGGREGATE_TYPE,
           id: result.id,
         };
+
+        try {
+          req.session.save((err) => {
+            throw new TrueImpactRuntimeException([
+              new TrueImpactError(`Failed to persist survey response session.`),
+              new TrueImpactError(
+                (err as { message?: string }).message || 'Unknown Error',
+              ),
+            ]);
+          });
+        } catch (_error) {
+          throw new Error(`Something went wrong!`);
+        }
+
+        return result;
+      }
+
+      if (fsa.type === 'SUBMIT_SURVEY') {
+        /**
+         * Submitting a survey successfully amounts to logging out of the session
+         * to complete a survey.
+         */
+        session.subject = null;
+
+        res.clearCookie('survey-response-session');
+
+        req.session.destroy((err) => {
+          throw new TrueImpactRuntimeException([
+            new TrueImpactError(`Logout failed after submitting a survey`),
+            new TrueImpactError(
+              (err as { message?: string })?.message || 'Unknown error',
+            ),
+          ]);
+        });
+
+        return result;
       }
 
       return result;
+    }
+
+    // TODO sort out where we wrap this in
+    if (!(result instanceof TrueImpactBadUserInputError)) {
+      return new TrueImpactBadUserInputError([result]);
     }
 
     return result;
@@ -175,16 +225,18 @@ export class SurveyController implements OnModuleInit {
     }>,
     // TODO inject the user instead
     @Session() session: Record<string, unknown>,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
   ) {
-    const result = await this.executeCommand(fsa, session);
+    const result = await this.executeCommand(fsa, session, req, res);
 
-    console.log({ commandUser: session?.user, session });
-
-    if (result instanceof TrueImpactError) {
+    if (result instanceof TrueImpactError || result === null) {
       return tiSduiToHtml(
         new CommandErrorPage({
           fsa: fsa,
-          error: new TrueImpactError(result.toString()),
+          error: result
+            ? new TrueImpactError(result.toString())
+            : new TrueImpactError('Not Found'),
         }).render(),
       );
     }

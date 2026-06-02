@@ -46,10 +46,10 @@ async function bootstrap() {
     ]);
   }
 
-  const maxCookieAgeDays = 1;
+  const maxCookieAgeHours = 1;
 
   // TODO make this part of the config
-  const maxCookieAgeMs = maxCookieAgeDays * 24 * 60 * 60 * 1000; // * h * min * s * ms / day
+  const maxCookieAgeMs = maxCookieAgeHours * 60 * 60 * 1000; // * h * min * s * ms / day
 
   app.use(
     session({
@@ -57,10 +57,11 @@ async function bootstrap() {
       resave: false,
       store: app.get(SurveyResponseSessionStore),
       saveUninitialized: false,
-      // TODO better name?
+      // TODO If we end up using the same cookie for all user sessions, we should rename this.
+      // TODO make a constant for this
       name: 'survey-response-session',
       cookie: {
-        // domain // TODO set this
+        // domain // TODO set this from the config
         maxAge: maxCookieAgeMs,
         secure: process.env.NODE_ENV === 'production',
         httpOnly: true, // not available via JS in the browser
@@ -79,6 +80,8 @@ async function bootstrap() {
   const documentFactory = () => SwaggerModule.createDocument(app, config);
 
   SwaggerModule.setup('api/docs', app, documentFactory);
+
+  app.enableShutdownHooks();
 
   await app.listen(NODE_PORT);
 

@@ -28,7 +28,6 @@ import { SurveyResponseRecordViewModelClientDto } from './queries/survey-respons
 import { BeginSurveyPage } from './views';
 import { SubmitSurveyPage } from './views/submit-survey.page';
 import { SurveyCompletionAcknowledgementPage } from './views/survey-completion-acknowledgement-page';
-import { SurveyIndexPage } from './views/survey-index-page';
 import { SurveyQuestionCompletionPage } from './views/survey-question-completion-page';
 
 const schema = convertToOpenApiSchema(
@@ -59,26 +58,27 @@ export class SurveyResponseQueryController {
     return htmlView;
   }
 
-  // TODO Ensure that only surveys open to the public appear here.
-  @Get('participate')
-  async chooseSurveyToComplete() {
-    // TODO Put `fetchAvailableSurveys()` on the survey query service
-    const available = await this.surveyQueryService.fetchAvailable();
+  // TODO Expose lists of surveys that are publicly available.
+  // TODO Expose links to surveys that are available, subject to possession of a
+  // @Get('participate')
+  // async chooseSurveyToComplete() {
+  //   // TODO Put `fetchAvailableSurveys()` on the survey query service
+  //   const available = await this.surveyQueryService.fetchAvailable();
 
-    if (available instanceof Error) {
-      return `<div>Failed to fetch a list of available surveys from the database. Please try again!</div>`;
-    }
+  //   if (available instanceof Error) {
+  //     return `<div>Failed to fetch a list of available surveys from the database. Please try again!</div>`;
+  //   }
 
-    /**
-     * Eventually, we may want to inject the user context to make this decision.
-     */
+  //   /**
+  //    * Eventually, we may want to inject the user context to make this decision.
+  //    */
 
-    const sdui = new SurveyIndexPage({
-      entities: available,
-    }).render();
+  //   const sdui = new SurveyIndexPage({
+  //     entities: available,
+  //   }).render();
 
-    return tiSduiToHtml(sdui);
-  }
+  //   return tiSduiToHtml(sdui);
+  // }
 
   @Get('participate/:id')
   async participate(
@@ -90,7 +90,8 @@ export class SurveyResponseQueryController {
      * @SurveyResponseGuard()
      */
     if (!session.subject) {
-      return null;
+      // TODO return null
+      return `<div>Missing session subject!</div>`; // null;
     }
 
     if (
@@ -101,7 +102,9 @@ export class SurveyResponseQueryController {
     }
 
     if ((session.subject as { id: string }).id !== attemptId) {
-      return null;
+      //  TODO return null
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      return `<div>You don't have permission for this particular survey! you can see: ${session.subject.id}</div>`;
     }
 
     const target = await this.fetchCompletionByAttemptId(attemptId);

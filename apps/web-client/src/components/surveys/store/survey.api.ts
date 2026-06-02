@@ -89,7 +89,7 @@ export const surveyApi = createApi({
         const tag = { type: "survey", id: result.id };
         return [tag];
       },
-      onQueryStarted: async (_, { dispatch, queryFulfilled }) => {
+      onQueryStarted: async (_commandFsa, { dispatch, queryFulfilled }) => {
         const { data: commandAcknowledgement } = await queryFulfilled;
 
         if (commandAcknowledgement.accessCode) {

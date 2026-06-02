@@ -29,13 +29,15 @@ export const assertCommandScenarioSuccess = async ({
 
   fsasAndResults.forEach(([_fsa, result]) => {
     if (!(result as PersistenceAcknowledgement).id) {
-      console.log('oops');
+      console.log({ unexpectedFailingTestCommand: result });
     }
 
     const id = (result as PersistenceAcknowledgement).id;
 
     if (!id) {
-      console.log('Command Scenario Test Failed');
+      throw new Error(
+        `Command Scenario (command: ${_fsa.type} ) Test Failed: ${JSON.stringify(result)}`,
+      );
     }
 
     expect(id).toBeTruthy();
