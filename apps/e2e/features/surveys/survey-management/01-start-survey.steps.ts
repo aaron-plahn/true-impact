@@ -48,19 +48,19 @@ When("I start a new survey", async () => {
   await surveyPage.addOptionForQuestion({
     questionLabel: "1",
     optionLabel: "b",
-    text: option1a,
+    text: option1b,
   });
 
   await surveyPage.addOptionForQuestion({
     questionLabel: "1",
     optionLabel: "c",
-    text: option1a,
+    text: option1c,
   });
 
   await surveyPage.addOptionForQuestion({
     questionLabel: "1",
     optionLabel: "d",
-    text: option1a,
+    text: option1d,
   });
 
   await surveyPage.publish();
