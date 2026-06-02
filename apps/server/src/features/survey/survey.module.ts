@@ -49,7 +49,6 @@ import { SurveyResponseRecordViewModel } from './survey-completion/queries/surve
 import { SURVEY_RESPONSE_COMMAND_REPOSITORY_INJECTION_TOKEN } from './survey-completion/repositories';
 import { InMemorySurveyResponseCommandRepository } from './survey-completion/repositories/in-memory-survey-response.command-repository';
 import { SurveyResponseValidationService } from './survey-completion/services';
-import { SurveyResponseCommandController } from './survey-completion/survey-response-command.controller';
 import { SurveyResponseQueryController } from './survey-completion/survey-response-query.controller';
 import { SurveyEventsGateway } from './survey-events.gateway';
 import {
@@ -349,7 +348,6 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
   // Exposing data classes allows us to drive them via repl
   exports: [...dataClasses],
   controllers: [
-    SurveyResponseCommandController,
     SurveyResponseQueryController,
     SurveyReviewController,
     // this must come last so that `survey/responses` is not routed to its `surveys/:id` with `{ id:responses }`, for example
