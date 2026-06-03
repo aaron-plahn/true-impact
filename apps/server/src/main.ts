@@ -1,8 +1,6 @@
 // TODO wrap NestJS Swagger?
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import session from 'express-session';
-import { SuperTokensExceptionFilter } from 'supertokens-nestjs';
-import supertokens from 'supertokens-node';
 import { AppModule } from './app.module';
 import { SurveyResponseSessionStore } from './features/survey/survey-completion/repositories/survey-response.session-store';
 import { TrueImpactError, TrueImpactRuntimeException } from './libs/data-types';
@@ -27,11 +25,10 @@ async function bootstrap() {
 
   app.enableCors({
     origin: [CLIENT_DOMAIN],
-    allowedHeaders: ['content-type', ...supertokens.getAllCORSHeaders()],
+    // TODO ensure all headers required for auth show up here
+    allowedHeaders: ['content-type'],
     credentials: true,
   });
-
-  app.useGlobalFilters(new SuperTokensExceptionFilter());
 
   const cookiesSecret = configService.get<string>('TI_COOKIES_SECRET'); // process.env.TI_COOKIES_SECRET;
 
