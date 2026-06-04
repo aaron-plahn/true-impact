@@ -40,6 +40,33 @@ export class InMemoryTiSystemUserCommandRepository implements ITiSystemUserComma
     });
   }
 
+  count(): Promise<number> {
+    const result = this.entitiesById.size;
+
+    return Promise.resolve(result);
+  }
+
+  async isEmpty(): Promise<boolean> {
+    const count = await this.count();
+
+    return count === 0;
+  }
+
+  fetchByCredentials(credentials: {
+    username: string;
+    hashedPassword: string;
+  }): Promise<TiSystemUser | null> {
+    const searchResult = Array.from(this.entitiesById.values()).find((user) => {
+      return (
+        user.username === credentials.username &&
+        user.hashedPassword === credentials.hashedPassword &&
+        user.isActive
+      );
+    });
+
+    return Promise.resolve(searchResult || null);
+  }
+
   fetchMany(): Promise<TiSystemUser[] | TrueImpactError> {
     const instances = Array.from(this.entitiesById.values());
 
@@ -106,6 +133,10 @@ export class InMemoryTiSystemUserCommandRepository implements ITiSystemUserComma
 
   async fetchById(id: string): Promise<TiSystemUser | null> {
     const result = this.entitiesById.get(id) || null;
+
+    if (!result || !result.isActive) {
+      return Promise.resolve(null);
+    }
 
     return Promise.resolve(result);
   }

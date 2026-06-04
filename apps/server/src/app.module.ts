@@ -5,6 +5,7 @@ import { CommunityModule } from './features/communities/community.module';
 import { FlagModule } from './features/flags/flag.module';
 import { SurveyModule } from './features/survey/survey.module';
 import { UserModule } from './features/users/user.module';
+import { CryptographyModule } from './libs/auth';
 import { ConfigModule, Module } from './libs/framework';
 
 @Module({
@@ -15,6 +16,7 @@ import { ConfigModule, Module } from './libs/framework';
       // TODO Support a different env per environment. Use a different NODE_ENV for Docker runs vs. local npm runs.
       envFilePath: ['.env.local', '../../.env.local'],
     }),
+    CryptographyModule,
     AuthModule,
     ClientModule,
     SurveyModule,

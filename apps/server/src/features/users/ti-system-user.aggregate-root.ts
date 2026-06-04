@@ -12,6 +12,7 @@ import type { TiUserRole } from './types';
 
 export class TiSystemUserPersistenceDto {
   id: string;
+  hashedPassword: string;
   isActive: boolean;
   email: string;
   hasEmailBeenValidated: boolean;
@@ -25,6 +26,12 @@ export class TiSystemUser extends AggregateRoot<TiSystemUserPersistenceDto> {
   static readonly type = TI_SYSTEM_USER_AGGREGATE_TYPE;
 
   id: string;
+
+  @NonEmptyString({
+    label: 'hashed password',
+    description: 'encrypted password for authentication purposes',
+  })
+  hashedPassword: string;
 
   @BooleanDataType({
     label: 'is active',
@@ -62,6 +69,7 @@ export class TiSystemUser extends AggregateRoot<TiSystemUserPersistenceDto> {
 
   constructor({
     id,
+    hashedPassword,
     isActive,
     username,
     email,
@@ -71,6 +79,7 @@ export class TiSystemUser extends AggregateRoot<TiSystemUserPersistenceDto> {
     role,
   }: {
     id: string;
+    hashedPassword: string;
     isActive: boolean;
     username: string;
     email: string;
@@ -82,6 +91,8 @@ export class TiSystemUser extends AggregateRoot<TiSystemUserPersistenceDto> {
     super();
 
     this.id = id;
+
+    this.hashedPassword = hashedPassword;
 
     // just to be safe
     this.isActive = typeof isActive === 'boolean' ? isActive : false;
@@ -112,6 +123,7 @@ export class TiSystemUser extends AggregateRoot<TiSystemUserPersistenceDto> {
   toPersistenceDto(): TiSystemUserPersistenceDto {
     return {
       id: this.id,
+      hashedPassword: this.hashedPassword,
       isActive: this.isActive,
       username: this.username,
       email: this.email,
@@ -154,6 +166,7 @@ export class TiSystemUser extends AggregateRoot<TiSystemUserPersistenceDto> {
   ): Entity | TrueImpactError {
     const {
       id,
+      hashedPassword,
       isActive,
       username,
       revision,
@@ -165,6 +178,7 @@ export class TiSystemUser extends AggregateRoot<TiSystemUserPersistenceDto> {
 
     const instance = new TiSystemUser({
       id,
+      hashedPassword,
       isActive,
       username,
       email,
@@ -181,11 +195,13 @@ export class TiSystemUser extends AggregateRoot<TiSystemUserPersistenceDto> {
 
   static fromUserRequest(payload: {
     username: string;
+    // the command handler must encrypt this before building the initial user instance
+    hashedPassword: string;
     email: string;
     firstName: string;
     lastName: string;
   }): TiSystemUser | TrueImpactError {
-    const { username, email, firstName, lastName } = payload;
+    const { hashedPassword, username, email, firstName, lastName } = payload;
 
     const fullNameBuildResult = FullName.fromDto({
       firstName,
@@ -200,6 +216,7 @@ export class TiSystemUser extends AggregateRoot<TiSystemUserPersistenceDto> {
 
     const user = new TiSystemUser({
       id: 'GENERATE_A_NEW_ID',
+      hashedPassword,
       // A new user will be active initially
       isActive: true,
       username,

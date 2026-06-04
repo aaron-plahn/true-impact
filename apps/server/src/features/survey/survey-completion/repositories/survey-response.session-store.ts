@@ -10,7 +10,8 @@ import {
 declare module 'express-session' {
   interface SessionData {
     id: string;
-    subject: SurveyResponseCompositeIdentifier;
+    subject?: SurveyResponseCompositeIdentifier;
+    userId?: string;
   }
 }
 
@@ -58,6 +59,8 @@ export class SurveyResponseSessionStore extends session.Store {
       .catch((err) => {
         if (typeof callback === 'function') callback(err);
       });
+
+    console.log('done');
   }
 
   destroy(sid: string, callback?: (err?: any) => void): void {

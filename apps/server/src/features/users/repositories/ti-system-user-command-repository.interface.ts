@@ -7,6 +7,11 @@ export interface ITiSystemUserCommandRepository {
 
   fetchMany(): Promise<TiSystemUser[] | TrueImpactError>;
 
+  fetchByCredentials(credentials: {
+    username: string;
+    hashedPassword: string;
+  }): Promise<TiSystemUser | null>;
+
   create(
     instance: TiSystemUser,
   ): Promise<PersistenceAcknowledgement | TrueImpactError>;
@@ -25,4 +30,6 @@ export interface ITiSystemUserCommandRepository {
   update(
     intance: DeepPartial<TiSystemUser> & Pick<TiSystemUser, 'id'>,
   ): Promise<PersistenceAcknowledgement | TrueImpactError>;
+
+  isEmpty(): Promise<boolean>;
 }
