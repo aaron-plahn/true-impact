@@ -1,5 +1,7 @@
-import { Req, Res, Session } from '@nestjs/common';
+import { Req, Res, Session, UseGuards } from '@nestjs/common';
 import type { Request, Response } from 'express';
+import { AuthenticatedUserGuard } from 'src/auth/guards/authenticated-user-guard';
+import { RbacAuthGuard } from 'src/auth/guards/rbac-auth-guard';
 import { isDeepStrictEqual } from 'util';
 import type { ICommandFsa } from '../../libs/cqrs-es';
 import { CommandHandlerService, CommandResult } from '../../libs/cqrs-es';
@@ -88,6 +90,7 @@ export class SurveyController implements OnModuleInit {
    * a read-only state for certain deployment strategies or maintenance windows.
    */
   // TODO @CommandExecutionEndpoint()
+  @UseGuards(AuthenticatedUserGuard, RbacAuthGuard)
   @Post('commands')
   async executeCommand(
     @Body()

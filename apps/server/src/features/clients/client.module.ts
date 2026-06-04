@@ -3,6 +3,7 @@ import { CommandHandlerService } from '../../libs/cqrs-es';
 import { Module, ModuleRef } from '../../libs/framework';
 import { CommunityModule } from '../communities/community.module';
 import { FlagModule } from '../flags/flag.module';
+import { UserModule } from '../users/user.module';
 import { Client } from './client.aggregate-root';
 import { ClientController } from './client.controller';
 import { AddCommunityAffiliationForClient } from './commands/add-community-affiliation-for-client';
@@ -16,7 +17,7 @@ import { ClientValidationService } from './services';
 import { ClientQueryService } from './services/client-query.service';
 
 @Module({
-  imports: [FlagModule, CommunityModule],
+  imports: [FlagModule, CommunityModule, UserModule],
   providers: [
     ClientQueryService,
     // Commands

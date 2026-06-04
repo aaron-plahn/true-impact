@@ -15,6 +15,10 @@ import {
 @UseFilters(ResourceNotFoundFilter, BadUserInputFilter)
 @UseInterceptors(QueryResponseInterceptor)
 @Controller('commands')
+/**
+ * We may want to use this to have a single endpoint for all commands, while allowing each
+ * module to register its own commands.
+ */
 export class CommandsController {
   constructor(private readonly commandHandlerService: CommandHandlerService) {}
 

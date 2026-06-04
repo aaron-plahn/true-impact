@@ -1,3 +1,4 @@
+import { AuthenticatedUserGuard, RbacAuthGuard } from 'src/auth/guards';
 import type { CommandResult, ICommandFsa } from '../../libs/cqrs-es';
 import { CommandHandlerService } from '../../libs/cqrs-es';
 
@@ -22,6 +23,7 @@ import {
   ResourceNotFoundFilter,
   TestSetupEndpoint,
   UseFilters,
+  UseGuards,
   UseInterceptors,
 } from '../../libs/framework';
 import { ClientViewModelClientDto } from './queries';
@@ -66,6 +68,7 @@ export class ClientController implements OnModuleInit {
     return clients;
   }
 
+  @UseGuards(AuthenticatedUserGuard, RbacAuthGuard)
   @Post('commands')
   async executeCommand(@Body() fsa: ICommandFsa): Promise<CommandResult> {
     const result = await this.commandHandlerService.execute(fsa);

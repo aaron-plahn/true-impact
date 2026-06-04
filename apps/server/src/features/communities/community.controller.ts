@@ -1,3 +1,4 @@
+import { AuthenticatedUserGuard, RbacAuthGuard } from 'src/auth/guards';
 import type { ICommandFsa } from '../../libs/cqrs-es';
 import { CommandHandlerService, CommandResult } from '../../libs/cqrs-es';
 import {
@@ -17,6 +18,7 @@ import {
   ResourceNotFoundFilter,
   TestSetupEndpoint,
   UseFilters,
+  UseGuards,
   UseInterceptors,
 } from '../../libs/framework';
 import { CommunityQueryService, CommunityViewModelClientDto } from './queries';
@@ -31,6 +33,7 @@ export class CommunityController implements OnModuleInit {
   ) {}
 
   // TODO @CommandExecutionEndpoint
+  @UseGuards(AuthenticatedUserGuard, RbacAuthGuard)
   @Post('commands')
   async executeCommand(@Body() fsa: ICommandFsa): Promise<CommandResult> {
     const result = await this.commandHandlerService.execute(fsa);

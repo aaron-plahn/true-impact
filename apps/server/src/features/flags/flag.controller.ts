@@ -1,5 +1,6 @@
-import { OnModuleInit } from '@nestjs/common';
+import { OnModuleInit, UseGuards } from '@nestjs/common';
 import { ApiOkResponse } from '@nestjs/swagger';
+import { AuthenticatedUserGuard, RbacAuthGuard } from 'src/auth/guards';
 import type { ICommandFsa } from '../../libs/cqrs-es';
 import { CommandHandlerService, CommandResult } from '../../libs/cqrs-es';
 import {
@@ -41,6 +42,7 @@ export class FlagController implements OnModuleInit {
   ) {}
 
   // TODO @CommandExecutionEndpoint
+  @UseGuards(AuthenticatedUserGuard, RbacAuthGuard)
   @Post('commands')
   async executeCommand(@Body() fsa: ICommandFsa): Promise<CommandResult> {
     const result = await this.commandHandlerService.execute(fsa);
