@@ -7,29 +7,29 @@ import {
   TrueImpactError,
   TrueImpactRuntimeException,
 } from 'src/libs/data-types';
-import { TI_SYSTEM_USER_AGGREGATE_TYPE } from '../constants';
-import { TiSystemUser } from '../ti-system-user.aggregate-root';
-import { TiUserRole } from '../types';
-import { ITiSystemUserCommandRepository } from './ti-system-user-command-repository.interface';
+import { USER_AGGREGATE_TYPE } from '../constants';
+import { UserRole } from '../types';
+import { User } from '../user.aggregate-root';
+import { IUserCommandRepository } from './user-command-repository.interface';
 
-export class InMemoryTiSystemUserCommandRepository implements ITiSystemUserCommandRepository {
+export class InMemoryTiSystemUserCommandRepository implements IUserCommandRepository {
   private _nextId = 0;
 
-  private uniqueFields: Set<keyof TiSystemUser> = new Set();
+  private uniqueFields: Set<keyof User> = new Set();
 
-  private readonly type = TI_SYSTEM_USER_AGGREGATE_TYPE;
+  private readonly type = USER_AGGREGATE_TYPE;
 
-  constructor(private entitiesById: Map<string, TiSystemUser> = new Map()) {
-    const schema = getDataSchemaFromClassCtor(TiSystemUser);
+  constructor(private entitiesById: Map<string, User> = new Map()) {
+    const schema = getDataSchemaFromClassCtor(User);
 
     // @ts-expect-error What's going on here?
-    const uniqueFields: (keyof TiSystemUser)[] = Array.from(
+    const uniqueFields: (keyof User)[] = Array.from(
       Object.entries(schema.properties),
     ).flatMap(([propertyKey, propertySchema]) => {
       if (
         (propertySchema as SimpleSchemaPropertyMetadata | null)?.mustBeUnique
       ) {
-        return [propertyKey as keyof TiUserRole];
+        return [propertyKey as keyof UserRole];
       }
 
       return [];
@@ -55,7 +55,7 @@ export class InMemoryTiSystemUserCommandRepository implements ITiSystemUserComma
   fetchByCredentials(credentials: {
     username: string;
     hashedPassword: string;
-  }): Promise<TiSystemUser | null> {
+  }): Promise<User | null> {
     const searchResult = Array.from(this.entitiesById.values()).find((user) => {
       return (
         user.username === credentials.username &&
@@ -67,14 +67,14 @@ export class InMemoryTiSystemUserCommandRepository implements ITiSystemUserComma
     return Promise.resolve(searchResult || null);
   }
 
-  fetchMany(): Promise<TiSystemUser[] | TrueImpactError> {
+  fetchMany(): Promise<User[] | TrueImpactError> {
     const instances = Array.from(this.entitiesById.values());
 
     return Promise.resolve(instances);
   }
 
   create(
-    instance: TiSystemUser,
+    instance: User,
   ): Promise<PersistenceAcknowledgement | TrueImpactError> {
     const id = this.getNextId();
 
@@ -100,7 +100,7 @@ export class InMemoryTiSystemUserCommandRepository implements ITiSystemUserComma
     return Promise.resolve(result);
   }
 
-  async createMany(instances: TiSystemUser[]): Promise<void> {
+  async createMany(instances: User[]): Promise<void> {
     for (const instance of instances) {
       await this.create(instance);
     }
@@ -108,7 +108,7 @@ export class InMemoryTiSystemUserCommandRepository implements ITiSystemUserComma
 
   // We may want more specific update methods at some point
   update(
-    intance: DeepPartial<TiSystemUser> & Pick<TiSystemUser, 'id'>,
+    intance: DeepPartial<User> & Pick<User, 'id'>,
   ): Promise<PersistenceAcknowledgement | TrueImpactError> {
     if (!this.entitiesById.has(intance.id)) {
       const err = new TrueImpactError(
@@ -118,7 +118,7 @@ export class InMemoryTiSystemUserCommandRepository implements ITiSystemUserComma
       return Promise.resolve(err);
     }
 
-    const target = this.entitiesById.get(intance.id) as TiSystemUser;
+    const target = this.entitiesById.get(intance.id) as User;
 
     Object.assign(target, intance);
 
@@ -131,7 +131,7 @@ export class InMemoryTiSystemUserCommandRepository implements ITiSystemUserComma
     });
   }
 
-  async fetchById(id: string): Promise<TiSystemUser | null> {
+  async fetchById(id: string): Promise<User | null> {
     const result = this.entitiesById.get(id) || null;
 
     if (!result || !result.isActive) {
@@ -145,7 +145,7 @@ export class InMemoryTiSystemUserCommandRepository implements ITiSystemUserComma
     field,
     value,
   }: {
-    field: keyof TiSystemUser;
+    field: keyof User;
     value: string | number | boolean;
   }) {
     if (field.includes('.')) {
@@ -168,10 +168,10 @@ export class InMemoryTiSystemUserCommandRepository implements ITiSystemUserComma
   }
 
   private validateUniquenessConstraints(
-    instance: TiSystemUser,
+    instance: User,
   ): TrueImpactError | this {
     const uniqueFieldViolations = Array.from(this.uniqueFields).flatMap(
-      (field: keyof TiSystemUser): TrueImpactError[] => {
+      (field: keyof User): TrueImpactError[] => {
         const newValue = instance[field];
 
         const collisions = this.fetchWhere({

@@ -3,7 +3,7 @@ import {
   TrueImpactDataExample,
 } from '../../../libs/data-types';
 
-@TrueImpactDataExample<CreateUser>({
+@TrueImpactDataExample<CreateUserWithPassword>({
   example: {
     username: 'sysuser1221',
     email: 'sysuser@somedomain.org',
@@ -12,9 +12,8 @@ import {
     password: 'verySECURE1',
   },
 })
-// CREATE_USER_WITH_PASSWORD?
-export class CreateUser {
-  static readonly type = 'CREATE_USER';
+export class CreateUserWithPassword {
+  static readonly type = 'CREATE_USER_WITH_PASSWORD';
 
   @NonEmptyString({
     label: 'username',

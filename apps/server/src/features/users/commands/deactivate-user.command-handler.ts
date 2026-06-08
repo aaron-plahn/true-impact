@@ -4,19 +4,17 @@ import {
   TrueImpactError,
 } from 'src/libs/data-types';
 import { CommandResult, ICommandHandler } from '../../../libs/cqrs-es';
-import { TI_SYSTEM_USER_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../constants';
-import type { ITiSystemUserCommandRepository } from '../repositories';
-import { DeactivateTiSystemUser } from './deactivate-user.command';
+import { USER_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../constants';
+import type { IUserCommandRepository } from '../repositories';
+import { DeactivateUser } from './deactivate-user.command';
 
-export class DeactivateUserCommandHandler implements ICommandHandler<DeactivateTiSystemUser> {
+export class DeactivateUserCommandHandler implements ICommandHandler<DeactivateUser> {
   constructor(
-    @Inject(TI_SYSTEM_USER_COMMAND_REPOSITORY_INJECTION_TOKEN)
-    private readonly userCommandRepository: ITiSystemUserCommandRepository,
+    @Inject(USER_COMMAND_REPOSITORY_INJECTION_TOKEN)
+    private readonly userCommandRepository: IUserCommandRepository,
   ) {}
 
-  async handle(fsa: {
-    payload: DeactivateTiSystemUser;
-  }): Promise<CommandResult> {
+  async handle(fsa: { payload: DeactivateUser }): Promise<CommandResult> {
     const {
       payload: {
         aggregateCompositeIdentifier: { id },

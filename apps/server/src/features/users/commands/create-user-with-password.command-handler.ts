@@ -1,31 +1,33 @@
 import { EncryptionService } from 'src/libs/auth';
-import { CommandResult } from 'src/libs/cqrs-es';
+import { CommandResult, ICommandHandler } from 'src/libs/cqrs-es';
 import { TrueImpactError } from 'src/libs/data-types';
 import { Inject } from '../../../libs/framework';
-import { TI_SYSTEM_USER_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../constants';
-import type { ITiSystemUserCommandRepository } from '../repositories';
-import { TiSystemUser } from '../ti-system-user.aggregate-root';
-import { CreateUser } from './create-user.command';
+import { USER_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../constants';
+import type { IUserCommandRepository } from '../repositories';
+import { User } from '../user.aggregate-root';
+import { CreateUserWithPassword } from './create-user-with-password.command';
 
-// TODO implements ICommandHandler<CreateUser>
-export class CreateUserCommandHandler {
+export class CreateUserWithPasswordCommandHandler implements ICommandHandler<CreateUserWithPassword> {
   constructor(
-    @Inject(TI_SYSTEM_USER_COMMAND_REPOSITORY_INJECTION_TOKEN)
-    private readonly repository: ITiSystemUserCommandRepository,
+    @Inject(USER_COMMAND_REPOSITORY_INJECTION_TOKEN)
+    private readonly repository: IUserCommandRepository,
     private readonly cryptoService: EncryptionService,
   ) {}
 
-  async handle({ payload }: { payload: CreateUser }): Promise<CommandResult> {
+  async handle({
+    payload,
+  }: {
+    payload: CreateUserWithPassword;
+  }): Promise<CommandResult> {
     // TODO validate password strength
     const { password, username, email, firstName, lastName } = payload;
 
     const hashedPassword = this.cryptoService.encrypt(password);
 
-    const buildResult = TiSystemUser.fromUserRequest({
+    const buildResult = User.fromUserRequest({
       hashedPassword,
       username,
       email,
-      // should we combine these here first?
       firstName,
       lastName,
     });

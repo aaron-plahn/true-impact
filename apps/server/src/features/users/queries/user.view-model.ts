@@ -1,6 +1,6 @@
 import { FullName, FullNameDto } from 'src/common/full-name';
 import { NestedDataType, NonEmptyString } from 'src/libs/data-types';
-import { TiSystemUser } from '../ti-system-user.aggregate-root';
+import { User } from '../user.aggregate-root';
 
 export class UserViewModelClientDto {
   @NonEmptyString({
@@ -80,7 +80,7 @@ export class UserViewModel {
     };
   }
 
-  static fromDomainModel(domainModel: TiSystemUser): UserViewModel {
+  static fromDomainModel(domainModel: User): UserViewModel {
     const { id, revision, username, fullName, role } = domainModel;
 
     return new UserViewModel({

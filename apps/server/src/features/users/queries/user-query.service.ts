@@ -1,14 +1,14 @@
 import { Inject } from '@nestjs/common';
-import { TI_SYSTEM_USER_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../constants';
-import type { ITiSystemUserCommandRepository } from '../repositories';
-import { TiSystemUser } from '../ti-system-user.aggregate-root';
+import { USER_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../constants';
+import type { IUserCommandRepository } from '../repositories';
+import { User } from '../user.aggregate-root';
 import { UserViewModel } from './user.view-model';
 
 export class UserQueryService {
   constructor(
-    @Inject(TI_SYSTEM_USER_COMMAND_REPOSITORY_INJECTION_TOKEN)
+    @Inject(USER_COMMAND_REPOSITORY_INJECTION_TOKEN)
     // Currently, we project off the domain (command DB) for user queries
-    private readonly commandRepository: ITiSystemUserCommandRepository,
+    private readonly commandRepository: IUserCommandRepository,
   ) {}
 
   async fetchById(id: string) {
@@ -21,7 +21,7 @@ export class UserQueryService {
     return this.buildView(result).toClientDto();
   }
 
-  private buildView(domainModel: TiSystemUser) {
+  private buildView(domainModel: User) {
     return UserViewModel.fromDomainModel(domainModel);
   }
 }

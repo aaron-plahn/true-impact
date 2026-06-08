@@ -1,8 +1,8 @@
 import { HttpStatus } from '@nestjs/common';
 import axios from 'axios';
 import { SessionInfoForAuthenticatedUser } from '../../../auth/auth.controller';
-import { CreateUser } from '../../../features/users/commands/create-user.command';
-import { DeactivateTiSystemUser } from '../../../features/users/commands/deactivate-user.command';
+import { CreateUserWithPassword } from '../../../features/users/commands/create-user-with-password.command';
+import { DeactivateUser } from '../../../features/users/commands/deactivate-user.command';
 import { TestCommandStream } from '../../../libs/cqrs-es';
 import { assertCommandScenarioSuccess } from '../utils';
 
@@ -37,7 +37,7 @@ describe(`When loging in with a username and password (without Multi-factor Auth
     beforeEach(async () => {
       await assertCommandScenarioSuccess({
         endpoint: userCommandsEndpoint,
-        stream: TestCommandStream.first(CreateUser, {
+        stream: TestCommandStream.first(CreateUserWithPassword, {
           username: testUsername,
           password: testPassword,
         }),
@@ -94,7 +94,6 @@ describe(`When loging in with a username and password (without Multi-factor Auth
 
         const _foo = response.headers['set-cookie'];
 
-        // TODO is this the correct status code?
         expect(response.status).toBe(HttpStatus.CREATED);
 
         const result = (
@@ -170,10 +169,10 @@ describe(`When loging in with a username and password (without Multi-factor Auth
     beforeEach(async () => {
       await assertCommandScenarioSuccess({
         endpoint: userCommandsEndpoint,
-        stream: TestCommandStream.first(CreateUser, {
+        stream: TestCommandStream.first(CreateUserWithPassword, {
           username: testUsername,
           password: testPassword,
-        }).andThen(DeactivateTiSystemUser),
+        }).andThen(DeactivateUser),
       });
     });
 

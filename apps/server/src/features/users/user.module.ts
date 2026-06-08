@@ -8,32 +8,34 @@ import {
   TrueImpactError,
   TrueImpactRuntimeException,
 } from '../../libs/data-types';
-import { CreateUser } from './commands/create-user.command';
-import { CreateUserCommandHandler } from './commands/create-user.command-handler';
-import { DeactivateTiSystemUser } from './commands/deactivate-user.command';
-import { DeactivateUserCommandHandler } from './commands/deactivate-user.command-handler';
-import { GrantUserRole } from './commands/grant-user-role.command';
-import { GrantUserRoleCommandHandler } from './commands/grant-user-role.command-handler';
+import {
+  CreateUserWithPassword,
+  CreateUserWithPasswordCommandHandler,
+  DeactivateUser,
+  DeactivateUserCommandHandler,
+  GrantUserRole,
+  GrantUserRoleCommandHandler,
+} from './commands';
 import { UserCommandController } from './commands/user-command.controller';
 import {
-  TI_SYSTEM_USER_AGGREGATE_TYPE,
-  TI_SYSTEM_USER_COMMAND_REPOSITORY_INJECTION_TOKEN,
-  TI_SYSTEM_USER_QUERY_REPOSITORY_INJECTION_TOKEN,
+  USER_AGGREGATE_TYPE,
+  USER_COMMAND_REPOSITORY_INJECTION_TOKEN,
+  USER_QUERY_REPOSITORY_INJECTION_TOKEN,
 } from './constants';
 import { UserViewModel } from './queries';
 import { UserQueryController } from './queries/user-query.controller';
 import { UserQueryService } from './queries/user-query.service';
-import { ITiSystemUserCommandRepository } from './repositories';
+import type { IUserCommandRepository } from './repositories';
 import { InMemoryTiSystemUserCommandRepository } from './repositories/in-memory-ti-system-user-command.repository';
 
 @Module({
   providers: [
     {
-      provide: TI_SYSTEM_USER_QUERY_REPOSITORY_INJECTION_TOKEN,
+      provide: USER_QUERY_REPOSITORY_INJECTION_TOKEN,
       useFactory: () => new InMemoryQueryRepository(UserViewModel),
     },
     {
-      provide: TI_SYSTEM_USER_COMMAND_REPOSITORY_INJECTION_TOKEN,
+      provide: USER_COMMAND_REPOSITORY_INJECTION_TOKEN,
       useClass: InMemoryTiSystemUserCommandRepository,
     },
     {
@@ -55,8 +57,8 @@ import { InMemoryTiSystemUserCommandRepository } from './repositories/in-memory-
 
         commandHandlerService
           .register({
-            CommandHandlerCtor: CreateUserCommandHandler,
-            CommandPayloadCtor: CreateUser,
+            CommandHandlerCtor: CreateUserWithPasswordCommandHandler,
+            CommandPayloadCtor: CreateUserWithPassword,
           })
           .register({
             CommandHandlerCtor: GrantUserRoleCommandHandler,
@@ -64,31 +66,30 @@ import { InMemoryTiSystemUserCommandRepository } from './repositories/in-memory-
           })
           .register({
             CommandHandlerCtor: DeactivateUserCommandHandler,
-            // TODO name this pair consistently
-            CommandPayloadCtor: DeactivateTiSystemUser,
+            CommandPayloadCtor: DeactivateUser,
           });
 
         return commandHandlerService;
       },
       inject: [ModuleRef],
     },
-    CreateUserCommandHandler,
+    CreateUserWithPasswordCommandHandler,
     GrantUserRoleCommandHandler,
     DeactivateUserCommandHandler,
     UserQueryService,
   ],
   controllers: [UserQueryController, UserCommandController],
-  // TODO wrap this ina  service
-  exports: [TI_SYSTEM_USER_COMMAND_REPOSITORY_INJECTION_TOKEN],
+  // TODO wrap this in a  service
+  exports: [USER_COMMAND_REPOSITORY_INJECTION_TOKEN],
 })
 export class UserModule implements OnModuleInit {
   constructor(private readonly moduleRef: ModuleRef) {}
 
   async onModuleInit() {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
     const isUserDbEmpty = await this.moduleRef
-      .get<ITiSystemUserCommandRepository>(
-        TI_SYSTEM_USER_COMMAND_REPOSITORY_INJECTION_TOKEN,
-      )
+      .get<IUserCommandRepository>(USER_COMMAND_REPOSITORY_INJECTION_TOKEN)
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       .isEmpty();
 
     const INITIAL_ADMIN_PASSWORD_VAR_NAME = 'INITIAL_ADMIN_PASSWORD';
@@ -105,11 +106,15 @@ export class UserModule implements OnModuleInit {
           .get(EncryptionService, { strict: false })
           .generatePasscode();
 
+      const defaultAdminUsername =
+        this.moduleRef.get<string | null>('SYSTEM_ADMIN_USERNAME') ||
+        'ti-admin-user';
+
       const userCommandHandler = this.moduleRef.get(CommandHandlerService);
 
-      const userCreationCommandPayload: CreateUser = {
+      const userCreationCommandPayload: CreateUserWithPassword = {
         // TODO make this configurable
-        username: 'ti-system-admin',
+        username: defaultAdminUsername,
         email: 'tisystemadmin@yoursitehere.org',
         firstName: 'System',
         lastName: 'Admin',
@@ -117,7 +122,7 @@ export class UserModule implements OnModuleInit {
       };
 
       const userCreationResult = await userCommandHandler.execute({
-        type: CreateUser.type,
+        type: CreateUserWithPassword.type,
         payload: userCreationCommandPayload,
       });
 
@@ -132,7 +137,7 @@ export class UserModule implements OnModuleInit {
 
       const grantAdminUserRolePayload: GrantUserRole = {
         aggregateCompositeIdentifier: {
-          type: TI_SYSTEM_USER_AGGREGATE_TYPE,
+          type: USER_AGGREGATE_TYPE,
           id: userCreationResult.id,
         },
         role: 'system admin',
@@ -160,6 +165,7 @@ export class UserModule implements OnModuleInit {
           );
         } else {
           console.log(
+            // Note that we are logging the name of the env var, not its value here
             `---- Seeded initial user with value from environment var: ${INITIAL_ADMIN_PASSWORD_VAR_NAME}`,
           );
         }

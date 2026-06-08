@@ -16,8 +16,8 @@ import {
   UseFilters,
   UseInterceptors,
 } from '../../../libs/framework';
-import { TI_SYSTEM_USER_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../constants';
-import type { ITiSystemUserCommandRepository } from '../repositories';
+import { USER_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../constants';
+import type { IUserCommandRepository } from '../repositories';
 
 @UseFilters(ResourceNotFoundFilter, BadUserInputFilter)
 @UseInterceptors(QueryResponseInterceptor)
@@ -25,8 +25,8 @@ import type { ITiSystemUserCommandRepository } from '../repositories';
 export class UserCommandController {
   constructor(
     private readonly commandHandlerService: CommandHandlerService,
-    @Inject(TI_SYSTEM_USER_COMMAND_REPOSITORY_INJECTION_TOKEN)
-    private readonly commandRepository: ITiSystemUserCommandRepository,
+    @Inject(USER_COMMAND_REPOSITORY_INJECTION_TOKEN)
+    private readonly commandRepository: IUserCommandRepository,
   ) {}
 
   // TODO @CommandExecutionEndpoint

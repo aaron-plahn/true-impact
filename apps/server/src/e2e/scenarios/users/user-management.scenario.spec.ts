@@ -1,10 +1,10 @@
 import { HttpStatus } from '@nestjs/common';
 import axios from 'axios';
-import { CreateUser } from '../../../features/users/commands/create-user.command';
-import { DeactivateTiSystemUser } from '../../../features/users/commands/deactivate-user.command';
+import { CreateUserWithPassword } from '../../../features/users/commands/create-user-with-password.command';
+import { DeactivateUser } from '../../../features/users/commands/deactivate-user.command';
 import { GrantUserRole } from '../../../features/users/commands/grant-user-role.command';
 import { UserViewModel } from '../../../features/users/queries';
-import { TiUserRole } from '../../../features/users/types';
+import { UserRole } from '../../../features/users/types';
 import { TestCommandStream } from '../../../libs/cqrs-es';
 import {
   assertCommandError,
@@ -45,7 +45,7 @@ describe('User Management Scenarios', () => {
           it(`should create the user`, async () => {
             await assertCommandScenarioSuccess({
               endpoint: userCommandsEndpoint,
-              stream: TestCommandStream.first(CreateUser, {
+              stream: TestCommandStream.first(CreateUserWithPassword, {
                 username: testUsername,
                 firstName: testUserFirstName,
                 lastName: testUserLastName,
@@ -77,12 +77,12 @@ describe('User Management Scenarios', () => {
   describe(`When granting a role to a user`, () => {
     describe(`when the user exists`, () => {
       describe(`when the user currently has a different role`, () => {
-        const newRole: TiUserRole = 'tenant admin';
+        const newRole: UserRole = 'tenant admin';
 
         it(`should grant the user the new role`, async () => {
           await assertCommandScenarioSuccess({
             endpoint: userCommandsEndpoint,
-            stream: TestCommandStream.first(CreateUser, {}).andThen(
+            stream: TestCommandStream.first(CreateUserWithPassword, {}).andThen(
               GrantUserRole,
               {
                 role: newRole,
@@ -103,11 +103,11 @@ describe('User Management Scenarios', () => {
 
       describe(`when the user already has the given role`, () => {
         it(`should return the expected error response`, async () => {
-          const redundantRole: TiUserRole = 'tenant admin';
+          const redundantRole: UserRole = 'tenant admin';
 
           await assertCommandScenarioError({
             endpoint: userCommandsEndpoint,
-            stream: TestCommandStream.first(CreateUser, {
+            stream: TestCommandStream.first(CreateUserWithPassword, {
               username: testUsername,
             })
               .andThen(GrantUserRole, {
@@ -153,8 +153,8 @@ describe('User Management Scenarios', () => {
           await assertCommandScenarioSuccess({
             endpoint: userCommandsEndpoint,
             // shouldn't the second arg here default to {}?
-            stream: TestCommandStream.first(CreateUser, {}).andThen(
-              DeactivateTiSystemUser,
+            stream: TestCommandStream.first(CreateUserWithPassword, {}).andThen(
+              DeactivateUser,
               {},
             ),
           });
@@ -165,11 +165,11 @@ describe('User Management Scenarios', () => {
         it(`should return the expected error`, async () => {
           await assertCommandScenarioError({
             endpoint: userCommandsEndpoint,
-            stream: TestCommandStream.first(CreateUser, {
+            stream: TestCommandStream.first(CreateUserWithPassword, {
               username: testUsername,
             })
-              .andThen(DeactivateTiSystemUser, {})
-              .andThen(DeactivateTiSystemUser, {}),
+              .andThen(DeactivateUser, {})
+              .andThen(DeactivateUser, {}),
             assertErrorMessageAsExpected: (message) => {
               expect(message).toContain('cannot deactivate');
               expect(message).toContain(testUsername);
@@ -184,7 +184,7 @@ describe('User Management Scenarios', () => {
       it(`should return the expected error`, async () => {
         await assertCommandError({
           endpoint: userCommandsEndpoint,
-          commandFsa: TestCommandStream.buildOne(DeactivateTiSystemUser, {
+          commandFsa: TestCommandStream.buildOne(DeactivateUser, {
             aggregateCompositeIdentifier: {
               id: missingUserId,
             },

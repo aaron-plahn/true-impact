@@ -7,10 +7,10 @@ import {
   TrueImpactError,
   UpdateMethod,
 } from '../../libs/data-types';
-import { TI_SYSTEM_USER_AGGREGATE_TYPE } from './constants';
-import type { TiUserRole } from './types';
+import { USER_AGGREGATE_TYPE } from './constants';
+import type { UserRole } from './types';
 
-export class TiSystemUserPersistenceDto {
+export class UserPersistenceDto {
   id: string;
   hashedPassword: string;
   isActive: boolean;
@@ -18,12 +18,12 @@ export class TiSystemUserPersistenceDto {
   hasEmailBeenValidated: boolean;
   username: string;
   revision: number;
-  role: TiUserRole;
+  role: UserRole;
   fullName: FullNameDto;
 }
 
-export class TiSystemUser extends AggregateRoot<TiSystemUserPersistenceDto> {
-  static readonly type = TI_SYSTEM_USER_AGGREGATE_TYPE;
+export class User extends AggregateRoot<UserPersistenceDto> {
+  static readonly type = USER_AGGREGATE_TYPE;
 
   id: string;
 
@@ -65,7 +65,7 @@ export class TiSystemUser extends AggregateRoot<TiSystemUserPersistenceDto> {
   fullName: FullName;
 
   // TODO enum?
-  role: TiUserRole;
+  role: UserRole;
 
   constructor({
     id,
@@ -86,7 +86,7 @@ export class TiSystemUser extends AggregateRoot<TiSystemUserPersistenceDto> {
     hasEmailBeenValidated?: boolean;
     revision: number;
     fullName: FullName;
-    role: TiUserRole;
+    role: UserRole;
   }) {
     super();
 
@@ -120,7 +120,7 @@ export class TiSystemUser extends AggregateRoot<TiSystemUserPersistenceDto> {
     return this.fullName.toString();
   }
 
-  toPersistenceDto(): TiSystemUserPersistenceDto {
+  toPersistenceDto(): UserPersistenceDto {
     return {
       id: this.id,
       hashedPassword: this.hashedPassword,
@@ -135,7 +135,7 @@ export class TiSystemUser extends AggregateRoot<TiSystemUserPersistenceDto> {
   }
 
   @UpdateMethod()
-  grantUserRole(newRole: TiUserRole): TiSystemUser | TrueImpactError {
+  grantUserRole(newRole: UserRole): User | TrueImpactError {
     if (this.role === newRole) {
       return new TrueImpactError(
         `You cannot grant the role: [${newRole}] to user: [${this.username}], as the user already has the given role.`,
@@ -148,7 +148,7 @@ export class TiSystemUser extends AggregateRoot<TiSystemUserPersistenceDto> {
   }
 
   @UpdateMethod()
-  deactivate(): TiSystemUser | TrueImpactError {
+  deactivate(): User | TrueImpactError {
     if (!this.isActive) {
       return new TrueImpactError(
         `You cannot deactivate user [${this.username}], as the user has already been deactivated.`,
@@ -161,7 +161,7 @@ export class TiSystemUser extends AggregateRoot<TiSystemUserPersistenceDto> {
   }
 
   static fromPersistenceDto(
-    dto: TiSystemUserPersistenceDto,
+    dto: UserPersistenceDto,
     buildOptions?: { shouldValidate?: boolean },
   ): Entity | TrueImpactError {
     const {
@@ -176,7 +176,7 @@ export class TiSystemUser extends AggregateRoot<TiSystemUserPersistenceDto> {
       hasEmailBeenValidated,
     } = dto;
 
-    const instance = new TiSystemUser({
+    const instance = new User({
       id,
       hashedPassword,
       isActive,
@@ -200,7 +200,7 @@ export class TiSystemUser extends AggregateRoot<TiSystemUserPersistenceDto> {
     email: string;
     firstName: string;
     lastName: string;
-  }): TiSystemUser | TrueImpactError {
+  }): User | TrueImpactError {
     const { hashedPassword, username, email, firstName, lastName } = payload;
 
     const fullNameBuildResult = FullName.fromDto({
@@ -214,7 +214,7 @@ export class TiSystemUser extends AggregateRoot<TiSystemUserPersistenceDto> {
       return fullNameBuildResult;
     }
 
-    const user = new TiSystemUser({
+    const user = new User({
       id: 'GENERATE_A_NEW_ID',
       hashedPassword,
       // A new user will be active initially

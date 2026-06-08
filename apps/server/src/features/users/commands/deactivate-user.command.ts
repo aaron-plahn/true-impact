@@ -1,17 +1,17 @@
 import { TrueImpactDataExample } from '../../../libs/data-types';
-import { TI_SYSTEM_USER_AGGREGATE_TYPE } from '../constants';
-import { TiSystemUserCompositeIdentifier } from '../ti-system-user.composite-identifier';
+import { USER_AGGREGATE_TYPE } from '../constants';
+import { UserCompositeIdentifier } from '../user.composite-identifier';
 
-@TrueImpactDataExample<DeactivateTiSystemUser>({
+@TrueImpactDataExample<DeactivateUser>({
   example: {
     aggregateCompositeIdentifier: {
-      type: TI_SYSTEM_USER_AGGREGATE_TYPE,
+      type: USER_AGGREGATE_TYPE,
       id: '1',
     },
   },
 })
-export class DeactivateTiSystemUser {
+export class DeactivateUser {
   static readonly type = 'DEACTIVATE_USER';
 
-  aggregateCompositeIdentifier: TiSystemUserCompositeIdentifier;
+  aggregateCompositeIdentifier: UserCompositeIdentifier;
 }

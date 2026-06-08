@@ -7,8 +7,8 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
-import { TI_SYSTEM_USER_COMMAND_REPOSITORY_INJECTION_TOKEN } from 'src/features/users/constants';
-import type { ITiSystemUserCommandRepository } from 'src/features/users/repositories';
+import { USER_COMMAND_REPOSITORY_INJECTION_TOKEN } from 'src/features/users/constants';
+import type { IUserCommandRepository } from 'src/features/users/repositories';
 import { UserAuthenticationService } from 'src/features/users/user-authentication.service';
 import {
   convertToOpenApiSchema,
@@ -33,8 +33,8 @@ export class SessionInfoForAuthenticatedUser {
 export class AuthController {
   constructor(
     private readonly userAuthService: UserAuthenticationService,
-    @Inject(TI_SYSTEM_USER_COMMAND_REPOSITORY_INJECTION_TOKEN)
-    private readonly userCommandRepository: ITiSystemUserCommandRepository,
+    @Inject(USER_COMMAND_REPOSITORY_INJECTION_TOKEN)
+    private readonly userCommandRepository: IUserCommandRepository,
   ) {}
 
   @Post('logIn')
@@ -60,6 +60,11 @@ export class AuthController {
     }
 
     const { userId } = result;
+
+    // This is just in case our type safety fails some how here and some unexpected type slips thorugh.
+    if (!userId) {
+      throw new UnauthorizedException();
+    }
 
     if (!session) {
       throw new Error(`Missing session for login.`);

@@ -1,1 +1,1 @@
-export * from './ti-user-role';
+export * from './user-role';

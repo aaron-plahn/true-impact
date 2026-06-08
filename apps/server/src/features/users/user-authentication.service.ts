@@ -1,14 +1,14 @@
 import { EncryptionService } from 'src/libs/auth';
 import { Inject } from '../../libs/framework';
-import { TI_SYSTEM_USER_COMMAND_REPOSITORY_INJECTION_TOKEN } from './constants';
-import type { ITiSystemUserCommandRepository } from './repositories';
+import { USER_COMMAND_REPOSITORY_INJECTION_TOKEN } from './constants';
+import type { IUserCommandRepository } from './repositories';
 
 type LogInResult = 'unauhtorized' | 'MFA required' | { userId: string };
 
 export class UserAuthenticationService {
   constructor(
-    @Inject(TI_SYSTEM_USER_COMMAND_REPOSITORY_INJECTION_TOKEN)
-    private readonly userCommandRepository: ITiSystemUserCommandRepository,
+    @Inject(USER_COMMAND_REPOSITORY_INJECTION_TOKEN)
+    private readonly userCommandRepository: IUserCommandRepository,
     private readonly cryptoService: EncryptionService,
   ) {}
 
@@ -27,22 +27,6 @@ export class UserAuthenticationService {
     // should this be a user ID for the session?
     return { userId: fetchResult.id };
   }
-
-  //   redeemMfaToken(_passcode: string): Promise<'success' | 'unauthorized'> {
-  //     return Promise.resolve('unauthorized');
-  //   }
-
-  //   // Link?
-  //   requestPasswordReset(): Promise<{ code: string } | 'unauthorized'> {
-  //     return Promise.resolve('unauthorized');
-  //   }
-
-  //   resetPassword(_resetInfo: {
-  //     newPassword: string;
-  //     resetCode: string;
-  //   }): Promise<'success' | 'unauthorized'> {
-  //     return Promise.resolve('unauthorized');
-  //   }
 
   logOut(): Promise<'success' | 'unauthorized'> {
     return Promise.resolve('success');

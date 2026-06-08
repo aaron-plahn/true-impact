@@ -4,14 +4,14 @@ import {
   TrueImpactError,
 } from '../../../libs/data-types';
 import { Inject } from '../../../libs/framework';
-import { TI_SYSTEM_USER_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../constants';
-import type { ITiSystemUserCommandRepository } from '../repositories';
+import { USER_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../constants';
+import type { IUserCommandRepository } from '../repositories';
 import { GrantUserRole } from './grant-user-role.command';
 
 export class GrantUserRoleCommandHandler implements ICommandHandler<GrantUserRole> {
   constructor(
-    @Inject(TI_SYSTEM_USER_COMMAND_REPOSITORY_INJECTION_TOKEN)
-    private readonly userCommandRepository: ITiSystemUserCommandRepository,
+    @Inject(USER_COMMAND_REPOSITORY_INJECTION_TOKEN)
+    private readonly userCommandRepository: IUserCommandRepository,
   ) {}
 
   async handle(fsa: { payload: GrantUserRole }): Promise<CommandResult> {

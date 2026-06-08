@@ -1,24 +1,22 @@
 import { PersistenceAcknowledgement } from 'src/libs/cqrs-es';
 import { DeepPartial, TrueImpactError } from 'src/libs/data-types';
-import { TiSystemUser } from '../ti-system-user.aggregate-root';
+import { User } from '../user.aggregate-root';
 
-export interface ITiSystemUserCommandRepository {
-  fetchById(id: string): Promise<TiSystemUser | null>;
+export interface IUserCommandRepository {
+  fetchById(id: string): Promise<User | null>;
 
-  fetchMany(): Promise<TiSystemUser[] | TrueImpactError>;
+  fetchMany(): Promise<User[] | TrueImpactError>;
 
   fetchByCredentials(credentials: {
     username: string;
     hashedPassword: string;
-  }): Promise<TiSystemUser | null>;
+  }): Promise<User | null>;
 
-  create(
-    instance: TiSystemUser,
-  ): Promise<PersistenceAcknowledgement | TrueImpactError>;
+  create(instance: User): Promise<PersistenceAcknowledgement | TrueImpactError>;
 
   //   TODO error? Acknowledgement?
   // note that this is currently only used for test setup
-  createMany(instances: TiSystemUser[]): Promise<void>;
+  createMany(instances: User[]): Promise<void>;
 
   /**
    * There is a fork in the road. If we decide to event-source users, then this
@@ -28,7 +26,7 @@ export interface ITiSystemUserCommandRepository {
    * performance \ implementation details without the need for a query language.
    */
   update(
-    intance: DeepPartial<TiSystemUser> & Pick<TiSystemUser, 'id'>,
+    intance: DeepPartial<User> & Pick<User, 'id'>,
   ): Promise<PersistenceAcknowledgement | TrueImpactError>;
 
   isEmpty(): Promise<boolean>;

@@ -1,1 +1,1 @@
-export * from './ti-system-user-command-repository.interface';
+export * from './user-command-repository.interface';

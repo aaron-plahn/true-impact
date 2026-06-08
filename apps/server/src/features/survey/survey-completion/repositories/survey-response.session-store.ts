@@ -59,8 +59,6 @@ export class SurveyResponseSessionStore extends session.Store {
       .catch((err) => {
         if (typeof callback === 'function') callback(err);
       });
-
-    console.log('done');
   }
 
   destroy(sid: string, callback?: (err?: any) => void): void {
