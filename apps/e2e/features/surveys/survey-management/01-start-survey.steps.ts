@@ -16,10 +16,23 @@ const option1d = "Python";
 Given("I am logged in as an admin", async () => {
   await loginPage.open();
 
-  await loginPage.login(
-    process.env.TRUE_IMPACT_ADMIN_USERNAME as string,
-    process.env.TRUE_IMPACT_ADMIN_PASSWORD as string,
-  );
+  const adminUsername = process.env.SYSTEM_ADMIN_USERNAME as string;
+
+  if (!adminUsername) {
+    throw new Error(
+      `Failed to read admin username for e2e test. Did you set $SYSTEM_ADMIN_USERNAME?`,
+    );
+  }
+
+  const adminPassword = process.env.INITIAL_ADMIN_PASSWORD as string;
+
+  if (!adminPassword) {
+    throw new Error(
+      `FAiled to read admin password for e2e test. Did you set $INITIAL_ADMIN_PASSWORD?`,
+    );
+  }
+
+  await loginPage.login(adminUsername, adminPassword);
 });
 
 Given("I am on the survey management index page", async () => {

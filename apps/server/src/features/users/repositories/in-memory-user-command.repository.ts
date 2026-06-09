@@ -12,7 +12,7 @@ import { UserRole } from '../types';
 import { User } from '../user.aggregate-root';
 import { IUserCommandRepository } from './user-command-repository.interface';
 
-export class InMemoryTiSystemUserCommandRepository implements IUserCommandRepository {
+export class InMemoryUserCommandRepository implements IUserCommandRepository {
   private _nextId = 0;
 
   private uniqueFields: Set<keyof User> = new Set();

@@ -4,7 +4,8 @@ import path from "path";
 import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-dotenv.config({ path: path.resolve(__dirname, "./.env.test") });
+
+dotenv.config({ path: path.resolve(__dirname, "../../.env.e2e") });
 
 const patternsToMask = [
   process.env.TRUE_IMPACT_ADMIN_USERNAME,
@@ -103,7 +104,7 @@ export const config: WebdriverIO.Config = {
   // baseUrl: 'http://localhost:8080',
   //
   // Default timeout for all waitFor* commands.
-  waitforTimeout: 120000,
+  waitforTimeout: 6000,
   //
   // Default timeout in milliseconds for request
   // if browser driver or grid doesn't send response

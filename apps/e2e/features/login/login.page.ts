@@ -9,7 +9,7 @@ class LoginPage extends Page {
    * define selectors using getter methods
    */
   public get inputUsername() {
-    return $('[placeholder="Email address"]');
+    return $('[placeholder="Username"]');
   }
 
   public get inputPassword() {

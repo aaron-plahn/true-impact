@@ -1,22 +1,17 @@
 import { BrowserRouter } from "react-router-dom";
-import SuperTokens, { SuperTokensWrapper } from "supertokens-auth-react";
 import "./App.css";
-import { getSupertokensConfig } from "./config";
-import { AppRoutes } from "./routes";
+import { AuthProvider } from "./auth";
 import { NavBar } from "./components/navbar";
-
-if (typeof window !== "undefined") {
-  SuperTokens.init(getSupertokensConfig());
-}
+import { AppRoutes } from "./routes";
 
 function App() {
   return (
-    <SuperTokensWrapper>
+    <AuthProvider>
       <BrowserRouter>
-      <NavBar></NavBar>
+        <NavBar></NavBar>
         <AppRoutes />
       </BrowserRouter>
-    </SuperTokensWrapper>
+    </AuthProvider>
   );
 }
 

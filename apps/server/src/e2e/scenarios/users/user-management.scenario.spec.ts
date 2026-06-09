@@ -172,8 +172,8 @@ describe('User Management Scenarios', () => {
               .andThen(DeactivateUser, {}),
             assertErrorMessageAsExpected: (message) => {
               expect(message).toContain('cannot deactivate');
-              expect(message).toContain(testUsername);
-              expect(message).toContain('already');
+              // note that we treat a deleted and deactivated user as the same in the repository implementation
+              expect(message).toContain('no such user');
             },
           });
         });

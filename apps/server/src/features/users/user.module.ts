@@ -26,7 +26,7 @@ import { UserViewModel } from './queries';
 import { UserQueryController } from './queries/user-query.controller';
 import { UserQueryService } from './queries/user-query.service';
 import type { IUserCommandRepository } from './repositories';
-import { InMemoryTiSystemUserCommandRepository } from './repositories/in-memory-ti-system-user-command.repository';
+import { InMemoryUserCommandRepository } from './repositories/in-memory-user-command.repository';
 
 @Module({
   providers: [
@@ -36,7 +36,7 @@ import { InMemoryTiSystemUserCommandRepository } from './repositories/in-memory-
     },
     {
       provide: USER_COMMAND_REPOSITORY_INJECTION_TOKEN,
-      useClass: InMemoryTiSystemUserCommandRepository,
+      useClass: InMemoryUserCommandRepository,
     },
     {
       provide: CommandHandlerService,
@@ -86,10 +86,9 @@ export class UserModule implements OnModuleInit {
   constructor(private readonly moduleRef: ModuleRef) {}
 
   async onModuleInit() {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
     const isUserDbEmpty = await this.moduleRef
       .get<IUserCommandRepository>(USER_COMMAND_REPOSITORY_INJECTION_TOKEN)
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+
       .isEmpty();
 
     const INITIAL_ADMIN_PASSWORD_VAR_NAME = 'INITIAL_ADMIN_PASSWORD';
@@ -107,8 +106,9 @@ export class UserModule implements OnModuleInit {
           .generatePasscode();
 
       const defaultAdminUsername =
-        this.moduleRef.get<string | null>('SYSTEM_ADMIN_USERNAME') ||
-        'ti-admin-user';
+        this.moduleRef
+          .get(ConfigService, { strict: false })
+          .get<string | null>('SYSTEM_ADMIN_USERNAME') || 'ti-admin-user';
 
       const userCommandHandler = this.moduleRef.get(CommandHandlerService);
 
