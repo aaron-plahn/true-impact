@@ -14,8 +14,7 @@ import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { JSX, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useSessionContext } from "supertokens-auth-react/recipe/session";
-import { signOut } from "supertokens-web-js/recipe/emailpassword";
+import { useAuth } from "../../auth";
 import { Loading } from "../loading";
 import { NavMenuSection } from "./navmenu.interface";
 import { NavMenuMd } from "./navmenu.md";
@@ -63,7 +62,17 @@ export const NavBar = (): JSX.Element => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [anchorElUser, setAnchorElUser] = useState<null | HTMLElement>(null);
   const navigate = useNavigate();
-  const session = useSessionContext();
+  const session = useAuth();
+
+  if (!session) {
+    return <Loading />;
+  }
+
+  if (session?.isLoading) {
+    return <Loading />;
+  }
+
+  const signOut = session.logOut;
 
   async function logOutWithRedirect() {
     await signOut();
@@ -71,7 +80,7 @@ export const NavBar = (): JSX.Element => {
     navigate("/");
   }
 
-  if (session.loading) {
+  if (session?.isLoading) {
     return <Loading />;
   }
 
@@ -155,7 +164,7 @@ export const NavBar = (): JSX.Element => {
                 sx={{ p: 0 }}
                 data-testid="avatar-button"
               >
-                {session.doesSessionExist ? (
+                {session?.doesSessionExist ? (
                   <Avatar sx={{ bgcolor: "darkgrey" }}>
                     <PersonIcon />
                   </Avatar>
@@ -182,7 +191,7 @@ export const NavBar = (): JSX.Element => {
               open={Boolean(anchorElUser)}
               onClose={handleCloseUserMenu}
             >
-              {session.doesSessionExist ? (
+              {session?.doesSessionExist ? (
                 <MenuItem>
                   <Typography sx={{ textAlign: "center" }}>
                     <Button

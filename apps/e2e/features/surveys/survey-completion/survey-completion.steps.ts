@@ -7,10 +7,24 @@ import { surveyCompletionPage } from "./survey-completion.page";
 Given("There is a survey named {string}", async (surveyName) => {
   await loginPage.open();
 
-  await loginPage.login(
-    process.env.TRUE_IMPACT_ADMIN_USERNAME as string,
-    process.env.TRUE_IMPACT_ADMIN_PASSWORD as string,
-  );
+  const adminUsername = process.env.SYSTEM_ADMIN_USERNAME as string;
+
+  if (!adminUsername) {
+    throw new Error(
+      `Failed to read admin username for e2e test. Did you set $SYSTEM_ADMIN_USERNAME?`,
+    );
+  }
+
+  const adminPassword = process.env.INITIAL_ADMIN_PASSWORD as string;
+
+  if (!adminPassword) {
+    throw new Error(
+      `Failed to read admin password for e2e test. Did you set $INITIAL_ADMIN_PASSWORD?`,
+    );
+  }
+
+  // TODO Can we change the step to "Given I am logged in as admin"?
+  await loginPage.login(adminUsername, adminPassword);
 
   await surveyPage.open();
 

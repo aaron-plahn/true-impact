@@ -14,8 +14,10 @@ export class SurveyResponseCookie {
   sameSite?: boolean | 'lax' | 'strict' | 'none' | undefined;
 }
 
+// TODO Is this any old session? Do we want a union type for this?
 export class SurveyResponseSession {
   id: string;
-  subject: SurveyResponseCompositeIdentifier;
+  userId?: string;
+  subject?: SurveyResponseCompositeIdentifier;
   cookie: SurveyResponseCookie;
 }

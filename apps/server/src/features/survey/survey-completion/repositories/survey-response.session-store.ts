@@ -10,7 +10,8 @@ import {
 declare module 'express-session' {
   interface SessionData {
     id: string;
-    subject: SurveyResponseCompositeIdentifier;
+    subject?: SurveyResponseCompositeIdentifier;
+    userId?: string;
   }
 }
 

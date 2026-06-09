@@ -9,10 +9,12 @@ When(
   },
 );
 
+// TODO Add cases where the username or password are left blank
+
 Then(
   "I should see an authentication error message saying {string}",
   async (message) => {
-    await expect($("#supertokens-root")).toHaveText(message, {
+    await expect($("#auth-form-root")).toHaveText(message, {
       ignoreCase: true,
       containing: true,
     });

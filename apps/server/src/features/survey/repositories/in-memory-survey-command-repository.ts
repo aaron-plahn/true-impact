@@ -17,7 +17,7 @@ export class InMemorySurveyCommandRepository implements ISurveyCommandRepository
 
   private readonly type = SURVEY_AGGREGATE_TYPE;
 
-  constructor(private entititesById: Map<string, Survey> = new Map()) {
+  constructor(private entitiesById: Map<string, Survey> = new Map()) {
     const schema = getDataSchemaFromClassCtor(Survey);
 
     const uniqueFields: (keyof Survey)[] = Array.from(
@@ -38,15 +38,15 @@ export class InMemorySurveyCommandRepository implements ISurveyCommandRepository
   }
 
   exists(id: string): Promise<boolean> {
-    return Promise.resolve(this.entititesById.has(id));
+    return Promise.resolve(this.entitiesById.has(id));
   }
 
   fetchById(id: string): Promise<Survey | null> {
-    return Promise.resolve(this.entititesById.get(id) || null);
+    return Promise.resolve(this.entitiesById.get(id) || null);
   }
 
   fetchMany(): Promise<Survey[]> {
-    return Promise.resolve(Array.from(this.entititesById.values()));
+    return Promise.resolve(Array.from(this.entitiesById.values()));
   }
 
   create(
@@ -54,7 +54,7 @@ export class InMemorySurveyCommandRepository implements ISurveyCommandRepository
   ): Promise<PersistenceAcknowledgement | TrueImpactError> {
     const id = this.getNextId();
 
-    if (this.entititesById.has(id)) {
+    if (this.entitiesById.has(id)) {
       return Promise.resolve(
         new TrueImpactError(
           `Unique constraint [id] violated. There is already a survey with the ID: ${instance.id}`,
@@ -73,7 +73,7 @@ export class InMemorySurveyCommandRepository implements ISurveyCommandRepository
 
     instance.revision = 1;
 
-    this.entititesById.set(id, instance);
+    this.entitiesById.set(id, instance);
 
     const result = {
       type: this.type,
@@ -94,7 +94,7 @@ export class InMemorySurveyCommandRepository implements ISurveyCommandRepository
     id: string,
     hashedAccessCode: string,
   ): Promise<PersistenceAcknowledgement | TrueImpactError> {
-    const target = this.entititesById.get(id);
+    const target = this.entitiesById.get(id);
 
     if (!target) {
       return Promise.resolve(
@@ -106,7 +106,7 @@ export class InMemorySurveyCommandRepository implements ISurveyCommandRepository
 
     target.revision += 1;
 
-    this.entititesById.set(id, target);
+    this.entitiesById.set(id, target);
 
     return Promise.resolve({
       type: this.type,
@@ -127,7 +127,7 @@ export class InMemorySurveyCommandRepository implements ISurveyCommandRepository
 
     const { id, revision: revisonNumber } = instance.toPersistenceDto();
 
-    if (!this.entititesById.has(id)) {
+    if (!this.entitiesById.has(id)) {
       return Promise.resolve(
         new TrueImpactError(
           `Failed to update survey [${id}], as it does not exist.`,
@@ -135,7 +135,7 @@ export class InMemorySurveyCommandRepository implements ISurveyCommandRepository
       );
     }
 
-    const existingEntity = this.entititesById.get(id) as Survey;
+    const existingEntity = this.entitiesById.get(id) as Survey;
 
     if (existingEntity.revision !== revisonNumber) {
       const optimisticConcurrencyError = new TrueImpactError(
@@ -147,7 +147,7 @@ export class InMemorySurveyCommandRepository implements ISurveyCommandRepository
 
     instance.revision++;
 
-    this.entititesById.set(id, instance);
+    this.entitiesById.set(id, instance);
 
     return Promise.resolve({
       id,
@@ -211,7 +211,7 @@ export class InMemorySurveyCommandRepository implements ISurveyCommandRepository
       ]);
     }
 
-    return Array.from(this.entititesById.values()).filter((instance) => {
+    return Array.from(this.entitiesById.values()).filter((instance) => {
       if (!(field in instance)) {
         return false;
       }
@@ -227,6 +227,6 @@ export class InMemorySurveyCommandRepository implements ISurveyCommandRepository
   }
 
   clear() {
-    this.entititesById = new Map();
+    this.entitiesById = new Map();
   }
 }
