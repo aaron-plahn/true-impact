@@ -44,7 +44,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   ) => {
     // setIsLoading(true);
 
-    console.log("TRYING!!!!!!!!!!!!!!!!!!!!11");
 
     // TODO can we refactor this? The try catch is really hard to follow. Throwing for control flow is confusing.
     try {
