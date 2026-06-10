@@ -30,10 +30,11 @@ const testPassword = 'my$PACEwasSICKin99';
 
 const bogusPassword = 'sorryMARIOcheckANOTHERcastle123';
 
+const httpClientForTestRuns = new TestHttpClient('http://localhost:4200');
+
 describe(`When loging in with a username and password (without Multi-factor Authentication enabled)`, () => {
   beforeEach(async () => {
-    // TODO get rid of direct usage of axios in favor of TestHttpClient. It's confusing to have both.
-    await axios.patch(userSetupEndpoint);
+    await httpClientForTestRuns.patch(userSetupEndpoint);
   });
 
   describe(`when the user exists`, () => {

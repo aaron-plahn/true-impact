@@ -9,6 +9,7 @@ import {
   assertCommandScenarioSuccess,
   assertCommandSuccess,
 } from '../utils';
+import { assertCommandAccessDeniedToUser } from '../utils/assert-command-access-denied-to-user';
 import { signInAsAdmin } from '../utils/sign-in';
 import { TestHttpClient } from '../utils/test-http-client';
 
@@ -50,149 +51,95 @@ const httpClient = new TestHttpClient('http://localhost:4200');
  * in the corresponding scenarios.
  */
 describe(`Flag Management Scenarios`, () => {
-  beforeAll(async () => {
-    await signInAsAdmin(httpClient);
-  });
-
-  beforeEach(async () => {
-    await httpClient.patch(flagTestSetupEndpoint);
-  });
-
-  describe(`when creating a flag`, () => {
-    describe(`when  creating a first flag`, () => {
-      it(`should create the flag`, async () => {
-        await assertCommandScenarioSuccess({
-          httpClient,
-          endpoint: flagCommandsEndpoint,
-          stream: createFlag,
-          assertSuccess: async (acks) => {
-            const searchResponse = await httpClient.get(
-              `${flagIndexEndpoint}/${acks[0].id}`,
-            );
-
-            expect(searchResponse.status).toBe(HttpStatusCode.Ok);
-
-            const newFlag = searchResponse.data as FlagViewModel;
-
-            expect(newFlag.label).toBe(firstLabel);
-          },
-        });
-      });
+  describe(`when the user is authenitcated as an admin`, () => {
+    beforeAll(async () => {
+      await signInAsAdmin(httpClient);
     });
 
-    describe(`when creating a second flag`, () => {
-      describe(`when the label is unique`, () => {
-        it(`should have a test`, async () => {
-          // Arrange
-          await assertCommandSuccess({
-            httpClient,
-            endpoint: flagCommandsEndpoint,
-            commandFsa: TestCommandStream.buildOne(CreateFlag, {
-              label: firstLabel,
-            }),
-          });
-
-          await assertCommandSuccess({
-            httpClient,
-            endpoint: flagCommandsEndpoint,
-            commandFsa: TestCommandStream.buildOne(CreateFlag, {
-              label: 'new label',
-            }),
-            assertSuccess: async () => {
-              const indexResult = (await httpClient.get(flagIndexEndpoint))
-                .data as FlagViewModel[];
-
-              expect(indexResult).toHaveLength(2);
-            },
-          });
-        });
-      });
-
-      describe(`when the label is already in use`, () => {
-        describe(`because another flag was created with this label`, () => {
-          it(`should return the expected error response`, async () => {
-            // Arrange
-            await assertCommandScenarioSuccess({
-              httpClient,
-              endpoint: flagCommandsEndpoint,
-              stream: createFlag,
-            });
-
-            // Act \ Assert
-            await assertCommandScenarioError({
-              httpClient,
-              endpoint: flagCommandsEndpoint,
-              stream: createFlag,
-              assertErrorMessageAsExpected: (message) => {
-                assertTextMatchesAll(message, firstLabel, 'already in use');
-              },
-            });
-          });
-        });
-
-        describe(`because another flag was relabelled to have this label`, () => {
-          it(`should return the epxected error response`, async () => {
-            // Arrange
-            await assertCommandScenarioSuccess({
-              httpClient,
-              endpoint: flagCommandsEndpoint,
-              stream: createFlag.andThen(RelabelFlag, {
-                newLabel: repeatedFlagLabel,
-              }),
-            });
-
-            // Act \ Assert
-            await assertCommandScenarioError({
-              httpClient,
-              endpoint: flagCommandsEndpoint,
-              stream: TestCommandStream.first(CreateFlag, {
-                label: 'ok label',
-              }).andThen(RelabelFlag, {
-                newLabel: repeatedFlagLabel,
-              }),
-              assertErrorMessageAsExpected: (message) => {
-                assertTextMatchesAll(
-                  message,
-                  repeatedFlagLabel,
-                  'already in use',
-                );
-              },
-            });
-          });
-        });
-      });
+    beforeEach(async () => {
+      await httpClient.patch(flagTestSetupEndpoint);
     });
-  });
 
-  describe(`when relabelling a flag`, () => {
-    describe(`when the target flag exists`, () => {
-      describe(`when the new label is unique`, () => {
-        it(`should update the flag`, async () => {
+    describe(`when creating a flag`, () => {
+      describe(`when  creating a first flag`, () => {
+        it(`should create the flag`, async () => {
           await assertCommandScenarioSuccess({
             httpClient,
             endpoint: flagCommandsEndpoint,
-            stream: relabelFlag,
+            stream: createFlag,
             assertSuccess: async (acks) => {
-              const updated = (
-                await httpClient.get(`${flagIndexEndpoint}/${acks[0].id}`)
-              ).data as FlagViewModel;
+              const searchResponse = await httpClient.get(
+                `${flagIndexEndpoint}/${acks[0].id}`,
+              );
 
-              expect(updated.label).toBe(uniqueUpdatedLabel);
+              expect(searchResponse.status).toBe(HttpStatusCode.Ok);
+
+              const newFlag = searchResponse.data as FlagViewModel;
+
+              expect(newFlag.label).toBe(firstLabel);
             },
           });
         });
       });
 
-      describe(`when the new label is already in use`, () => {
-        describe(`by another flag`, () => {
-          describe(`that was created with this label`, () => {
+      describe(`when creating a second flag`, () => {
+        describe(`when the label is unique`, () => {
+          it(`should have a test`, async () => {
+            // Arrange
+            await assertCommandSuccess({
+              httpClient,
+              endpoint: flagCommandsEndpoint,
+              commandFsa: TestCommandStream.buildOne(CreateFlag, {
+                label: firstLabel,
+              }),
+            });
+
+            await assertCommandSuccess({
+              httpClient,
+              endpoint: flagCommandsEndpoint,
+              commandFsa: TestCommandStream.buildOne(CreateFlag, {
+                label: 'new label',
+              }),
+              assertSuccess: async () => {
+                const indexResult = (await httpClient.get(flagIndexEndpoint))
+                  .data as FlagViewModel[];
+
+                expect(indexResult).toHaveLength(2);
+              },
+            });
+          });
+        });
+
+        describe(`when the label is already in use`, () => {
+          describe(`because another flag was created with this label`, () => {
             it(`should return the expected error response`, async () => {
               // Arrange
-              await assertCommandSuccess({
+              await assertCommandScenarioSuccess({
                 httpClient,
                 endpoint: flagCommandsEndpoint,
-                commandFsa: TestCommandStream.buildOne(CreateFlag, {
-                  label: repeatedFlagLabel,
+                stream: createFlag,
+              });
+
+              // Act \ Assert
+              await assertCommandScenarioError({
+                httpClient,
+                endpoint: flagCommandsEndpoint,
+                stream: createFlag,
+                assertErrorMessageAsExpected: (message) => {
+                  assertTextMatchesAll(message, firstLabel, 'already in use');
+                },
+              });
+            });
+          });
+
+          describe(`because another flag was relabelled to have this label`, () => {
+            it(`should return the epxected error response`, async () => {
+              // Arrange
+              await assertCommandScenarioSuccess({
+                httpClient,
+                endpoint: flagCommandsEndpoint,
+                stream: createFlag.andThen(RelabelFlag, {
+                  newLabel: repeatedFlagLabel,
                 }),
               });
 
@@ -200,37 +147,8 @@ describe(`Flag Management Scenarios`, () => {
               await assertCommandScenarioError({
                 httpClient,
                 endpoint: flagCommandsEndpoint,
-                stream: createFlag.andThen(RelabelFlag, {
-                  newLabel: repeatedFlagLabel,
-                }),
-                assertErrorMessageAsExpected: (message) => {
-                  assertTextMatchesAll(
-                    message,
-                    repeatedFlagLabel,
-                    'already in use',
-                  );
-                },
-              });
-            });
-          });
-
-          describe(`that was relabelled to have this label`, () => {
-            it(`should return the expected error resposne`, async () => {
-              await assertCommandScenarioSuccess({
-                httpClient,
-                endpoint: flagCommandsEndpoint,
                 stream: TestCommandStream.first(CreateFlag, {
-                  label: 'some other label',
-                }).andThen(RelabelFlag, {
-                  newLabel: repeatedFlagLabel,
-                }),
-              });
-
-              await assertCommandScenarioError({
-                httpClient,
-                endpoint: flagCommandsEndpoint,
-                stream: TestCommandStream.first(CreateFlag, {
-                  label: 'no problem here',
+                  label: 'ok label',
                 }).andThen(RelabelFlag, {
                   newLabel: repeatedFlagLabel,
                 }),
@@ -242,50 +160,165 @@ describe(`Flag Management Scenarios`, () => {
                   );
                 },
               });
-            });
-          });
-        });
-
-        describe(`by the target flag`, () => {
-          it(`should return the expected error response`, async () => {
-            await assertCommandScenarioError({
-              httpClient,
-              endpoint: flagCommandsEndpoint,
-              stream: createFlag
-                .andThen(RelabelFlag, {
-                  newLabel: repeatedFlagLabel,
-                })
-                .andThen(RelabelFlag, {
-                  newLabel: repeatedFlagLabel,
-                }),
-              assertErrorMessageAsExpected: (message) => {
-                assertTextMatchesAll(message, repeatedFlagLabel, 'already has');
-              },
             });
           });
         });
       });
     });
 
-    describe(`when the target flag does not exist`, () => {
-      it(`should return the expected error response`, async () => {
-        const missingId = '555';
+    describe(`when relabelling a flag`, () => {
+      describe(`when the target flag exists`, () => {
+        describe(`when the new label is unique`, () => {
+          it(`should update the flag`, async () => {
+            await assertCommandScenarioSuccess({
+              httpClient,
+              endpoint: flagCommandsEndpoint,
+              stream: relabelFlag,
+              assertSuccess: async (acks) => {
+                const updated = (
+                  await httpClient.get(`${flagIndexEndpoint}/${acks[0].id}`)
+                ).data as FlagViewModel;
 
-        await assertCommandError({
-          httpClient,
-          endpoint: flagCommandsEndpoint,
-          commandFsa: TestCommandStream.buildOne(RelabelFlag, {
-            aggregateCompositeIdentifier: {
-              id: missingId,
+                expect(updated.label).toBe(uniqueUpdatedLabel);
+              },
+            });
+          });
+        });
+
+        describe(`when the new label is already in use`, () => {
+          describe(`by another flag`, () => {
+            describe(`that was created with this label`, () => {
+              it(`should return the expected error response`, async () => {
+                // Arrange
+                await assertCommandSuccess({
+                  httpClient,
+                  endpoint: flagCommandsEndpoint,
+                  commandFsa: TestCommandStream.buildOne(CreateFlag, {
+                    label: repeatedFlagLabel,
+                  }),
+                });
+
+                // Act \ Assert
+                await assertCommandScenarioError({
+                  httpClient,
+                  endpoint: flagCommandsEndpoint,
+                  stream: createFlag.andThen(RelabelFlag, {
+                    newLabel: repeatedFlagLabel,
+                  }),
+                  assertErrorMessageAsExpected: (message) => {
+                    assertTextMatchesAll(
+                      message,
+                      repeatedFlagLabel,
+                      'already in use',
+                    );
+                  },
+                });
+              });
+            });
+
+            describe(`that was relabelled to have this label`, () => {
+              it(`should return the expected error resposne`, async () => {
+                await assertCommandScenarioSuccess({
+                  httpClient,
+                  endpoint: flagCommandsEndpoint,
+                  stream: TestCommandStream.first(CreateFlag, {
+                    label: 'some other label',
+                  }).andThen(RelabelFlag, {
+                    newLabel: repeatedFlagLabel,
+                  }),
+                });
+
+                await assertCommandScenarioError({
+                  httpClient,
+                  endpoint: flagCommandsEndpoint,
+                  stream: TestCommandStream.first(CreateFlag, {
+                    label: 'no problem here',
+                  }).andThen(RelabelFlag, {
+                    newLabel: repeatedFlagLabel,
+                  }),
+                  assertErrorMessageAsExpected: (message) => {
+                    assertTextMatchesAll(
+                      message,
+                      repeatedFlagLabel,
+                      'already in use',
+                    );
+                  },
+                });
+              });
+            });
+          });
+
+          describe(`by the target flag`, () => {
+            it(`should return the expected error response`, async () => {
+              await assertCommandScenarioError({
+                httpClient,
+                endpoint: flagCommandsEndpoint,
+                stream: createFlag
+                  .andThen(RelabelFlag, {
+                    newLabel: repeatedFlagLabel,
+                  })
+                  .andThen(RelabelFlag, {
+                    newLabel: repeatedFlagLabel,
+                  }),
+                assertErrorMessageAsExpected: (message) => {
+                  assertTextMatchesAll(
+                    message,
+                    repeatedFlagLabel,
+                    'already has',
+                  );
+                },
+              });
+            });
+          });
+        });
+      });
+
+      describe(`when the target flag does not exist`, () => {
+        it(`should return the expected error response`, async () => {
+          const missingId = '555';
+
+          await assertCommandError({
+            httpClient,
+            endpoint: flagCommandsEndpoint,
+            commandFsa: TestCommandStream.buildOne(RelabelFlag, {
+              aggregateCompositeIdentifier: {
+                id: missingId,
+              },
+            }),
+            assertErrorMessageAsExpected: (message) => {
+              assertTextMatchesAll(
+                message,
+                missingId,
+                'cannot relabel',
+                'no such flag',
+              );
             },
-          }),
-          assertErrorMessageAsExpected: (message) => {
-            assertTextMatchesAll(
-              message,
-              missingId,
-              'cannot relabel',
-              'no such flag',
-            );
+          });
+        });
+      });
+    });
+  });
+
+  describe(`when the user does not have role-based access to execute commands`, () => {
+    describe(`when the user is not authenticated`, () => {
+      it(`should return forbidden`, async () => {
+        await assertCommandAccessDeniedToUser({
+          endpoint: flagCommandsEndpoint,
+          user: undefined,
+        });
+      });
+    });
+
+    describe(`when the user is an ordinary user`, () => {
+      it(`should return forbidden`, async () => {
+        await assertCommandAccessDeniedToUser({
+          endpoint: flagCommandsEndpoint,
+          user: {
+            credentials: {
+              username: 'testemployee',
+              password: 'testemployeePASSWORD1',
+            },
+            role: 'employee',
           },
         });
       });

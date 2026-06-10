@@ -1,6 +1,6 @@
-import { EncryptionService } from 'src/libs/auth';
-import { CommandResult, ICommandHandler } from 'src/libs/cqrs-es';
-import { TrueImpactError } from 'src/libs/data-types';
+import { EncryptionService } from '../../../libs/auth';
+import { CommandResult, ICommandHandler } from '../../../libs/cqrs-es';
+import { TrueImpactError } from '../../../libs/data-types';
 import { Inject } from '../../../libs/framework';
 import { USER_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../constants';
 import type { IUserCommandRepository } from '../repositories';

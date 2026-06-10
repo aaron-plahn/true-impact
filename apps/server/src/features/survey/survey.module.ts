@@ -1,9 +1,9 @@
-import { AuthModule } from 'src/auth/auth.module';
-import { EncryptionService } from 'src/libs/auth';
+import { AuthModule } from '../../auth/auth.module';
 import {
   InMemoryCommandRepository,
   InMemoryQueryRepositoryProvider,
 } from '../../common/persistence';
+import { EncryptionService } from '../../libs/auth';
 import { CommandHandlerService } from '../../libs/cqrs-es';
 import {
   TrueImpactBadUserInputError,

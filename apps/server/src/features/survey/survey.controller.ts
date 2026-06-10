@@ -1,8 +1,7 @@
 import { Req, Res, Session, UseGuards } from '@nestjs/common';
 import type { Request, Response } from 'express';
-import { AuthenticatedUserGuard } from 'src/auth/guards/authenticated-user-guard';
-import { RbacAuthGuard } from 'src/auth/guards/rbac-auth-guard';
 import { isDeepStrictEqual } from 'util';
+import { AuthenticatedUserGuard, RbacAuthGuard } from '../../auth/guards';
 import type { ICommandFsa } from '../../libs/cqrs-es';
 import { CommandHandlerService, CommandResult } from '../../libs/cqrs-es';
 import {
