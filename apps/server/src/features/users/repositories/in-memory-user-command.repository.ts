@@ -61,8 +61,6 @@ export class InMemoryUserCommandRepository implements IUserCommandRepository {
     hashedPassword: string;
   }): Promise<User | null> {
     const searchResult = Array.from(this.entitiesById.values()).find((user) => {
-      console.log({ user: user, credentials: credentials });
-
       return (
         user.username === credentials.username &&
         user.hashedPassword === credentials.hashedPassword &&

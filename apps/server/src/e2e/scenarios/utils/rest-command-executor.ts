@@ -1,7 +1,7 @@
 import { ICommandFsa, PersistenceAcknowledgement } from '../../../libs/cqrs-es';
 import { HttpStatus } from '../../../libs/framework';
-import { TestHttpClient } from '../test-utils';
 import { CommandErrorResponseBody } from './command-responses';
+import { TestHttpClient } from './test-http-client';
 
 export class RestCommandStreamExecutor {
   constructor(

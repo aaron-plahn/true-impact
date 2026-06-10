@@ -2,8 +2,8 @@ import {
   PersistenceAcknowledgement,
   TestCommandStream,
 } from '../../../libs/cqrs-es';
-import { TestHttpClient } from '../test-utils';
 import { RestCommandStreamExecutor } from './rest-command-executor';
+import { TestHttpClient } from './test-http-client';
 
 export * from './assert-command-scenario-success';
 

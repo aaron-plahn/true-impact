@@ -7,9 +7,9 @@ import {
   TrueImpactError,
   TrueImpactRuntimeException,
 } from '../../../libs/data-types';
-import { TestHttpClient } from '../test-utils';
 import { CommandErrorResponseBody } from './command-responses';
 import { RestCommandStreamExecutor } from './rest-command-executor';
+import { TestHttpClient } from './test-http-client';
 
 type ErrorTestCase = {
   endpoint: string;

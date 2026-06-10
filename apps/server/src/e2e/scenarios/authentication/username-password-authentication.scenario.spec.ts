@@ -4,8 +4,9 @@ import { SessionInfoForAuthenticatedUser } from '../../../auth/auth.controller';
 import { CreateUserWithPassword } from '../../../features/users/commands/create-user-with-password.command';
 import { DeactivateUser } from '../../../features/users/commands/deactivate-user.command';
 import { TestCommandStream } from '../../../libs/cqrs-es';
-import { TestHttpClient } from '../test-utils';
 import { assertCommandScenarioSuccess } from '../utils';
+import { signInAsAdmin } from '../utils/sign-in';
+import { TestHttpClient } from '../utils/test-http-client';
 
 const port = '3234';
 
@@ -28,52 +29,6 @@ const testUsername = 'hotmale99';
 const testPassword = 'my$PACEwasSICKin99';
 
 const bogusPassword = 'sorryMARIOcheckANOTHERcastle123';
-
-const signIn = async (
-  { username, password }: { username: string; password: string },
-  httpClient: TestHttpClient,
-) => {
-  const result = await httpClient
-    .post(logInEndpoint, {
-      username,
-      password,
-    })
-    .catch((e: { status: HttpStatus; response: { data: unknown } }) => {
-      return {
-        status: e.status,
-      };
-    });
-
-  expect(result.status).toBe(HttpStatus.CREATED);
-
-  return result;
-};
-
-const signInAsAdmin = (httpClient: TestHttpClient) => {
-  const username = process.env.SYSTEM_ADMIN_USERNAME;
-
-  if (typeof username !== 'string') {
-    throw new Error(
-      `Test failed. You need to set $SYSTEM_ADMIN_USERNAME in your test environment.`,
-    );
-  }
-
-  const password = process.env.INITIAL_ADMIN_PASSWORD;
-
-  if (typeof password !== 'string') {
-    throw new Error(
-      `Test failed. You need to set $INITIAL_ADMIN_PASSWORD in your test enviornment.`,
-    );
-  }
-
-  return signIn(
-    {
-      username,
-      password,
-    },
-    httpClient,
-  );
-};
 
 describe(`When loging in with a username and password (without Multi-factor Authentication enabled)`, () => {
   beforeEach(async () => {

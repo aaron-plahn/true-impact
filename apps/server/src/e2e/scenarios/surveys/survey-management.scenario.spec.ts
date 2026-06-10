@@ -1,4 +1,3 @@
-import axios from 'axios';
 import { CreateFlag } from '../../../features/flags/commands';
 import {
   FlagViewModel,
@@ -23,6 +22,8 @@ import {
   assertCommandSuccess,
   assertQueryResponse,
 } from '../utils';
+import { signInAsAdmin } from '../utils/sign-in';
+import { TestHttpClient } from '../utils/test-http-client';
 
 // TODO From env.e2e
 const port = '3234';
@@ -152,16 +153,23 @@ const labelOfTopLevelOptionToFlag = 'a';
 const labelOfFollowUpQuestionToFlag = '1.a.FU-1';
 const labelOfFollowUpOptionToFlag = 'FUOa';
 
+const httpClient = new TestHttpClient('http://localhost:4200');
+
 describe(`Survey Management Scenarios`, () => {
   let flagId: string;
 
+  beforeAll(async () => {
+    await signInAsAdmin(httpClient);
+  });
+
   beforeEach(async () => {
     // TODO Deal with seeding an admin user who has survey management permissions
-    await axios.patch(testSetupEndpoint);
+    await httpClient.patch(testSetupEndpoint);
 
-    await axios.patch(`${baseEndpoint}/flags/test-setup`);
+    await httpClient.patch(`${baseEndpoint}/flags/test-setup`);
 
     await assertCommandSuccess({
+      httpClient,
       endpoint: flagCommandsEndpoint,
       commandFsa: TestCommandStream.buildOne(CreateFlag, {
         label: flagLabel,
@@ -169,7 +177,7 @@ describe(`Survey Management Scenarios`, () => {
       }),
     });
 
-    const allFlags = (await axios.get(flagIndexEndpoint))
+    const allFlags = (await httpClient.get(flagIndexEndpoint))
       .data as FlagViewModel[];
 
     // TODO use a query endpoint for this
@@ -181,6 +189,7 @@ describe(`Survey Management Scenarios`, () => {
       describe(`when the request is valid`, () => {
         it(`should return the expected acknowledgement`, async () => {
           await assertCommandSuccess({
+            httpClient,
             endpoint: commandEndpoint,
             commandFsa: createSurvey.getCreationCommand(),
             assertSuccess: async (response) => {
@@ -198,11 +207,13 @@ describe(`Survey Management Scenarios`, () => {
         describe(`when there is already a survey with the given name`, () => {
           it(`should return the expected error message`, async () => {
             await assertCommandScenarioSuccess({
+              httpClient,
               endpoint: commandEndpoint,
               stream: createSurvey,
             });
 
             await assertCommandScenarioError({
+              httpClient,
               endpoint: commandEndpoint,
               stream: createSurvey,
               assertErrorMessageAsExpected: (message: string) => {
@@ -222,6 +233,7 @@ describe(`Survey Management Scenarios`, () => {
       describe(`when the request is valid`, () => {
         it(`should succeed`, async () => {
           await assertCommandScenarioSuccess({
+            httpClient,
             endpoint: commandEndpoint,
             stream: addFirstQuestionToSurvey,
             assertSuccess: async (acks) => {
@@ -242,6 +254,7 @@ describe(`Survey Management Scenarios`, () => {
         describe(`when the survey is already published`, () => {
           it(`should return the expected error response`, async () => {
             await assertCommandScenarioError({
+              httpClient,
               endpoint: commandEndpoint,
               stream: publishSurvey.andThen(AddQuestionToSurvey, {}),
               assertErrorMessageAsExpected: (message: string) => {
@@ -255,6 +268,7 @@ describe(`Survey Management Scenarios`, () => {
         describe(`when the target survey does not exist`, () => {
           it(`should return the expected error`, async () => {
             await assertCommandError({
+              httpClient,
               endpoint: commandEndpoint,
               commandFsa: TestCommandStream.buildOne(AddQuestionToSurvey, {
                 aggregateCompositeIdentifier: {
@@ -277,6 +291,7 @@ describe(`Survey Management Scenarios`, () => {
 
           it(`should return the expected error`, async () => {
             await assertCommandScenarioError({
+              httpClient,
               endpoint: commandEndpoint,
               stream: createSurvey
                 .andThen(AddQuestionToSurvey, {
@@ -326,6 +341,7 @@ describe(`Survey Management Scenarios`, () => {
         describe(`when the request is valid`, () => {
           it(`should add the option to the survey`, async () => {
             await assertCommandScenarioSuccess({
+              httpClient,
               endpoint: commandEndpoint,
               stream: addOptionToSurveyQuestion,
               assertSuccess: async (acks) => {
@@ -350,6 +366,7 @@ describe(`Survey Management Scenarios`, () => {
           describe(`when the survey is already published`, () => {
             it(`should return the expected error response`, async () => {
               await assertCommandScenarioError({
+                httpClient,
                 endpoint: commandEndpoint,
                 stream: publishSurvey.andThen(AddOptionToSurveyQuestion, {
                   questionLabel: questionLabels[0],
@@ -366,6 +383,7 @@ describe(`Survey Management Scenarios`, () => {
           describe(`when the survey does not exist`, () => {
             it(`should return the expected error`, async () => {
               await assertCommandError({
+                httpClient,
                 endpoint: commandEndpoint,
                 commandFsa: TestCommandStream.buildOne(
                   AddOptionToSurveyQuestion,
@@ -396,6 +414,7 @@ describe(`Survey Management Scenarios`, () => {
           describe(`when the question does not exist`, () => {
             it(`should return the expected error`, async () => {
               await assertCommandScenarioError({
+                httpClient,
                 endpoint: commandEndpoint,
                 stream: createSurvey.andThen(AddOptionToSurveyQuestion, {
                   questionLabel: missingQuestionLabel,
@@ -421,6 +440,7 @@ describe(`Survey Management Scenarios`, () => {
           describe(`when there is already a question with the given option`, () => {
             it(`should return the expected error`, async () => {
               await assertCommandScenarioError({
+                httpClient,
                 endpoint: commandEndpoint,
                 stream: addOptionToSurveyQuestion.andThen(
                   AddOptionToSurveyQuestion,
@@ -482,6 +502,7 @@ describe(`Survey Management Scenarios`, () => {
       describe(`when the request is valid`, () => {
         it(`should add the follow-up question`, async () => {
           await assertCommandScenarioSuccess({
+            httpClient,
             endpoint: commandEndpoint,
             stream: addFollowUpQuestionForOption,
             assertSuccess: async (acks) => {
@@ -522,6 +543,7 @@ describe(`Survey Management Scenarios`, () => {
         describe(`when the survey is already published`, () => {
           it(`should return the expected error response`, async () => {
             await assertCommandScenarioError({
+              httpClient,
               endpoint: commandEndpoint,
               stream: publishSurvey.andThen(
                 AddFollowUpQuestionForSurveyOption,
@@ -543,6 +565,7 @@ describe(`Survey Management Scenarios`, () => {
         describe(`when the survey does not exist`, () => {
           it(`should return the expected error response`, async () => {
             await assertCommandError({
+              httpClient,
               endpoint: commandEndpoint,
               commandFsa: TestCommandStream.buildOne(
                 AddFollowUpQuestionForSurveyOption,
@@ -566,6 +589,7 @@ describe(`Survey Management Scenarios`, () => {
         describe(`when the question does not exist`, () => {
           it(`should return the expected error response`, async () => {
             await assertCommandScenarioError({
+              httpClient,
               endpoint: commandEndpoint,
               stream: createSurvey.andThen(AddFollowUpQuestionForSurveyOption, {
                 questionLabel: missingQuestionLabel,
@@ -584,6 +608,7 @@ describe(`Survey Management Scenarios`, () => {
         describe(`when the option does not exist`, () => {
           it(`should return the expected error response`, async () => {
             await assertCommandScenarioError({
+              httpClient,
               endpoint: commandEndpoint,
               stream: addFirstQuestionToSurvey.andThen(
                 AddFollowUpQuestionForSurveyOption,
@@ -607,6 +632,7 @@ describe(`Survey Management Scenarios`, () => {
             const existingQuestionLabel = questionLabels[0];
 
             await assertCommandScenarioError({
+              httpClient,
               endpoint: commandEndpoint,
               stream: createSurvey
                 .andThen(AddQuestionToSurvey, {
@@ -657,6 +683,7 @@ describe(`Survey Management Scenarios`, () => {
       describe(`when the request is valid`, () => {
         it(`should publish the survey`, async () => {
           await assertCommandScenarioSuccess({
+            httpClient,
             endpoint: commandEndpoint,
             stream: publishSurvey,
             assertSuccess: async (acks) => {
@@ -677,6 +704,7 @@ describe(`Survey Management Scenarios`, () => {
         describe(`when the survey is already published`, () => {
           it(`should return the expected error response`, async () => {
             await assertCommandScenarioError({
+              httpClient,
               endpoint: commandEndpoint,
               stream: publishSurvey.andThen(PublishSurvey, {}),
               assertErrorMessageAsExpected: (message: string) => {
@@ -690,6 +718,7 @@ describe(`Survey Management Scenarios`, () => {
         describe(`when the survey has no questions`, () => {
           it(`should return the expected error response`, async () => {
             await assertCommandScenarioError({
+              httpClient,
               endpoint: commandEndpoint,
               stream: createSurvey.andThen(PublishSurvey),
               assertErrorMessageAsExpected: (message) => {
@@ -704,6 +733,7 @@ describe(`Survey Management Scenarios`, () => {
         describe(`when one of the questions has no options`, () => {
           it(`should return the expected error response`, async () => {
             await assertCommandScenarioError({
+              httpClient,
               endpoint: commandEndpoint,
               stream: addFirstQuestionToSurvey.andThen(PublishSurvey, {}),
               assertErrorMessageAsExpected: (message) => {
@@ -718,6 +748,7 @@ describe(`Survey Management Scenarios`, () => {
         describe(`when one of the question has an option with an empty follow-up question`, () => {
           it(`should return the expected error response`, async () => {
             await assertCommandScenarioError({
+              httpClient,
               endpoint: commandEndpoint,
               stream: addFollowUpQuestionForOption.andThen(PublishSurvey),
               assertErrorMessageAsExpected: (message) => {
@@ -740,6 +771,7 @@ describe(`Survey Management Scenarios`, () => {
                 describe(`when the flag exists`, () => {
                   it(`should add the flag`, async () => {
                     await assertCommandScenarioSuccess({
+                      httpClient,
                       endpoint: commandEndpoint,
                       stream: publishSurvey.andThen(FlagSurveyOption, {
                         flagId,
@@ -748,7 +780,7 @@ describe(`Survey Management Scenarios`, () => {
                       }),
                       assertSuccess: async (acks) => {
                         const result = (
-                          await axios.get(
+                          await httpClient.get(
                             `${surveyIndexEndpoint}/${acks[0].id}`,
                           )
                         ).data as SurveyViewModelClientDto;
@@ -779,6 +811,7 @@ describe(`Survey Management Scenarios`, () => {
                     const optionLabel = labelOfTopLevelOptionToFlag;
 
                     await assertCommandScenarioError({
+                      httpClient,
                       endpoint: commandEndpoint,
                       stream: publishSurvey.andThen(FlagSurveyOption, {
                         flagId: missingFlagId,
@@ -804,6 +837,7 @@ describe(`Survey Management Scenarios`, () => {
 
                 it(`should return the expected error response`, async () => {
                   await assertCommandScenarioError({
+                    httpClient,
                     endpoint: commandEndpoint,
                     stream: publishSurvey
                       .andThen(FlagSurveyOption, {
@@ -834,6 +868,7 @@ describe(`Survey Management Scenarios`, () => {
             describe(`when the option does not exist`, () => {
               it(`should return the expected error response`, async () => {
                 await assertCommandScenarioError({
+                  httpClient,
                   endpoint: commandEndpoint,
                   stream: publishSurvey.andThen(FlagSurveyOption, {
                     flagId,
@@ -861,6 +896,7 @@ describe(`Survey Management Scenarios`, () => {
                 describe(`when the flag exists`, () => {
                   it(`should add the flag`, async () => {
                     await assertCommandScenarioSuccess({
+                      httpClient,
                       endpoint: commandEndpoint,
                       stream: publishSurvey.andThen(FlagSurveyOption, {
                         flagId,
@@ -869,7 +905,7 @@ describe(`Survey Management Scenarios`, () => {
                       }),
                       assertSuccess: async (acks) => {
                         const { questions } = (
-                          await axios.get(
+                          await httpClient.get(
                             `${surveyIndexEndpoint}/${acks[0].id}`,
                           )
                         ).data as SurveyViewModelClientDto;
@@ -916,6 +952,7 @@ describe(`Survey Management Scenarios`, () => {
                 describe(`when the flag does not exist`, () => {
                   it(`should return the expected error resposne`, async () => {
                     await assertCommandScenarioError({
+                      httpClient,
                       endpoint: commandEndpoint,
                       stream: publishSurvey.andThen(FlagSurveyOption, {
                         flagId: missingFlagId,
@@ -938,6 +975,7 @@ describe(`Survey Management Scenarios`, () => {
               describe(`when the option already has the given flag`, () => {
                 it(`should return the expected error response`, async () => {
                   await assertCommandScenarioError({
+                    httpClient,
                     endpoint: commandEndpoint,
                     stream: publishSurvey
                       .andThen(FlagSurveyOption, {
@@ -967,6 +1005,7 @@ describe(`Survey Management Scenarios`, () => {
             describe(`when the option does not exist`, () => {
               it(`should return the expected error response`, async () => {
                 await assertCommandScenarioError({
+                  httpClient,
                   endpoint: commandEndpoint,
                   stream: publishSurvey.andThen(FlagSurveyOption, {
                     flagId,
@@ -993,6 +1032,7 @@ describe(`Survey Management Scenarios`, () => {
         describe(`when the question does not exist`, () => {
           it(`should return the expected error response`, async () => {
             await assertCommandScenarioError({
+              httpClient,
               endpoint: commandEndpoint,
               stream: publishSurvey.andThen(FlagSurveyOption, {
                 flagId,
@@ -1015,6 +1055,7 @@ describe(`Survey Management Scenarios`, () => {
       describe(`when the survey does not exist`, () => {
         it(`should return the expected error response`, async () => {
           await assertCommandError({
+            httpClient,
             endpoint: commandEndpoint,
             commandFsa: TestCommandStream.buildOne(FlagSurveyOption, {
               aggregateCompositeIdentifier: {

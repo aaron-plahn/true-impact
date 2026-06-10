@@ -1,4 +1,3 @@
-import axios from 'axios';
 import { SurveyViewModelClientDto } from '../../../features/survey/queries/survey.view-model';
 import {
   AddCategoryToSurveyAnalyzer,
@@ -16,6 +15,8 @@ import {
   assertCommandScenarioError,
   assertCommandScenarioSuccess,
 } from '../utils';
+import { signInAsAdmin } from '../utils/sign-in';
+import { TestHttpClient } from '../utils/test-http-client';
 
 // TODO From env.e2e
 const port = '3234';
@@ -90,9 +91,15 @@ const addValueForOption = addCategoryForAnalyzer.andThen(
   },
 );
 
+const httpClient = new TestHttpClient('http://localhost:4200');
+
 describe(`Build Survey Analyzer Scenarios`, () => {
+  beforeAll(async () => {
+    await signInAsAdmin(httpClient);
+  });
+
   beforeEach(async () => {
-    await axios.patch(surveyTestSetupEndpoint);
+    await httpClient.patch(surveyTestSetupEndpoint);
   });
 
   describe(`when creating an analyzer`, () => {
@@ -101,6 +108,7 @@ describe(`Build Survey Analyzer Scenarios`, () => {
         describe(`when the new analyzer name is in conflict with the existing one`, () => {
           it(`should return the expected error resposne`, async () => {
             await assertCommandScenarioError({
+              httpClient,
               endpoint: surveyCommandsEndpoint,
               stream: createAnalyzer.andThen(CreateAnalyzerForSurvey, {
                 name: analyzerName,
@@ -122,6 +130,7 @@ describe(`Build Survey Analyzer Scenarios`, () => {
             const uniqueName = 'Favourite Sports';
 
             await assertCommandScenarioSuccess({
+              httpClient,
               endpoint: surveyCommandsEndpoint,
               stream: createAnalyzer.andThen(CreateAnalyzerForSurvey, {
                 name: uniqueName,
@@ -130,7 +139,7 @@ describe(`Build Survey Analyzer Scenarios`, () => {
                 const { id } = acks[0];
 
                 const updated = (
-                  await axios.get(`${surveyIndexEndpoint}/${id}`)
+                  await httpClient.get(`${surveyIndexEndpoint}/${id}`)
                 ).data as SurveyViewModelClientDto;
 
                 expect(uniqueName in updated.analyzersByName).toBe(true);
@@ -143,11 +152,12 @@ describe(`Build Survey Analyzer Scenarios`, () => {
       describe(`when the survey has no analyzers`, () => {
         it(`should add the analyzer`, async () => {
           await assertCommandScenarioSuccess({
+            httpClient,
             endpoint: surveyCommandsEndpoint,
             stream: createAnalyzer,
             assertSuccess: async (acks) => {
               const updated = (
-                await axios.get(`${surveyIndexEndpoint}/${acks[0].id}`)
+                await httpClient.get(`${surveyIndexEndpoint}/${acks[0].id}`)
               ).data as SurveyViewModelClientDto;
 
               expect(analyzerName in updated.analyzersByName).toBe(true);
@@ -162,6 +172,7 @@ describe(`Build Survey Analyzer Scenarios`, () => {
     describe(`when the survey does not exist`, () => {
       it(`should return the expected error response`, async () => {
         await assertCommandError({
+          httpClient,
           endpoint: surveyCommandsEndpoint,
           commandFsa: TestCommandStream.buildOne(CreateAnalyzerForSurvey, {
             aggregateCompositeIdentifier: {
@@ -183,6 +194,7 @@ describe(`Build Survey Analyzer Scenarios`, () => {
         describe(`when the analyzer has no categories`, () => {
           it(`should add the first category`, async () => {
             await assertCommandScenarioSuccess({
+              httpClient,
               endpoint: surveyCommandsEndpoint,
               stream: createAnalyzer.andThen(AddCategoryToSurveyAnalyzer, {
                 analyzerName,
@@ -190,7 +202,7 @@ describe(`Build Survey Analyzer Scenarios`, () => {
               }),
               assertSuccess: async (acks) => {
                 const { analyzersByName } = (
-                  await axios.get(`${surveyIndexEndpoint}/${acks[0].id}`)
+                  await httpClient.get(`${surveyIndexEndpoint}/${acks[0].id}`)
                 ).data as SurveyViewModelClientDto;
 
                 expect(Object.values(analyzersByName)).toHaveLength(1);
@@ -213,6 +225,7 @@ describe(`Build Survey Analyzer Scenarios`, () => {
 
             it(`should add an additional category`, async () => {
               await assertCommandScenarioSuccess({
+                httpClient,
                 endpoint: surveyCommandsEndpoint,
                 stream: addCategoryForAnalyzer.andThen(
                   AddCategoryToSurveyAnalyzer,
@@ -223,7 +236,7 @@ describe(`Build Survey Analyzer Scenarios`, () => {
                 ),
                 assertSuccess: async (acks) => {
                   const { analyzersByName } = (
-                    await axios.get(`${surveyIndexEndpoint}/${acks[0].id}`)
+                    await httpClient.get(`${surveyIndexEndpoint}/${acks[0].id}`)
                   ).data as SurveyViewModelClientDto;
 
                   expect(Object.entries(analyzersByName)).toHaveLength(1);
@@ -243,6 +256,7 @@ describe(`Build Survey Analyzer Scenarios`, () => {
           describe(`when the new category name conflicts with an existing name`, () => {
             it(`should return the expected error response`, async () => {
               await assertCommandScenarioError({
+                httpClient,
                 endpoint: surveyCommandsEndpoint,
                 stream: addCategoryForAnalyzer.andThen(
                   AddCategoryToSurveyAnalyzer,
@@ -269,6 +283,7 @@ describe(`Build Survey Analyzer Scenarios`, () => {
       describe(`when the analyzer does not exist`, () => {
         it(`should return the expected error response`, async () => {
           await assertCommandScenarioError({
+            httpClient,
             endpoint: surveyCommandsEndpoint,
             stream: createSurvey.andThen(AddCategoryToSurveyAnalyzer, {
               analyzerName,
@@ -291,6 +306,7 @@ describe(`Build Survey Analyzer Scenarios`, () => {
     describe(`when the survey does not exist`, () => {
       it(`should return the expected error response`, async () => {
         await assertCommandError({
+          httpClient,
           endpoint: surveyCommandsEndpoint,
           commandFsa: TestCommandStream.buildOne(AddCategoryToSurveyAnalyzer, {
             aggregateCompositeIdentifier: {
@@ -321,13 +337,16 @@ describe(`Build Survey Analyzer Scenarios`, () => {
               describe(`when all values are valid`, () => {
                 it(`should add the values`, async () => {
                   await assertCommandScenarioSuccess({
+                    httpClient,
                     endpoint: surveyCommandsEndpoint,
                     stream: addValueForOption,
                     assertSuccess: async (acks) => {
                       const { id: surveyId } = acks[0];
 
                       const fetchResult = (
-                        await axios.get(`${surveyIndexEndpoint}/${surveyId}`)
+                        await httpClient.get(
+                          `${surveyIndexEndpoint}/${surveyId}`,
+                        )
                       ).data as SurveyViewModelClientDto;
 
                       const { analyzersByName } = fetchResult;
@@ -356,6 +375,7 @@ describe(`Build Survey Analyzer Scenarios`, () => {
 
                   it(`should return the expected error response`, async () => {
                     await assertCommandScenarioError({
+                      httpClient,
                       endpoint: surveyCommandsEndpoint,
                       stream: addValueForOption.andThen(
                         AddValueForSurveyOption,
@@ -389,6 +409,7 @@ describe(`Build Survey Analyzer Scenarios`, () => {
                     const invalidValue = -20;
 
                     await assertCommandScenarioError({
+                      httpClient,
                       endpoint: surveyCommandsEndpoint,
                       stream: createAnalyzer.andThen(AddValueForSurveyOption, {
                         questionLabel: targetQuestion,
@@ -418,6 +439,7 @@ describe(`Build Survey Analyzer Scenarios`, () => {
                 const missingCategory = 'spunk';
 
                 await assertCommandScenarioError({
+                  httpClient,
                   endpoint: surveyCommandsEndpoint,
                   stream: addCategoryForAnalyzer.andThen(
                     AddValueForSurveyOption,
@@ -449,6 +471,7 @@ describe(`Build Survey Analyzer Scenarios`, () => {
           describe(`when the analyzer does not exist`, () => {
             it(`should return the expected error response`, async () => {
               await assertCommandScenarioError({
+                httpClient,
                 endpoint: surveyCommandsEndpoint,
                 stream: publishSurvey.andThen(AddValueForSurveyOption, {
                   analyzerName,
@@ -473,6 +496,7 @@ describe(`Build Survey Analyzer Scenarios`, () => {
 
           it(`should return the expected error response`, async () => {
             await assertCommandScenarioError({
+              httpClient,
               endpoint: surveyCommandsEndpoint,
               stream: addValueForOption.andThen(AddValueForSurveyOption, {
                 questionLabel: targetQuestion,
@@ -501,6 +525,7 @@ describe(`Build Survey Analyzer Scenarios`, () => {
 
         it(`should return the expected error response`, async () => {
           await assertCommandScenarioError({
+            httpClient,
             endpoint: surveyCommandsEndpoint,
             stream: addValueForOption.andThen(AddValueForSurveyOption, {
               questionLabel: missingQuestionLabel,
@@ -521,6 +546,7 @@ describe(`Build Survey Analyzer Scenarios`, () => {
     describe(`when the survey does not exist`, () => {
       it(`should return the expected error response`, async () => {
         await assertCommandError({
+          httpClient,
           endpoint: surveyCommandsEndpoint,
           commandFsa: TestCommandStream.buildOne(AddValueForSurveyOption, {
             aggregateCompositeIdentifier: {

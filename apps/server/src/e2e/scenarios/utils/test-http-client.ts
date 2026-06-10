@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-interface Headers {
+export interface Headers {
   Cookie: string[];
 }
 

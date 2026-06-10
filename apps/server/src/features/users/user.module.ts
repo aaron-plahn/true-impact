@@ -107,8 +107,6 @@ export class UserModule implements OnModuleInit {
           .get(EncryptionService, { strict: false })
           .generatePasscode();
 
-      console.log({ tempAdminPassword });
-
       const defaultAdminUsername =
         this.moduleRef
           .get(ConfigService, { strict: false })

@@ -1,4 +1,3 @@
-import axios from 'axios';
 import { AddCommunityAffiliationForClient } from '../../../features/clients/commands/add-community-affiliation-for-client';
 import { CreateClient } from '../../../features/clients/commands/create-client.command';
 import { FlagClient } from '../../../features/clients/commands/flag-client.command';
@@ -18,6 +17,8 @@ import {
   assertCommandScenarioSuccess,
   assertCommandSuccess,
 } from '../utils';
+import { signInAsAdmin } from '../utils/sign-in';
+import { TestHttpClient } from '../utils/test-http-client';
 
 // TODO From env.e2e
 const port = '3234';
@@ -54,6 +55,8 @@ const missingClientId = 'cl-404';
 
 const missingCommunityId = 'comm-404';
 
+const httpClient = new TestHttpClient('http://localhost:4200');
+
 describe(`Client Management Scenarios`, () => {
   let communityId: string;
 
@@ -63,23 +66,30 @@ describe(`Client Management Scenarios`, () => {
 
   let secondFlagId: string;
 
+  beforeAll(async () => {
+    await signInAsAdmin(httpClient);
+  });
+
   beforeEach(async () => {
-    await axios.patch(clientTestSetupEndpoint);
+    await httpClient.patch(clientTestSetupEndpoint);
 
-    await axios.patch(communityTestSetupEndpoint);
+    await httpClient.patch(communityTestSetupEndpoint);
 
-    await axios.patch(flagTestSetupEndpoint);
+    await httpClient.patch(flagTestSetupEndpoint);
 
     await assertCommandSuccess({
+      httpClient,
       endpoint: commandsEndpointForCommunities,
       commandFsa: TestCommandStream.buildOne(CreateCommunity, {}),
     });
 
     communityId = (
-      (await axios.get(communityIndexEndpoint)).data as CommunityViewModel[]
+      (await httpClient.get(communityIndexEndpoint))
+        .data as CommunityViewModel[]
     )[0].id;
 
     await assertCommandSuccess({
+      httpClient,
       endpoint: flagCommandsEndpoint,
       commandFsa: TestCommandStream.buildOne(CreateFlag, {
         label: flagLabel,
@@ -87,17 +97,18 @@ describe(`Client Management Scenarios`, () => {
     });
 
     flagId = (
-      (await axios.get(flagIndexEndpoint)).data as CommunityViewModel[]
+      (await httpClient.get(flagIndexEndpoint)).data as CommunityViewModel[]
     )[0].id;
 
     await assertCommandSuccess({
+      httpClient,
       endpoint: flagCommandsEndpoint,
       commandFsa: TestCommandStream.buildOne(CreateFlag, {
         label: secondFlagLabel,
       }),
     });
 
-    const allFlags = (await axios.get(flagIndexEndpoint))
+    const allFlags = (await httpClient.get(flagIndexEndpoint))
       .data as FlagViewModelClientDto[];
 
     secondFlagId = allFlags.find((f) => f.label === secondFlagLabel)
@@ -109,6 +120,7 @@ describe(`Client Management Scenarios`, () => {
       describe(`when no community is provided`, () => {
         it(`should create the client`, async () => {
           await assertCommandSuccess({
+            httpClient,
             endpoint: commandsEndpointForClients,
             commandFsa: TestCommandStream.buildOne(CreateClient, {
               isIndigenous: 'Yes',
@@ -118,7 +130,7 @@ describe(`Client Management Scenarios`, () => {
             }),
             assertSuccess: async (ack) => {
               const updated = (
-                await axios.get(`${clientIndexEndpoint}/${ack.id}`)
+                await httpClient.get(`${clientIndexEndpoint}/${ack.id}`)
               ).data as ClientViewModelClientDto;
 
               expect(updated.community?.id).toBe(undefined);
@@ -137,6 +149,7 @@ describe(`Client Management Scenarios`, () => {
         describe(`when the community exists`, () => {
           it(`should create the client with the given community`, async () => {
             await assertCommandScenarioSuccess({
+              httpClient,
               endpoint: commandsEndpointForClients,
               stream: TestCommandStream.first(CreateClient, {
                 communityId,
@@ -145,7 +158,7 @@ describe(`Client Management Scenarios`, () => {
               }),
               assertSuccess: async (acks) => {
                 const newClient = (
-                  await axios.get(`${clientIndexEndpoint}/${acks[0].id}`)
+                  await httpClient.get(`${clientIndexEndpoint}/${acks[0].id}`)
                 ).data as ClientViewModelClientDto;
 
                 // shouldn't this be .communityId ?
@@ -164,6 +177,7 @@ describe(`Client Management Scenarios`, () => {
 
           it(`should return the expected error`, async () => {
             await assertCommandError({
+              httpClient,
               endpoint: commandsEndpointForClients,
               commandFsa: TestCommandStream.buildOne(CreateClient, {
                 communityId: bogusCommunityId,
@@ -185,6 +199,7 @@ describe(`Client Management Scenarios`, () => {
       describe(`when no community is provided`, () => {
         it(`should create the client`, async () => {
           await assertCommandSuccess({
+            httpClient,
             endpoint: commandsEndpointForClients,
             commandFsa: TestCommandStream.buildOne(CreateClient, {
               communityId: undefined,
@@ -194,7 +209,7 @@ describe(`Client Management Scenarios`, () => {
             }),
             assertSuccess: async (ack) => {
               const newClient = (
-                await axios.get(`${clientIndexEndpoint}/${ack.id}`)
+                await httpClient.get(`${clientIndexEndpoint}/${ack.id}`)
               ).data as ClientViewModelClientDto;
 
               expect(newClient.community?.id).toBe(undefined);
@@ -212,6 +227,7 @@ describe(`Client Management Scenarios`, () => {
       describe(`when a community is provided`, () => {
         it(`should return the expected error`, async () => {
           await assertCommandError({
+            httpClient,
             endpoint: commandsEndpointForClients,
             commandFsa: TestCommandStream.buildOne(CreateClient, {
               isIndigenous: 'No',
@@ -235,6 +251,7 @@ describe(`Client Management Scenarios`, () => {
       describe(`when no community is provided`, () => {
         it(`should create the client`, async () => {
           await assertCommandSuccess({
+            httpClient,
             endpoint: commandsEndpointForClients,
             commandFsa: TestCommandStream.buildOne(CreateClient, {
               firstName: clientFirstName,
@@ -244,7 +261,7 @@ describe(`Client Management Scenarios`, () => {
             }),
             assertSuccess: async (ack) => {
               const newClient = (
-                await axios.get(`${clientIndexEndpoint}/${ack.id}`)
+                await httpClient.get(`${clientIndexEndpoint}/${ack.id}`)
               ).data as ClientViewModelClientDto;
 
               expect(newClient.fullName.firstName).toBe(clientFirstName);
@@ -260,6 +277,7 @@ describe(`Client Management Scenarios`, () => {
       describe(`when a community is provided`, () => {
         it(`should return the expected error`, async () => {
           await assertCommandError({
+            httpClient,
             endpoint: commandsEndpointForClients,
             commandFsa: TestCommandStream.buildOne(CreateClient, {
               isIndigenous: 'Unknown',
@@ -281,6 +299,7 @@ describe(`Client Management Scenarios`, () => {
     describe(`when an invalid community is specified for the client`, () => {
       it(`should return the expected error response`, async () => {
         await assertCommandError({
+          httpClient,
           endpoint: commandsEndpointForClients,
           commandFsa: TestCommandStream.buildOne(CreateClient, {
             isIndigenous: 'Yes',
@@ -305,13 +324,14 @@ describe(`Client Management Scenarios`, () => {
       describe(`when the client already has a community affiliation`, () => {
         it(`should return the expected error resposne`, async () => {
           await assertCommandSuccess({
+            httpClient,
             endpoint: commandsEndpointForCommunities,
             commandFsa: TestCommandStream.buildOne(CreateCommunity, {
               name: secondCommunityName,
             }),
           });
 
-          const communities = (await axios.get(communityIndexEndpoint))
+          const communities = (await httpClient.get(communityIndexEndpoint))
             .data as CommunityViewModelClientDto[];
 
           const { id: secondCommunityId } = communities.find(
@@ -319,6 +339,7 @@ describe(`Client Management Scenarios`, () => {
           ) as CommunityViewModelClientDto;
 
           await assertCommandScenarioError({
+            httpClient,
             endpoint: commandsEndpointForClients,
             stream: TestCommandStream.first(CreateClient, {
               isIndigenous: 'Yes',
@@ -341,6 +362,7 @@ describe(`Client Management Scenarios`, () => {
       describe(`when the client is non-indigenous`, () => {
         it(`should return the expected error response`, async () => {
           await assertCommandScenarioError({
+            httpClient,
             endpoint: commandsEndpointForClients,
             stream: TestCommandStream.first(CreateClient, {
               communityId: undefined,
@@ -362,6 +384,7 @@ describe(`Client Management Scenarios`, () => {
       describe(`when whether the client is indigenous was previously recorded as unknown`, () => {
         it(`should update the client's community and mark them as indigenous`, async () => {
           await assertCommandScenarioSuccess({
+            httpClient,
             endpoint: commandsEndpointForClients,
             stream: TestCommandStream.first(CreateClient, {
               firstName: clientFirstName,
@@ -373,7 +396,7 @@ describe(`Client Management Scenarios`, () => {
             }),
             assertSuccess: async (acks) => {
               const updated = (
-                await axios.get(`${clientIndexEndpoint}/${acks[0].id}`)
+                await httpClient.get(`${clientIndexEndpoint}/${acks[0].id}`)
               ).data as ClientViewModelClientDto;
 
               expect(updated.community?.id).toBe(communityId);
@@ -387,6 +410,7 @@ describe(`Client Management Scenarios`, () => {
       describe(`when the client was previously marked as indigenous, but their community was not specified`, () => {
         it(`should update the client's community`, async () => {
           await assertCommandScenarioSuccess({
+            httpClient,
             endpoint: commandsEndpointForClients,
             stream: TestCommandStream.first(CreateClient, {
               firstName: clientFirstName,
@@ -398,7 +422,7 @@ describe(`Client Management Scenarios`, () => {
             }),
             assertSuccess: async (acks) => {
               const updated = (
-                await axios.get(`${clientIndexEndpoint}/${acks[0].id}`)
+                await httpClient.get(`${clientIndexEndpoint}/${acks[0].id}`)
               ).data as ClientViewModelClientDto;
 
               expect(updated.isIndigenous).toBe('Yes');
@@ -413,6 +437,7 @@ describe(`Client Management Scenarios`, () => {
     describe(`when the provided community does not exist`, () => {
       it(`should return the expected error response`, async () => {
         await assertCommandScenarioError({
+          httpClient,
           endpoint: commandsEndpointForClients,
           stream: TestCommandStream.first(CreateClient, {
             firstName: clientFirstName,
@@ -440,6 +465,7 @@ describe(`Client Management Scenarios`, () => {
         describe(`when the client has no flags to start with`, () => {
           it(`should add a first flag`, async () => {
             await assertCommandScenarioSuccess({
+              httpClient,
               endpoint: commandsEndpointForClients,
               stream: TestCommandStream.first(CreateClient, {
                 communityId: communityId,
@@ -448,7 +474,7 @@ describe(`Client Management Scenarios`, () => {
               }),
               assertSuccess: async (acks) => {
                 const updated = (
-                  await axios.get(`${clientIndexEndpoint}/${acks[0].id}`)
+                  await httpClient.get(`${clientIndexEndpoint}/${acks[0].id}`)
                 ).data as ClientViewModelClientDto;
 
                 expect(Object.keys(updated.flagsById)).toContain(flagId);
@@ -465,6 +491,7 @@ describe(`Client Management Scenarios`, () => {
           describe(`when the new flag is distinct from existing flags`, () => {
             it(`should add the additional flag`, async () => {
               await assertCommandScenarioSuccess({
+                httpClient,
                 endpoint: commandsEndpointForClients,
                 stream: TestCommandStream.first(CreateClient, {
                   communityId: communityId,
@@ -483,6 +510,7 @@ describe(`Client Management Scenarios`, () => {
           describe(`when the client already has the given flag`, () => {
             it(`should return the expected error response`, async () => {
               await assertCommandScenarioError({
+                httpClient,
                 endpoint: commandsEndpointForClients,
                 stream: TestCommandStream.first(CreateClient, {
                   communityId: communityId,
@@ -513,6 +541,7 @@ describe(`Client Management Scenarios`, () => {
       describe(`when the target flag does not exist`, () => {
         it(`should return the expected error response`, async () => {
           await assertCommandScenarioError({
+            httpClient,
             endpoint: commandsEndpointForClients,
             stream: TestCommandStream.first(CreateClient, {
               communityId,
@@ -537,6 +566,7 @@ describe(`Client Management Scenarios`, () => {
     describe(`when the client does not exist`, () => {
       it(`should return the expected error response`, async () => {
         await assertCommandError({
+          httpClient,
           endpoint: commandsEndpointForClients,
           commandFsa: TestCommandStream.buildOne(FlagClient, {
             aggregateCompositeIdentifier: {

@@ -1,4 +1,3 @@
-import axios from 'axios';
 import {
   CreateCommunity,
   TranslateCommunityName,
@@ -12,6 +11,8 @@ import {
   assertCommandScenarioError,
   assertCommandScenarioSuccess,
 } from '../utils';
+import { signInAsAdmin } from '../utils/sign-in';
+import { TestHttpClient } from '../utils/test-http-client';
 
 // TODO From env.e2e
 const port = '3234';
@@ -48,9 +49,15 @@ const translateCommunityName = createCommunity.andThen(TranslateCommunityName, {
   languageCode: translationLanguageCodeForName,
 });
 
+const httpClient = new TestHttpClient('http://localhost:4200');
+
 describe(`Community Management Scenarios`, () => {
+  beforeAll(async () => {
+    await signInAsAdmin(httpClient);
+  });
+
   beforeEach(async () => {
-    await axios.patch(communityTestSetupEndpoint);
+    await httpClient.patch(communityTestSetupEndpoint);
   });
 
   describe(`when creating a community`, () => {
@@ -58,10 +65,11 @@ describe(`Community Management Scenarios`, () => {
       describe(`when the community name is in English (en)`, () => {
         it(`should create the community`, async () => {
           await assertCommandScenarioSuccess({
+            httpClient,
             endpoint: commandsEndpointForCommunities,
             stream: createCommunity,
             assertSuccess: async (acks) => {
-              const searchResult = await axios.get(
+              const searchResult = await httpClient.get(
                 `${communityBaseEndpoint}/${acks[0].id}`,
               );
 
@@ -94,6 +102,7 @@ describe(`Community Management Scenarios`, () => {
 
         it(`should return the expected error resposne`, async () => {
           await assertCommandError({
+            httpClient,
             endpoint: commandsEndpointForCommunities,
             commandFsa: TestCommandStream.buildOne(CreateCommunity, {
               languageCodeForName: unsupportedLanguageCode,
@@ -115,6 +124,7 @@ describe(`Community Management Scenarios`, () => {
 
       it(`should return the expected error resposne`, async () => {
         await assertCommandError({
+          httpClient,
           endpoint: commandsEndpointForCommunities,
           commandFsa: TestCommandStream.buildOne(CreateCommunity, {
             languageCodeForName: invalidLanguageCode,
@@ -134,11 +144,13 @@ describe(`Community Management Scenarios`, () => {
     describe(`when there is already a community with the given name`, () => {
       it(`should return the expected error response`, async () => {
         await assertCommandScenarioSuccess({
+          httpClient,
           endpoint: commandsEndpointForCommunities,
           stream: createCommunity,
         });
 
         await assertCommandScenarioError({
+          httpClient,
           endpoint: commandsEndpointForCommunities,
           stream: TestCommandStream.first(CreateCommunity, {
             name: englishCommunityName,
@@ -165,11 +177,12 @@ describe(`Community Management Scenarios`, () => {
         describe(`clc`, () => {
           it(`should translate the community name`, async () => {
             await assertCommandScenarioSuccess({
+              httpClient,
               endpoint: commandsEndpointForCommunities,
               stream: translateCommunityName,
               assertSuccess: async (acks) => {
                 const { name } = (
-                  await axios.get(`${communityBaseEndpoint}/${acks[0].id}`)
+                  await httpClient.get(`${communityBaseEndpoint}/${acks[0].id}`)
                 ).data as CommunityViewModelClientDto;
 
                 expect(
@@ -189,6 +202,7 @@ describe(`Community Management Scenarios`, () => {
 
           it(`should translate the community name`, async () => {
             await assertCommandScenarioError({
+              httpClient,
               endpoint: commandsEndpointForCommunities,
               stream: createCommunity.andThen(TranslateCommunityName, {
                 languageCode: invalidLanguageCode,
@@ -211,6 +225,7 @@ describe(`Community Management Scenarios`, () => {
 
           it(`should return the expected error resposne`, async () => {
             await assertCommandScenarioError({
+              httpClient,
               endpoint: commandsEndpointForCommunities,
               stream: createCommunity.andThen(TranslateCommunityName, {
                 languageCode: invalidLanguageCode,
@@ -232,6 +247,7 @@ describe(`Community Management Scenarios`, () => {
       describe(`when the new translation targets the same langauge as the existing translation`, () => {
         it(`should return the expected error response`, async () => {
           await assertCommandScenarioError({
+            httpClient,
             endpoint: commandsEndpointForCommunities,
             stream: createCommunity.andThen(TranslateCommunityName, {
               languageCode: originalLanguageCodeForName,
