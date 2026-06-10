@@ -72,6 +72,7 @@ export const surveyApi = createApi({
         url: `surveys/commands`,
         method: "POST",
         body: commandFsa,
+        credentials: "include",
       }),
       /**
        * Note that this triggers a full refresh of the survey. Although this mostly negates the benefits of using a SPA
