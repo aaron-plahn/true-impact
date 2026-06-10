@@ -44,7 +44,7 @@ export class SurveyReviewController {
 
   @TestSetupEndpoint()
   async testSetup(): Promise<'OK'> {
-    if (process.env.NODE_ENV !== 'test') {
+    if (process.env.NODE_ENV !== 'test' && process.env.NODE_ENV !== 'e2e') {
       throw new TrueImpactRuntimeException([
         new TrueImpactError(
           `You cannot access test setup helpers in the environment [${process.env.NODE_ENV}]`,

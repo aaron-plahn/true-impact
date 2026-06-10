@@ -4,6 +4,7 @@ import { SessionInfoForAuthenticatedUser } from '../../../auth/auth.controller';
 import { CreateUserWithPassword } from '../../../features/users/commands/create-user-with-password.command';
 import { DeactivateUser } from '../../../features/users/commands/deactivate-user.command';
 import { TestCommandStream } from '../../../libs/cqrs-es';
+import { TestHttpClient } from '../test-utils';
 import { assertCommandScenarioSuccess } from '../utils';
 
 const port = '3234';
@@ -28,55 +29,78 @@ const testPassword = 'my$PACEwasSICKin99';
 
 const bogusPassword = 'sorryMARIOcheckANOTHERcastle123';
 
+const signIn = async (
+  { username, password }: { username: string; password: string },
+  httpClient: TestHttpClient,
+) => {
+  const result = await httpClient
+    .post(logInEndpoint, {
+      username,
+      password,
+    })
+    .catch((e: { status: HttpStatus; response: { data: unknown } }) => {
+      return {
+        status: e.status,
+      };
+    });
+
+  expect(result.status).toBe(HttpStatus.CREATED);
+
+  return result;
+};
+
+const signInAsAdmin = (httpClient: TestHttpClient) => {
+  const username = process.env.SYSTEM_ADMIN_USERNAME;
+
+  if (typeof username !== 'string') {
+    throw new Error(
+      `Test failed. You need to set $SYSTEM_ADMIN_USERNAME in your test environment.`,
+    );
+  }
+
+  const password = process.env.INITIAL_ADMIN_PASSWORD;
+
+  if (typeof password !== 'string') {
+    throw new Error(
+      `Test failed. You need to set $INITIAL_ADMIN_PASSWORD in your test enviornment.`,
+    );
+  }
+
+  return signIn(
+    {
+      username,
+      password,
+    },
+    httpClient,
+  );
+};
+
 describe(`When loging in with a username and password (without Multi-factor Authentication enabled)`, () => {
   beforeEach(async () => {
+    // TODO get rid of direct usage of axios in favor of TestHttpClient. It's confusing to have both.
     await axios.patch(userSetupEndpoint);
   });
 
   describe(`when the user exists`, () => {
     beforeEach(async () => {
+      const httpClientForDataSeeding = new TestHttpClient(
+        'http://localhost:4200',
+      );
+
+      await signInAsAdmin(httpClientForDataSeeding);
+
       await assertCommandScenarioSuccess({
         endpoint: userCommandsEndpoint,
         stream: TestCommandStream.first(CreateUserWithPassword, {
           username: testUsername,
           password: testPassword,
         }),
+        httpClient: httpClientForDataSeeding,
       });
     });
 
     describe(`when the credentials are correct`, () => {
-      let cookies: string[];
-
-      const client = axios.create({
-        withCredentials: true,
-        headers: {
-          Origin: 'http://localhost:4200',
-        },
-      });
-
-      client.interceptors.request.use((config) => {
-        console.log(`OUTGOING AXIOS REQUEST ----------`);
-
-        console.log('URL:', config.url);
-
-        console.log('HEADERS:', config.headers);
-
-        return config;
-      });
-
-      client.interceptors.response.use((config) => {
-        console.log('RESPONSE HEADERS ---->', config.headers);
-
-        if ('set-cookie' in config.headers) {
-          const foo = config.headers['set-cookie'];
-
-          if (foo) {
-            cookies = foo;
-          }
-        }
-
-        return config;
-      });
+      const client = new TestHttpClient('http://localhost:4200');
 
       /**
        * We might verify this at the `e2e` level by providing an addtional
@@ -96,13 +120,8 @@ describe(`When loging in with a username and password (without Multi-factor Auth
 
         expect(response.status).toBe(HttpStatus.CREATED);
 
-        const result = (
-          await client.get(sessionEndpoint, {
-            headers: {
-              Cookie: cookies[0],
-            },
-          })
-        ).data as SessionInfoForAuthenticatedUser;
+        const result = (await client.get(sessionEndpoint))
+          .data as SessionInfoForAuthenticatedUser;
 
         expect(result.username).toBe(testUsername);
 
@@ -167,12 +186,19 @@ describe(`When loging in with a username and password (without Multi-factor Auth
 
   describe(`when the user has been deactivated`, () => {
     beforeEach(async () => {
+      const httpClientForDataSeeding = new TestHttpClient(
+        'http://localhost:4200',
+      );
+
+      await signInAsAdmin(httpClientForDataSeeding);
+
       await assertCommandScenarioSuccess({
         endpoint: userCommandsEndpoint,
         stream: TestCommandStream.first(CreateUserWithPassword, {
           username: testUsername,
           password: testPassword,
         }).andThen(DeactivateUser),
+        httpClient: httpClientForDataSeeding,
       });
     });
 

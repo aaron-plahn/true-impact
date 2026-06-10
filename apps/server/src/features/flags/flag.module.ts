@@ -1,9 +1,11 @@
+import { AuthModule } from 'src/auth/auth.module';
 import {
   InMemoryCommandRepository,
   InMemoryQueryRepository,
 } from '../../common/persistence';
 import { CommandHandlerService } from '../../libs/cqrs-es';
 import { Module, ModuleRef } from '../../libs/framework';
+import { UserModule } from '../users/user.module';
 import { CreateFlag, RelabelFlag, RelabelFlagCommandHandler } from './commands';
 import { CreateFlagCommandHandler } from './commands/create-flag.command-handler';
 import {
@@ -17,6 +19,7 @@ import { Flag } from './models';
 import { FlagQueryService, FlagViewModel } from './queries';
 
 @Module({
+  imports: [UserModule, AuthModule],
   providers: [
     FlagQueryService,
     // commands

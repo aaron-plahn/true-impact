@@ -17,6 +17,7 @@ import {
   ApiOkResponse,
   BadUserInputFilter,
   Body,
+  ConfigService,
   Controller,
   DetailQueryEndpoint,
   IdParam,
@@ -54,6 +55,7 @@ export class SurveyController implements OnModuleInit {
     private readonly commandHandlerService: CommandHandlerService,
     @Inject(SURVEY_RESPONSE_SESSION_REPOSITORY_TOKEN)
     private readonly sessionRepository: ISurveyResponseSessionRepository,
+    private readonly configService: ConfigService,
   ) {}
 
   @DetailQueryEndpoint()
@@ -256,9 +258,10 @@ export class SurveyController implements OnModuleInit {
     );
   }
 
+  // TODO auth guard
   @TestSetupEndpoint()
   async testSetup(): Promise<'OK'> {
-    if (process.env.NODE_ENV !== 'test') {
+    if (process.env.NODE_ENV !== 'test' && process.env.NODE_ENV !== 'e2e') {
       throw new TrueImpactRuntimeException([
         new TrueImpactError(
           `You cannot access test setup helpers in the environment [${process.env.NODE_ENV}]`,

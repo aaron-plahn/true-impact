@@ -112,6 +112,13 @@ export class SurveyEventsGateway {
   server: Server;
 
   /**
+   * TODO We need to validate the user session during the initial handshake.
+   * The proper flow is for the user to subscribe after beginning the survey
+   * on the first call to `participate/:id`. At this point, we can make the connection
+   * and the user can join a channel for the survey attempt.
+   */
+
+  /**
    * We force this to be async to
    * 1. avoid race-conditions with command success acknowledgements
    * 2. be consistent with the ultimate behaviour, which is an out-of-process publisher

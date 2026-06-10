@@ -44,6 +44,7 @@ export class ClientController implements OnModuleInit {
     private readonly commandHandlerService: CommandHandlerService,
   ) {}
 
+  @UseGuards(AuthenticatedUserGuard, RbacAuthGuard)
   @DetailQueryEndpoint()
   @ApiOkResponse({
     schema,
@@ -55,6 +56,7 @@ export class ClientController implements OnModuleInit {
     return result;
   }
 
+  @UseGuards(AuthenticatedUserGuard, RbacAuthGuard)
   @IndexQueryEndpoint()
   @ApiOkResponse({
     isArray: true,
@@ -76,9 +78,10 @@ export class ClientController implements OnModuleInit {
     return result;
   }
 
+  // TODO Auth Guards
   @TestSetupEndpoint()
   async testSetup(): Promise<'OK'> {
-    if (process.env.NODE_ENV !== 'test') {
+    if (process.env.NODE_ENV !== 'test' && process.env.NODE_ENV !== 'e2e') {
       throw new TrueImpactRuntimeException([
         new TrueImpactError(
           `You cannot access test setup helpers in the environment [${process.env.NODE_ENV}]`,

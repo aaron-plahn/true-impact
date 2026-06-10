@@ -1,6 +1,8 @@
+import { AuthModule } from 'src/auth/auth.module';
 import { InMemoryQueryRepository } from '../../common/persistence';
 import { CommandHandlerService } from '../../libs/cqrs-es';
 import { Module, ModuleRef } from '../../libs/framework';
+import { UserModule } from '../users/user.module';
 import {
   CreateCommunity,
   CreateCommunityCommandHandler,
@@ -18,6 +20,7 @@ import { CommunityValidationService } from './external-services';
 import { CommunityQueryService, CommunityViewModel } from './queries';
 
 @Module({
+  imports: [UserModule, AuthModule],
   providers: [
     {
       provide: COMMUNITY_QUERY_REPOSITORY_INJECTION_TOKEN,

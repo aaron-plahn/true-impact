@@ -1,10 +1,10 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
-import { TiSystemUser } from 'src/features/users/ti-system-user.aggregate-root';
+import { User } from '../../features/users/user.aggregate-root';
 
 @Injectable()
 export class RbacAuthGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
-    const req = context.switchToHttp().getRequest<{ user?: TiSystemUser }>();
+    const req = context.switchToHttp().getRequest<{ user?: User }>();
 
     if (!req.user) {
       return false;

@@ -7,6 +7,7 @@ import {
   TrueImpactError,
   TrueImpactRuntimeException,
 } from '../../../libs/data-types';
+import { TestHttpClient } from '../test-utils';
 import { CommandErrorResponseBody } from './command-responses';
 import { RestCommandStreamExecutor } from './rest-command-executor';
 
@@ -14,14 +15,18 @@ type ErrorTestCase = {
   endpoint: string;
   stream: TestCommandStream;
   assertErrorMessageAsExpected?: (message: string) => void;
+  httpClient?: TestHttpClient;
 };
 
 export const assertCommandScenarioError = async ({
   endpoint,
   stream,
   assertErrorMessageAsExpected,
+  httpClient,
 }: ErrorTestCase): Promise<void> => {
-  const results = await stream.execute(new RestCommandStreamExecutor(endpoint));
+  const results = await stream.execute(
+    new RestCommandStreamExecutor(endpoint, httpClient),
+  );
 
   const failingCommands: [ICommandFsa, CommandErrorResponseBody][] =
     results.filter(

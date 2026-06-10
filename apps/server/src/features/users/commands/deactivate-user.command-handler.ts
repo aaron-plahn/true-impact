@@ -21,6 +21,12 @@ export class DeactivateUserCommandHandler implements ICommandHandler<DeactivateU
       },
     } = fsa;
 
+    /**
+     * You also shouldn't be able to deactivate a lone admin user. But
+     * we can always manually append a `USER_REACTIVATED` in the DB to
+     * recover from this situation, so we avoid complicated validation of
+     * that situation here.
+     */
     const target = await this.userCommandRepository.fetchById(id);
 
     if (!target) {

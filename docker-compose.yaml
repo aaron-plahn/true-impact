@@ -47,7 +47,7 @@ services:
       context: .
       dockerfile: apps/server/Dockerfile
     env_file:
-      - .env.local
+      - .env.${NODE_ENV}
     ports:
       - $API_PORT:$API_PORT
     networks:

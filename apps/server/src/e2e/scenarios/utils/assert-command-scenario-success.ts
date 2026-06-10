@@ -2,6 +2,7 @@ import {
   PersistenceAcknowledgement,
   TestCommandStream,
 } from '../../../libs/cqrs-es';
+import { TestHttpClient } from '../test-utils';
 import { RestCommandStreamExecutor } from './rest-command-executor';
 
 export * from './assert-command-scenario-success';
@@ -11,7 +12,9 @@ export const assertCommandScenarioSuccess = async ({
   stream,
   // name,
   assertSuccess: assertSuccessResponse,
+  // TODO remove this
   headers = {},
+  httpClient,
 }: {
   endpoint: string;
   stream: TestCommandStream;
@@ -19,11 +22,12 @@ export const assertCommandScenarioSuccess = async ({
   assertSuccess?: (acks: PersistenceAcknowledgement[]) => void | Promise<void>;
   // this is important for mocking authenticated requests
   headers?: Record<string, unknown>;
+  httpClient?: TestHttpClient;
 }) => {
   const results: PersistenceAcknowledgement[] = [];
 
   const fsasAndResults = await stream.execute(
-    new RestCommandStreamExecutor(endpoint),
+    new RestCommandStreamExecutor(endpoint, httpClient),
     headers,
   );
 

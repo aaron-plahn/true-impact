@@ -1,3 +1,4 @@
+import { ConfigService } from '@nestjs/config';
 import { PersistenceAcknowledgement } from 'src/libs/cqrs-es';
 import {
   DeepPartial,
@@ -19,7 +20,10 @@ export class InMemoryUserCommandRepository implements IUserCommandRepository {
 
   private readonly type = USER_AGGREGATE_TYPE;
 
-  constructor(private entitiesById: Map<string, User> = new Map()) {
+  constructor(
+    private entitiesById: Map<string, User> = new Map(),
+    private readonly configService: ConfigService,
+  ) {
     const schema = getDataSchemaFromClassCtor(User);
 
     // @ts-expect-error What's going on here?
@@ -57,6 +61,8 @@ export class InMemoryUserCommandRepository implements IUserCommandRepository {
     hashedPassword: string;
   }): Promise<User | null> {
     const searchResult = Array.from(this.entitiesById.values()).find((user) => {
+      console.log({ user: user, credentials: credentials });
+
       return (
         user.username === credentials.username &&
         user.hashedPassword === credentials.hashedPassword &&
@@ -211,6 +217,14 @@ export class InMemoryUserCommandRepository implements IUserCommandRepository {
   }
 
   clear() {
-    this.entitiesById = new Map();
+    const defaultAdminUsername =
+      this.configService.get<string | null>('SYSTEM_ADMIN_USERNAME') ||
+      '<NONE>';
+
+    for (const user of this.entitiesById.values()) {
+      if (user.username !== defaultAdminUsername) {
+        this.entitiesById.delete(user.id);
+      }
+    }
   }
 }

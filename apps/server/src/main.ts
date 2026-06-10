@@ -26,8 +26,17 @@ async function bootstrap() {
   app.enableCors({
     origin: [CLIENT_DOMAIN],
     // TODO ensure all headers required for auth show up here
-    allowedHeaders: ['content-type'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'X-Requested-With',
+      'Accept',
+      'credentials',
+    ],
+    optionSuccessStatus: 204,
+    preflightContinue: false,
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   });
 
   const cookiesSecret = configService.get<string>('TI_COOKIES_SECRET'); // process.env.TI_COOKIES_SECRET;
