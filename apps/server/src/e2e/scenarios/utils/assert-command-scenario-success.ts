@@ -12,23 +12,18 @@ export const assertCommandScenarioSuccess = async ({
   stream,
   // name,
   assertSuccess: assertSuccessResponse,
-  // TODO remove this
-  headers = {},
   httpClient,
 }: {
   endpoint: string;
   stream: TestCommandStream;
   // name: string;
   assertSuccess?: (acks: PersistenceAcknowledgement[]) => void | Promise<void>;
-  // this is important for mocking authenticated requests
-  headers?: Record<string, unknown>;
   httpClient?: TestHttpClient;
 }) => {
   const results: PersistenceAcknowledgement[] = [];
 
   const fsasAndResults = await stream.execute(
     new RestCommandStreamExecutor(endpoint, httpClient),
-    headers,
   );
 
   fsasAndResults.forEach(([_fsa, result]) => {

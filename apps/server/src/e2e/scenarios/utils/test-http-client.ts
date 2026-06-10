@@ -4,6 +4,12 @@ export interface Headers {
   Cookie: string[];
 }
 
+/**
+ * We attempted to use tough-cookie and cookie-jar, but these led to friction
+ * with our test build due to incompatible modules. Since this is only a test utility,
+ * we implemented our own http client with cookies as this didn't take much time. A
+ * nice side-effect is several less dependencies.
+ */
 export class TestHttpClient implements Omit<
   axios.AxiosInstance,
   'constructor'

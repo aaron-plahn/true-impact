@@ -56,24 +56,17 @@ export class TestCommandStream {
     return new TestCommandStream(this.creationCommandFsa, existing);
   }
 
-  async execute(
-    executor: {
-      execute(
-        fsa: ICommandFsa,
-        headers?: Record<string, unknown>,
-      ): Promise<PersistenceAcknowledgement | { message: string }>;
-    },
-    headers?: Record<string, unknown>,
-  ) {
+  async execute(executor: {
+    execute(
+      fsa: ICommandFsa,
+    ): Promise<PersistenceAcknowledgement | { message: string }>;
+  }) {
     const allResults: [
       ICommandFsa,
       PersistenceAcknowledgement | { message: string },
     ][] = [];
 
-    const creationResult = await executor.execute(
-      this.creationCommandFsa,
-      headers,
-    );
+    const creationResult = await executor.execute(this.creationCommandFsa);
 
     allResults.push([this.creationCommandFsa, creationResult]);
 
@@ -87,7 +80,7 @@ export class TestCommandStream {
     });
 
     for (const fsa of updateCommandFsasToExecute) {
-      const result = await executor.execute(fsa, headers || {});
+      const result = await executor.execute(fsa);
 
       allResults.push([fsa, result]);
     }
