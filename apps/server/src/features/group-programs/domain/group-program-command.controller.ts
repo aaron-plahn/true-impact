@@ -1,34 +1,39 @@
-import { AuthenticatedUserGuard, RbacAuthGuard } from 'src/auth/guards';
 import {
-  TrueImpactError,
-  TrueImpactRuntimeException,
-} from 'src/libs/data-types';
-import type { CommandResult, ICommandFsa } from '../../../libs/cqrs-es';
-import { CommandHandlerService } from '../../../libs/cqrs-es';
-import {
-  BadUserInputFilter,
   Body,
   Controller,
   Inject,
   Post,
-  QueryResponseInterceptor,
-  ResourceNotFoundFilter,
-  TestSetupEndpoint,
-  UseFilters,
   UseGuards,
   UseInterceptors,
-} from '../../../libs/framework';
-import { USER_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../constants';
-import type { IUserCommandRepository } from '../repositories';
+} from '@nestjs/common';
+import { AuthenticatedUserGuard, RbacAuthGuard } from 'src/auth/guards';
+import { UserCommandController } from 'src/features/users/commands/user-command.controller';
+import type { ICommandFsa } from 'src/libs/cqrs-es';
+import { CommandHandlerService, CommandResult } from 'src/libs/cqrs-es';
+import {
+  TrueImpactError,
+  TrueImpactRuntimeException,
+} from 'src/libs/data-types';
+import {
+  QueryResponseInterceptor,
+  TestSetupEndpoint,
+} from 'src/libs/framework';
+import {
+  BadUserInputFilter,
+  ResourceNotFoundFilter,
+  UseFilters,
+} from 'src/libs/framework/exceptions';
+import type { IGroupCommandRepository } from './commands/group-command-repository.interface';
+import { GROUP_PROGRAM_COMMAND_REPOSITORY_INJECTION_TOKEN } from './constants';
 
 @UseFilters(ResourceNotFoundFilter, BadUserInputFilter)
 @UseInterceptors(QueryResponseInterceptor)
-@Controller('users')
-export class UserCommandController {
+@Controller('group-programs')
+export class GroupProgramCommandController {
   constructor(
     private readonly commandHandlerService: CommandHandlerService,
-    @Inject(USER_COMMAND_REPOSITORY_INJECTION_TOKEN)
-    private readonly commandRepository: IUserCommandRepository,
+    @Inject(GROUP_PROGRAM_COMMAND_REPOSITORY_INJECTION_TOKEN)
+    private readonly commandRepository: IGroupCommandRepository,
   ) {}
 
   @UseGuards(AuthenticatedUserGuard, RbacAuthGuard)
