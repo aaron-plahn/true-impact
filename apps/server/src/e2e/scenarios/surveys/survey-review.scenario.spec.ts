@@ -39,6 +39,8 @@ import {
   assertCommandScenarioSuccess,
   assertCommandSuccess,
 } from '../utils';
+import { assertCommandAccessDeniedToUser } from '../utils/assert-command-access-denied-to-user';
+import { TestHttpClient } from '../utils/test-http-client';
 
 /**
  * There is a fair deal of dependent state for this test.
@@ -175,6 +177,8 @@ const seedRequiredState = async ({
   // @ts-expect-error This is not the best pattern. Don't extract this as a general util yet.
   return { id, accessCode };
 };
+
+const httpClient = new TestHttpClient('http://localhost:4200');
 
 /**
  * This test suite become broken when introducing session-based auth for completing surveys. We need a
@@ -871,6 +875,7 @@ describe.skip(`when reviewing a survey (e.g. when a clinician reviews a client's
 
               beforeEach(async () => {
                 await assertCommandSuccess({
+                  httpClient,
                   endpoint: buildCommandEndpoint(indexEndpoints.flags),
                   commandFsa: TestCommandStream.buildOne(CreateFlag, {
                     label: secondFlagLabel,
@@ -1245,6 +1250,32 @@ describe.skip(`when reviewing a survey (e.g. when a clinician reviews a client's
           }),
           assertErrorMessageAsExpected: (message) => {
             assertTextMatchesAll(message, missingAggregateId, 'no such review');
+          },
+        });
+      });
+    });
+  });
+
+  describe(`when the user does not have role-based access to execute commands`, () => {
+    describe(`when the user is not authenticated`, () => {
+      it(`should return forbidden`, async () => {
+        await assertCommandAccessDeniedToUser({
+          endpoint: commandEndpointForSurveyReviews,
+          user: undefined,
+        });
+      });
+    });
+
+    describe(`when the user is an ordinary user`, () => {
+      it(`should return forbidden`, async () => {
+        await assertCommandAccessDeniedToUser({
+          endpoint: commandEndpointForSurveyReviews,
+          user: {
+            credentials: {
+              username: 'testemployee',
+              password: 'testemployeePASSWORD1',
+            },
+            role: 'employee',
           },
         });
       });

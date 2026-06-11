@@ -1,3 +1,4 @@
+import { AuthenticatedUserGuard, RbacAuthGuard } from 'src/auth/guards';
 import {
   TrueImpactError,
   TrueImpactRuntimeException,
@@ -14,6 +15,7 @@ import {
   ResourceNotFoundFilter,
   TestSetupEndpoint,
   UseFilters,
+  UseGuards,
   UseInterceptors,
 } from '../../../libs/framework';
 import { USER_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../constants';
@@ -29,6 +31,7 @@ export class UserCommandController {
     private readonly commandRepository: IUserCommandRepository,
   ) {}
 
+  @UseGuards(AuthenticatedUserGuard, RbacAuthGuard)
   // TODO @CommandExecutionEndpoint
   @Post('commands')
   async executeCommand(@Body() fsa: ICommandFsa): Promise<CommandResult> {
@@ -37,9 +40,10 @@ export class UserCommandController {
     return result;
   }
 
+  // TODO auth guards
   @TestSetupEndpoint()
   async testSetup(): Promise<'OK'> {
-    if (process.env.NODE_ENV !== 'test') {
+    if (process.env.NODE_ENV !== 'test' && process.env.NODE_ENV !== 'e2e') {
       throw new TrueImpactRuntimeException([
         new TrueImpactError(
           `You cannot access test setup helpers in the environment [${process.env.NODE_ENV}]`,
@@ -55,4 +59,10 @@ export class UserCommandController {
   }
 
   // TODO onModuleInit buildApiDocs
+  onModuleInit() {
+    this.commandHandlerService.buildApiDocs(
+      UserCommandController,
+      'executeCommand',
+    );
+  }
 }

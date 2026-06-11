@@ -1,21 +1,24 @@
-import axios, { AxiosResponse } from 'axios';
+import { AxiosResponse } from 'axios';
 import { ICommandFsa, PersistenceAcknowledgement } from '../../../libs/cqrs-es';
 import { HttpStatus } from '../../../libs/framework';
 import { CommandErrorResponseBody, SuccessResponse } from './command-responses';
+import { TestHttpClient } from './test-http-client';
 
 type SuccessTestCase = {
   endpoint: string;
   commandFsa: ICommandFsa;
   // arrange: () => Promise<void>;
   assertSuccess?: (response: SuccessResponse['body']) => Promise<void>;
+  httpClient: TestHttpClient;
 };
 
 export const assertCommandSuccess = async ({
   endpoint,
   commandFsa,
   assertSuccess: assertSuccess,
+  httpClient,
 }: SuccessTestCase) => {
-  const response = await axios
+  const response = await httpClient
     .post(endpoint, commandFsa)
     .catch(
       (e: {

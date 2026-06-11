@@ -1,9 +1,9 @@
-import { AuthModule } from 'src/auth/auth.module';
-import { EncryptionService } from 'src/libs/auth';
+import { AuthModule } from '../../auth/auth.module';
 import {
   InMemoryCommandRepository,
   InMemoryQueryRepositoryProvider,
 } from '../../common/persistence';
+import { EncryptionService } from '../../libs/auth';
 import { CommandHandlerService } from '../../libs/cqrs-es';
 import {
   TrueImpactBadUserInputError,
@@ -15,6 +15,7 @@ import { ClientModule } from '../clients/client.module';
 import { ClientValidationService } from '../clients/services';
 import { FlagModule } from '../flags/flag.module';
 import { AddFollowUpQuestionForSurveyOption } from '../survey/survey-management';
+import { UserModule } from '../users/user.module';
 import { SURVEY_COMMAND_REPOSITORY_DEPENDENCY_TOKEN } from './constants';
 import { SURVEY_QUERY_REPOSITORY_PROVIDER_TOKEN } from './queries/survey-query-repository.interface';
 import { SurveyQueryService } from './queries/survey-query.service';
@@ -94,7 +95,7 @@ import { SurveyController } from './survey.controller';
 const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
 
 @Module({
-  imports: [ClientModule, FlagModule, AuthModule],
+  imports: [ClientModule, FlagModule, UserModule, AuthModule],
   providers: [
     SurveyEventsGateway,
     // core survey commands

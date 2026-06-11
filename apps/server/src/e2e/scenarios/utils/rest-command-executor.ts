@@ -1,19 +1,18 @@
-import axios, { RawAxiosRequestHeaders } from 'axios';
 import { ICommandFsa, PersistenceAcknowledgement } from '../../../libs/cqrs-es';
 import { HttpStatus } from '../../../libs/framework';
 import { CommandErrorResponseBody } from './command-responses';
+import { TestHttpClient } from './test-http-client';
 
 export class RestCommandStreamExecutor {
-  private readonly httpClient = axios.create({
-    withCredentials: true,
-  });
+  constructor(
+    private readonly endpoint: string,
+    // TODO pull this from .env \ config
+    private readonly httpClient = new TestHttpClient('http://localhost:4200'),
+  ) {}
 
-  constructor(private readonly endpoint: string) {}
-
-  async execute(fsa: ICommandFsa, headers: RawAxiosRequestHeaders = {}) {
+  async execute(fsa: ICommandFsa) {
     const response = await this.httpClient
-      // @ts-expect-error We need to fix the types in this file
-      .post(this.endpoint, fsa, { ...headers, Origin: 'http://localhost:4200' })
+      .post(this.endpoint, fsa)
       .catch(
         (e: {
           status: HttpStatus;

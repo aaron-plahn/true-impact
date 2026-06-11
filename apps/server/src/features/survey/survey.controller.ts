@@ -1,6 +1,7 @@
-import { Req, Res, Session } from '@nestjs/common';
+import { Req, Res, Session, UseGuards } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { isDeepStrictEqual } from 'util';
+import { AuthenticatedUserGuard, RbacAuthGuard } from '../../auth/guards';
 import type { ICommandFsa } from '../../libs/cqrs-es';
 import { CommandHandlerService, CommandResult } from '../../libs/cqrs-es';
 import {
@@ -15,6 +16,7 @@ import {
   ApiOkResponse,
   BadUserInputFilter,
   Body,
+  ConfigService,
   Controller,
   DetailQueryEndpoint,
   IdParam,
@@ -52,6 +54,7 @@ export class SurveyController implements OnModuleInit {
     private readonly commandHandlerService: CommandHandlerService,
     @Inject(SURVEY_RESPONSE_SESSION_REPOSITORY_TOKEN)
     private readonly sessionRepository: ISurveyResponseSessionRepository,
+    private readonly configService: ConfigService,
   ) {}
 
   @DetailQueryEndpoint()
@@ -88,6 +91,7 @@ export class SurveyController implements OnModuleInit {
    * a read-only state for certain deployment strategies or maintenance windows.
    */
   // TODO @CommandExecutionEndpoint()
+  @UseGuards(AuthenticatedUserGuard, RbacAuthGuard)
   @Post('commands')
   async executeCommand(
     @Body()
@@ -253,9 +257,10 @@ export class SurveyController implements OnModuleInit {
     );
   }
 
+  // TODO auth guard
   @TestSetupEndpoint()
   async testSetup(): Promise<'OK'> {
-    if (process.env.NODE_ENV !== 'test') {
+    if (process.env.NODE_ENV !== 'test' && process.env.NODE_ENV !== 'e2e') {
       throw new TrueImpactRuntimeException([
         new TrueImpactError(
           `You cannot access test setup helpers in the environment [${process.env.NODE_ENV}]`,

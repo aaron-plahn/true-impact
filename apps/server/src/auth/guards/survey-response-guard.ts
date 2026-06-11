@@ -1,4 +1,4 @@
-import { CanActivate, ExecutionContext } from '@nestjs/common';
+import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { SURVEY_RESPONSE_AGGREGATE_TYPE } from 'src/features/survey/constants';
 import { SurveyResponseCompositeIdentifier } from 'src/features/survey/survey-completion';
 import { isDeepStrictEqual } from 'util';
@@ -32,6 +32,7 @@ interface TiRequest {
   user?: RequestUser;
 }
 
+@Injectable()
 export class SurveyResponseGuard implements CanActivate {
   public canActivate(context: ExecutionContext): boolean {
     const { body, user } = context.switchToHttp().getRequest<TiRequest>();

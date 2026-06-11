@@ -137,66 +137,6 @@ export class SurveyResponseQueryController {
     return tiSduiToHtml(sduiView.render());
   }
 
-  @Get('test-ws')
-  testWS() {
-    return `
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>WSs are dope!</title>
-        
-    </head>
-    <body>
-        <p id="root">Loading</p>
-        <p id="BEGIN_SURVEY_1">PLACEHOLDER</p>
-        <button id="send-button">SEND</button>
-        <script src="https://cdn.socket.io/3.1.3/socket.io.min.js" integrity="sha384-cPwlPLvBTa3sKAgddT6krw0cJat7egBga3DJepJyrLl4Q9/5WLra3rrnMcyTyOnh" crossorigin="anonymous"></script>
-        <script>
-          const target = document.getElementById('root');
-
-          const wsUri = 'ws://localhost:3234/survey-events';
-          const socket = io(wsUri, { transports: ['websocket'], autoConnect: true });
-
-          const send = () =>{
-            socket.emit("SOME_EVENT",{message: 'Another one bites the dust!'});
-
-            console.log("EMITTED");
-          };
-
-          socket.on('connect', () => {
-            document.getElementById("send-button").addEventListener("click",send);
-
-            send();
-          });
-
-          socket.on('SOME_EVENT', ({ message }) => {
-            target.innerHTML += ", " +message;
-          });
-
-          socket.on('SURVEY_UPDATED', (e)=>{
-            console.log({updatedWith: e});
-
-            const elToUpdate = document.getElementById(e.target);
-
-            if(!elToUpdate){
-              throw new Error('Failed to update target element with ID:' + e.target)
-            }
-
-            if(e.swap === "outer"){
-              elToUpdate.outerHTML = e.content;
-              return;
-            }
-
-            console.log({unsupportedEvent: e});
-          })
-        </script>
-    </body>
-    </html>
-      `;
-  }
-
   @IndexQueryEndpoint()
   @ApiOkResponse({
     schema,
@@ -218,9 +158,10 @@ export class SurveyResponseQueryController {
 
   // TODO support filters to fetch completion attempts for participant of a given type, for a given survey, etc.
 
+  // TODO auth guard
   @TestSetupEndpoint()
   async testSetup(): Promise<'OK'> {
-    if (process.env.NODE_ENV !== 'test') {
+    if (process.env.NODE_ENV !== 'test' && process.env.NODE_ENV !== 'e2e') {
       throw new TrueImpactRuntimeException([
         new TrueImpactError(
           `You cannot access test setup helpers in the environment [${process.env.NODE_ENV}]`,

@@ -8,13 +8,15 @@ import { UserModule } from './features/users/user.module';
 import { CryptographyModule } from './libs/auth';
 import { ConfigModule, Module } from './libs/framework';
 
+const nodeEnv = process.env.NODE_ENV || 'local';
+
 @Module({
   imports: [
     // TODO Make the dot-env file path configurable by environment
     ConfigModule.forRoot({
       isGlobal: true,
       // TODO Support a different env per environment. Use a different NODE_ENV for Docker runs vs. local npm runs.
-      envFilePath: ['.env.local', '../../.env.local'],
+      envFilePath: [`.env.${nodeEnv}`, `../../.env.${nodeEnv}`],
     }),
     CryptographyModule,
     AuthModule,

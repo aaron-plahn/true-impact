@@ -1,3 +1,4 @@
+import { AuthenticatedUserGuard, RbacAuthGuard } from 'src/auth/guards';
 import type { ICommandFsa } from '../../libs/cqrs-es';
 import { CommandHandlerService, CommandResult } from '../../libs/cqrs-es';
 import {
@@ -17,6 +18,7 @@ import {
   ResourceNotFoundFilter,
   TestSetupEndpoint,
   UseFilters,
+  UseGuards,
   UseInterceptors,
 } from '../../libs/framework';
 import { CommunityQueryService, CommunityViewModelClientDto } from './queries';
@@ -31,6 +33,7 @@ export class CommunityController implements OnModuleInit {
   ) {}
 
   // TODO @CommandExecutionEndpoint
+  @UseGuards(AuthenticatedUserGuard, RbacAuthGuard)
   @Post('commands')
   async executeCommand(@Body() fsa: ICommandFsa): Promise<CommandResult> {
     const result = await this.commandHandlerService.execute(fsa);
@@ -38,6 +41,7 @@ export class CommunityController implements OnModuleInit {
     return result;
   }
 
+  @UseGuards(AuthenticatedUserGuard, RbacAuthGuard)
   @DetailQueryEndpoint()
   async fetchById(
     @IdParam() id: string,
@@ -47,6 +51,7 @@ export class CommunityController implements OnModuleInit {
     return result;
   }
 
+  @UseGuards(AuthenticatedUserGuard, RbacAuthGuard)
   @IndexQueryEndpoint()
   async fetchMany(): Promise<CommunityViewModelClientDto[] | TrueImpactError> {
     const result = await this.communityQueryService.fetchMany();
@@ -54,9 +59,10 @@ export class CommunityController implements OnModuleInit {
     return result;
   }
 
+  // TODO What auth guard should we use here?
   @TestSetupEndpoint()
   async testSetup(): Promise<'OK'> {
-    if (process.env.NODE_ENV !== 'test') {
+    if (process.env.NODE_ENV !== 'test' && process.env.NODE_ENV !== 'e2e') {
       throw new TrueImpactRuntimeException([
         new TrueImpactError(
           `You cannot access test setup helpers in the environment [${process.env.NODE_ENV}]`,

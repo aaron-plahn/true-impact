@@ -36,7 +36,9 @@ import { InMemoryUserCommandRepository } from './repositories/in-memory-user-com
     },
     {
       provide: USER_COMMAND_REPOSITORY_INJECTION_TOKEN,
-      useClass: InMemoryUserCommandRepository,
+      useFactory: (configService: ConfigService) =>
+        new InMemoryUserCommandRepository(new Map(), configService),
+      inject: [ConfigService],
     },
     {
       provide: CommandHandlerService,

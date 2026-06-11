@@ -12,7 +12,7 @@ export function TestSetupEndpoint(): MethodDecorator {
   ) {
     ApiExcludeEndpoint()(target, propertyKey, descriptor);
 
-    if (process.env.NODE_ENV === 'test') {
+    if (process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'e2e') {
       return Patch('test-setup')(target, propertyKey, descriptor);
     }
   };

@@ -26,6 +26,7 @@ import {
   assertCommandSuccess,
   assertQueryResponse,
 } from '../utils';
+import { TestHttpClient } from '../utils/test-http-client';
 
 // TODO From env.e2e
 const port = '3234';
@@ -155,6 +156,8 @@ const seedPublishedSurvey = async () => {
 
 const communityName = 'Big Community';
 
+const httpClient = new TestHttpClient('http://localhost:4200');
+
 /**
  * We have currently disabled completion of surveys by known clients. We can circle back
  * once we have completed support for anonymous survey completion.
@@ -173,6 +176,7 @@ describe.skip(`Survey Completion Scenarios`, () => {
     await axios.patch(communityTestSetupEndpoint);
 
     await assertCommandSuccess({
+      httpClient,
       endpoint: communityCommandEndpoint,
       commandFsa: TestCommandStream.buildOne(CreateCommunity, {
         name: communityName,

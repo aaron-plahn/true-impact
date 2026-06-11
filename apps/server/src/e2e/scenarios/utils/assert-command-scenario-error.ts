@@ -9,19 +9,24 @@ import {
 } from '../../../libs/data-types';
 import { CommandErrorResponseBody } from './command-responses';
 import { RestCommandStreamExecutor } from './rest-command-executor';
+import { TestHttpClient } from './test-http-client';
 
 type ErrorTestCase = {
   endpoint: string;
   stream: TestCommandStream;
   assertErrorMessageAsExpected?: (message: string) => void;
+  httpClient?: TestHttpClient;
 };
 
 export const assertCommandScenarioError = async ({
   endpoint,
   stream,
   assertErrorMessageAsExpected,
+  httpClient,
 }: ErrorTestCase): Promise<void> => {
-  const results = await stream.execute(new RestCommandStreamExecutor(endpoint));
+  const results = await stream.execute(
+    new RestCommandStreamExecutor(endpoint, httpClient),
+  );
 
   const failingCommands: [ICommandFsa, CommandErrorResponseBody][] =
     results.filter(

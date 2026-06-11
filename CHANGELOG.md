@@ -2,6 +2,11 @@
 
 This first release of the True Impact platform introduces a working model for user management, client management, and survey creation and completion.
 
+## 30
+In this commit, we add role based access control (RBAC) to all command and query endpoints. We
+introduce several server integration test utilities to deal with tracking auth state in the test
+http client and seeding test users. Securing the web sockets (real-time update channels) is future-scoped.
+
 ## 29
 In this commit, we introduce a user management work flow and sessions for authenticated system users.
 

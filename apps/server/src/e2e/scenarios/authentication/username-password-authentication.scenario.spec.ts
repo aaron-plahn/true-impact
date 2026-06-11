@@ -5,6 +5,8 @@ import { CreateUserWithPassword } from '../../../features/users/commands/create-
 import { DeactivateUser } from '../../../features/users/commands/deactivate-user.command';
 import { TestCommandStream } from '../../../libs/cqrs-es';
 import { assertCommandScenarioSuccess } from '../utils';
+import { signInAsAdmin } from '../utils/sign-in';
+import { TestHttpClient } from '../utils/test-http-client';
 
 const port = '3234';
 
@@ -28,55 +30,33 @@ const testPassword = 'my$PACEwasSICKin99';
 
 const bogusPassword = 'sorryMARIOcheckANOTHERcastle123';
 
+const httpClientForTestRuns = new TestHttpClient('http://localhost:4200');
+
 describe(`When loging in with a username and password (without Multi-factor Authentication enabled)`, () => {
   beforeEach(async () => {
-    await axios.patch(userSetupEndpoint);
+    await httpClientForTestRuns.patch(userSetupEndpoint);
   });
 
   describe(`when the user exists`, () => {
     beforeEach(async () => {
+      const httpClientForDataSeeding = new TestHttpClient(
+        'http://localhost:4200',
+      );
+
+      await signInAsAdmin(httpClientForDataSeeding);
+
       await assertCommandScenarioSuccess({
         endpoint: userCommandsEndpoint,
         stream: TestCommandStream.first(CreateUserWithPassword, {
           username: testUsername,
           password: testPassword,
         }),
+        httpClient: httpClientForDataSeeding,
       });
     });
 
     describe(`when the credentials are correct`, () => {
-      let cookies: string[];
-
-      const client = axios.create({
-        withCredentials: true,
-        headers: {
-          Origin: 'http://localhost:4200',
-        },
-      });
-
-      client.interceptors.request.use((config) => {
-        console.log(`OUTGOING AXIOS REQUEST ----------`);
-
-        console.log('URL:', config.url);
-
-        console.log('HEADERS:', config.headers);
-
-        return config;
-      });
-
-      client.interceptors.response.use((config) => {
-        console.log('RESPONSE HEADERS ---->', config.headers);
-
-        if ('set-cookie' in config.headers) {
-          const foo = config.headers['set-cookie'];
-
-          if (foo) {
-            cookies = foo;
-          }
-        }
-
-        return config;
-      });
+      const client = new TestHttpClient('http://localhost:4200');
 
       /**
        * We might verify this at the `e2e` level by providing an addtional
@@ -96,13 +76,8 @@ describe(`When loging in with a username and password (without Multi-factor Auth
 
         expect(response.status).toBe(HttpStatus.CREATED);
 
-        const result = (
-          await client.get(sessionEndpoint, {
-            headers: {
-              Cookie: cookies[0],
-            },
-          })
-        ).data as SessionInfoForAuthenticatedUser;
+        const result = (await client.get(sessionEndpoint))
+          .data as SessionInfoForAuthenticatedUser;
 
         expect(result.username).toBe(testUsername);
 
@@ -167,12 +142,19 @@ describe(`When loging in with a username and password (without Multi-factor Auth
 
   describe(`when the user has been deactivated`, () => {
     beforeEach(async () => {
+      const httpClientForDataSeeding = new TestHttpClient(
+        'http://localhost:4200',
+      );
+
+      await signInAsAdmin(httpClientForDataSeeding);
+
       await assertCommandScenarioSuccess({
         endpoint: userCommandsEndpoint,
         stream: TestCommandStream.first(CreateUserWithPassword, {
           username: testUsername,
           password: testPassword,
         }).andThen(DeactivateUser),
+        httpClient: httpClientForDataSeeding,
       });
     });
 

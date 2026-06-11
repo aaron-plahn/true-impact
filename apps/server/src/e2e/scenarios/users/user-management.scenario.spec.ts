@@ -1,5 +1,4 @@
 import { HttpStatus } from '@nestjs/common';
-import axios from 'axios';
 import { CreateUserWithPassword } from '../../../features/users/commands/create-user-with-password.command';
 import { DeactivateUser } from '../../../features/users/commands/deactivate-user.command';
 import { GrantUserRole } from '../../../features/users/commands/grant-user-role.command';
@@ -11,6 +10,8 @@ import {
   assertCommandScenarioError,
   assertCommandScenarioSuccess,
 } from '../utils';
+import { signInAsAdmin } from '../utils/sign-in';
+import { TestHttpClient } from '../utils/test-http-client';
 
 const port = '3234';
 
@@ -33,9 +34,15 @@ const testUserLastName = 'Boy';
 
 const missingUserId = 'MissingUserId';
 
+const httpClient = new TestHttpClient('http://localhost:4200');
+
 describe('User Management Scenarios', () => {
+  beforeAll(async () => {
+    await signInAsAdmin(httpClient);
+  });
+
   beforeEach(async () => {
-    await axios.patch(userTestSetupEndpoint);
+    await httpClient.patch(userTestSetupEndpoint);
   });
 
   describe(`When creating a new user`, () => {
@@ -44,6 +51,7 @@ describe('User Management Scenarios', () => {
         describe(`when the user is a tenant admin`, () => {
           it(`should create the user`, async () => {
             await assertCommandScenarioSuccess({
+              httpClient,
               endpoint: userCommandsEndpoint,
               stream: TestCommandStream.first(CreateUserWithPassword, {
                 username: testUsername,
@@ -53,7 +61,7 @@ describe('User Management Scenarios', () => {
               assertSuccess: async (acks) => {
                 const { id } = acks[0];
 
-                const queryResult = await axios.get(
+                const queryResult = await httpClient.get(
                   buildUserDetailEndpoint(id),
                 );
 
@@ -81,6 +89,7 @@ describe('User Management Scenarios', () => {
 
         it(`should grant the user the new role`, async () => {
           await assertCommandScenarioSuccess({
+            httpClient,
             endpoint: userCommandsEndpoint,
             stream: TestCommandStream.first(CreateUserWithPassword, {}).andThen(
               GrantUserRole,
@@ -92,7 +101,7 @@ describe('User Management Scenarios', () => {
               const { id } = acks[0];
 
               const updatedUserView = (
-                await axios.get(buildUserDetailEndpoint(id))
+                await httpClient.get(buildUserDetailEndpoint(id))
               ).data as UserViewModel;
 
               expect(updatedUserView.role).toBe(newRole);
@@ -106,6 +115,7 @@ describe('User Management Scenarios', () => {
           const redundantRole: UserRole = 'tenant admin';
 
           await assertCommandScenarioError({
+            httpClient,
             endpoint: userCommandsEndpoint,
             stream: TestCommandStream.first(CreateUserWithPassword, {
               username: testUsername,
@@ -130,6 +140,7 @@ describe('User Management Scenarios', () => {
     describe(`when the user does not exist`, () => {
       it(`should return the expected error response`, async () => {
         await assertCommandError({
+          httpClient,
           endpoint: userCommandsEndpoint,
           commandFsa: TestCommandStream.buildOne(GrantUserRole, {
             aggregateCompositeIdentifier: {
@@ -151,6 +162,7 @@ describe('User Management Scenarios', () => {
       describe(`when the user is currently active`, () => {
         it(`should deactivate the user`, async () => {
           await assertCommandScenarioSuccess({
+            httpClient,
             endpoint: userCommandsEndpoint,
             // shouldn't the second arg here default to {}?
             stream: TestCommandStream.first(CreateUserWithPassword, {}).andThen(
@@ -164,6 +176,7 @@ describe('User Management Scenarios', () => {
       describe(`when the user has already been deactivated`, () => {
         it(`should return the expected error`, async () => {
           await assertCommandScenarioError({
+            httpClient,
             endpoint: userCommandsEndpoint,
             stream: TestCommandStream.first(CreateUserWithPassword, {
               username: testUsername,
@@ -183,6 +196,7 @@ describe('User Management Scenarios', () => {
     describe(`when the user does not exist`, () => {
       it(`should return the expected error`, async () => {
         await assertCommandError({
+          httpClient,
           endpoint: userCommandsEndpoint,
           commandFsa: TestCommandStream.buildOne(DeactivateUser, {
             aggregateCompositeIdentifier: {

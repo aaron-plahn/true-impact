@@ -1,4 +1,4 @@
-import { EncryptionService } from 'src/libs/auth';
+import { EncryptionService } from '../../libs/auth';
 import { Inject } from '../../libs/framework';
 import { USER_COMMAND_REPOSITORY_INJECTION_TOKEN } from './constants';
 import type { IUserCommandRepository } from './repositories';

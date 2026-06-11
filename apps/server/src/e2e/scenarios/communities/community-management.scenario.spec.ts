@@ -1,4 +1,3 @@
-import axios from 'axios';
 import {
   CreateCommunity,
   TranslateCommunityName,
@@ -12,6 +11,9 @@ import {
   assertCommandScenarioError,
   assertCommandScenarioSuccess,
 } from '../utils';
+import { assertCommandAccessDeniedToUser } from '../utils/assert-command-access-denied-to-user';
+import { signInAsAdmin } from '../utils/sign-in';
+import { TestHttpClient } from '../utils/test-http-client';
 
 // TODO From env.e2e
 const port = '3234';
@@ -48,61 +50,122 @@ const translateCommunityName = createCommunity.andThen(TranslateCommunityName, {
   languageCode: translationLanguageCodeForName,
 });
 
+const httpClient = new TestHttpClient('http://localhost:4200');
+
 describe(`Community Management Scenarios`, () => {
-  beforeEach(async () => {
-    await axios.patch(communityTestSetupEndpoint);
-  });
+  describe(`when the user is authenticated as an admin`, () => {
+    beforeAll(async () => {
+      await signInAsAdmin(httpClient);
+    });
 
-  describe(`when creating a community`, () => {
-    describe(`when the community name is valid`, () => {
-      describe(`when the community name is in English (en)`, () => {
-        it(`should create the community`, async () => {
-          await assertCommandScenarioSuccess({
-            endpoint: commandsEndpointForCommunities,
-            stream: createCommunity,
-            assertSuccess: async (acks) => {
-              const searchResult = await axios.get(
-                `${communityBaseEndpoint}/${acks[0].id}`,
-              );
+    beforeEach(async () => {
+      await httpClient.patch(communityTestSetupEndpoint);
+    });
 
-              expect(searchResult.status).toBe(HttpStatus.OK);
+    describe(`when creating a community`, () => {
+      describe(`when the community name is valid`, () => {
+        describe(`when the community name is in English (en)`, () => {
+          it(`should create the community`, async () => {
+            await assertCommandScenarioSuccess({
+              httpClient,
+              endpoint: commandsEndpointForCommunities,
+              stream: createCommunity,
+              assertSuccess: async (acks) => {
+                const searchResult = await httpClient.get(
+                  `${communityBaseEndpoint}/${acks[0].id}`,
+                );
 
-              const newCommunity =
-                searchResult.data as CommunityViewModelClientDto;
+                expect(searchResult.status).toBe(HttpStatus.OK);
 
-              expect(
-                newCommunity.name.items[originalLanguageCodeForName].original
-                  ?.text,
-              ).toBe(englishCommunityName);
+                const newCommunity =
+                  searchResult.data as CommunityViewModelClientDto;
 
-              const { bandNumber, revision, nation } = newCommunity;
+                expect(
+                  newCommunity.name.items[originalLanguageCodeForName].original
+                    ?.text,
+                ).toBe(englishCommunityName);
 
-              expect(bandNumber).toBe(bandNumber);
+                const { bandNumber, revision, nation } = newCommunity;
 
-              expect(revision).toBe('1');
+                expect(bandNumber).toBe(bandNumber);
 
-              expect(nation).toBe(nation);
-            },
+                expect(revision).toBe('1');
+
+                expect(nation).toBe(nation);
+              },
+            });
           });
         });
       });
-    });
 
-    describe(`when the language of the community name is not currently supported (but will be in the near future)`, () => {
-      describe(`clc`, () => {
-        const unsupportedLanguageCode = 'clc';
+      describe(`when the language of the community name is not currently supported (but will be in the near future)`, () => {
+        describe(`clc`, () => {
+          const unsupportedLanguageCode = 'clc';
+
+          it(`should return the expected error resposne`, async () => {
+            await assertCommandError({
+              httpClient,
+              endpoint: commandsEndpointForCommunities,
+              commandFsa: TestCommandStream.buildOne(CreateCommunity, {
+                languageCodeForName: unsupportedLanguageCode,
+              }),
+              assertErrorMessageAsExpected: (message) => {
+                assertTextMatchesAll(
+                  message,
+                  'not yet supported',
+                  unsupportedLanguageCode,
+                );
+              },
+            });
+          });
+        });
+      });
+
+      describe(`when the language of the community name is not a known language`, () => {
+        const invalidLanguageCode = 'X89';
 
         it(`should return the expected error resposne`, async () => {
           await assertCommandError({
+            httpClient,
             endpoint: commandsEndpointForCommunities,
             commandFsa: TestCommandStream.buildOne(CreateCommunity, {
-              languageCodeForName: unsupportedLanguageCode,
+              languageCodeForName: invalidLanguageCode,
             }),
             assertErrorMessageAsExpected: (message) => {
               assertTextMatchesAll(
                 message,
-                'not yet supported',
-                unsupportedLanguageCode,
+                invalidLanguageCode,
+                'cannot create a community',
+                'unknown language',
+              );
+            },
+          });
+        });
+      });
+
+      describe(`when there is already a community with the given name`, () => {
+        it(`should return the expected error response`, async () => {
+          await assertCommandScenarioSuccess({
+            httpClient,
+            endpoint: commandsEndpointForCommunities,
+            stream: createCommunity,
+          });
+
+          await assertCommandScenarioError({
+            httpClient,
+            endpoint: commandsEndpointForCommunities,
+            stream: TestCommandStream.first(CreateCommunity, {
+              name: englishCommunityName,
+              languageCodeForName: originalLanguageCodeForName,
+              bandNumber: '101b',
+            }),
+            assertErrorMessageAsExpected: (message) => {
+              assertTextMatchesAll(
+                message,
+                'cannot create community',
+                englishCommunityName,
+                bandNumber, // of the existing community
+                'already',
               );
             },
           });
@@ -110,144 +173,128 @@ describe(`Community Management Scenarios`, () => {
       });
     });
 
-    describe(`when the language of the community name is not a known language`, () => {
-      const invalidLanguageCode = 'X89';
+    describe(`when translating a community's name`, () => {
+      describe(`when the name has no translation`, () => {
+        describe(`when the langauge code is a known langauge code`, () => {
+          describe(`clc`, () => {
+            it(`should translate the community name`, async () => {
+              await assertCommandScenarioSuccess({
+                httpClient,
+                endpoint: commandsEndpointForCommunities,
+                stream: translateCommunityName,
+                assertSuccess: async (acks) => {
+                  const { name } = (
+                    await httpClient.get(
+                      `${communityBaseEndpoint}/${acks[0].id}`,
+                    )
+                  ).data as CommunityViewModelClientDto;
 
-      it(`should return the expected error resposne`, async () => {
-        await assertCommandError({
-          endpoint: commandsEndpointForCommunities,
-          commandFsa: TestCommandStream.buildOne(CreateCommunity, {
-            languageCodeForName: invalidLanguageCode,
-          }),
-          assertErrorMessageAsExpected: (message) => {
-            assertTextMatchesAll(
-              message,
-              invalidLanguageCode,
-              'cannot create a community',
-              'unknown language',
-            );
-          },
+                  expect(
+                    name.items[translationLanguageCodeForName]?.[
+                      'free translation'
+                    ]?.text,
+                  ).toBe(translationOfTheCommunityName);
+                },
+              });
+            });
+          });
+        });
+
+        describe(`when the language code is one that is not yet supported (but will be in the near future)`, () => {
+          describe(`en`, () => {
+            const invalidLanguageCode = 'en';
+
+            it(`should translate the community name`, async () => {
+              await assertCommandScenarioError({
+                httpClient,
+                endpoint: commandsEndpointForCommunities,
+                stream: createCommunity.andThen(TranslateCommunityName, {
+                  languageCode: invalidLanguageCode,
+                }),
+                assertErrorMessageAsExpected: (message) => {
+                  assertTextMatchesAll(
+                    message,
+                    invalidLanguageCode,
+                    'not yet supported',
+                  );
+                },
+              });
+            });
+          });
+        });
+
+        describe(`when the language code is not a valid language code`, () => {
+          describe(`abc`, () => {
+            const invalidLanguageCode = 'abc';
+
+            it(`should return the expected error resposne`, async () => {
+              await assertCommandScenarioError({
+                httpClient,
+                endpoint: commandsEndpointForCommunities,
+                stream: createCommunity.andThen(TranslateCommunityName, {
+                  languageCode: invalidLanguageCode,
+                }),
+                assertErrorMessageAsExpected: (message) => {
+                  assertTextMatchesAll(
+                    message,
+                    invalidLanguageCode,
+                    'unknown language',
+                  );
+                },
+              });
+            });
+          });
         });
       });
-    });
 
-    describe(`when there is already a community with the given name`, () => {
-      it(`should return the expected error response`, async () => {
-        await assertCommandScenarioSuccess({
-          endpoint: commandsEndpointForCommunities,
-          stream: createCommunity,
-        });
-
-        await assertCommandScenarioError({
-          endpoint: commandsEndpointForCommunities,
-          stream: TestCommandStream.first(CreateCommunity, {
-            name: englishCommunityName,
-            languageCodeForName: originalLanguageCodeForName,
-            bandNumber: '101b',
-          }),
-          assertErrorMessageAsExpected: (message) => {
-            assertTextMatchesAll(
-              message,
-              'cannot create community',
-              englishCommunityName,
-              bandNumber, // of the existing community
-              'already',
-            );
-          },
+      describe(`when the name has a translation`, () => {
+        describe(`when the new translation targets the same langauge as the existing translation`, () => {
+          it(`should return the expected error response`, async () => {
+            await assertCommandScenarioError({
+              httpClient,
+              endpoint: commandsEndpointForCommunities,
+              stream: createCommunity.andThen(TranslateCommunityName, {
+                languageCode: originalLanguageCodeForName,
+              }),
+              assertErrorMessageAsExpected: (message) => {
+                assertTextMatchesAll(
+                  message,
+                  // this is what we expect until we support English translations
+                  'not yet supported',
+                  // in the future:
+                  // englishCommunityName,
+                  // originalLanguageCodeForName,
+                  // 'already has',
+                );
+              },
+            });
+          });
         });
       });
     });
   });
 
-  describe(`when translating a community's name`, () => {
-    describe(`when the name has no translation`, () => {
-      describe(`when the langauge code is a known langauge code`, () => {
-        describe(`clc`, () => {
-          it(`should translate the community name`, async () => {
-            await assertCommandScenarioSuccess({
-              endpoint: commandsEndpointForCommunities,
-              stream: translateCommunityName,
-              assertSuccess: async (acks) => {
-                const { name } = (
-                  await axios.get(`${communityBaseEndpoint}/${acks[0].id}`)
-                ).data as CommunityViewModelClientDto;
-
-                expect(
-                  name.items[translationLanguageCodeForName]?.[
-                    'free translation'
-                  ]?.text,
-                ).toBe(translationOfTheCommunityName);
-              },
-            });
-          });
-        });
-      });
-
-      describe(`when the language code is one that is not yet supported (but will be in the near future)`, () => {
-        describe(`en`, () => {
-          const invalidLanguageCode = 'en';
-
-          it(`should translate the community name`, async () => {
-            await assertCommandScenarioError({
-              endpoint: commandsEndpointForCommunities,
-              stream: createCommunity.andThen(TranslateCommunityName, {
-                languageCode: invalidLanguageCode,
-              }),
-              assertErrorMessageAsExpected: (message) => {
-                assertTextMatchesAll(
-                  message,
-                  invalidLanguageCode,
-                  'not yet supported',
-                );
-              },
-            });
-          });
-        });
-      });
-
-      describe(`when the language code is not a valid language code`, () => {
-        describe(`abc`, () => {
-          const invalidLanguageCode = 'abc';
-
-          it(`should return the expected error resposne`, async () => {
-            await assertCommandScenarioError({
-              endpoint: commandsEndpointForCommunities,
-              stream: createCommunity.andThen(TranslateCommunityName, {
-                languageCode: invalidLanguageCode,
-              }),
-              assertErrorMessageAsExpected: (message) => {
-                assertTextMatchesAll(
-                  message,
-                  invalidLanguageCode,
-                  'unknown language',
-                );
-              },
-            });
-          });
+  describe(`when the user does not have role-based access to execute commands`, () => {
+    describe(`when the user is not authenticated`, () => {
+      it(`should return forbidden`, async () => {
+        await assertCommandAccessDeniedToUser({
+          endpoint: commandsEndpointForCommunities,
+          user: undefined,
         });
       });
     });
 
-    describe(`when the name has a translation`, () => {
-      describe(`when the new translation targets the same langauge as the existing translation`, () => {
-        it(`should return the expected error response`, async () => {
-          await assertCommandScenarioError({
-            endpoint: commandsEndpointForCommunities,
-            stream: createCommunity.andThen(TranslateCommunityName, {
-              languageCode: originalLanguageCodeForName,
-            }),
-            assertErrorMessageAsExpected: (message) => {
-              assertTextMatchesAll(
-                message,
-                // this is what we expect until we support English translations
-                'not yet supported',
-                // in the future:
-                // englishCommunityName,
-                // originalLanguageCodeForName,
-                // 'already has',
-              );
+    describe(`when the user is an ordinary user`, () => {
+      it(`should return forbidden`, async () => {
+        await assertCommandAccessDeniedToUser({
+          endpoint: commandsEndpointForCommunities,
+          user: {
+            credentials: {
+              username: 'testemployee',
+              password: 'testemployeePASSWORD1',
             },
-          });
+            role: 'employee',
+          },
         });
       });
     });

@@ -1,3 +1,4 @@
+import { AuthenticatedUserGuard, RbacAuthGuard } from '../../../auth/guards';
 import {
   BadUserInputFilter,
   Controller,
@@ -6,6 +7,7 @@ import {
   QueryResponseInterceptor,
   ResourceNotFoundFilter,
   UseFilters,
+  UseGuards,
   UseInterceptors,
 } from '../../../libs/framework';
 import { UserQueryService } from './user-query.service';
@@ -16,6 +18,7 @@ import { UserQueryService } from './user-query.service';
 export class UserQueryController {
   constructor(private readonly queryService: UserQueryService) {}
 
+  @UseGuards(AuthenticatedUserGuard, RbacAuthGuard)
   @DetailQueryEndpoint()
   fetchById(@IdParam() id: string) {
     return this.queryService.fetchById(id);
