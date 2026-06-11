@@ -14,9 +14,8 @@ import {
 
 export const AppRoutes = () => {
   /**
-   * Note that one can use the session context to make further decisions about user access
-   * inside any route wrapped with `<SessionAuth>...</SessionAuth>` in Supertokens. We
-   * might want a similar wrapper.
+   * Note that we will want to use the session context to make further decisions about user access.
+   * We might want to introduce a wrapper `<SessionAuth>...</SessionAuth>` similar to that in Supertookens.
    *
    * See [here](https://supertokens.com/docs/auth-react/modules/recipe_session.html)
    * and [here](https://supertokens.com/docs/auth-react/modules/recipe_userroles.html)
