@@ -33,8 +33,6 @@
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "socket.io": "^4.8.3",
-    "supertokens-nestjs": "^1.0.0",
-    "supertokens-node": "^24.0.0",
     "wdio-video-reporter": "^6.2.0"
   },
   "devDependencies": {

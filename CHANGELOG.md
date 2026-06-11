@@ -2,6 +2,11 @@
 
 This first release of the True Impact platform introduces a working model for user management, client management, and survey creation and completion.
 
+## 31
+Securing anonymous survey responses proved sufficiently novel to make using our originally intended drop-in auth solution (Supertokens)
+a fight against the platform. As such, we have implemented our own auth solution. In this PR, we remove the Supertokens container as well
+as its required PostgreSQL container from the Docker build and remove all (now unused) remenants of Supertokens from the server and web-client.
+
 ## 30
 In this commit, we add role based access control (RBAC) to all command and query endpoints. We
 introduce several server integration test utilities to deal with tracking auth state in the test

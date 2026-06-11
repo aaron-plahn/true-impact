@@ -20,8 +20,6 @@ Run:
 cp sample.env env.local
 ```
 
-Then replace the placeholders with your own environment variables. You will need to [generate a Supertoken API key](https://supertokens.com/docs/platform-configuration/supertokens-core/api-keys).
-
 ### 3. Run Locally with Docker
 
 After you [install Docker on your machine]() you can run the application locally in Docker containers by running:
@@ -29,21 +27,14 @@ After you [install Docker on your machine]() you can run the application locally
 docker compose --env-file env.local up --build
 ```
 
-Note that this will create a persistant volume for the PostgreSQL data.
 
 See the [Docker compose file](docker-compose.yaml) for more details.
 
 ## Components
 
 ### External
-#### Supertokens
-We currently user [Supertokens IO](https://supertokens.com/) as our auth server. Supertokens is self-hostable and available as a Docker image. Our [Docker build](./docker-compose.yaml) includes Supertokens.
-
-#### PostgreSQL
-Currently, we use [PostgreSQL](https://www.postgresql.org/) for the auth database. It is a dependency of Supertokens. We may end up using Postgres for persistence for state and \ or views. This decision has not yet been made. See below for more info.
-
 #### Additional Databases
-In the current stage of development, we have implemented in-memory databases that are abstracted behind repository interfaces persisting domain models (writes) and view models (reads). We may implement persistence for these with Postgres or a different database. In the latter case, we will include the additional database(s) as part of the Docker build.
+In the current stage of development, we have implemented in-memory databases that are abstracted behind repository interfaces persisting domain models (writes) and view models (reads). In the future, we will include one or more databases as part of the Docker build.
 
 ### Apps
 
