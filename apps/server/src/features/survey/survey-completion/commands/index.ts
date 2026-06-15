@@ -6,3 +6,7 @@ export * from './begin-survey.command';
 export * from './begin-survey.command-handler';
 export * from './submit-survey.command';
 export * from './submit-survey.command-handler';
+export * from './survey-completion-abandoned.event';
+export * from './survey-question-answered.event';
+export * from './survey-submitted.event';
+// reorganize this directory
