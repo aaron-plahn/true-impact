@@ -2,7 +2,10 @@ import { TrueImpactError } from '../../../libs/data-types';
 import { SurveyQuestion } from '../survey-management/survey-question.entity';
 import { Survey } from './survey.aggregate-root';
 
-const validEmptySurvey = Survey.buildEmpty({ name: 'test survey' }) as Survey;
+const validEmptySurvey = Survey.buildEmpty({
+  name: 'test survey',
+  id: '123',
+}) as Survey;
 
 const firstQuestionLabel = 'i';
 

@@ -1,14 +1,16 @@
 import { Inject } from '@nestjs/common';
 import { Section, TextContentNode } from 'src/libs/server-driven-ui';
-import type { ISurveyResponseQueryRepository } from '../queries';
-import { SURVEY_RESPONSE_QUERY_REPOSITORY_INJECTION_TOKEN } from '../queries';
-import { SduiDiffProducer, SDUIViewDiff } from './sdui-view-differ';
+import type { ISurveyResponseCommandRepository } from '../../repositories';
+import { SURVEY_RESPONSE_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../../repositories';
+import { SduiDiffProducer, SDUIViewDiff } from '../sdui-view-differ';
 import { SurveySubmitted } from './survey-submitted.event';
 
 export class SurveySubmittedViewDiffer implements SduiDiffProducer<SurveySubmitted> {
+  // TODO Should this be the query repo instead?
+
   constructor(
-    @Inject(SURVEY_RESPONSE_QUERY_REPOSITORY_INJECTION_TOKEN)
-    private readonly queryRepo: ISurveyResponseQueryRepository,
+    @Inject(SURVEY_RESPONSE_COMMAND_REPOSITORY_INJECTION_TOKEN)
+    private readonly queryRepo: ISurveyResponseCommandRepository,
   ) {}
 
   async handle(e: SurveySubmitted): Promise<SDUIViewDiff> {
@@ -42,7 +44,7 @@ export class SurveySubmittedViewDiffer implements SduiDiffProducer<SurveySubmitt
     const textNode: TextContentNode = {
       id: `survey_responses_${attemptId}_1_1`,
       type: 'TEXT',
-      text: `Succesfully submitted survey: ${target.name}`,
+      text: `Succesfully submitted survey: ${target.survey.name}`,
     };
 
     const firstSection: Section = {

@@ -1,5 +1,5 @@
-import { LinkContentNode, Section } from 'src/libs/server-driven-ui';
-import { SDUIViewDiff } from './sdui-view-differ';
+import { LinkContentNode, Section } from '../../../../../libs/server-driven-ui';
+import { SDUIViewDiff } from '../sdui-view-differ';
 import { SurveyBegan } from './survey-began.event';
 
 export class SurveyBeganViewDiffer {

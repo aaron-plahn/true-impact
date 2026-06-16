@@ -2,7 +2,10 @@ import { TrueImpactError } from '../../../libs/data-types';
 import { Survey } from './survey.aggregate-root';
 
 describe(`Survey.addFollowUpQuestion`, () => {
-  const emptySurvey = Survey.buildEmpty({ name: 'test survey' }) as Survey;
+  const emptySurvey = Survey.buildEmpty({
+    name: 'test survey',
+    id: '123',
+  }) as Survey;
 
   const targetQuestionLabel = 'V';
 

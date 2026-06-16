@@ -99,7 +99,6 @@ export class InMemoryCommandRepository<
   async create(
     instance: T,
   ): Promise<PersistenceAcknowledgement | TrueImpactError> {
-    // TODO should we remove the ID generation here?
     const id = instance.id || this.getNextId();
 
     if (this.entititesById.has(id)) {

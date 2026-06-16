@@ -1,12 +1,12 @@
 import { Inject } from '@nestjs/common';
-import { CommandResult, ICommandHandler } from '../../../../libs/cqrs-es';
-import { SURVEY_RESPONSE_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../repositories';
+import { CommandResult, ICommandHandler } from '../../../../../libs/cqrs-es';
+import { SURVEY_RESPONSE_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../../repositories';
 
 import {
   TrueImpactBadUserInputError,
   TrueImpactError,
-} from '../../../../libs/data-types';
-import type { ISurveyResponseCommandRepository } from '../repositories';
+} from '../../../../../libs/data-types';
+import type { ISurveyResponseCommandRepository } from '../../repositories';
 import { AnswerSurveyQuestion } from './answer-survey-question.command';
 
 export class AnswerSurveyQuestionCommandHandler implements ICommandHandler<AnswerSurveyQuestion> {
@@ -46,6 +46,9 @@ export class AnswerSurveyQuestionCommandHandler implements ICommandHandler<Answe
     const persistenceResult = await this.repository.update(updatedInstance);
 
     Object.assign(persistenceResult, {
+      /**
+       * Note that this handler is aware that there is only one event appended by the domain model.
+       */
       events: [updatedInstance.eventHistory.at(-1)],
     });
 

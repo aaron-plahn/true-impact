@@ -1,13 +1,13 @@
 import { Inject } from '@nestjs/common';
-import { CommandResult, ICommandHandler } from '../../../../libs/cqrs-es';
+import { CommandResult, ICommandHandler } from '../../../../../libs/cqrs-es';
 import {
   TrueImpactBadUserInputError,
   TrueImpactError,
-} from '../../../../libs/data-types';
+} from '../../../../../libs/data-types';
 import {
   SURVEY_RESPONSE_COMMAND_REPOSITORY_INJECTION_TOKEN,
   type ISurveyResponseCommandRepository,
-} from '../repositories';
+} from '../../repositories';
 import { AbandonSurveyCompletion } from './abandon-survey-completion.command';
 
 export class AbandonSurveyCompletionCommandHandler implements ICommandHandler<AbandonSurveyCompletion> {

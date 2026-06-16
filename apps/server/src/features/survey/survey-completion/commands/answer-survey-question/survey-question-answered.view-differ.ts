@@ -1,8 +1,8 @@
 import { Inject } from '@nestjs/common';
 import { LinkContentNode, Section } from 'src/libs/server-driven-ui';
-import type { ISurveyResponseQueryRepository } from '../queries';
-import { SURVEY_RESPONSE_QUERY_REPOSITORY_INJECTION_TOKEN } from '../queries';
-import { SDUIViewDiff } from './sdui-view-differ';
+import type { ISurveyResponseQueryRepository } from '../../queries';
+import { SURVEY_RESPONSE_QUERY_REPOSITORY_INJECTION_TOKEN } from '../../queries';
+import { SDUIViewDiff } from '../sdui-view-differ';
 import { SurveyQuestionAnswered } from './survey-question-answered.event';
 
 // TODO @ViewDiffer(...)

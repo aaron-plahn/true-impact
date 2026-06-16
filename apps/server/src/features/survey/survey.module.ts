@@ -42,10 +42,10 @@ import {
   SubmitSurveyCommandHandler,
   SURVEY_PARTICIPANT_VALIDATION_SERVICE_PROVIDER_INJECTION_TOKEN,
   SurveyBeganViewDiffer,
+  SurveyQuestionAnsweredViewDiffer,
   SurveySubmittedViewDiffer,
 } from './survey-completion';
 import { SduiViewDiffer } from './survey-completion/commands/sdui-view-differ';
-import { SurveyQuestionAnsweredViewDiffer } from './survey-completion/commands/survey-question-answered.view-differ';
 import {
   SURVEY_RESPONSE_QUERY_REPOSITORY_INJECTION_TOKEN,
   SurveyResponseQueryService,
@@ -55,7 +55,6 @@ import { SURVEY_RESPONSE_COMMAND_REPOSITORY_INJECTION_TOKEN } from './survey-com
 import { InMemorySurveyResponseCommandRepository } from './survey-completion/repositories/in-memory-survey-response.command-repository';
 import { SurveyResponseValidationService } from './survey-completion/services';
 import { SurveyResponseQueryController } from './survey-completion/survey-response-query.controller';
-import { SurveyEventsGateway } from './survey-events.gateway';
 import {
   AddFollowUpQuestionForSurveyOptionCommandHandler,
   AddOptionToSurveyQuestion,
@@ -101,7 +100,6 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
 @Module({
   imports: [ClientModule, FlagModule, UserModule, AuthModule],
   providers: [
-    SurveyEventsGateway,
     // core survey commands
     CreateSurveyCommandHandler,
     AddQuestionToSurveyCommandHandler,
@@ -159,14 +157,11 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
       provide: CommandHandlerService,
       // TODO We need to ensure we can acces the child module's providers in this context
       useFactory: (moduleRef: ModuleRef) => {
-        const commandHandlerService = new CommandHandlerService(
-          {
-            resolve(injectionToken) {
-              return moduleRef.get(injectionToken);
-            },
+        const commandHandlerService = new CommandHandlerService({
+          resolve(injectionToken) {
+            return moduleRef.get(injectionToken);
           },
-          moduleRef.get(SurveyEventsGateway),
-        );
+        });
 
         commandHandlerService
           .register({

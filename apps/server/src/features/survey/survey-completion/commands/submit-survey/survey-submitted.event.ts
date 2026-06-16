@@ -1,4 +1,4 @@
-import { SurveyResponseCompositeIdentifier } from '../models';
+import { SurveyResponseCompositeIdentifier } from '../../models';
 
 export class SurveySubmittedPayload {
   aggregateCompositeIdentifier: SurveyResponseCompositeIdentifier;

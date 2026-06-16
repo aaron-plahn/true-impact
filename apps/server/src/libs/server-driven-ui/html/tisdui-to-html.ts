@@ -91,40 +91,6 @@ export const tiSduiToHtml = (input: TIScreen): string => {
                     return;
                 }
                 };
-
-            </script>
-            <script src="https://cdn.socket.io/3.1.3/socket.io.min.js" integrity="sha384-cPwlPLvBTa3sKAgddT6krw0cJat7egBga3DJepJyrLl4Q9/5WLra3rrnMcyTyOnh" crossorigin="anonymous"></script>
-            <script>
-                      const target = document.getElementById('root');
-
-          const wsUri = 'ws://localhost:3234/survey-events';
-          const socket = io(wsUri, { transports: ['websocket'], autoConnect: true });
-
-          const send = () =>{
-            socket.emit("SOME_EVENT",{message: 'Another one bites the dust!'});
-
-          };
-
-
-          socket.on('SOME_EVENT', ({ message }) => {
-            target.innerHTML += ", " +message;
-          });
-
-          socket.on('SURVEY_UPDATED', (e)=>{
-
-            const elToUpdate = document.getElementById(e.target);
-
-            if(!elToUpdate){
-              throw new Error('Failed to update target element with ID:' + e.target)
-            }
-
-            if(e.swap === "outer"){
-              elToUpdate.outerHTML = e.content;
-              return;
-            }
-
-            console.log({unsupportedEvent: e});
-          })
             </script>
         </body>
     </html>

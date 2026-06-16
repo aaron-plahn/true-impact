@@ -3,7 +3,7 @@ import Page from "../../login/page";
 
 class SurveyCompletionPage extends Page {
   public async beginSurvey() {
-    await $("button*=GO").click();
+    await $("a").click();
   }
 
   public async answerQuestion({
@@ -21,7 +21,7 @@ class SurveyCompletionPage extends Page {
   }
 
   public async goToNextQuestion() {
-    await $(`button*=NEXT`).click();
+    await $(`*=NEXT`).click();
   }
 
   public get surveySubmissionButton() {

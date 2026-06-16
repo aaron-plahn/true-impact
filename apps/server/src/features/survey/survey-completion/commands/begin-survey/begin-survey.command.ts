@@ -2,8 +2,8 @@ import {
   NestedDataType,
   NonEmptyString,
   TrueImpactDataExample,
-} from '../../../../libs/data-types';
-import { SurveyParticipantCompositeIdentifier } from '../models';
+} from '../../../../../libs/data-types';
+import { SurveyParticipantCompositeIdentifier } from '../../models';
 
 @TrueImpactDataExample<BeginSurvey>({
   example: {

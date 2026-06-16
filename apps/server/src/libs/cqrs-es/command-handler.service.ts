@@ -58,6 +58,10 @@ export class CommandHandlerService {
      */
     private readonly eventPublisher: {
       publishEvent: (event: unknown) => Promise<void>;
+    } = {
+      publishEvent: (_e) => {
+        return Promise.resolve();
+      },
     },
   ) {}
 

@@ -2,9 +2,9 @@ import {
   NestedDataType,
   NonEmptyString,
   TrueImpactDataExample,
-} from '../../../../libs/data-types';
-import { SURVEY_RESPONSE_AGGREGATE_TYPE } from '../../constants';
-import { SurveyResponseCompositeIdentifier } from '../models/survey-response-record.aggregate-root';
+} from '../../../../../libs/data-types';
+import { SURVEY_RESPONSE_AGGREGATE_TYPE } from '../../../constants';
+import { SurveyResponseCompositeIdentifier } from '../../models/survey-response-record.aggregate-root';
 
 @TrueImpactDataExample<AnswerSurveyQuestion>({
   example: {

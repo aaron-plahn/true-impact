@@ -21,11 +21,11 @@ import {
   SurveyPersistenceDto,
 } from '../../survey-management/survey.aggregate-root';
 import {
+  SurveyBegan,
   SurveyCompletionAbandoned,
   SurveyQuestionAnswered,
   SurveySubmitted,
 } from '../commands';
-import { SurveyBegan } from '../commands/survey-began.event';
 import { SurveyParticipantCompositeIdentifier } from './survey-participant.composite-identifier';
 
 class SurveyQuestionResponsePersistenceDto {
