@@ -10,3 +10,6 @@ export * from './survey-completion-abandoned.event';
 export * from './survey-question-answered.event';
 export * from './survey-submitted.event';
 // reorganize this directory
+export * from './survey-began.view-differ';
+export * from './survey-question-answered.view-differ';
+export * from './survey-submitted.view-differ';

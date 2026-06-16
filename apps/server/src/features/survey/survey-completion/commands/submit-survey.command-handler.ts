@@ -37,6 +37,10 @@ export class SubmitSurveyCommandHandler implements ICommandHandler<SubmitSurvey>
       return updated;
     }
 
-    return this.repository.update(updated);
+    const persistenceResult = await this.repository.update(updated);
+
+    Object.assign(persistenceResult, { events: [updated.eventHistory.at(-1)] });
+
+    return persistenceResult;
   }
 }

@@ -215,7 +215,8 @@ export class User extends AggregateRoot<UserPersistenceDto> {
     }
 
     const user = new User({
-      id: 'GENERATE_A_NEW_ID',
+      // TODO generate an ID in command handler
+      id: undefined as unknown as string,
       hashedPassword,
       // A new user will be active initially
       isActive: true,

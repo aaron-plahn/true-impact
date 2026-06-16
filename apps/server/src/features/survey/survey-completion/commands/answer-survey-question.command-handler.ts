@@ -45,6 +45,10 @@ export class AnswerSurveyQuestionCommandHandler implements ICommandHandler<Answe
 
     const persistenceResult = await this.repository.update(updatedInstance);
 
+    Object.assign(persistenceResult, {
+      events: [updatedInstance.eventHistory.at(-1)],
+    });
+
     return persistenceResult;
   }
 }

@@ -1,5 +1,5 @@
 import { TIScreen } from '../ti-screen';
-import { tiSduiToHtmlFragment } from './tisdui-to-html-fragment';
+import { tiSduiScreenToHtmlFragment } from './tisdui-to-html-fragment';
 
 export const tiSduiToHtml = (input: TIScreen): string => {
   return `
@@ -10,8 +10,25 @@ export const tiSduiToHtml = (input: TIScreen): string => {
             <title>${input.title}</title>
         </head>
         <body>
-            ${tiSduiToHtmlFragment(input)}
+            ${tiSduiScreenToHtmlFragment(input)}
             <script>
+                // TODO make these stand-alone scripts
+                // TODO bundler
+                const renderDiffFromServer = (diff) =>{
+                    const elToUpdate = document.getElementById(diff.target);
+
+                    if(!elToUpdate){
+                        throw new Error('Failed to update target element with ID:' + diff.target)
+                    }
+
+                    if(diff.swap === "outer"){
+                        elToUpdate.outerHTML = diff.content;
+                        return;
+                    }
+
+                    console.log("unsupported swap strategy for TI SDUI: " + e.swap);
+                }
+
                 const submitCommandForm = async (e) => {
 
                 e.preventDefault();
@@ -46,23 +63,23 @@ export const tiSduiToHtml = (input: TIScreen): string => {
                     body: JSON.stringify(fsa),
                     headers: {
                         'Content-Type': 'application/json',
-                        Accept: 'text/html',
+                        Accept: 'text/json',
                     },
                     });
 
-                    const result = await response.text();
+                   const result = await response.json();
 
                     if (response.status !== 201) {
-                    render('<div>Shoot! Fix me.</div>');
+                        render('<div>' + response?.message || 'unknown error' + '</div>');
                     }
 
-
-
-                    render(result);
+                   renderDiffFromServer(result);
 
                     return;
                 } catch (error) {
                     const msg = error?.message || 'Unexpected Server Error';
+
+                    console.log({badFsa: fsa});
 
                     const msgAsHtml =
                     '<div><h2>Server Error</h2><p>' +

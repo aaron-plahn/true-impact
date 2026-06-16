@@ -6,7 +6,7 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { tiSduiToHtmlFragment } from 'src/libs/server-driven-ui/html/tisdui-to-html-fragment';
+import { tiSduiScreenToHtmlFragment } from 'src/libs/server-driven-ui/html/tisdui-to-html-fragment';
 import { SurveyCompletionAcknowledgementPage } from './survey-completion/views/survey-completion-acknowledgement-page';
 
 interface ViewDiff {
@@ -89,7 +89,7 @@ const buildViewDiffForEvent = (e: BaseEvent): ViewDiff => {
     return {
       target: `SUBMIT_SURVEY_1`,
       swap: 'outer',
-      content: tiSduiToHtmlFragment(sduiContent),
+      content: tiSduiScreenToHtmlFragment(sduiContent),
     };
   }
 

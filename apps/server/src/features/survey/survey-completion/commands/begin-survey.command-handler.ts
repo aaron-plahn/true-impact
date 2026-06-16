@@ -1,4 +1,5 @@
 import { Inject } from '@nestjs/common';
+import { randomUUID } from 'node:crypto';
 import { EncryptionService } from '../../../../libs/auth';
 import { CommandResult, ICommandHandler } from '../../../../libs/cqrs-es';
 import {
@@ -88,6 +89,8 @@ export class BeginSurveyCommandHandler implements ICommandHandler<BeginSurvey> {
     }
 
     const emptyCompletionRecord = SurveyResponseRecord.begin({
+      // TODO We may want to follow this approach for all creation commands.
+      id: randomUUID(),
       survey: targetSurvey,
       participantCompositeIdentifier,
     });
@@ -99,6 +102,11 @@ export class BeginSurveyCommandHandler implements ICommandHandler<BeginSurvey> {
     const persistenceResult = await this.surveyCompletionRepository.begin(
       emptyCompletionRecord,
     );
+
+    // TODO move this responsibility to a write-hook on the event store
+    Object.assign(persistenceResult, {
+      events: emptyCompletionRecord.eventHistory,
+    });
 
     return persistenceResult;
   }

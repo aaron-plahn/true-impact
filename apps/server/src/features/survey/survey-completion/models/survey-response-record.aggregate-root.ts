@@ -272,7 +272,7 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
     participant,
     eventHistory,
   }: {
-    id?: string;
+    id: string;
     revision: number;
     hasBeenAbandoned: boolean;
     survey: Survey;
@@ -707,9 +707,11 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
   static begin({
     survey,
     participantCompositeIdentifier,
+    id,
   }: {
     survey: Survey;
     participantCompositeIdentifier?: SurveyParticipantCompositeIdentifier;
+    id: string;
   }): SurveyResponseRecord | TrueImpactError {
     const allowedParticipantTypes = [CLIENT_AGGREGATE_TYPE];
 
@@ -731,6 +733,7 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
     }
 
     return new SurveyResponseRecord({
+      id,
       survey,
       responses: [],
       revision: 0,
@@ -742,7 +745,7 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
           payload: {
             aggregateCompositeIdentifier: {
               type: SURVEY_RESPONSE_AGGREGATE_TYPE,
-              id: 'what do we do here?',
+              id,
             },
           },
         }),

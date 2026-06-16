@@ -41,7 +41,11 @@ import {
   SubmitSurvey,
   SubmitSurveyCommandHandler,
   SURVEY_PARTICIPANT_VALIDATION_SERVICE_PROVIDER_INJECTION_TOKEN,
+  SurveyBeganViewDiffer,
+  SurveySubmittedViewDiffer,
 } from './survey-completion';
+import { SduiViewDiffer } from './survey-completion/commands/sdui-view-differ';
+import { SurveyQuestionAnsweredViewDiffer } from './survey-completion/commands/survey-question-answered.view-differ';
 import {
   SURVEY_RESPONSE_QUERY_REPOSITORY_INJECTION_TOKEN,
   SurveyResponseQueryService,
@@ -128,6 +132,10 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
     SurveyResponseQueryService,
     SurveyReviewQueryService,
 
+    // View Diff Producers
+    SurveyBeganViewDiffer,
+    SurveyQuestionAnsweredViewDiffer,
+    SurveySubmittedViewDiffer,
     {
       provide: SURVEY_QUERY_REPOSITORY_PROVIDER_TOKEN,
       useValue: new InMemoryQueryRepositoryProvider().forFeature(
@@ -254,6 +262,37 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
         return commandHandlerService;
       },
       inject: [ModuleRef],
+    },
+    {
+      provide: SduiViewDiffer,
+      useFactory: (
+        surveyBegan: SurveyBeganViewDiffer,
+        surveyQuestionAnswered: SurveyQuestionAnsweredViewDiffer,
+        surveySubmitted: SurveySubmittedViewDiffer,
+      ) => {
+        const differ = new SduiViewDiffer();
+
+        differ
+          .register({
+            eventType: 'SURVEY_BEGAN',
+            consumer: surveyBegan,
+          })
+          .register({
+            eventType: 'SURVEY_QUESTION_ANSWERED',
+            consumer: surveyQuestionAnswered,
+          })
+          .register({
+            eventType: 'SURVEY_SUBMITTED',
+            consumer: surveySubmitted,
+          });
+
+        return differ;
+      },
+      inject: [
+        SurveyBeganViewDiffer,
+        SurveyQuestionAnsweredViewDiffer,
+        SurveySubmittedViewDiffer,
+      ],
     },
     {
       provide: SURVEY_COMMAND_REPOSITORY_DEPENDENCY_TOKEN,
