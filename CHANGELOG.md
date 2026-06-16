@@ -2,6 +2,10 @@
 
 This first release of the True Impact platform introduces a working model for user management, client management, and survey creation and completion.
 
+## 33
+This PR is a refactor that changes the way the server and client interact without changing the overall behaviour. With this PR, the
+entire survey completion workflow has been secured.
+
 ## 31
 Securing anonymous survey responses proved sufficiently novel to make using our originally intended drop-in auth solution (Supertokens)
 a fight against the platform. As such, we have implemented our own auth solution. In this PR, we remove the Supertokens container as well
