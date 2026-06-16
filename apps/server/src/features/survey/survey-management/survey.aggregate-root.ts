@@ -975,11 +975,13 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
 
   static buildEmpty({
     name,
+    id,
   }: {
+    id: string;
     name: string;
   }): Survey | InvariantValidationError {
     const instance = new Survey({
-      id: 'GENERATE_A_NEW_ID',
+      id,
       isPublished: false,
       name,
       questions: {},

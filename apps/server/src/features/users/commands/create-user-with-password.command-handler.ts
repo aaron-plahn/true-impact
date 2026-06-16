@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { EncryptionService } from '../../../libs/auth';
 import { CommandResult, ICommandHandler } from '../../../libs/cqrs-es';
 import { TrueImpactError } from '../../../libs/data-types';
@@ -30,6 +31,7 @@ export class CreateUserWithPasswordCommandHandler implements ICommandHandler<Cre
       email,
       firstName,
       lastName,
+      id: randomUUID(),
     });
 
     if (buildResult instanceof TrueImpactError) {

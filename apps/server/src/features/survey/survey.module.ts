@@ -41,7 +41,11 @@ import {
   SubmitSurvey,
   SubmitSurveyCommandHandler,
   SURVEY_PARTICIPANT_VALIDATION_SERVICE_PROVIDER_INJECTION_TOKEN,
+  SurveyBeganViewDiffer,
+  SurveyQuestionAnsweredViewDiffer,
+  SurveySubmittedViewDiffer,
 } from './survey-completion';
+import { SduiViewDiffer } from './survey-completion/commands/sdui-view-differ';
 import {
   SURVEY_RESPONSE_QUERY_REPOSITORY_INJECTION_TOKEN,
   SurveyResponseQueryService,
@@ -51,7 +55,6 @@ import { SURVEY_RESPONSE_COMMAND_REPOSITORY_INJECTION_TOKEN } from './survey-com
 import { InMemorySurveyResponseCommandRepository } from './survey-completion/repositories/in-memory-survey-response.command-repository';
 import { SurveyResponseValidationService } from './survey-completion/services';
 import { SurveyResponseQueryController } from './survey-completion/survey-response-query.controller';
-import { SurveyEventsGateway } from './survey-events.gateway';
 import {
   AddFollowUpQuestionForSurveyOptionCommandHandler,
   AddOptionToSurveyQuestion,
@@ -97,7 +100,6 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
 @Module({
   imports: [ClientModule, FlagModule, UserModule, AuthModule],
   providers: [
-    SurveyEventsGateway,
     // core survey commands
     CreateSurveyCommandHandler,
     AddQuestionToSurveyCommandHandler,
@@ -128,6 +130,10 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
     SurveyResponseQueryService,
     SurveyReviewQueryService,
 
+    // View Diff Producers
+    SurveyBeganViewDiffer,
+    SurveyQuestionAnsweredViewDiffer,
+    SurveySubmittedViewDiffer,
     {
       provide: SURVEY_QUERY_REPOSITORY_PROVIDER_TOKEN,
       useValue: new InMemoryQueryRepositoryProvider().forFeature(
@@ -151,14 +157,11 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
       provide: CommandHandlerService,
       // TODO We need to ensure we can acces the child module's providers in this context
       useFactory: (moduleRef: ModuleRef) => {
-        const commandHandlerService = new CommandHandlerService(
-          {
-            resolve(injectionToken) {
-              return moduleRef.get(injectionToken);
-            },
+        const commandHandlerService = new CommandHandlerService({
+          resolve(injectionToken) {
+            return moduleRef.get(injectionToken);
           },
-          moduleRef.get(SurveyEventsGateway),
-        );
+        });
 
         commandHandlerService
           .register({
@@ -254,6 +257,37 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
         return commandHandlerService;
       },
       inject: [ModuleRef],
+    },
+    {
+      provide: SduiViewDiffer,
+      useFactory: (
+        surveyBegan: SurveyBeganViewDiffer,
+        surveyQuestionAnswered: SurveyQuestionAnsweredViewDiffer,
+        surveySubmitted: SurveySubmittedViewDiffer,
+      ) => {
+        const differ = new SduiViewDiffer();
+
+        differ
+          .register({
+            eventType: 'SURVEY_BEGAN',
+            consumer: surveyBegan,
+          })
+          .register({
+            eventType: 'SURVEY_QUESTION_ANSWERED',
+            consumer: surveyQuestionAnswered,
+          })
+          .register({
+            eventType: 'SURVEY_SUBMITTED',
+            consumer: surveySubmitted,
+          });
+
+        return differ;
+      },
+      inject: [
+        SurveyBeganViewDiffer,
+        SurveyQuestionAnsweredViewDiffer,
+        SurveySubmittedViewDiffer,
+      ],
     },
     {
       provide: SURVEY_COMMAND_REPOSITORY_DEPENDENCY_TOKEN,

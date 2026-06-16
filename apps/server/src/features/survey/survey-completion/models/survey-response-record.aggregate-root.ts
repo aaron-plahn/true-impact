@@ -1,3 +1,4 @@
+import { IDomainEvent } from 'src/libs/cqrs-es';
 import {
   AggregateRoot,
   BooleanDataType,
@@ -19,6 +20,12 @@ import {
   Survey,
   SurveyPersistenceDto,
 } from '../../survey-management/survey.aggregate-root';
+import {
+  SurveyBegan,
+  SurveyCompletionAbandoned,
+  SurveyQuestionAnswered,
+  SurveySubmitted,
+} from '../commands';
 import { SurveyParticipantCompositeIdentifier } from './survey-participant.composite-identifier';
 
 class SurveyQuestionResponsePersistenceDto {
@@ -37,6 +44,12 @@ export class SurveyResponseCompositeIdentifier {
 }
 
 class SurveyQuestionResponse extends Entity {
+  /**
+   * Order is crucial here.
+   */
+  // TODO make `revision` a getter now.
+  eventHistory: IDomainEvent[] = [];
+
   @NonEmptyString({
     label: 'question label',
     description: 'label for the question being answered',
@@ -112,6 +125,8 @@ export class SurveyResponseRecordPersistenceDto {
 
   revision: number;
 
+  eventHistory: IDomainEvent[];
+
   survey: SurveyPersistenceDto;
 
   hasBeenAbandoned: boolean;
@@ -155,6 +170,7 @@ const testSurveyExample = buildTestInstance(Survey, {
     },
     // empty by default
     responses: [],
+    eventHistory: [],
   },
 })
 export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPersistenceDto> {
@@ -173,6 +189,9 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
       'a version number that tracks the changes to this survey attempt',
   })
   revision: number;
+
+  // TODO we could decorate this with the event union for this aggregate type
+  eventHistory: IDomainEvent[];
 
   /**
    * Note that when a participant begins a survey, the target survey is copied here
@@ -251,8 +270,9 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
     responses,
     hasBeenSubmitted,
     participant,
+    eventHistory,
   }: {
-    id?: string;
+    id: string;
     revision: number;
     hasBeenAbandoned: boolean;
     survey: Survey;
@@ -260,6 +280,7 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
     participant?: SurveyParticipantCompositeIdentifier;
     responses: SurveyQuestionResponse[];
     hasBeenSubmitted?: boolean;
+    eventHistory: IDomainEvent[];
   }) {
     super();
 
@@ -278,6 +299,8 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
 
     this.hasBeenSubmitted =
       typeof hasBeenSubmitted === 'boolean' ? hasBeenSubmitted : false;
+
+    this.eventHistory = eventHistory;
 
     if (participant) {
       this.participant = {
@@ -306,6 +329,36 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
     } else {
       this.nextQuestionLabel = DONE;
     }
+  }
+
+  // TODO base class?
+  getAggregateCompositeIdentifier() {
+    return {
+      type: SURVEY_RESPONSE_AGGREGATE_TYPE,
+      id: this.id,
+    };
+  }
+
+  handleSurveyQuestionAnswered({
+    payload: { questionLabel, chosenOptionLabel },
+  }: SurveyQuestionAnswered) {
+    this.responses.push(
+      SurveyQuestionResponse.fromPersistenceDto({
+        questionLabel,
+        optionLabel: chosenOptionLabel,
+      }) as SurveyQuestionResponse,
+    );
+
+    if (!this.isComplete()) {
+      this.nextQuestionLabel = this.survey.getNextQuestionLabel(
+        questionLabel,
+        chosenOptionLabel,
+      ) as string;
+    } else {
+      this.nextQuestionLabel = DONE;
+    }
+
+    return this;
   }
 
   @UpdateMethod()
@@ -355,21 +408,21 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
       );
     }
 
-    this.responses.push(
-      SurveyQuestionResponse.fromPersistenceDto({
-        questionLabel,
-        optionLabel: chosenOptionLabel,
-      }) as SurveyQuestionResponse,
+    return this.apply(
+      new SurveyQuestionAnswered({
+        payload: {
+          aggregateCompositeIdentifier:
+            // TODO deal with the chicken-and-egg problem of IDs
+            this.getAggregateCompositeIdentifier() as SurveyResponseCompositeIdentifier,
+          questionLabel,
+          chosenOptionLabel,
+        },
+      }),
     );
+  }
 
-    if (!this.isComplete()) {
-      this.nextQuestionLabel = this.survey.getNextQuestionLabel(
-        questionLabel,
-        chosenOptionLabel,
-      ) as string;
-    } else {
-      this.nextQuestionLabel = DONE;
-    }
+  handleSurveySubmitted(_event: SurveySubmitted) {
+    this.hasBeenSubmitted = true;
 
     return this;
   }
@@ -394,7 +447,20 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
       );
     }
 
-    this.hasBeenSubmitted = true;
+    this.apply(
+      new SurveySubmitted({
+        payload: {
+          aggregateCompositeIdentifier:
+            this.getAggregateCompositeIdentifier() as SurveyResponseCompositeIdentifier,
+        },
+      }),
+    );
+
+    return this;
+  }
+
+  handleSurveyCompletionAbandoned(_event: SurveyCompletionAbandoned) {
+    this.hasBeenAbandoned = true;
 
     return this;
   }
@@ -413,7 +479,32 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
       );
     }
 
-    this.hasBeenAbandoned = true;
+    // Where do invariants get validated?
+    return this.apply(
+      new SurveyCompletionAbandoned({
+        payload: {
+          aggregateCompositeIdentifier:
+            this.getAggregateCompositeIdentifier() as SurveyResponseCompositeIdentifier,
+        },
+      }),
+    );
+  }
+
+  apply(event: IDomainEvent) {
+    // TODO use a magic method for this
+    if (event.type === 'SURVEY_QUESTION_ANSWERED') {
+      this.handleSurveyQuestionAnswered(event as SurveyQuestionAnswered);
+    }
+
+    if (event.type === 'SURVEY_SUBMITTED') {
+      this.handleSurveySubmitted(event as SurveySubmitted);
+    }
+
+    if (event.type === 'SURVEY_COMPLETION_ABANDONED') {
+      this.handleSurveyCompletionAbandoned(event as SurveyCompletionAbandoned);
+    }
+
+    this.eventHistory.push(event);
 
     return this;
   }
@@ -550,6 +641,7 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
       hasBeenSubmitted: this.hasBeenSubmitted,
       participantCompositeIdentifier: this.participant,
       responses: this.responses,
+      eventHistory: this.eventHistory,
     };
   }
 
@@ -562,6 +654,7 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
       survey,
       responses,
       participantCompositeIdentifier,
+      eventHistory,
     }: SurveyResponseRecordPersistenceDto,
     buildOptions: { shouldValidate?: boolean } = {},
   ): SurveyResponseRecord | TrueImpactError {
@@ -607,15 +700,18 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
       survey: surveyBuildResult,
       responses: questionResponses as SurveyQuestionResponse[],
       participant: participantCompositeIdentifier,
+      eventHistory,
     });
   }
 
   static begin({
     survey,
     participantCompositeIdentifier,
+    id,
   }: {
     survey: Survey;
     participantCompositeIdentifier?: SurveyParticipantCompositeIdentifier;
+    id: string;
   }): SurveyResponseRecord | TrueImpactError {
     const allowedParticipantTypes = [CLIENT_AGGREGATE_TYPE];
 
@@ -637,12 +733,23 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
     }
 
     return new SurveyResponseRecord({
+      id,
       survey,
       responses: [],
       revision: 0,
       hasBeenAbandoned: false,
       hasBeenSubmitted: false,
       participant: participantCompositeIdentifier,
+      eventHistory: [
+        new SurveyBegan({
+          payload: {
+            aggregateCompositeIdentifier: {
+              type: SURVEY_RESPONSE_AGGREGATE_TYPE,
+              id,
+            },
+          },
+        }),
+      ],
     });
   }
 }

@@ -99,8 +99,7 @@ export class InMemoryCommandRepository<
   async create(
     instance: T,
   ): Promise<PersistenceAcknowledgement | TrueImpactError> {
-    // How should we handle this?
-    const id = this.getNextId();
+    const id = instance.id || this.getNextId();
 
     if (this.entititesById.has(id)) {
       return new TrueImpactBadUserInputError([

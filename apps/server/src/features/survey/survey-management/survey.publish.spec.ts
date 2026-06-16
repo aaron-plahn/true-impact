@@ -3,6 +3,7 @@ import { Survey } from './survey.aggregate-root';
 
 const emptySurvey = Survey.buildEmpty({
   name: 'test survey',
+  id: '123',
 }) as Survey;
 
 const targetQuestionLabel = 'i';

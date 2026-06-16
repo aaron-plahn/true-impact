@@ -2,13 +2,57 @@ import {
   TrueImpactError,
   TrueImpactRuntimeException,
 } from 'src/libs/data-types';
+import { Section } from '../section';
 import { TIScreen } from '../ti-screen';
 import { TiSduiLayout } from '../tisdui-layout';
 import { actionToHtmlFragment } from './action-to-html-fragment';
 import { escape } from './escape';
 import { linkToHtmlFragment } from './link-to-html-fragment';
 
-export const tiSduiToHtmlFragment = (
+export const tiSduiSectionToHtmlFragment = (section: Section): string => {
+  const children: string[] = [];
+
+  for (const node of section.nodes) {
+    if (node.type === 'TEXT') {
+      // TODO write a test that proves that this escape is working
+      children.push(`<p id="${node.id}">${escape(node.text)}</p>`);
+
+      continue;
+    }
+
+    if (node.type === 'IMAGE') {
+      throw new Error(`Images are not currently supported in TI SDUI. Sorry!`);
+    }
+
+    if (node.type === 'ACTION') {
+      children.push(actionToHtmlFragment(node));
+
+      continue;
+    }
+
+    if (node.type === 'LINK') {
+      children.push(linkToHtmlFragment(node));
+
+      continue;
+    }
+
+    const exhaustiveCheck: never = node;
+
+    throw new Error(
+      `Unsupported type for node: ${JSON.stringify(exhaustiveCheck)}`,
+    );
+  }
+
+  const html = `
+            <div id="${section.id}">
+            ${children.join('\n')}
+            </div>
+    `;
+
+  return html;
+};
+
+export const tiSduiScreenToHtmlFragment = (
   input: TIScreen,
   size: 's' | 'l' = 's',
 ): string => {
@@ -17,46 +61,7 @@ export const tiSduiToHtmlFragment = (
   const sectionsById = new Map<string, string>();
 
   for (const section of sections) {
-    const children: string[] = [];
-
-    for (const node of section.nodes) {
-      if (node.type === 'TEXT') {
-        // TODO write a test that proves that this escape is working
-        children.push(`<p id="${node.id}">${escape(node.text)}</p>`);
-
-        continue;
-      }
-
-      if (node.type === 'IMAGE') {
-        throw new Error(
-          `Images are not currently supported in TI SDUI. Sorry!`,
-        );
-      }
-
-      if (node.type === 'ACTION') {
-        children.push(actionToHtmlFragment(node));
-
-        continue;
-      }
-
-      if (node.type === 'LINK') {
-        children.push(linkToHtmlFragment(node));
-
-        continue;
-      }
-
-      const exhaustiveCheck: never = node;
-
-      throw new Error(
-        `Unsupported type for node: ${JSON.stringify(exhaustiveCheck)}`,
-      );
-    }
-
-    const html = `
-            <div id="${section.id}">
-            ${children.join('\n')}
-            </div>
-    `;
+    const html = tiSduiSectionToHtmlFragment(section);
 
     sectionsById.set(section.id, html);
   }

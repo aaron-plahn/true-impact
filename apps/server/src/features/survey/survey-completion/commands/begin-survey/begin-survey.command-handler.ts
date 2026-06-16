@@ -1,14 +1,15 @@
 import { Inject } from '@nestjs/common';
-import { EncryptionService } from '../../../../libs/auth';
-import { CommandResult, ICommandHandler } from '../../../../libs/cqrs-es';
+import { randomUUID } from 'node:crypto';
+import { EncryptionService } from '../../../../../libs/auth';
+import { CommandResult, ICommandHandler } from '../../../../../libs/cqrs-es';
 import {
   TrueImpactBadUserInputError,
   TrueImpactError,
-} from '../../../../libs/data-types';
-import { Survey } from '../../survey-management';
-import { SurveyResponseRecord } from '../models/survey-response-record.aggregate-root';
-import type { ISurveyResponseCommandRepository } from '../repositories';
-import { SURVEY_RESPONSE_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../repositories';
+} from '../../../../../libs/data-types';
+import { Survey } from '../../../survey-management';
+import { SurveyResponseRecord } from '../../models/survey-response-record.aggregate-root';
+import type { ISurveyResponseCommandRepository } from '../../repositories';
+import { SURVEY_RESPONSE_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../../repositories';
 import { BeginSurvey } from './begin-survey.command';
 
 interface ISurveyParticipantManagementService {
@@ -88,6 +89,7 @@ export class BeginSurveyCommandHandler implements ICommandHandler<BeginSurvey> {
     }
 
     const emptyCompletionRecord = SurveyResponseRecord.begin({
+      id: randomUUID(),
       survey: targetSurvey,
       participantCompositeIdentifier,
     });
@@ -99,6 +101,11 @@ export class BeginSurveyCommandHandler implements ICommandHandler<BeginSurvey> {
     const persistenceResult = await this.surveyCompletionRepository.begin(
       emptyCompletionRecord,
     );
+
+    // TODO move this responsibility to a write-hook on the event store
+    Object.assign(persistenceResult, {
+      events: emptyCompletionRecord.eventHistory,
+    });
 
     return persistenceResult;
   }

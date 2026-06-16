@@ -1,9 +1,5 @@
 import { ApiBody } from '@nestjs/swagger';
 import {
-  AnswerSurveyQuestion,
-  BeginSurvey,
-} from '../../features/survey/survey-completion';
-import {
   buildTestInstance,
   convertToOpenApiSchema,
   Ctor,
@@ -62,6 +58,10 @@ export class CommandHandlerService {
      */
     private readonly eventPublisher: {
       publishEvent: (event: unknown) => Promise<void>;
+    } = {
+      publishEvent: (_e) => {
+        return Promise.resolve();
+      },
     },
   ) {}
 
@@ -157,49 +157,19 @@ export class CommandHandlerService {
       ]);
 
     if (!(executionResult instanceof Error)) {
-      const aggregateCompositeIdentifier = {
-        id: executionResult.id,
-        type: executionResult.type,
-      };
+      const { events } = executionResult;
 
       /**
-       * Better patterns
-       * 1. Make the command handler responsible for `buildEvent` and publish
-       * the event after writing to the event store (domain DB).
-       * 2. (Better yet) Pull events from the event store and publish
-       * via a proper messaging queue for more robustness.
+       * Eventually we will
+       * 1. publish domain events out of process (no await below)
+       * 2. discover these events not from command handler acknowledgements
+       * but from a write hook on the event store.
+       * 3. rely on a production-grade messaging queue for this communication
        */
-      if (commandType === 'BEGIN_SURVEY') {
-        this.eventPublisher.publishEvent({
-          type: 'SURVEY_BEGAN',
-          payload: {
-            aggregateCompositeIdentifier,
-            surveyId: (userRequest.payload as BeginSurvey).surveyId,
-          },
-        });
-      }
-
-      if (commandType === 'ANSWER_SURVEY_QUESTION') {
-        const { questionLabel, chosenOptionLabel } =
-          userRequest.payload as AnswerSurveyQuestion;
-
-        this.eventPublisher.publishEvent({
-          type: 'SURVEY_QUESTION_ANSWERED',
-          payload: {
-            aggregateCompositeIdentifier,
-            questionLabel,
-            chosenOptionLabel,
-          },
-        });
-      }
-
-      if (commandType === 'SUBMIT_SURVEY') {
-        this.eventPublisher.publishEvent({
-          type: 'SURVEY_SUBMITTED',
-          payload: {
-            aggregateCompositeIdentifier,
-          },
-        });
+      if (Array.isArray(events)) {
+        for (const e of events) {
+          await this.eventPublisher.publishEvent(e);
+        }
       }
     }
 

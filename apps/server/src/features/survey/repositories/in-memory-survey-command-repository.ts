@@ -52,9 +52,7 @@ export class InMemorySurveyCommandRepository implements ISurveyCommandRepository
   create(
     instance: Survey,
   ): Promise<PersistenceAcknowledgement | TrueImpactError> {
-    const id = this.getNextId();
-
-    if (this.entitiesById.has(id)) {
+    if (this.entitiesById.has(instance.id)) {
       return Promise.resolve(
         new TrueImpactError(
           `Unique constraint [id] violated. There is already a survey with the ID: ${instance.id}`,
@@ -69,11 +67,9 @@ export class InMemorySurveyCommandRepository implements ISurveyCommandRepository
       return Promise.resolve(uniquenessConstraintsValidationResult);
     }
 
-    instance.id = id;
-
     instance.revision = 1;
 
-    this.entitiesById.set(id, instance);
+    this.entitiesById.set(instance.id, instance);
 
     const result = {
       type: this.type,

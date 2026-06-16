@@ -1,5 +1,7 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Req, Res, Session, UseGuards } from '@nestjs/common';
 import type { Request, Response } from 'express';
+import { tiSduiSectionToHtmlFragment } from 'src/libs/server-driven-ui/html/tisdui-to-html-fragment';
 import { isDeepStrictEqual } from 'util';
 import { AuthenticatedUserGuard, RbacAuthGuard } from '../../auth/guards';
 import type { ICommandFsa } from '../../libs/cqrs-es';
@@ -34,6 +36,7 @@ import { tiSduiToHtml } from '../../libs/server-driven-ui';
 import { SURVEY_RESPONSE_AGGREGATE_TYPE } from './constants';
 import { SurveyQueryService } from './queries/survey-query.service';
 import { SurveyViewModelClientDto } from './queries/survey.view-model';
+import { SduiViewDiffer } from './survey-completion/commands/sdui-view-differ';
 import type { ISurveyResponseSessionRepository } from './survey-completion/repositories/survey-response.session-repository.interface';
 import { SURVEY_RESPONSE_SESSION_REPOSITORY_TOKEN } from './survey-completion/repositories/survey-response.session-repository.interface';
 import { CommandSuccessPage } from './survey-completion/views';
@@ -52,6 +55,8 @@ export class SurveyController implements OnModuleInit {
   constructor(
     private readonly surveyQueryService: SurveyQueryService,
     private readonly commandHandlerService: CommandHandlerService,
+    // TODO naming
+    private readonly surveyResponseViewDiffer: SduiViewDiffer,
     @Inject(SURVEY_RESPONSE_SESSION_REPOSITORY_TOKEN)
     private readonly sessionRepository: ISurveyResponseSessionRepository,
     private readonly configService: ConfigService,
@@ -158,6 +163,8 @@ export class SurveyController implements OnModuleInit {
           id: result.id,
         };
 
+        console.log({ setSubject: session.subject });
+
         try {
           req.session.save((err) => {
             throw new TrueImpactRuntimeException([
@@ -234,27 +241,58 @@ export class SurveyController implements OnModuleInit {
   ) {
     const result = await this.executeCommand(fsa, session, req, res);
 
+    const commandErrorPage = new CommandErrorPage({
+      fsa: fsa,
+      error: result
+        ? // eslint-disable-next-line @typescript-eslint/no-base-to-string
+          new TrueImpactError(result.toString())
+        : new TrueImpactError('Not Found'),
+    });
+
     if (result instanceof TrueImpactError || result === null) {
+      return {
+        target: 'root',
+        swap: 'outer',
+        content: commandErrorPage.render(),
+      };
+    }
+
+    const { events } = result;
+
+    if (!events || events.length === 0) {
       return tiSduiToHtml(
-        new CommandErrorPage({
-          fsa: fsa,
-          error: result
-            ? new TrueImpactError(result.toString())
-            : new TrueImpactError('Not Found'),
+        // TODO this should be a SDUI diff
+        new CommandSuccessPage({
+          commandType: fsa.type,
+          aggregateCompositeIdentifier: {
+            type: result.type,
+            id: result.id,
+          },
+          revision: result.revision,
         }).render(),
       );
     }
 
-    return tiSduiToHtml(
-      new CommandSuccessPage({
-        commandType: fsa.type,
-        aggregateCompositeIdentifier: {
-          type: result.type,
-          id: result.id,
-        },
-        revision: result.revision,
-      }).render(),
-    );
+    if (events.length === 1) {
+      const diff = await this.surveyResponseViewDiffer.calculateDiff(events[0]);
+
+      if (!diff) {
+        throw new Error(`Not implemented: null view updates`);
+      }
+
+      return {
+        target: diff.target,
+        swap: diff.swap,
+        content: tiSduiSectionToHtmlFragment(diff?.content),
+      };
+    }
+
+    // if (events.length > 1)
+    throw new TrueImpactRuntimeException([
+      new TrueImpactError(
+        `A command of type ${fsa.type} emitted multiple events (${(events || []).map((e) => e.type).join(', ')}). \n This is not currently supported within the system.`,
+      ),
+    ]);
   }
 
   // TODO auth guard

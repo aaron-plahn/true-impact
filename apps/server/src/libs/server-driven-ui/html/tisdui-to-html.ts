@@ -1,5 +1,5 @@
 import { TIScreen } from '../ti-screen';
-import { tiSduiToHtmlFragment } from './tisdui-to-html-fragment';
+import { tiSduiScreenToHtmlFragment } from './tisdui-to-html-fragment';
 
 export const tiSduiToHtml = (input: TIScreen): string => {
   return `
@@ -10,8 +10,25 @@ export const tiSduiToHtml = (input: TIScreen): string => {
             <title>${input.title}</title>
         </head>
         <body>
-            ${tiSduiToHtmlFragment(input)}
+            ${tiSduiScreenToHtmlFragment(input)}
             <script>
+                // TODO make these stand-alone scripts
+                // TODO bundler
+                const renderDiffFromServer = (diff) =>{
+                    const elToUpdate = document.getElementById(diff.target);
+
+                    if(!elToUpdate){
+                        throw new Error('Failed to update target element with ID:' + diff.target)
+                    }
+
+                    if(diff.swap === "outer"){
+                        elToUpdate.outerHTML = diff.content;
+                        return;
+                    }
+
+                    console.log("unsupported swap strategy for TI SDUI: " + e.swap);
+                }
+
                 const submitCommandForm = async (e) => {
 
                 e.preventDefault();
@@ -46,23 +63,23 @@ export const tiSduiToHtml = (input: TIScreen): string => {
                     body: JSON.stringify(fsa),
                     headers: {
                         'Content-Type': 'application/json',
-                        Accept: 'text/html',
+                        Accept: 'text/json',
                     },
                     });
 
-                    const result = await response.text();
+                   const result = await response.json();
 
                     if (response.status !== 201) {
-                    render('<div>Shoot! Fix me.</div>');
+                        render('<div>' + response?.message || 'unknown error' + '</div>');
                     }
 
-
-
-                    render(result);
+                   renderDiffFromServer(result);
 
                     return;
                 } catch (error) {
                     const msg = error?.message || 'Unexpected Server Error';
+
+                    console.log({badFsa: fsa});
 
                     const msgAsHtml =
                     '<div><h2>Server Error</h2><p>' +
@@ -74,40 +91,6 @@ export const tiSduiToHtml = (input: TIScreen): string => {
                     return;
                 }
                 };
-
-            </script>
-            <script src="https://cdn.socket.io/3.1.3/socket.io.min.js" integrity="sha384-cPwlPLvBTa3sKAgddT6krw0cJat7egBga3DJepJyrLl4Q9/5WLra3rrnMcyTyOnh" crossorigin="anonymous"></script>
-            <script>
-                      const target = document.getElementById('root');
-
-          const wsUri = 'ws://localhost:3234/survey-events';
-          const socket = io(wsUri, { transports: ['websocket'], autoConnect: true });
-
-          const send = () =>{
-            socket.emit("SOME_EVENT",{message: 'Another one bites the dust!'});
-
-          };
-
-
-          socket.on('SOME_EVENT', ({ message }) => {
-            target.innerHTML += ", " +message;
-          });
-
-          socket.on('SURVEY_UPDATED', (e)=>{
-
-            const elToUpdate = document.getElementById(e.target);
-
-            if(!elToUpdate){
-              throw new Error('Failed to update target element with ID:' + e.target)
-            }
-
-            if(e.swap === "outer"){
-              elToUpdate.outerHTML = e.content;
-              return;
-            }
-
-            console.log({unsupportedEvent: e});
-          })
             </script>
         </body>
     </html>

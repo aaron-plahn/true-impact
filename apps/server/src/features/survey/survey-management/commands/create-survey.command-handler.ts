@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { CommandResult, ICommandHandler } from '../../../../libs/cqrs-es';
 import { TrueImpactError } from '../../../../libs/data-types';
 import { Inject } from '../../../../libs/framework';
@@ -19,7 +20,7 @@ export class CreateSurveyCommandHandler implements ICommandHandler {
   }: {
     payload: CreateSurvey;
   }): Promise<CommandResult> {
-    const buildResult = Survey.buildEmpty({ name });
+    const buildResult = Survey.buildEmpty({ name, id: randomUUID() });
 
     if (buildResult instanceof TrueImpactError) {
       return buildResult;
