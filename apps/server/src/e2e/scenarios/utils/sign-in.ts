@@ -9,6 +9,12 @@ const authBaseEndpoint = `${baseUrl}/auth`;
 
 const logInEndpoint = `${authBaseEndpoint}/logIn`;
 
+const logOutEndpoint = `${authBaseEndpoint}/logOut`;
+
+export const signOut = async (httpClient: TestHttpClient) => {
+  await httpClient.post(logOutEndpoint);
+};
+
 export const signIn = async (
   { username, password }: { username: string; password: string },
   httpClient: TestHttpClient,

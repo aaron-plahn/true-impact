@@ -3,6 +3,7 @@ import { AuthModule } from './auth/auth.module';
 import { ClientModule } from './features/clients/client.module';
 import { CommunityModule } from './features/communities/community.module';
 import { FlagModule } from './features/flags/flag.module';
+import { GroupProgramModule } from './features/group-programs/domain/group-program.module';
 import { SurveyModule } from './features/survey/survey.module';
 import { UserModule } from './features/users/user.module';
 import { CryptographyModule } from './libs/auth';
@@ -26,6 +27,7 @@ const nodeEnv = process.env.NODE_ENV || 'local';
     CommunityModule,
     // TIUserModule?
     UserModule,
+    GroupProgramModule,
   ],
   controllers: [AppController],
   providers: [],
