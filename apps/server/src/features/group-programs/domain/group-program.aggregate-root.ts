@@ -1,8 +1,13 @@
+import { IDomainEvent } from 'src/libs/cqrs-es';
 import {
   AggregateRoot,
   NestedDataType,
+  NonEmptyString,
+  TrueImpactBadUserInputError,
   TrueImpactError,
 } from '../../../libs/data-types';
+import { CreateGroupProgram } from './commands';
+import { GroupProgramCreated } from './commands/create-group-program/group-program-created.event';
 import { GROUP_PROGRAM_AGGREGATE_TYPE } from './constants';
 import {
   GroupSession,
@@ -25,8 +30,16 @@ export class GroupProgram extends AggregateRoot {
 
   id: string;
 
+  eventHistory: IDomainEvent[];
+
+  // Can we make this a getter? this.eventHistory.length
   revision: number;
 
+  @NonEmptyString({
+    label: 'name',
+    description: 'the public-facing name of this group program',
+    mustBeUnique: true,
+  })
   name: string; // TODO ML Text
 
   @NestedDataType(() => GroupSession, {
@@ -35,6 +48,32 @@ export class GroupProgram extends AggregateRoot {
       'A list of all current and historical sessions of this group program',
   })
   sessions: GroupSession[];
+
+  constructor({
+    id,
+    revision,
+    name,
+    sessions,
+    eventHistory,
+  }: {
+    id: string;
+    revision: number;
+    name: string;
+    sessions: GroupSession[];
+    eventHistory: IDomainEvent[];
+  }) {
+    super();
+
+    this.id = id;
+
+    this.revision = revision;
+
+    this.name = name;
+
+    this.sessions = sessions;
+
+    this.eventHistory = eventHistory;
+  }
 
   validateComplexInvariants(): TrueImpactError[] {
     const allErrors: TrueImpactError[] = [];
@@ -70,5 +109,33 @@ export class GroupProgram extends AggregateRoot {
       revision: this.revision,
       sessions: this.sessions.map((s) => s.toPersistenceDto()),
     };
+  }
+
+  static fromUserRequest({
+    aggregateCompositeIdentifier: { id },
+    name,
+  }: CreateGroupProgram & {
+    aggregateCompositeIdentifier: { id: string };
+  }): GroupProgram | TrueImpactBadUserInputError {
+    const buildResult = new GroupProgram({
+      id,
+      revision: 1,
+      sessions: [],
+      name,
+      eventHistory: [
+        new GroupProgramCreated({
+          payload: {
+            aggregateCompositeIdentifier: {
+              // TODO we should omit this
+              type: GROUP_PROGRAM_AGGREGATE_TYPE,
+              id: id,
+            },
+            name,
+          },
+        }),
+      ],
+    });
+
+    return buildResult.validateInvariants();
   }
 }

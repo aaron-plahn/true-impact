@@ -1,9 +1,11 @@
-import { PersistenceAcknowledgement } from 'src/libs/cqrs-es';
+import { PersistenceAcknowledgement } from '../../../../libs/cqrs-es';
 import {
+  getDataSchemaFromClassCtor,
+  SimpleSchemaPropertyMetadata,
   TrueImpactBadUserInputError,
   TrueImpactError,
   TrueImpactRuntimeException,
-} from 'src/libs/data-types';
+} from '../../../../libs/data-types';
 import { IGroupCommandRepository } from '../commands/group-command-repository.interface';
 import { GROUP_PROGRAM_AGGREGATE_TYPE } from '../constants';
 import { GroupProgram } from '../group-program.aggregate-root';
@@ -15,7 +17,25 @@ export class InMemoryGroupProgramCommandRepository implements IGroupCommandRepos
 
   private readonly type = GROUP_PROGRAM_AGGREGATE_TYPE;
 
-  constructor(private entitiesById: Map<string, GroupProgram> = new Map()) {}
+  constructor(private entitiesById: Map<string, GroupProgram> = new Map()) {
+    const schema = getDataSchemaFromClassCtor(GroupProgram);
+
+    const uniqueFields: (keyof GroupProgram)[] = Array.from(
+      Object.entries(schema.properties),
+    ).flatMap(([propertyKey, propertySchema]) => {
+      if (
+        (propertySchema as SimpleSchemaPropertyMetadata | null)?.mustBeUnique
+      ) {
+        return [propertyKey as keyof GroupProgram];
+      }
+
+      return [];
+    });
+
+    uniqueFields.forEach((f) => {
+      this.uniqueFields.add(f);
+    });
+  }
 
   fetchById(id: string): Promise<GroupProgram | null> {
     const result = this.entitiesById.get(id) || null;

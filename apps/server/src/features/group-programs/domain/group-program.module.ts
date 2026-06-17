@@ -5,8 +5,8 @@ import { CommandHandlerService } from 'src/libs/cqrs-es';
 import { Module, ModuleRef } from '../../../libs/framework';
 import { GroupProgramQueryService } from '../queries/group-program-query.service';
 import { GroupProgramViewModel } from '../queries/group-program.view-model';
-import { CreateGroupProgram } from './commands/create-group-program.command';
-import { CreateGroupProgramCommandHandler } from './commands/create-group-program.command-handler';
+import { CreateGroupProgram } from './commands';
+import { CreateGroupProgramCommandHandler } from './commands/create-group-program/create-group-program.command-handler';
 import {
   GROUP_PROGRAM_COMMAND_REPOSITORY_INJECTION_TOKEN,
   GROUP_PROGRAM_QUERY_REPOSITORY_INJECTION_TOKEN,
@@ -19,6 +19,7 @@ import { InMemoryGroupProgramCommandRepository } from './repositories/in-memory-
   imports: [UserModule, AuthModule],
   providers: [
     GroupProgramQueryService,
+    CreateGroupProgramCommandHandler,
     {
       provide: GROUP_PROGRAM_COMMAND_REPOSITORY_INJECTION_TOKEN,
       useClass: InMemoryGroupProgramCommandRepository,
@@ -51,6 +52,7 @@ import { InMemoryGroupProgramCommandRepository } from './repositories/in-memory-
 
         return commandHandlerService;
       },
+      inject: [ModuleRef],
     },
   ],
   controllers: [GroupProgramCommandController, GroupProgramQueryController],

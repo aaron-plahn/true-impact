@@ -1,7 +1,7 @@
 import {
   NonEmptyString,
   TrueImpactDataExample,
-} from '../../../../libs/data-types';
+} from '../../../../../libs/data-types';
 
 @TrueImpactDataExample<CreateGroupProgram>({
   example: {

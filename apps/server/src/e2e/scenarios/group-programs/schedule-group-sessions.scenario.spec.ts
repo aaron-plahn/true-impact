@@ -1,5 +1,5 @@
 import { HttpStatus } from '@nestjs/common';
-import { CreateGroupProgram } from '../../../features/group-programs/domain/commands/create-group-program.command';
+import { CreateGroupProgram } from '../../../features/group-programs/domain/commands';
 import { TestCommandStream } from '../../../libs/cqrs-es';
 import {
   assertCommandScenarioError,
@@ -16,6 +16,8 @@ const groupProgramQueryEndpoint = `${baseEndpoint}/group-programs`;
 
 const groupProgramCommandEndpoint = `${baseEndpoint}/group-programs/commands`;
 
+const groupProgramTestSetupEndpoint = `${baseEndpoint}/group-programs/test-setup`;
+
 const programName = "Wreckin' Rollerbladez";
 
 describe(`Group Program Scheduling Scenarios`, () => {
@@ -24,6 +26,10 @@ describe(`Group Program Scheduling Scenarios`, () => {
 
     beforeAll(async () => {
       await signInAsAdmin(httpClient);
+    });
+
+    beforeEach(async () => {
+      await httpClient.patch(groupProgramTestSetupEndpoint);
     });
 
     describe(`when creating a group program`, () => {
@@ -47,45 +53,46 @@ describe(`Group Program Scheduling Scenarios`, () => {
           });
         });
       });
-    });
 
-    describe(`when the request is invalid`, () => {
-      describe(`when the name is omitted`, () => {
-        it(`should return the expected error`, async () => {
-          await assertCommandScenarioError({
-            httpClient,
-            endpoint: groupProgramCommandEndpoint,
-            stream: TestCommandStream.first(CreateGroupProgram, {
-              // TODO explicitly check '' as well
-              name: undefined,
-            }),
-            assertErrorMessageAsExpected: (message) => {
-              expect(message).toContain(`required`);
-              expect(message).toContain('name');
-            },
+      describe(`when the request is invalid`, () => {
+        describe(`when the name is omitted`, () => {
+          it(`should return the expected error`, async () => {
+            await assertCommandScenarioError({
+              httpClient,
+              endpoint: groupProgramCommandEndpoint,
+              stream: TestCommandStream.first(CreateGroupProgram, {
+                // TODO explicitly check '' as well
+                name: undefined,
+              }),
+              assertErrorMessageAsExpected: (message) => {
+                expect(message).toContain(`required`);
+                expect(message).toContain('name');
+              },
+            });
           });
         });
-      });
 
-      describe(`when the name is already in use by another program`, () => {
-        it(`should return the expected error`, async () => {
-          await assertCommandScenarioSuccess({
-            httpClient,
-            endpoint: groupProgramCommandEndpoint,
-            stream: TestCommandStream.first(CreateGroupProgram, {
-              name: programName,
-            }),
-          });
+        describe(`when the name is already in use by another program`, () => {
+          it(`should return the expected error`, async () => {
+            await assertCommandScenarioSuccess({
+              httpClient,
+              endpoint: groupProgramCommandEndpoint,
+              stream: TestCommandStream.first(CreateGroupProgram, {
+                name: programName,
+              }),
+            });
 
-          await assertCommandScenarioError({
-            endpoint: groupProgramCommandEndpoint,
-            stream: TestCommandStream.first(CreateGroupProgram, {
-              name: programName,
-            }),
-            assertErrorMessageAsExpected: (message) => {
-              expect(message).toContain(programName);
-              expect(message).toContain('already in use');
-            },
+            await assertCommandScenarioError({
+              httpClient,
+              endpoint: groupProgramCommandEndpoint,
+              stream: TestCommandStream.first(CreateGroupProgram, {
+                name: programName,
+              }),
+              assertErrorMessageAsExpected: (message) => {
+                expect(message).toContain(programName);
+                expect(message).toContain('already in use');
+              },
+            });
           });
         });
       });
