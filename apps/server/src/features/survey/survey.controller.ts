@@ -163,8 +163,6 @@ export class SurveyController implements OnModuleInit {
           id: result.id,
         };
 
-        console.log({ setSubject: session.subject });
-
         try {
           req.session.save((err) => {
             throw new TrueImpactRuntimeException([

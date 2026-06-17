@@ -43,8 +43,9 @@ export class CreateGroupProgramCommandHandler implements ICommandHandler<CreateG
       return persistenceResult;
     }
 
-    // TODO Include events
-    Object.assign(persistenceResult, { events: [] });
+    Object.assign(persistenceResult, {
+      events: buildResult.eventHistory.at(-1),
+    });
 
     return persistenceResult;
   }

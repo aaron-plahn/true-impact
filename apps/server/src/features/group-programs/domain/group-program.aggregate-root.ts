@@ -51,13 +51,11 @@ export class GroupProgram extends AggregateRoot {
 
   constructor({
     id,
-    revision,
     name,
     sessions,
     eventHistory,
   }: {
     id: string;
-    revision: number;
     name: string;
     sessions: GroupSession[];
     eventHistory: IDomainEvent[];
@@ -66,7 +64,7 @@ export class GroupProgram extends AggregateRoot {
 
     this.id = id;
 
-    this.revision = revision;
+    this.revision = eventHistory.length;
 
     this.name = name;
 
@@ -106,8 +104,8 @@ export class GroupProgram extends AggregateRoot {
     return {
       id: this.id,
       name: this.name,
-      revision: this.revision,
       sessions: this.sessions.map((s) => s.toPersistenceDto()),
+      revision: this.eventHistory.length,
     };
   }
 
@@ -119,7 +117,6 @@ export class GroupProgram extends AggregateRoot {
   }): GroupProgram | TrueImpactBadUserInputError {
     const buildResult = new GroupProgram({
       id,
-      revision: 1,
       sessions: [],
       name,
       eventHistory: [

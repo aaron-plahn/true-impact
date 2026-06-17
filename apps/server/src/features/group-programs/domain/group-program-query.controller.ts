@@ -5,7 +5,7 @@ import {
   IdParam,
   UseGuards,
 } from 'src/libs/framework';
-import { GroupProgramQueryService } from '../queries/group-program-query.service';
+import { GroupProgramQueryService } from '../queries';
 
 @Controller('group-programs')
 export class GroupProgramQueryController {

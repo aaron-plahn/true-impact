@@ -1,11 +1,12 @@
 import { HttpStatus } from '@nestjs/common';
 import { CreateGroupProgram } from '../../../features/group-programs/domain/commands';
+import { CreateUserWithPassword } from '../../../features/users/commands';
 import { TestCommandStream } from '../../../libs/cqrs-es';
 import {
   assertCommandScenarioError,
   assertCommandScenarioSuccess,
 } from '../utils';
-import { signInAsAdmin } from '../utils/sign-in';
+import { signIn, signInAsAdmin } from '../utils/sign-in';
 import { TestHttpClient } from '../utils/test-http-client';
 
 const port = '3234';
@@ -21,22 +22,22 @@ const groupProgramTestSetupEndpoint = `${baseEndpoint}/group-programs/test-setup
 const programName = "Wreckin' Rollerbladez";
 
 describe(`Group Program Scheduling Scenarios`, () => {
+  const adminHttpClient = new TestHttpClient('http://localhost:3234');
+
+  beforeEach(async () => {
+    await adminHttpClient.patch(groupProgramTestSetupEndpoint);
+  });
+
   describe(`when the user is authenticated as admin`, () => {
-    const httpClient = new TestHttpClient('http://localhost:3234');
-
     beforeAll(async () => {
-      await signInAsAdmin(httpClient);
-    });
-
-    beforeEach(async () => {
-      await httpClient.patch(groupProgramTestSetupEndpoint);
+      await signInAsAdmin(adminHttpClient);
     });
 
     describe(`when creating a group program`, () => {
       describe(`when the request is valid`, () => {
         it(`should create the group program`, async () => {
           await assertCommandScenarioSuccess({
-            httpClient,
+            httpClient: adminHttpClient,
             endpoint: groupProgramCommandEndpoint,
             stream: TestCommandStream.first(CreateGroupProgram, {
               name: programName,
@@ -44,7 +45,7 @@ describe(`Group Program Scheduling Scenarios`, () => {
             assertSuccess: async (acks) => {
               const { id } = acks[0];
 
-              const result = await httpClient.get(
+              const result = await adminHttpClient.get(
                 `${groupProgramQueryEndpoint}/${id}`,
               );
 
@@ -58,7 +59,7 @@ describe(`Group Program Scheduling Scenarios`, () => {
         describe(`when the name is omitted`, () => {
           it(`should return the expected error`, async () => {
             await assertCommandScenarioError({
-              httpClient,
+              httpClient: adminHttpClient,
               endpoint: groupProgramCommandEndpoint,
               stream: TestCommandStream.first(CreateGroupProgram, {
                 // TODO explicitly check '' as well
@@ -75,7 +76,7 @@ describe(`Group Program Scheduling Scenarios`, () => {
         describe(`when the name is already in use by another program`, () => {
           it(`should return the expected error`, async () => {
             await assertCommandScenarioSuccess({
-              httpClient,
+              httpClient: adminHttpClient,
               endpoint: groupProgramCommandEndpoint,
               stream: TestCommandStream.first(CreateGroupProgram, {
                 name: programName,
@@ -83,7 +84,7 @@ describe(`Group Program Scheduling Scenarios`, () => {
             });
 
             await assertCommandScenarioError({
-              httpClient,
+              httpClient: adminHttpClient,
               endpoint: groupProgramCommandEndpoint,
               stream: TestCommandStream.first(CreateGroupProgram, {
                 name: programName,
@@ -95,6 +96,46 @@ describe(`Group Program Scheduling Scenarios`, () => {
             });
           });
         });
+      });
+    });
+  });
+
+  describe(`when the user is authenticated as an ordinary user (no RBAC to execute commands)`, () => {
+    const userHttpClient = new TestHttpClient('http://localhost:4200');
+
+    const ordinaryUsername = 'duser';
+
+    const ordinaryUserPassword = 'abc123';
+
+    beforeAll(async () => {
+      await adminHttpClient.patch(`${baseEndpoint}/users/test-setup`);
+
+      await assertCommandScenarioSuccess({
+        httpClient: adminHttpClient,
+        endpoint: `${baseEndpoint}/users/commands`,
+        stream: TestCommandStream.first(CreateUserWithPassword, {
+          username: ordinaryUsername,
+          password: ordinaryUserPassword,
+          email: 'duser@mytenant.org',
+        }),
+      });
+
+      await signIn(
+        {
+          username: ordinaryUsername,
+          password: ordinaryUserPassword,
+        },
+        userHttpClient,
+      );
+    });
+
+    it(`should return forbidden`, async () => {
+      await assertCommandScenarioError({
+        endpoint: groupProgramCommandEndpoint,
+        stream: TestCommandStream.first(CreateGroupProgram, {}),
+        assertErrorMessageAsExpected: (message) => {
+          expect(message).toContain('Forbidden');
+        },
       });
     });
   });

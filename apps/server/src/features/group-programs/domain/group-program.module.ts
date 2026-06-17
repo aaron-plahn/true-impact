@@ -3,8 +3,7 @@ import { InMemoryQueryRepository } from 'src/common/persistence';
 import { UserModule } from 'src/features/users/user.module';
 import { CommandHandlerService } from 'src/libs/cqrs-es';
 import { Module, ModuleRef } from '../../../libs/framework';
-import { GroupProgramQueryService } from '../queries/group-program-query.service';
-import { GroupProgramViewModel } from '../queries/group-program.view-model';
+import { GroupProgramQueryService, GroupProgramViewModel } from '../queries';
 import { CreateGroupProgram } from './commands';
 import { CreateGroupProgramCommandHandler } from './commands/create-group-program/create-group-program.command-handler';
 import {

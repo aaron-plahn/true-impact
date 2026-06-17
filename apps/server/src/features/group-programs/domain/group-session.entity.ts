@@ -1,4 +1,4 @@
-import { Entity, TrueImpactError } from 'src/libs/data-types';
+import { Entity, TrueImpactError } from '../../../libs/data-types';
 import {
   GroupSessionLocation,
   GroupSessionLocationDto,
