@@ -2,6 +2,9 @@
 
 This first release of the True Impact platform introduces a working model for user management, client management, and survey creation and completion.
 
+## 32
+In this PR, we introduce group programs, including a command to create a group program. Eventually, we will support specifying a group program as the subject of a survey.
+
 ## 33
 This PR is a refactor that changes the way the server and client interact without changing the overall behaviour. With this PR, the
 entire survey completion workflow has been secured.
