@@ -18,6 +18,7 @@ import {
   SurveyAnalyzer,
   SurveyAnalyzerPersistenceDto,
 } from '../survey-analysis';
+import { SurveyParticipantCompositeIdentifier } from '../survey-completion/models';
 import { SurveyAccessToken } from './survey-access-token.entity';
 import { SurveyOption } from './survey-option.entity';
 import {
@@ -930,6 +931,34 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
     }
 
     this.analyzersByName.set(analyzerName, updatedAnalyzer);
+
+    return this;
+  }
+
+  openToParticipant({
+    dateOfExpiry,
+    dateOpened,
+    hash,
+    participantCompositeIdentifier,
+  }: {
+    dateOpened: string;
+    dateOfExpiry: string;
+    hash: string;
+    participantCompositeIdentifier: SurveyParticipantCompositeIdentifier;
+  }) {
+    const buildResult = SurveyAccessToken.openParticipantAccess({
+      dateCreated: dateOpened,
+      dateExpires: dateOfExpiry,
+      hash,
+      participantCompositeIdentifier,
+      algorithm: 'TODO add me now!',
+    });
+
+    if (buildResult instanceof Error) {
+      return buildResult;
+    }
+
+    this.accessTokensByHash.set(hash, buildResult);
 
     return this;
   }

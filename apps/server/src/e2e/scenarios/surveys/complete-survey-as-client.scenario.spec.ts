@@ -1,4 +1,3 @@
-import axios from 'axios';
 import { Client } from '../../../features/clients/client.aggregate-root';
 import { CLIENT_AGGREGATE_TYPE } from '../../../features/clients/client.composite-identifier';
 import { CreateClient } from '../../../features/clients/commands/create-client.command';
@@ -16,6 +15,7 @@ import { AddFollowUpQuestionForSurveyOption } from '../../../features/survey/sur
 import { AddOptionToSurveyQuestion } from '../../../features/survey/survey-management/commands/add-option-to-survey-question.command';
 import { AddQuestionToSurvey } from '../../../features/survey/survey-management/commands/add-question-to-survey.command';
 import { CreateSurvey } from '../../../features/survey/survey-management/commands/create-survey.command';
+import { OpenSurveyToClient } from '../../../features/survey/survey-management/commands/open-survey-to-client';
 import { PublishSurvey } from '../../../features/survey/survey-management/commands/publish-survey.command';
 import { TestCommandStream } from '../../../libs/cqrs-es';
 import { assertTextMatchesAll } from '../../../libs/test-utils';
@@ -26,6 +26,7 @@ import {
   assertCommandSuccess,
   assertQueryResponse,
 } from '../utils';
+import { signInAsAdmin } from '../utils/sign-in';
 import { TestHttpClient } from '../utils/test-http-client';
 
 // TODO From env.e2e
@@ -134,56 +135,77 @@ const buildFullSurveyBeforePublishing = TestCommandStream.first(CreateSurvey, {
 
 const publishSurvey = buildFullSurveyBeforePublishing.andThen(PublishSurvey);
 
-const seedTestClient = async ({ communityId }: { communityId: string }) => {
-  await assertCommandScenarioSuccess({
-    endpoint: clientCommandsEndpoint,
-    stream: TestCommandStream.first(CreateClient, { communityId }),
-    // onSuccess?
-    assertSuccess: (acks) => {
-      expect(acks).toHaveLength(1);
-
-      clientId = acks[0].id;
-    },
-  });
-};
-
-const seedPublishedSurvey = async () => {
-  await assertCommandScenarioSuccess({
-    endpoint: surveyCompletionCommandsEndpoint,
-    stream: publishSurvey,
-  });
-};
-
 const communityName = 'Big Community';
-
-const httpClient = new TestHttpClient('http://localhost:4200');
 
 /**
  * We have currently disabled completion of surveys by known clients. We can circle back
  * once we have completed support for anonymous survey completion.
  */
-describe.skip(`Survey Completion Scenarios`, () => {
+describe(`Survey Completion Scenarios`, () => {
+  const adminHttpClient = new TestHttpClient('http://localhost:3234');
+
+  const seedPublishedSurvey = async (
+    clientId: string,
+  ): Promise<{ accessCode: string }> => {
+    let accessCode: string = '';
+
+    await assertCommandScenarioSuccess({
+      httpClient: adminHttpClient,
+      endpoint: surveyCompletionCommandsEndpoint,
+      stream: publishSurvey.andThen(OpenSurveyToClient, {
+        clientId,
+      }),
+      assertSuccess: (acks) => {
+        accessCode = acks.at(-1)?.accessCode || '';
+      },
+    });
+
+    return { accessCode };
+  };
+
+  const seedTestClient = async ({ communityId }: { communityId: string }) => {
+    await assertCommandScenarioSuccess({
+      httpClient: adminHttpClient,
+      endpoint: clientCommandsEndpoint,
+      stream: TestCommandStream.first(CreateClient, { communityId }),
+      // onSuccess?
+      assertSuccess: (acks) => {
+        expect(acks).toHaveLength(1);
+
+        clientId = acks[0].id;
+      },
+    });
+  };
+
+  const anonymousParticipantHttpClient = new TestHttpClient(
+    'http://localhost:3234',
+  );
+
+  beforeAll(async () => {
+    await signInAsAdmin(adminHttpClient);
+  });
+
   let communityId: string;
 
   beforeEach(async () => {
     // clear all test data between runs
-    await axios.patch(surveyCompletionTestSetupEndpoint);
+    await adminHttpClient.patch(surveyCompletionTestSetupEndpoint);
 
-    await axios.patch(surveyTestSetupEndpoint);
+    await adminHttpClient.patch(surveyTestSetupEndpoint);
 
-    await axios.patch(clientTestSetupEndpoint);
+    await adminHttpClient.patch(clientTestSetupEndpoint);
 
-    await axios.patch(communityTestSetupEndpoint);
+    await adminHttpClient.patch(communityTestSetupEndpoint);
 
     await assertCommandSuccess({
-      httpClient,
+      httpClient: adminHttpClient,
       endpoint: communityCommandEndpoint,
       commandFsa: TestCommandStream.buildOne(CreateCommunity, {
         name: communityName,
       }),
     });
 
-    const communities = (await axios.get(communityIndexEndpoint))
+    const communities = (await adminHttpClient.get(communityIndexEndpoint))
       .data as CommunityViewModelClientDto[];
 
     communityId = communities[0].id;
@@ -192,25 +214,33 @@ describe.skip(`Survey Completion Scenarios`, () => {
   });
 
   describe(`when executing a scenario`, () => {
+    let accessCode: string;
+
     describe(`when the scenario is valid`, () => {
       describe(`when completing the survey for the first time`, () => {
         beforeEach(async () => {
-          await seedPublishedSurvey();
+          const { id: clientId } = (
+            (await adminHttpClient.get(clientBaseEndpoint)).data as Client[]
+          )[0];
+
+          const surveySeedResult = await seedPublishedSurvey(clientId);
+
+          accessCode = surveySeedResult.accessCode;
         });
 
         it(`should submit the survey completion attempt`, async () => {
-          const { id: clientId } = (
-            (await axios.get(clientBaseEndpoint)).data as Client[]
-          )[0];
-
           const { id: surveyId } = (
-            (await axios.get(surveyIndexEndpoint)).data as SurveyViewModel[]
+            (await adminHttpClient.get(surveyIndexEndpoint))
+              .data as SurveyViewModel[]
           )[0];
 
           await assertCommandScenarioSuccess({
+            httpClient: anonymousParticipantHttpClient,
             endpoint: surveyCompletionCommandsEndpoint,
             stream: TestCommandStream.first(BeginSurvey, {
               surveyId,
+              accessCode,
+              // TODO remove this
               participantCompositeIdentifier: {
                 id: clientId,
                 type: CLIENT_AGGREGATE_TYPE,
@@ -247,19 +277,23 @@ describe.skip(`Survey Completion Scenarios`, () => {
 
       describe(`when completing the survey for an additional time`, () => {
         beforeEach(async () => {
-          await seedPublishedSurvey();
+          const { id: clientId } = (
+            (await adminHttpClient.get(clientBaseEndpoint)).data as Client[]
+          )[0];
+
+          const seedResult = await seedPublishedSurvey(clientId);
+
+          accessCode = seedResult.accessCode;
         });
 
         it(`should add a complete, second survey completion record`, async () => {
-          const { id: clientId } = (
-            (await axios.get(clientBaseEndpoint)).data as Client[]
-          )[0];
-
           const { id: surveyId } = (
-            (await axios.get(surveyIndexEndpoint)).data as SurveyViewModel[]
+            (await adminHttpClient.get(surveyIndexEndpoint))
+              .data as SurveyViewModel[]
           )[0];
 
           await assertCommandScenarioSuccess({
+            httpClient: anonymousParticipantHttpClient,
             endpoint: surveyCompletionCommandsEndpoint,
             stream: TestCommandStream.first(BeginSurvey, {
               surveyId,
@@ -296,6 +330,7 @@ describe.skip(`Survey Completion Scenarios`, () => {
           });
 
           await assertCommandScenarioSuccess({
+            httpClient: anonymousParticipantHttpClient,
             endpoint: surveyCompletionCommandsEndpoint,
             stream: TestCommandStream.first(BeginSurvey, {
               surveyId,
@@ -328,75 +363,32 @@ describe.skip(`Survey Completion Scenarios`, () => {
           });
         });
       });
-
-      describe(`when completing the survey anonymously`, () => {
-        beforeEach(async () => {
-          await seedPublishedSurvey();
-        });
-
-        it(`should add a complete survey response record`, async () => {
-          const { id: surveyId } = (
-            (await axios.get(surveyIndexEndpoint)).data as SurveyViewModel[]
-          )[0];
-
-          await assertCommandScenarioSuccess({
-            endpoint: surveyCompletionCommandsEndpoint,
-            stream: TestCommandStream.first(BeginSurvey, {
-              surveyId,
-              // This survey is being completed anonymously
-              participantCompositeIdentifier: undefined,
-            })
-              .andThen(AnswerSurveyQuestion, {
-                questionLabel: 'q1',
-                chosenOptionLabel: 'a',
-              })
-              .andThen(AnswerSurveyQuestion, {
-                questionLabel: 'q2',
-                chosenOptionLabel: 'b',
-              })
-              .andThen(AnswerSurveyQuestion, {
-                questionLabel: 'q2.a',
-                chosenOptionLabel: 'a',
-              })
-              .andThen(AnswerSurveyQuestion, {
-                questionLabel: 'q3',
-                chosenOptionLabel: 'b',
-              })
-              .andThen(SubmitSurvey, {}),
-            assertSuccess: async (acks) => {
-              await assertQueryResponse({
-                endpoint: `${surveyResponseRecordIndexEndpoint}/${acks[0].id}`,
-                assertResponseBody: (body: SurveyResponseRecordViewModel) => {
-                  expect(body.hasBeenSubmitted).toBe(true);
-
-                  expect(body.participantCompositeIdentifier).toBeFalsy();
-                },
-              });
-            },
-          });
-        });
-      });
     });
 
     describe(`when the scenario is invalid`, () => {
       describe(`when beginning a survey`, () => {
         describe(`when the participant already has attempt in progress for this survey`, () => {
           beforeEach(async () => {
-            await seedPublishedSurvey();
+            const { id: clientId } = (
+              (await adminHttpClient.get(clientBaseEndpoint)).data as Client[]
+            )[0];
+
+            const seedResult = await seedPublishedSurvey(clientId);
+
+            accessCode = seedResult.accessCode;
           });
 
           it(`should return the expected error response`, async () => {
-            const { id: clientId } = (
-              (await axios.get(clientBaseEndpoint)).data as Client[]
-            )[0];
-
             const { id: surveyId } = (
-              (await axios.get(surveyIndexEndpoint)).data as SurveyViewModel[]
+              (await adminHttpClient.get(surveyIndexEndpoint))
+                .data as SurveyViewModel[]
             )[0];
 
             await assertCommandScenarioSuccess({
+              httpClient: anonymousParticipantHttpClient,
               endpoint: surveyCompletionCommandsEndpoint,
               stream: TestCommandStream.first(BeginSurvey, {
+                accessCode,
                 surveyId,
                 participantCompositeIdentifier: {
                   id: clientId,
@@ -409,6 +401,7 @@ describe.skip(`Survey Completion Scenarios`, () => {
             });
 
             await assertCommandError({
+              httpClient: anonymousParticipantHttpClient,
               endpoint: surveyCompletionCommandsEndpoint,
               commandFsa: TestCommandStream.buildOne(BeginSurvey, {
                 // SAME survey as the one in progress
@@ -430,6 +423,10 @@ describe.skip(`Survey Completion Scenarios`, () => {
           });
         });
 
+        /**
+         * Note that if the survey doesn't exist, it's not possible to give the access code
+         * any consideration.
+         */
         describe(`when the target survey does not exist`, () => {
           it(`should return the expected error response`, async () => {
             const missingSurveyId = '404';
@@ -443,6 +440,7 @@ describe.skip(`Survey Completion Scenarios`, () => {
             });
 
             await assertCommandScenarioError({
+              httpClient: anonymousParticipantHttpClient,
               endpoint: surveyCompletionCommandsEndpoint,
               stream: beginSurvey,
               assertErrorMessageAsExpected: (message: string) => {
@@ -459,6 +457,7 @@ describe.skip(`Survey Completion Scenarios`, () => {
         describe(`when the target survey is not published`, () => {
           it(`should return the expected error response`, async () => {
             await assertCommandScenarioSuccess({
+              httpClient: adminHttpClient,
               endpoint: surveyCompletionCommandsEndpoint,
               stream: buildFullSurveyBeforePublishing,
             });
@@ -467,7 +466,7 @@ describe.skip(`Survey Completion Scenarios`, () => {
              * A better way to do this is to expose a `fetchOneByName` endpoint.
              */
             // Do we want a helper to hide the cast- or can we use a generic on the .get?
-            const response = await axios.get(surveyIndexEndpoint);
+            const response = await adminHttpClient.get(surveyIndexEndpoint);
 
             const body = response.data as SurveyViewModel[];
 
@@ -482,6 +481,7 @@ describe.skip(`Survey Completion Scenarios`, () => {
             });
 
             await assertCommandScenarioError({
+              httpClient: anonymousParticipantHttpClient,
               endpoint: surveyCompletionCommandsEndpoint,
               stream: beginSurvey,
             });
@@ -526,19 +526,17 @@ describe.skip(`Survey Completion Scenarios`, () => {
                 stream: publishSurvey,
               });
 
-              const surveySearchResult = await axios.get(surveyIndexEndpoint);
+              const surveySearchResult =
+                await adminHttpClient.get(surveyIndexEndpoint);
 
               const { id: surveyId } = (
                 surveySearchResult.data as SurveyViewModel[]
               )[0];
 
-              // const clientSearchResult = await axios.get(clientBaseEndpoint);
-
-              // const { id: clientId } = (clientSearchResult.data as Client[])[0];
-
               const missingClientId = 'c404';
 
               const beginSurvey = TestCommandStream.first(BeginSurvey, {
+                accessCode,
                 surveyId,
                 participantCompositeIdentifier: {
                   type: CLIENT_AGGREGATE_TYPE,
@@ -586,16 +584,19 @@ describe.skip(`Survey Completion Scenarios`, () => {
 
         describe(`when there is no question with the given label`, () => {
           beforeEach(async () => {
-            await seedPublishedSurvey();
+            const { id: clientId } = (
+              (await adminHttpClient.get(clientBaseEndpoint)).data as Client[]
+            )[0];
+
+            const seedResult = await seedPublishedSurvey(clientId);
+
+            accessCode = seedResult.accessCode;
           });
 
           it(`should return the expected error response`, async () => {
-            const { id: clientId } = (
-              (await axios.get(clientBaseEndpoint)).data as Client[]
-            )[0];
-
             const { id: surveyId } = (
-              (await axios.get(surveyIndexEndpoint)).data as SurveyViewModel[]
+              (await adminHttpClient.get(surveyIndexEndpoint))
+                .data as SurveyViewModel[]
             )[0];
 
             const missingQuestionLabel = 'J7';
@@ -603,6 +604,7 @@ describe.skip(`Survey Completion Scenarios`, () => {
             await assertCommandScenarioError({
               endpoint: surveyCompletionCommandsEndpoint,
               stream: TestCommandStream.first(BeginSurvey, {
+                accessCode,
                 surveyId,
                 participantCompositeIdentifier: {
                   type: CLIENT_AGGREGATE_TYPE,
@@ -625,23 +627,27 @@ describe.skip(`Survey Completion Scenarios`, () => {
 
         describe(`when the question already has a response`, () => {
           beforeEach(async () => {
-            await seedPublishedSurvey();
+            const { id: clientId } = (
+              (await adminHttpClient.get(clientBaseEndpoint)).data as Client[]
+            )[0];
+
+            const seedResult = await seedPublishedSurvey(clientId);
+
+            accessCode = seedResult.accessCode;
           });
 
           it(`should return the expected error response`, async () => {
             const repeatedQuestion = targetQuestionLabel;
 
-            const { id: clientId } = (
-              (await axios.get(clientBaseEndpoint)).data as Client[]
-            )[0];
-
             const { id: surveyId } = (
-              (await axios.get(surveyIndexEndpoint)).data as SurveyViewModel[]
+              (await adminHttpClient.get(surveyIndexEndpoint))
+                .data as SurveyViewModel[]
             )[0];
 
             await assertCommandScenarioError({
               endpoint: surveyCompletionCommandsEndpoint,
               stream: TestCommandStream.first(BeginSurvey, {
+                accessCode,
                 surveyId,
                 participantCompositeIdentifier: {
                   id: clientId,
@@ -671,16 +677,19 @@ describe.skip(`Survey Completion Scenarios`, () => {
 
         describe(`when the question is not next in line`, () => {
           beforeEach(async () => {
-            await seedPublishedSurvey();
+            const { id: clientId } = (
+              (await adminHttpClient.get(clientBaseEndpoint)).data as Client[]
+            )[0];
+
+            const seedResult = await seedPublishedSurvey(clientId);
+
+            accessCode = seedResult.accessCode;
           });
 
           it(`should return the expected error response`, async () => {
-            const { id: clientId } = (
-              (await axios.get(clientBaseEndpoint)).data as Client[]
-            )[0];
-
             const { id: surveyId } = (
-              (await axios.get(surveyIndexEndpoint)).data as SurveyViewModel[]
+              (await adminHttpClient.get(surveyIndexEndpoint))
+                .data as SurveyViewModel[]
             )[0];
 
             const outOfOrderQuestionLabel = 'q2';
@@ -688,6 +697,7 @@ describe.skip(`Survey Completion Scenarios`, () => {
             await assertCommandScenarioError({
               endpoint: surveyCompletionCommandsEndpoint,
               stream: TestCommandStream.first(BeginSurvey, {
+                accessCode,
                 surveyId,
                 participantCompositeIdentifier: {
                   id: clientId,
@@ -704,23 +714,27 @@ describe.skip(`Survey Completion Scenarios`, () => {
       describe(`when responding to a follow-up survey question`, () => {
         describe(`when there is no question with the given label`, () => {
           beforeEach(async () => {
-            await seedPublishedSurvey();
+            const { id: clientId } = (
+              (await adminHttpClient.get(clientBaseEndpoint)).data as Client[]
+            )[0];
+
+            const seedResult = await seedPublishedSurvey(clientId);
+
+            accessCode = seedResult.accessCode;
           });
 
           it(`should return the expected error response`, async () => {
             const bogusQuestionLabel = '4.';
 
-            const { id: clientId } = (
-              (await axios.get(clientBaseEndpoint)).data as Client[]
-            )[0];
-
             const { id: surveyId } = (
-              (await axios.get(surveyIndexEndpoint)).data as SurveyViewModel[]
+              (await adminHttpClient.get(surveyIndexEndpoint))
+                .data as SurveyViewModel[]
             )[0];
 
             await assertCommandScenarioError({
               endpoint: surveyCompletionCommandsEndpoint,
               stream: TestCommandStream.first(BeginSurvey, {
+                accessCode,
                 surveyId,
 
                 participantCompositeIdentifier: {
@@ -745,23 +759,27 @@ describe.skip(`Survey Completion Scenarios`, () => {
 
         describe(`when the question already has a response`, () => {
           beforeEach(async () => {
-            await seedPublishedSurvey();
+            const { id: clientId } = (
+              (await adminHttpClient.get(clientBaseEndpoint)).data as Client[]
+            )[0];
+
+            const seedResult = await seedPublishedSurvey(clientId);
+
+            accessCode = seedResult.accessCode;
           });
 
           it(`should return the expected error response`, async () => {
             const repeatedQuestion = 'q2.a';
 
-            const { id: clientId } = (
-              (await axios.get(clientBaseEndpoint)).data as Client[]
-            )[0];
-
             const { id: surveyId } = (
-              (await axios.get(surveyIndexEndpoint)).data as SurveyViewModel[]
+              (await adminHttpClient.get(surveyIndexEndpoint))
+                .data as SurveyViewModel[]
             )[0];
 
             await assertCommandScenarioError({
               endpoint: surveyCompletionCommandsEndpoint,
               stream: TestCommandStream.first(BeginSurvey, {
+                accessCode,
                 surveyId,
                 participantCompositeIdentifier: {
                   id: clientId,
@@ -799,23 +817,27 @@ describe.skip(`Survey Completion Scenarios`, () => {
 
         describe(`when the follow-up question should not have been asked based on the parent question's response`, () => {
           beforeEach(async () => {
-            await seedPublishedSurvey();
+            const { id: clientId } = (
+              (await adminHttpClient.get(clientBaseEndpoint)).data as Client[]
+            )[0];
+
+            const seedResult = await seedPublishedSurvey(clientId);
+
+            accessCode = seedResult.accessCode;
           });
 
           it(`should return the expected error resposne`, async () => {
             const conditionallyOmittedQuestionLabel = 'q2.a';
 
-            const { id: clientId } = (
-              (await axios.get(clientBaseEndpoint)).data as Client[]
-            )[0];
-
             const { id: surveyId } = (
-              (await axios.get(surveyIndexEndpoint)).data as SurveyViewModel[]
+              (await adminHttpClient.get(surveyIndexEndpoint))
+                .data as SurveyViewModel[]
             )[0];
 
             await assertCommandScenarioError({
               endpoint: surveyCompletionCommandsEndpoint,
               stream: TestCommandStream.first(BeginSurvey, {
+                accessCode,
                 surveyId,
                 participantCompositeIdentifier: {
                   id: clientId,
@@ -860,12 +882,10 @@ describe.skip(`Survey Completion Scenarios`, () => {
                 },
               }),
               assertErrorMessageAsExpected: (message) => {
-                assertTextMatchesAll(
-                  message,
-                  'cannot abandon',
-                  missingSurveyAttemptId,
-                  'no such attempt',
-                );
+                /**
+                 * We can't validate an access code if there's no such survey.
+                 */
+                assertTextMatchesAll(message, 'Forbidden');
               },
             });
           });
@@ -874,16 +894,19 @@ describe.skip(`Survey Completion Scenarios`, () => {
         // TODO survey response instead of completion record?
         describe(`when the draft survey completion record has already been abandoned`, () => {
           beforeEach(async () => {
-            await seedPublishedSurvey();
+            const { id: clientId } = (
+              (await adminHttpClient.get(clientBaseEndpoint)).data as Client[]
+            )[0];
+
+            const seedResult = await seedPublishedSurvey(clientId);
+
+            accessCode = seedResult.accessCode;
           });
 
           it(`should return the expected error response`, async () => {
-            const { id: clientId } = (
-              (await axios.get(clientBaseEndpoint)).data as Client[]
-            )[0];
-
             const { id: surveyId } = (
-              (await axios.get(surveyIndexEndpoint)).data as SurveyViewModel[]
+              (await adminHttpClient.get(surveyIndexEndpoint))
+                .data as SurveyViewModel[]
             )[0];
 
             await assertCommandScenarioError({
@@ -912,21 +935,25 @@ describe.skip(`Survey Completion Scenarios`, () => {
 
         describe(`when the survey completion record has already been submitted`, () => {
           beforeEach(async () => {
-            await seedPublishedSurvey();
+            const { id: clientId } = (
+              (await adminHttpClient.get(clientBaseEndpoint)).data as Client[]
+            )[0];
+
+            const seedResult = await seedPublishedSurvey(clientId);
+
+            accessCode = seedResult.accessCode;
           });
 
           it(`should return the expected error response`, async () => {
-            const { id: clientId } = (
-              (await axios.get(clientBaseEndpoint)).data as Client[]
-            )[0];
-
             const { id: surveyId } = (
-              (await axios.get(surveyIndexEndpoint)).data as SurveyViewModel[]
+              (await adminHttpClient.get(surveyIndexEndpoint))
+                .data as SurveyViewModel[]
             )[0];
 
             await assertCommandScenarioError({
               endpoint: surveyCompletionCommandsEndpoint,
               stream: TestCommandStream.first(BeginSurvey, {
+                accessCode,
                 surveyId,
                 participantCompositeIdentifier: {
                   id: clientId,
@@ -989,21 +1016,25 @@ describe.skip(`Survey Completion Scenarios`, () => {
 
         describe(`when the survey attempt is incomplete`, () => {
           beforeEach(async () => {
-            await seedPublishedSurvey();
+            const { id: clientId } = (
+              (await adminHttpClient.get(clientBaseEndpoint)).data as Client[]
+            )[0];
+
+            const seedResult = await seedPublishedSurvey(clientId);
+
+            accessCode = seedResult.accessCode;
           });
 
           it(`should return the expected error response`, async () => {
-            const { id: clientId } = (
-              (await axios.get(clientBaseEndpoint)).data as Client[]
-            )[0];
-
             const { id: surveyId } = (
-              (await axios.get(surveyIndexEndpoint)).data as SurveyViewModel[]
+              (await adminHttpClient.get(surveyIndexEndpoint))
+                .data as SurveyViewModel[]
             )[0];
 
             await assertCommandScenarioError({
               endpoint: surveyCompletionCommandsEndpoint,
               stream: TestCommandStream.first(BeginSurvey, {
+                accessCode,
                 surveyId,
                 participantCompositeIdentifier: {
                   id: clientId,

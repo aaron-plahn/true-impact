@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Req, Res, Session, UseGuards } from '@nestjs/common';
 import type { Request, Response } from 'express';
+import { SurveyCommandAuthGuard } from 'src/e2e/scenarios/surveys/guards';
 import { tiSduiSectionToHtmlFragment } from 'src/libs/server-driven-ui/html/tisdui-to-html-fragment';
 import { isDeepStrictEqual } from 'util';
-import { AuthenticatedUserGuard, RbacAuthGuard } from '../../auth/guards';
 import type { ICommandFsa } from '../../libs/cqrs-es';
 import { CommandHandlerService, CommandResult } from '../../libs/cqrs-es';
 import {
@@ -18,12 +18,10 @@ import {
   ApiOkResponse,
   BadUserInputFilter,
   Body,
-  ConfigService,
   Controller,
   DetailQueryEndpoint,
   IdParam,
   IndexQueryEndpoint,
-  Inject,
   OnModuleInit,
   Post,
   QueryResponseInterceptor,
@@ -37,8 +35,6 @@ import { SURVEY_RESPONSE_AGGREGATE_TYPE } from './constants';
 import { SurveyQueryService } from './queries/survey-query.service';
 import { SurveyViewModelClientDto } from './queries/survey.view-model';
 import { SduiViewDiffer } from './survey-completion/commands/sdui-view-differ';
-import type { ISurveyResponseSessionRepository } from './survey-completion/repositories/survey-response.session-repository.interface';
-import { SURVEY_RESPONSE_SESSION_REPOSITORY_TOKEN } from './survey-completion/repositories/survey-response.session-repository.interface';
 import { CommandSuccessPage } from './survey-completion/views';
 import { CommandErrorPage } from './survey-completion/views/command-error-page';
 
@@ -57,9 +53,6 @@ export class SurveyController implements OnModuleInit {
     private readonly commandHandlerService: CommandHandlerService,
     // TODO naming
     private readonly surveyResponseViewDiffer: SduiViewDiffer,
-    @Inject(SURVEY_RESPONSE_SESSION_REPOSITORY_TOKEN)
-    private readonly sessionRepository: ISurveyResponseSessionRepository,
-    private readonly configService: ConfigService,
   ) {}
 
   @DetailQueryEndpoint()
@@ -96,7 +89,8 @@ export class SurveyController implements OnModuleInit {
    * a read-only state for certain deployment strategies or maintenance windows.
    */
   // TODO @CommandExecutionEndpoint()
-  @UseGuards(AuthenticatedUserGuard, RbacAuthGuard)
+  // @UseGuards(AuthenticatedUserGuard, RbacAuthGuard)
+  @UseGuards(SurveyCommandAuthGuard)
   @Post('commands')
   async executeCommand(
     @Body()
@@ -112,6 +106,7 @@ export class SurveyController implements OnModuleInit {
       throw new Error(`Missing fsa!`);
     }
 
+    // TODO think about the logic of this carefully
     if (
       fsa.payload.aggregateCompositeIdentifier &&
       fsa.payload.aggregateCompositeIdentifier.type ==

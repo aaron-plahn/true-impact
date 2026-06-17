@@ -1,4 +1,4 @@
-import { NonEmptyString } from 'src/libs/data-types';
+import { NonEmptyString } from '../../../libs/data-types';
 import { GroupSessionLocationViewModel } from './group-session-location.view-model';
 
 export class GroupSessionViewModel {

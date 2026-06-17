@@ -14,7 +14,11 @@ import { CLIENT_AGGREGATE_TYPE } from '../clients/client.composite-identifier';
 import { ClientModule } from '../clients/client.module';
 import { ClientValidationService } from '../clients/services';
 import { FlagModule } from '../flags/flag.module';
-import { AddFollowUpQuestionForSurveyOption } from '../survey/survey-management';
+import {
+  AddFollowUpQuestionForSurveyOption,
+  OpenSurveyToClient,
+  OpenSurveyToClientCommandHandler,
+} from '../survey/survey-management';
 import { UserModule } from '../users/user.module';
 import { SURVEY_COMMAND_REPOSITORY_DEPENDENCY_TOKEN } from './constants';
 import { SURVEY_QUERY_REPOSITORY_PROVIDER_TOKEN } from './queries/survey-query-repository.interface';
@@ -108,6 +112,7 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
     PublishSurveyCommandHandler,
     FlagSurveyOptionCommandHandler,
     OpenSurveyToAnonymousIndividualCommandHandler,
+    OpenSurveyToClientCommandHandler,
     // Survey Completion Commands
     BeginSurveyCommandHandler,
     AnswerSurveyQuestionCommandHandler,
@@ -188,6 +193,10 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
           .register({
             CommandHandlerCtor: FlagSurveyOptionCommandHandler,
             CommandPayloadCtor: FlagSurveyOption,
+          })
+          .register({
+            CommandHandlerCtor: OpenSurveyToClientCommandHandler,
+            CommandPayloadCtor: OpenSurveyToClient,
           })
           // Survey Completion
           .register({
@@ -344,6 +353,10 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
             hashedAccessCode: string | undefined,
           ): Promise<Survey | TrueImpactError> {
             const target = await repo.fetchById(surveyId);
+
+            if (!target) {
+              return new TrueImpactError('Resource not found');
+            }
 
             if (
               !target?.isPublished ||

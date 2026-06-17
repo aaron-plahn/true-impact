@@ -32,6 +32,11 @@ interface TiRequest {
   user?: RequestUser;
 }
 
+/**
+ * TODO Let's consider using a separate controller for survey response commands.
+ *
+ * TODO Remove this?
+ */
 @Injectable()
 export class SurveyResponseGuard implements CanActivate {
   public canActivate(context: ExecutionContext): boolean {
