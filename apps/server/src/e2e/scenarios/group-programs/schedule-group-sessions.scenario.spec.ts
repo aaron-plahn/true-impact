@@ -1,8 +1,13 @@
 import { HttpStatus } from '@nestjs/common';
-import { CreateGroupProgram } from '../../../features/group-programs/domain/commands';
+import {
+  CreateGroupProgram,
+  ScheduleGroupProgramSession,
+} from '../../../features/group-programs/domain/commands';
 import { CreateUserWithPassword } from '../../../features/users/commands';
 import { TestCommandStream } from '../../../libs/cqrs-es';
+import { assertTextMatchesAll } from '../../../libs/test-utils';
 import {
+  assertCommandError,
   assertCommandScenarioError,
   assertCommandScenarioSuccess,
 } from '../utils';
@@ -20,6 +25,8 @@ const groupProgramCommandEndpoint = `${baseEndpoint}/group-programs/commands`;
 const groupProgramTestSetupEndpoint = `${baseEndpoint}/group-programs/test-setup`;
 
 const programName = "Wreckin' Rollerbladez";
+
+const missingId = 'group-program-id-404';
 
 describe(`Group Program Scheduling Scenarios`, () => {
   const adminHttpClient = new TestHttpClient('http://localhost:3234');
@@ -92,6 +99,30 @@ describe(`Group Program Scheduling Scenarios`, () => {
               assertErrorMessageAsExpected: (message) => {
                 expect(message).toContain(programName);
                 expect(message).toContain('already in use');
+              },
+            });
+          });
+        });
+      });
+    });
+
+    describe(`when scheduling a first session`, () => {
+      describe(`when the request is invalid`, () => {
+        describe(`when the group program does not exist`, () => {
+          it.only(`should return the expected error`, async () => {
+            await assertCommandError({
+              httpClient: adminHttpClient,
+              endpoint: groupProgramCommandEndpoint,
+              commandFsa: TestCommandStream.buildOne(
+                ScheduleGroupProgramSession,
+                {
+                  aggregateCompositeIdentifier: {
+                    id: missingId,
+                  },
+                },
+              ),
+              assertErrorMessageAsExpected: (message) => {
+                assertTextMatchesAll(message, 'shit bway!');
               },
             });
           });

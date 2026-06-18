@@ -2,10 +2,14 @@ import { PersistenceAcknowledgement } from 'src/libs/cqrs-es';
 import { TrueImpactError } from 'src/libs/data-types';
 import { GroupProgram } from '../group-program.aggregate-root';
 
-export interface IGroupCommandRepository {
+export interface IGroupProgramCommandRepository {
   fetchById(id: string): Promise<GroupProgram | null>;
 
   create(
     instance: GroupProgram,
+  ): Promise<PersistenceAcknowledgement | TrueImpactError>;
+
+  update(
+    updatedInstance: GroupProgram,
   ): Promise<PersistenceAcknowledgement | TrueImpactError>;
 }

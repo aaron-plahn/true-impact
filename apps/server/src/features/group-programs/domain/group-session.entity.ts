@@ -11,9 +11,31 @@ export class GroupSessionPersistenceDto {
 }
 
 export class GroupSession extends Entity {
+  // Do we really need this?
   id: string;
 
   location: GroupSessionLocation;
+
+  // TODO use proper dates
+  date: string;
+
+  constructor({
+    id,
+    location,
+    date,
+  }: {
+    id: string;
+    location: GroupSessionLocation;
+    date: string;
+  }) {
+    super();
+
+    this.id = id;
+
+    this.location = location;
+
+    this.date = date;
+  }
 
   validateComplexInvariants(): TrueImpactError[] {
     const allErorrs: TrueImpactError[] = [];
@@ -41,5 +63,28 @@ export class GroupSession extends Entity {
       id: this.id,
       location: this.location.toPersistenceDto(),
     };
+  }
+
+  static schedule({
+    id,
+    date,
+    location,
+  }: {
+    id: string;
+    date: string;
+    location: GroupSessionLocationDto;
+  }): GroupSession | TrueImpactError {
+    const locationBuildResult =
+      GroupSessionLocation.fromPersistenceDto(location);
+
+    if (locationBuildResult instanceof Error) {
+      return locationBuildResult;
+    }
+
+    return new GroupSession({
+      id,
+      date,
+      location: locationBuildResult,
+    }).validateInvariants();
   }
 }

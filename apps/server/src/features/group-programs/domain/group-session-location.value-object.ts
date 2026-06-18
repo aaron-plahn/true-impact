@@ -92,7 +92,9 @@ export class GroupSessionLocation extends Entity {
     return !this.communityId && typeof this.isUrban !== 'boolean' && !this.name;
   }
 
-  static fromPersistenceDto(dto: GroupSessionLocationDto) {
+  static fromPersistenceDto(
+    dto: GroupSessionLocationDto,
+  ): GroupSessionLocation | TrueImpactError {
     return new GroupSessionLocation(dto);
   }
 

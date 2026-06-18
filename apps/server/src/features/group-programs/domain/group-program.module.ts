@@ -4,7 +4,11 @@ import { UserModule } from '../../../features/users/user.module';
 import { CommandHandlerService } from '../../../libs/cqrs-es';
 import { Module, ModuleRef } from '../../../libs/framework';
 import { GroupProgramQueryService, GroupProgramViewModel } from '../queries';
-import { CreateGroupProgram } from './commands';
+import {
+  CreateGroupProgram,
+  ScheduleGroupProgramSession,
+  ScheduleGroupProgramSessionCommandHandler,
+} from './commands';
 import { CreateGroupProgramCommandHandler } from './commands/create-group-program/create-group-program.command-handler';
 import {
   GROUP_PROGRAM_COMMAND_REPOSITORY_INJECTION_TOKEN,
@@ -19,6 +23,7 @@ import { InMemoryGroupProgramCommandRepository } from './repositories/in-memory-
   providers: [
     GroupProgramQueryService,
     CreateGroupProgramCommandHandler,
+    ScheduleGroupProgramSessionCommandHandler,
     {
       provide: GROUP_PROGRAM_COMMAND_REPOSITORY_INJECTION_TOKEN,
       useClass: InMemoryGroupProgramCommandRepository,
@@ -44,10 +49,15 @@ import { InMemoryGroupProgramCommandRepository } from './repositories/in-memory-
           },
         );
 
-        commandHandlerService.register({
-          CommandHandlerCtor: CreateGroupProgramCommandHandler,
-          CommandPayloadCtor: CreateGroupProgram,
-        });
+        commandHandlerService
+          .register({
+            CommandHandlerCtor: CreateGroupProgramCommandHandler,
+            CommandPayloadCtor: CreateGroupProgram,
+          })
+          .register({
+            CommandHandlerCtor: ScheduleGroupProgramSessionCommandHandler,
+            CommandPayloadCtor: ScheduleGroupProgramSession,
+          });
 
         return commandHandlerService;
       },
