@@ -62,6 +62,9 @@ export class BeginSurveyCommandHandler implements ICommandHandler<BeginSurvey> {
       return targetSurvey;
     }
 
+    const newSurveyAttemptId = randomUUID();
+
+    // TODO be sure this has good test coverage
     // TODO How does the participant interact with the access code?
     // can we pass this into the validator method?
     if (
@@ -86,10 +89,44 @@ export class BeginSurveyCommandHandler implements ICommandHandler<BeginSurvey> {
           ),
         ]);
       }
+
+      const surveyResponsesAlreadyInProgress =
+        await this.surveyCompletionRepository.fetchByParticipant(
+          participantCompositeIdentifier,
+          surveyId,
+        );
+
+      if (surveyResponsesAlreadyInProgress instanceof Error) {
+        return new TrueImpactBadUserInputError([
+          surveyResponsesAlreadyInProgress,
+        ]);
+      }
+
+      if (surveyResponsesAlreadyInProgress.length > 0) {
+        const errorsFromCancellingExistingSessions: TrueImpactError[] = [];
+
+        for (const r of surveyResponsesAlreadyInProgress) {
+          const updatedR = r.cancel({
+            replacementAttemptId: newSurveyAttemptId,
+          });
+
+          if (updatedR instanceof Error) {
+            errorsFromCancellingExistingSessions.push(updatedR);
+          } else {
+            await this.surveyCompletionRepository.update(updatedR);
+          }
+        }
+
+        if (errorsFromCancellingExistingSessions.length > 1) {
+          return new TrueImpactBadUserInputError(
+            errorsFromCancellingExistingSessions,
+          );
+        }
+      }
     }
 
     const emptyCompletionRecord = SurveyResponseRecord.begin({
-      id: randomUUID(),
+      id: newSurveyAttemptId,
       survey: targetSurvey,
       participantCompositeIdentifier,
     });

@@ -1,5 +1,5 @@
-import { FullName, FullNameDto } from 'src/common/full-name';
-import { NestedDataType, NonEmptyString } from 'src/libs/data-types';
+import { FullName, FullNameDto } from '../../../common/full-name';
+import { NestedDataType, NonEmptyString } from '../../../libs/data-types';
 import { User } from '../user.aggregate-root';
 
 export class UserViewModelClientDto {

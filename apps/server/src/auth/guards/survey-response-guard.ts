@@ -1,7 +1,7 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
-import { SURVEY_RESPONSE_AGGREGATE_TYPE } from 'src/features/survey/constants';
-import { SurveyResponseCompositeIdentifier } from 'src/features/survey/survey-completion';
 import { isDeepStrictEqual } from 'util';
+import { SURVEY_RESPONSE_AGGREGATE_TYPE } from '../../features/survey/constants';
+import { SurveyResponseCompositeIdentifier } from '../../features/survey/survey-completion';
 
 interface SurveyParticipantUser {
   type: 'SURVEY_PARTICIPANT';

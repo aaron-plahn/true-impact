@@ -23,6 +23,7 @@ import {
 import {
   SurveyBegan,
   SurveyCompletionAbandoned,
+  SurveyCompletionCancelled,
   SurveyQuestionAnswered,
   SurveySubmitted,
 } from '../commands';
@@ -129,7 +130,10 @@ export class SurveyResponseRecordPersistenceDto {
 
   survey: SurveyPersistenceDto;
 
+  // TODO the following 3 boolean flags have consistency rules that we should validate in "validateComplexInvariants"
   hasBeenAbandoned: boolean;
+
+  hasBeenCancelled: boolean;
 
   hasBeenSubmitted: boolean;
 
@@ -164,6 +168,7 @@ const testSurveyExample = buildTestInstance(Survey, {
     survey: testSurveyExample,
     hasBeenAbandoned: false,
     hasBeenSubmitted: false,
+    hasBeenCancelled: false,
     participantCompositeIdentifier: {
       type: CLIENT_AGGREGATE_TYPE,
       id: '55',
@@ -248,6 +253,13 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
   })
   hasBeenAbandoned: boolean;
 
+  @BooleanDataType({
+    label: 'has been cancelled',
+    description:
+      'has this survey been cancelled in favor of an additional attempt of the same survey?',
+  })
+  hasBeenCancelled: boolean;
+
   /**
    * Note that there is no need for schema-based validation of this. It
    * is calculated and could be a getter, except for the fact that it is easier
@@ -266,20 +278,22 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
     id,
     revision,
     hasBeenAbandoned,
+    hasBeenCancelled,
+    hasBeenSubmitted,
     survey,
     responses,
-    hasBeenSubmitted,
     participant,
     eventHistory,
   }: {
     id: string;
     revision: number;
     hasBeenAbandoned: boolean;
+    hasBeenCancelled: boolean;
+    hasBeenSubmitted?: boolean;
     survey: Survey;
     // surveys may be anonymous
     participant?: SurveyParticipantCompositeIdentifier;
     responses: SurveyQuestionResponse[];
-    hasBeenSubmitted?: boolean;
     eventHistory: IDomainEvent[];
   }) {
     super();
@@ -299,6 +313,9 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
 
     this.hasBeenSubmitted =
       typeof hasBeenSubmitted === 'boolean' ? hasBeenSubmitted : false;
+
+    this.hasBeenCancelled =
+      typeof hasBeenCancelled === 'boolean' ? hasBeenCancelled : false;
 
     this.eventHistory = eventHistory;
 
@@ -459,6 +476,41 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
     return this;
   }
 
+  handleSurveyCompletionCancelled(_event: SurveyCompletionCancelled) {
+    this.hasBeenCancelled = true;
+
+    return this;
+  }
+
+  @UpdateMethod()
+  cancel({
+    replacementAttemptId,
+  }: {
+    replacementAttemptId: string;
+  }): SurveyResponseRecord | TrueImpactError {
+    if (this.hasBeenAbandoned) {
+      return new TrueImpactError(
+        `You cannot cancel survey [${this.survey.name}], as it has already been abandoned`,
+      );
+    }
+
+    if (this.hasBeenSubmitted) {
+      return new TrueImpactError(
+        `You cannot cancel survey [${this.survey.name}], as it has already been submitted`,
+      );
+    }
+
+    return this.apply(
+      new SurveyCompletionCancelled({
+        payload: {
+          aggregateCompositeIdentifier:
+            this.getAggregateCompositeIdentifier() as SurveyResponseCompositeIdentifier,
+          nextAttemptId: replacementAttemptId,
+        },
+      }),
+    );
+  }
+
   handleSurveyCompletionAbandoned(_event: SurveyCompletionAbandoned) {
     this.hasBeenAbandoned = true;
 
@@ -502,6 +554,10 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
 
     if (event.type === 'SURVEY_COMPLETION_ABANDONED') {
       this.handleSurveyCompletionAbandoned(event as SurveyCompletionAbandoned);
+    }
+
+    if (event.type === 'SURVEY_COMPLETION_CANCELLED') {
+      this.handleSurveyCompletionCancelled(event as SurveyCompletionCancelled);
     }
 
     this.eventHistory.push(event);
@@ -639,6 +695,7 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
       survey: this.survey.toPersistenceDto(),
       hasBeenAbandoned: this.hasBeenAbandoned,
       hasBeenSubmitted: this.hasBeenSubmitted,
+      hasBeenCancelled: this.hasBeenCancelled,
       participantCompositeIdentifier: this.participant,
       responses: this.responses,
       eventHistory: this.eventHistory,
@@ -651,6 +708,7 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
       revision,
       hasBeenAbandoned,
       hasBeenSubmitted,
+      hasBeenCancelled,
       survey,
       responses,
       participantCompositeIdentifier,
@@ -697,6 +755,7 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
       revision: revision,
       hasBeenAbandoned,
       hasBeenSubmitted,
+      hasBeenCancelled,
       survey: surveyBuildResult,
       responses: questionResponses as SurveyQuestionResponse[],
       participant: participantCompositeIdentifier,
@@ -739,6 +798,7 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
       revision: 0,
       hasBeenAbandoned: false,
       hasBeenSubmitted: false,
+      hasBeenCancelled: false,
       participant: participantCompositeIdentifier,
       eventHistory: [
         new SurveyBegan({

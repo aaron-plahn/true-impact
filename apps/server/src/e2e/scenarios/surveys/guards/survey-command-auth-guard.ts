@@ -1,11 +1,11 @@
 import { CanActivate, ExecutionContext, Inject } from '@nestjs/common';
-import { RbacAuthGuard } from 'src/auth/guards';
-import { SURVEY_RESPONSE_AGGREGATE_TYPE } from 'src/features/survey/constants';
-import { BeginSurvey } from 'src/features/survey/survey-completion';
-import { USER_COMMAND_REPOSITORY_INJECTION_TOKEN } from 'src/features/users/constants';
-import type { IUserCommandRepository } from 'src/features/users/repositories';
-import { User } from 'src/features/users/user.aggregate-root';
-import { ICommandFsa } from 'src/libs/cqrs-es';
+import { RbacAuthGuard } from '../../../../auth/guards';
+import { SURVEY_RESPONSE_AGGREGATE_TYPE } from '../../../../features/survey/constants';
+import { BeginSurvey } from '../../../../features/survey/survey-completion';
+import { USER_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../../../../features/users/constants';
+import type { IUserCommandRepository } from '../../../../features/users/repositories';
+import { User } from '../../../../features/users/user.aggregate-root';
+import { ICommandFsa } from '../../../../libs/cqrs-es';
 
 export class SurveyCommandAuthGuard implements CanActivate {
   constructor(

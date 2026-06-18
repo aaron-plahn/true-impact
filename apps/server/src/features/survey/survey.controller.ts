@@ -10,6 +10,7 @@ import {
   buildTestInstance,
   convertToOpenApiSchema,
   getDataSchemaFromClassCtor,
+  ResourceNotFoundError,
   TrueImpactBadUserInputError,
   TrueImpactError,
   TrueImpactRuntimeException,
@@ -107,6 +108,7 @@ export class SurveyController implements OnModuleInit {
     }
 
     // TODO think about the logic of this carefully
+    // Note that BEGIN_SURVEY will not be handled here because it doesn't have an `aggregateCompositeIdentifier`
     if (
       fsa.payload.aggregateCompositeIdentifier &&
       fsa.payload.aggregateCompositeIdentifier.type ==
@@ -142,6 +144,15 @@ export class SurveyController implements OnModuleInit {
       }
     }
 
+    if (fsa.type === 'BEGIN_SURVEY' && session && session.subject) {
+      /**
+       * If the user has a different attempt in progress, we
+       * need to remove authorization for this survey from the session
+       * before starting a new session.
+       */
+      delete session.subject;
+    }
+
     const result = await this.commandHandlerService.execute(fsa);
 
     if (!(result instanceof Error)) {
@@ -168,7 +179,8 @@ export class SurveyController implements OnModuleInit {
             ]);
           });
         } catch (_error) {
-          throw new Error(`Something went wrong!`);
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+          throw new Error(_error.toString());
         }
 
         return result;
@@ -179,23 +191,16 @@ export class SurveyController implements OnModuleInit {
          * Submitting a survey successfully amounts to logging out of the session
          * to complete a survey.
          */
-        session.subject = null;
-
-        res.clearCookie('survey-response-session');
-
-        req.session.destroy((err) => {
-          throw new TrueImpactRuntimeException([
-            new TrueImpactError(`Logout failed after submitting a survey`),
-            new TrueImpactError(
-              (err as { message?: string })?.message || 'Unknown error',
-            ),
-          ]);
-        });
+        this.destroySession(session, req, res);
 
         return result;
       }
 
       return result;
+    }
+
+    if (result instanceof ResourceNotFoundError) {
+      return null;
     }
 
     // TODO sort out where we wrap this in
@@ -304,6 +309,25 @@ export class SurveyController implements OnModuleInit {
     await this.surveyQueryService.surveyCommandRepository.clear();
 
     return 'OK';
+  }
+
+  private destroySession(
+    @Session() session: Record<string, any>,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    session.subject = null;
+
+    res.clearCookie('survey-response-session');
+
+    req.session.destroy((err) => {
+      throw new TrueImpactRuntimeException([
+        new TrueImpactError(`Logout failed after submitting a survey`),
+        new TrueImpactError(
+          (err as { message?: string })?.message || 'Unknown error',
+        ),
+      ]);
+    });
   }
 
   onModuleInit() {

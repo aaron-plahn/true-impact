@@ -2,6 +2,7 @@ import { CallHandler, ExecutionContext, NestInterceptor } from '@nestjs/common';
 import { map, Observable } from 'rxjs';
 import {
   InvariantValidationError,
+  ResourceNotFoundError,
   TrueImpactBadUserInputError,
 } from '../../../libs/data-types';
 import { ResourceNotFoundException } from '../exceptions';
@@ -12,7 +13,9 @@ import { ResourceNotFoundException } from '../exceptions';
  * of the built-ins.
  */
 const isNotFound = (input: unknown) =>
-  input === null || typeof input === 'undefined';
+  input === null ||
+  typeof input === 'undefined' ||
+  input instanceof ResourceNotFoundError;
 
 export class QueryResponseInterceptor<T> implements NestInterceptor<T, T> {
   intercept(

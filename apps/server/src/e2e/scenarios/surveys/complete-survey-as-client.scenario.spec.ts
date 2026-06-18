@@ -1,3 +1,4 @@
+import { isDeepStrictEqual } from 'util';
 import { Client } from '../../../features/clients/client.aggregate-root';
 import { CLIENT_AGGREGATE_TYPE } from '../../../features/clients/client.composite-identifier';
 import { CreateClient } from '../../../features/clients/commands/create-client.command';
@@ -276,97 +277,6 @@ describe(`Survey Completion Scenarios`, () => {
       });
 
       describe(`when completing the survey for an additional time`, () => {
-        beforeEach(async () => {
-          const { id: clientId } = (
-            (await adminHttpClient.get(clientBaseEndpoint)).data as Client[]
-          )[0];
-
-          const seedResult = await seedPublishedSurvey(clientId);
-
-          accessCode = seedResult.accessCode;
-        });
-
-        it(`should add a complete, second survey completion record`, async () => {
-          const { id: surveyId } = (
-            (await adminHttpClient.get(surveyIndexEndpoint))
-              .data as SurveyViewModel[]
-          )[0];
-
-          await assertCommandScenarioSuccess({
-            httpClient: anonymousParticipantHttpClient,
-            endpoint: surveyCompletionCommandsEndpoint,
-            stream: TestCommandStream.first(BeginSurvey, {
-              surveyId,
-              participantCompositeIdentifier: {
-                id: clientId,
-                type: CLIENT_AGGREGATE_TYPE,
-              },
-            })
-              .andThen(AnswerSurveyQuestion, {
-                questionLabel: 'q1',
-                chosenOptionLabel: 'a',
-              })
-              .andThen(AnswerSurveyQuestion, {
-                questionLabel: 'q2',
-                chosenOptionLabel: 'b',
-              })
-              .andThen(AnswerSurveyQuestion, {
-                questionLabel: 'q2.a',
-                chosenOptionLabel: 'a',
-              })
-              .andThen(AnswerSurveyQuestion, {
-                questionLabel: 'q3',
-                chosenOptionLabel: 'b',
-              })
-              .andThen(SubmitSurvey, {}),
-            assertSuccess: async (acks) => {
-              await assertQueryResponse({
-                endpoint: `${surveyResponseRecordIndexEndpoint}/${acks[0].id}`,
-                assertResponseBody: (body: SurveyResponseRecordViewModel) => {
-                  expect(body.hasBeenSubmitted).toBe(true);
-                },
-              });
-            },
-          });
-
-          await assertCommandScenarioSuccess({
-            httpClient: anonymousParticipantHttpClient,
-            endpoint: surveyCompletionCommandsEndpoint,
-            stream: TestCommandStream.first(BeginSurvey, {
-              surveyId,
-              participantCompositeIdentifier: {
-                id: clientId,
-                type: CLIENT_AGGREGATE_TYPE,
-              },
-            })
-              .andThen(AnswerSurveyQuestion, {
-                questionLabel: 'q1',
-                chosenOptionLabel: 'a',
-              })
-              .andThen(AnswerSurveyQuestion, {
-                questionLabel: 'q2',
-                chosenOptionLabel: 'a',
-              })
-              .andThen(AnswerSurveyQuestion, {
-                questionLabel: 'q3',
-                chosenOptionLabel: 'c',
-              })
-              .andThen(SubmitSurvey, {}),
-            assertSuccess: async (acks) => {
-              await assertQueryResponse({
-                endpoint: `${surveyResponseRecordIndexEndpoint}/${acks[0].id}`,
-                assertResponseBody: (body: SurveyResponseRecordViewModel) => {
-                  expect(body.hasBeenSubmitted).toBe(true);
-                },
-              });
-            },
-          });
-        });
-      });
-    });
-
-    describe(`when the scenario is invalid`, () => {
-      describe(`when beginning a survey`, () => {
         describe(`when the participant already has attempt in progress for this survey`, () => {
           beforeEach(async () => {
             const { id: clientId } = (
@@ -400,29 +310,168 @@ describe(`Survey Completion Scenarios`, () => {
               }),
             });
 
-            await assertCommandError({
+            let secondAccessCode: string;
+
+            await assertCommandScenarioSuccess({
+              httpClient: adminHttpClient,
+              endpoint: surveyCompletionCommandsEndpoint,
+              stream: TestCommandStream.first(OpenSurveyToClient, {
+                // SAME survey as the one in progress
+                aggregateCompositeIdentifier: {
+                  id: surveyId,
+                },
+                clientId,
+              }),
+              assertSuccess: (acks) => {
+                secondAccessCode = acks[0].accessCode as string;
+              },
+            });
+
+            await assertCommandScenarioSuccess({
               httpClient: anonymousParticipantHttpClient,
               endpoint: surveyCompletionCommandsEndpoint,
-              commandFsa: TestCommandStream.buildOne(BeginSurvey, {
-                // SAME survey as the one in progress
+              stream: TestCommandStream.first(BeginSurvey, {
+                // @ts-expect-error TODO find a better pattern for dealing with this dependent state
+                accessCode: secondAccessCode,
                 surveyId,
                 participantCompositeIdentifier: {
                   id: clientId,
                   type: CLIENT_AGGREGATE_TYPE,
                 },
               }),
-              assertErrorMessageAsExpected: (message) => {
-                assertTextMatchesAll(
-                  message,
-                  surveyName,
-                  clientId,
-                  'in progress',
-                );
+            });
+
+            const allResponseRecordViews = (
+              await adminHttpClient.get(surveyResponseRecordIndexEndpoint)
+            ).data as SurveyResponseRecordViewModel[];
+
+            const searchResult = allResponseRecordViews.filter(
+              (r) =>
+                r.hasBeenCancelled === true &&
+                isDeepStrictEqual(r.participantCompositeIdentifier, {
+                  type: CLIENT_AGGREGATE_TYPE,
+                  id: clientId,
+                }),
+            );
+
+            expect(searchResult).toHaveLength(1);
+          });
+        });
+
+        describe('when the existing attempt has been submitted', () => {
+          beforeEach(async () => {
+            const { id: clientId } = (
+              (await adminHttpClient.get(clientBaseEndpoint)).data as Client[]
+            )[0];
+
+            const seedResult = await seedPublishedSurvey(clientId);
+
+            accessCode = seedResult.accessCode;
+          });
+
+          it(`should add a complete, second survey completion record`, async () => {
+            const { id: surveyId } = (
+              (await adminHttpClient.get(surveyIndexEndpoint))
+                .data as SurveyViewModel[]
+            )[0];
+
+            await assertCommandScenarioSuccess({
+              httpClient: anonymousParticipantHttpClient,
+              endpoint: surveyCompletionCommandsEndpoint,
+              stream: TestCommandStream.first(BeginSurvey, {
+                accessCode,
+                surveyId,
+                participantCompositeIdentifier: {
+                  id: clientId,
+                  type: CLIENT_AGGREGATE_TYPE,
+                },
+              })
+                .andThen(AnswerSurveyQuestion, {
+                  questionLabel: 'q1',
+                  chosenOptionLabel: 'a',
+                })
+                .andThen(AnswerSurveyQuestion, {
+                  questionLabel: 'q2',
+                  chosenOptionLabel: 'b',
+                })
+                .andThen(AnswerSurveyQuestion, {
+                  questionLabel: 'q2.a',
+                  chosenOptionLabel: 'a',
+                })
+                .andThen(AnswerSurveyQuestion, {
+                  questionLabel: 'q3',
+                  chosenOptionLabel: 'b',
+                })
+                .andThen(SubmitSurvey, {}),
+              assertSuccess: async (acks) => {
+                await assertQueryResponse({
+                  endpoint: `${surveyResponseRecordIndexEndpoint}/${acks[0].id}`,
+                  assertResponseBody: (body: SurveyResponseRecordViewModel) => {
+                    expect(body.hasBeenSubmitted).toBe(true);
+                  },
+                });
+              },
+            });
+
+            let secondAccessCode: string;
+
+            await assertCommandSuccess({
+              httpClient: adminHttpClient,
+              endpoint: surveyCompletionCommandsEndpoint,
+              commandFsa: TestCommandStream.buildOne(OpenSurveyToClient, {
+                aggregateCompositeIdentifier: {
+                  id: surveyId,
+                },
+                clientId,
+              }),
+              assertSuccess: (acks) => {
+                secondAccessCode = acks.accessCode as string;
+
+                return Promise.resolve();
+              },
+            });
+
+            await assertCommandScenarioSuccess({
+              httpClient: anonymousParticipantHttpClient,
+              endpoint: surveyCompletionCommandsEndpoint,
+              stream: TestCommandStream.first(BeginSurvey, {
+                // @ts-expect-error We need to find a better pattern for sharing state between separate command streams
+                accessCode: secondAccessCode,
+                surveyId,
+                participantCompositeIdentifier: {
+                  id: clientId,
+                  type: CLIENT_AGGREGATE_TYPE,
+                },
+              })
+                .andThen(AnswerSurveyQuestion, {
+                  questionLabel: 'q1',
+                  chosenOptionLabel: 'a',
+                })
+                .andThen(AnswerSurveyQuestion, {
+                  questionLabel: 'q2',
+                  chosenOptionLabel: 'a',
+                })
+                .andThen(AnswerSurveyQuestion, {
+                  questionLabel: 'q3',
+                  chosenOptionLabel: 'c',
+                })
+                .andThen(SubmitSurvey, {}),
+              assertSuccess: async (acks) => {
+                await assertQueryResponse({
+                  endpoint: `${surveyResponseRecordIndexEndpoint}/${acks[0].id}`,
+                  assertResponseBody: (body: SurveyResponseRecordViewModel) => {
+                    expect(body.hasBeenSubmitted).toBe(true);
+                  },
+                });
               },
             });
           });
         });
+      });
+    });
 
+    describe(`when the scenario is invalid`, () => {
+      describe(`when beginning a survey`, () => {
         /**
          * Note that if the survey doesn't exist, it's not possible to give the access code
          * any consideration.
@@ -444,11 +493,7 @@ describe(`Survey Completion Scenarios`, () => {
               endpoint: surveyCompletionCommandsEndpoint,
               stream: beginSurvey,
               assertErrorMessageAsExpected: (message: string) => {
-                assertTextMatchesAll(
-                  message,
-                  missingSurveyId,
-                  'cannot begin survey',
-                );
+                assertTextMatchesAll(message, 'Resource not found');
               },
             });
           });
@@ -488,72 +533,32 @@ describe(`Survey Completion Scenarios`, () => {
           });
         });
 
-        describe(`when the survey participant is not of type client`, () => {
-          const invalidParticipantType = 'reporter';
-
-          const invalidParticipantId = '456';
-
-          it(`should fail with the expected error response`, async () => {
-            let surveyId: string;
-
-            await assertCommandScenarioSuccess({
-              endpoint: surveyCompletionCommandsEndpoint,
-              stream: publishSurvey,
-              assertSuccess: (acks) => {
-                surveyId = acks[0].id;
-              },
-            });
-
-            await assertCommandScenarioError({
-              endpoint: surveyCompletionCommandsEndpoint,
-              stream: TestCommandStream.first(BeginSurvey, {
-                // @ts-expect-error The compiler doesn't realize our callback has a side effect
-                surveyId,
-                participantCompositeIdentifier: {
-                  type: invalidParticipantType,
-                  id: invalidParticipantId,
-                },
-              }),
-            });
-          });
-        });
+        /**
+         * Note that this situation is impossible by design. There is a concrete command
+         * to grant access to a client as a participant. In the future, we might generically
+         * allow participants via a dynamic plugin system. In that case, we will have test
+         * cases like this.
+         */
+        // describe(`when the survey participant is not of type client`, () => {
+        // });
 
         describe(`when the survey participant is a client`, () => {
           describe(`when the client does not exist`, () => {
             it(`should fail with the expected error response`, async () => {
-              await assertCommandScenarioSuccess({
-                endpoint: surveyCompletionCommandsEndpoint,
-                stream: publishSurvey,
-              });
-
-              const surveySearchResult =
-                await adminHttpClient.get(surveyIndexEndpoint);
-
-              const { id: surveyId } = (
-                surveySearchResult.data as SurveyViewModel[]
-              )[0];
-
               const missingClientId = 'c404';
 
-              const beginSurvey = TestCommandStream.first(BeginSurvey, {
-                accessCode,
-                surveyId,
-                participantCompositeIdentifier: {
-                  type: CLIENT_AGGREGATE_TYPE,
-                  id: missingClientId,
-                },
-              });
-
               await assertCommandScenarioError({
+                httpClient: adminHttpClient,
                 endpoint: surveyCompletionCommandsEndpoint,
-                stream: beginSurvey,
+                stream: publishSurvey.andThen(OpenSurveyToClient, {
+                  clientId: missingClientId,
+                }),
                 assertErrorMessageAsExpected: (message) => {
                   assertTextMatchesAll(
                     message,
                     CLIENT_AGGREGATE_TYPE,
-                    'participant does not exist',
+                    'not found',
                     missingClientId,
-                    surveyName,
                   );
                 },
               });
@@ -575,8 +580,11 @@ describe(`Survey Completion Scenarios`, () => {
                 },
               }),
               assertErrorMessageAsExpected: (message) => {
-                assertTextMatchesAll(bogusSurveyAttemptId);
-                assertTextMatchesAll(message, 'no such attempt in progress');
+                /**
+                 * The survey holds the access code. If the survey does not exist,
+                 * the user is not authorized to complete this survey.
+                 */
+                assertTextMatchesAll(message, 'Forbidden');
               },
             });
           });
@@ -912,6 +920,7 @@ describe(`Survey Completion Scenarios`, () => {
             await assertCommandScenarioError({
               endpoint: surveyCompletionCommandsEndpoint,
               stream: TestCommandStream.first(BeginSurvey, {
+                accessCode,
                 participantCompositeIdentifier: {
                   id: clientId,
                   type: CLIENT_AGGREGATE_TYPE,
@@ -950,41 +959,47 @@ describe(`Survey Completion Scenarios`, () => {
                 .data as SurveyViewModel[]
             )[0];
 
+            const stream = TestCommandStream.first(BeginSurvey, {
+              accessCode,
+              surveyId,
+              participantCompositeIdentifier: {
+                id: clientId,
+                type: CLIENT_AGGREGATE_TYPE,
+              },
+            })
+              .andThen(AnswerSurveyQuestion, {
+                questionLabel: 'q1',
+                chosenOptionLabel: 'a',
+              })
+              .andThen(AnswerSurveyQuestion, {
+                questionLabel: 'q2',
+                chosenOptionLabel: 'b',
+              })
+              .andThen(AnswerSurveyQuestion, {
+                questionLabel: 'q2.a',
+                chosenOptionLabel: 'a',
+              })
+              .andThen(AnswerSurveyQuestion, {
+                questionLabel: 'q3',
+                chosenOptionLabel: 'b',
+              })
+              .andThen(SubmitSurvey, {})
+              .andThen(AbandonSurveyCompletion);
+
             await assertCommandScenarioError({
               endpoint: surveyCompletionCommandsEndpoint,
-              stream: TestCommandStream.first(BeginSurvey, {
-                accessCode,
-                surveyId,
-                participantCompositeIdentifier: {
-                  id: clientId,
-                  type: CLIENT_AGGREGATE_TYPE,
-                },
-              })
-                .andThen(AnswerSurveyQuestion, {
-                  questionLabel: 'q1',
-                  chosenOptionLabel: 'a',
-                })
-                .andThen(AnswerSurveyQuestion, {
-                  questionLabel: 'q2',
-                  chosenOptionLabel: 'b',
-                })
-                .andThen(AnswerSurveyQuestion, {
-                  questionLabel: 'q2.a',
-                  chosenOptionLabel: 'a',
-                })
-                .andThen(AnswerSurveyQuestion, {
-                  questionLabel: 'q3',
-                  chosenOptionLabel: 'b',
-                })
-                .andThen(SubmitSurvey, {})
-                .andThen(AbandonSurveyCompletion),
+              stream,
               assertErrorMessageAsExpected: (message) => {
-                assertTextMatchesAll(
-                  message,
-                  surveyName,
-                  'cannot abandon',
-                  'been submitted',
-                );
+                /**
+                 * Successfully submitting a survey response logs the user out.
+                 * We then respond exactly as we would to any public request to
+                 * submit a command with a 404 for obscurity.
+                 *
+                 * TODO What if the command succeeds but the acknowledgement fails
+                 * so that the user still has an invalid cookie? How can we test
+                 * this scenario?
+                 */
+                assertTextMatchesAll(message, 'Resource not found');
               },
             });
           });
@@ -1006,8 +1021,12 @@ describe(`Survey Completion Scenarios`, () => {
               assertErrorMessageAsExpected: (message) => {
                 assertTextMatchesAll(
                   message,
-                  missingSurveyAttemptId,
-                  'no such attempt',
+                  /**
+                   * A client's permission to execute survey response commands
+                   * is contingent upon the response record existing. It is the "subject"
+                   * of a cookie. If the record doesn't exist, the client is unauthroized.
+                   */
+                  'Forbidden',
                 );
               },
             });

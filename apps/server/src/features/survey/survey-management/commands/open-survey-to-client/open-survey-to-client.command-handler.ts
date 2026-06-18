@@ -4,14 +4,31 @@ import { SURVEY_COMMAND_REPOSITORY_DEPENDENCY_TOKEN } from '../../../../../featu
 import type { ISurveyCommandRepository } from '../../../../../features/survey/repositories';
 import { EncryptionService } from '../../../../../libs/auth';
 import { CommandResult, ICommandHandler } from '../../../../../libs/cqrs-es';
-import { TrueImpactError } from '../../../../../libs/data-types';
+import {
+  ResourceNotFoundError,
+  TrueImpactBadUserInputError,
+  TrueImpactError,
+} from '../../../../../libs/data-types';
+import { Survey } from '../../survey.aggregate-root';
 import { OpenSurveyToClient } from './open-survey-to-client.command';
+
+export interface IParticipantValidationServiceForSurveys {
+  exists(participantId: string): Promise<boolean>;
+}
+
+export interface IParticipantValidatorProvider {
+  forEntity(
+    participantType: string,
+  ): IParticipantValidationServiceForSurveys | ResourceNotFoundError;
+}
 
 export class OpenSurveyToClientCommandHandler implements ICommandHandler<OpenSurveyToClient> {
   constructor(
     @Inject(SURVEY_COMMAND_REPOSITORY_DEPENDENCY_TOKEN)
     private readonly surveyCommandRepository: ISurveyCommandRepository,
     private readonly encryptionService: EncryptionService,
+    @Inject('SURVEY_PARTICIPANT_VALIDATION_SERVICE_PROVIDER_INJECTION_TOKEN')
+    private readonly participantValidationServiceProvider: IParticipantValidatorProvider,
   ) {}
 
   async handle({
@@ -22,12 +39,40 @@ export class OpenSurveyToClientCommandHandler implements ICommandHandler<OpenSur
   }: {
     payload: OpenSurveyToClient;
   }): Promise<CommandResult> {
-    const target = await this.surveyCommandRepository.fetchById(id);
+    const requiredStateErrors: TrueImpactError[] = [];
 
-    if (!target) {
-      return new TrueImpactError(
-        `You cannot open survey ${id} to a client, as there is no such survey.`,
+    const participantValidator =
+      this.participantValidationServiceProvider.forEntity(
+        CLIENT_AGGREGATE_TYPE,
       );
+
+    if (participantValidator instanceof Error) {
+      return participantValidator;
+    }
+
+    const doesParticipantExist = await participantValidator.exists(clientId);
+
+    if (!doesParticipantExist) {
+      requiredStateErrors.push(
+        new ResourceNotFoundError({
+          type: CLIENT_AGGREGATE_TYPE,
+          id: clientId,
+        }),
+      );
+    }
+
+    const surveyFetchResult = await this.surveyCommandRepository.fetchById(id);
+
+    if (!surveyFetchResult) {
+      requiredStateErrors.push(
+        new TrueImpactError(
+          `You cannot open survey ${id} to a client, as there is no such survey.`,
+        ),
+      );
+    }
+
+    if (requiredStateErrors.length > 0) {
+      return new TrueImpactBadUserInputError(requiredStateErrors);
     }
 
     const generatedOnetimePasscode = this.encryptionService.generatePasscode();
@@ -35,6 +80,8 @@ export class OpenSurveyToClientCommandHandler implements ICommandHandler<OpenSur
     const hashedPasscode = this.encryptionService.encrypt(
       generatedOnetimePasscode,
     );
+
+    const target = surveyFetchResult as Survey;
 
     const updatedResult = target.openToParticipant({
       dateOfExpiry: '12345',

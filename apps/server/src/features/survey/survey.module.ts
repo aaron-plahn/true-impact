@@ -6,6 +6,7 @@ import {
 import { EncryptionService } from '../../libs/auth';
 import { CommandHandlerService } from '../../libs/cqrs-es';
 import {
+  ResourceNotFoundError,
   TrueImpactBadUserInputError,
   TrueImpactError,
 } from '../../libs/data-types';
@@ -20,7 +21,10 @@ import {
   OpenSurveyToClientCommandHandler,
 } from '../survey/survey-management';
 import { UserModule } from '../users/user.module';
-import { SURVEY_COMMAND_REPOSITORY_DEPENDENCY_TOKEN } from './constants';
+import {
+  SURVEY_AGGREGATE_TYPE,
+  SURVEY_COMMAND_REPOSITORY_DEPENDENCY_TOKEN,
+} from './constants';
 import { SURVEY_QUERY_REPOSITORY_PROVIDER_TOKEN } from './queries/survey-query-repository.interface';
 import { SurveyQueryService } from './queries/survey-query.service';
 import { SurveyViewModel } from './queries/survey.view-model';
@@ -355,7 +359,10 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
             const target = await repo.fetchById(surveyId);
 
             if (!target) {
-              return new TrueImpactError('Resource not found');
+              return new ResourceNotFoundError({
+                type: SURVEY_AGGREGATE_TYPE,
+                id: surveyId,
+              });
             }
 
             if (
