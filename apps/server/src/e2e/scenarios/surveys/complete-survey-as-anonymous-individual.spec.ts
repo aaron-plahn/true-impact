@@ -16,6 +16,8 @@ import {
   assertCommandScenarioError,
   assertCommandScenarioSuccess,
 } from '../utils';
+import { signInAsAdmin } from '../utils/sign-in';
+import { TestHttpClient } from '../utils/test-http-client';
 
 // TODO From env.e2e
 const port = '3234';
@@ -111,6 +113,8 @@ const buildAndPublishSurveyPriorToOpenning = TestCommandStream.first(
   })
   .andThen(PublishSurvey);
 
+const clientOrigin = 'http://localhost:4200';
+
 /**
  * TODO Use TestHttpClient now
  *
@@ -118,8 +122,14 @@ const buildAndPublishSurveyPriorToOpenning = TestCommandStream.first(
  * to test this via direct HTTP requests to the server without a browser. We do have
  * robust automated browser e2e tests of these scenarios with webdriver.io.
  */
-describe.skip(`Survey Completion Scenarios: Anonymous Individual Participant`, () => {
+describe(`Survey Completion Scenarios: Anonymous Individual Participant`, () => {
   let surveyId: string;
+
+  const adminHttpClient = new TestHttpClient(clientOrigin);
+
+  beforeAll(async () => {
+    await signInAsAdmin(adminHttpClient);
+  });
 
   beforeEach(async () => {
     // clear all test data between runs
@@ -133,6 +143,8 @@ describe.skip(`Survey Completion Scenarios: Anonymous Individual Participant`, (
 
     beforeEach(async () => {
       await assertCommandScenarioSuccess({
+        // an admin must build the survey before it can be completed by an anonymous user in possession of an access code
+        httpClient: adminHttpClient,
         endpoint: surveyCompletionCommandsEndpoint,
         stream: buildAndPublishSurveyPriorToOpenning.andThen(
           OpenSurveyToAnonymousIndividual,
@@ -158,6 +170,7 @@ describe.skip(`Survey Completion Scenarios: Anonymous Individual Participant`, (
     describe(`when the user has a valid access code`, () => {
       it(`should begin the survey`, async () => {
         await assertCommandScenarioSuccess({
+          httpClient: new TestHttpClient(clientOrigin),
           endpoint: surveyCompletionCommandsEndpoint,
           // we need to append the one-time passcode to headers
           stream: TestCommandStream.first(BeginSurvey, {
@@ -176,6 +189,7 @@ describe.skip(`Survey Completion Scenarios: Anonymous Individual Participant`, (
     describe(`when an invalid access code is provided`, () => {
       it(`should return not found (for obscurity)`, async () => {
         await assertCommandScenarioError({
+          httpClient: new TestHttpClient(clientOrigin),
           endpoint: surveyCompletionCommandsEndpoint,
           stream: TestCommandStream.first(BeginSurvey, {
             surveyId,
@@ -183,7 +197,7 @@ describe.skip(`Survey Completion Scenarios: Anonymous Individual Participant`, (
           }),
           // can we validate the status code?
           assertErrorMessageAsExpected: (message) => {
-            expect(message).toBe('Not Found');
+            expect(message).toBe('Forbidden');
           },
         });
       });
@@ -191,13 +205,16 @@ describe.skip(`Survey Completion Scenarios: Anonymous Individual Participant`, (
 
     describe(`when an expired access code is provided`, () => {
       // we'll need to do some magic to set this up
-      // TODO finish this test case off!
+      // TODO finish this test case off before going to prod.
       it.todo(`should return unauthorized`);
     });
 
     describe(`when the survey has already been started`, () => {
+      const anonymousUserHttpClient = new TestHttpClient(clientOrigin);
+
       beforeEach(async () => {
         await assertCommandScenarioSuccess({
+          httpClient: anonymousUserHttpClient,
           endpoint: surveyCompletionCommandsEndpoint,
           stream: TestCommandStream.first(BeginSurvey, {
             surveyId,
@@ -206,15 +223,22 @@ describe.skip(`Survey Completion Scenarios: Anonymous Individual Participant`, (
         });
       });
 
-      it(`should return Not Found`, async () => {
+      /**
+       * If a user tries to begin a survey a second time with the same access code,
+       * the access code will no longer work. The server will see the BEGIN_SURVEY
+       * command, remove the `subject` from the cookie, and attempt to start the
+       * survey with the stale access code.
+       */
+      it(`should return Forbidden`, async () => {
         await assertCommandScenarioError({
+          httpClient: anonymousUserHttpClient,
           endpoint: surveyCompletionCommandsEndpoint,
           stream: TestCommandStream.first(BeginSurvey, {
             surveyId,
             accessCode: accessCodeToBeginSurvey,
           }),
           assertErrorMessageAsExpected: (message) => {
-            expect(message).toBe('Not Found');
+            expect(message).toBe('Forbidden');
           },
         });
       });
@@ -251,7 +275,14 @@ describe.skip(`Survey Completion Scenarios: Anonymous Individual Participant`, (
               chosenOptionLabel: 'a',
             }),
           assertErrorMessageAsExpected: (message) => {
-            expect(message).toContain('has already been submitted');
+            /**
+             * Submitting a survey has the side-effect of logging
+             * the (anonymous) client out.
+             *
+             * TODO Can we test what happens if the browser some how
+             * fails to clear the cookie?
+             */
+            expect(message).toContain('Forbidden');
           },
         });
       });
@@ -266,7 +297,7 @@ describe.skip(`Survey Completion Scenarios: Anonymous Individual Participant`, (
             accessCode: undefined,
           }),
           assertErrorMessageAsExpected: (message) => {
-            expect(message).toBe('Not Found');
+            expect(message).toContain('Forbidden');
           },
         });
       });
@@ -276,6 +307,7 @@ describe.skip(`Survey Completion Scenarios: Anonymous Individual Participant`, (
   describe(`when the survey has not been opened for completion`, () => {
     beforeEach(async () => {
       await assertCommandScenarioSuccess({
+        httpClient: adminHttpClient,
         endpoint: surveyCompletionCommandsEndpoint,
         stream: buildAndPublishSurveyPriorToOpenning,
       });
@@ -289,13 +321,14 @@ describe.skip(`Survey Completion Scenarios: Anonymous Individual Participant`, (
 
     it(`should return not found (for obscurity)`, async () => {
       await assertCommandScenarioError({
+        httpClient: new TestHttpClient(clientOrigin),
         endpoint: surveyCompletionCommandsEndpoint,
         stream: TestCommandStream.first(BeginSurvey, {
           surveyId,
           accessCode: 'BOGUS ACCESS CODE',
         }),
         assertErrorMessageAsExpected: (message) => {
-          expect(message).toBe('Not Found');
+          expect(message).toBe('Forbidden');
         },
       });
     });

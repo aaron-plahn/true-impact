@@ -1,5 +1,11 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { Req, Res, Session, UseGuards } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Req,
+  Res,
+  Session,
+  UseGuards,
+} from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { SurveyCommandAuthGuard } from 'src/e2e/scenarios/surveys/guards';
 import { tiSduiSectionToHtmlFragment } from 'src/libs/server-driven-ui/html/tisdui-to-html-fragment';
@@ -124,8 +130,7 @@ export class SurveyController implements OnModuleInit {
        * TODO Remove the subject or clear the session entirely after the survey is submitted.
        */
       if (!session) {
-        // 404
-        return null;
+        throw new ForbiddenException();
       }
 
       if (
@@ -140,7 +145,7 @@ export class SurveyController implements OnModuleInit {
           session.subject,
         )
       ) {
-        return null;
+        throw new ForbiddenException();
       }
     }
 
@@ -151,6 +156,9 @@ export class SurveyController implements OnModuleInit {
        * before starting a new session.
        */
       delete session.subject;
+
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+      session.save();
     }
 
     const result = await this.commandHandlerService.execute(fsa);

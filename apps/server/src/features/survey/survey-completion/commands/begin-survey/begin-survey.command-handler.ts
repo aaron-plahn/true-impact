@@ -1,4 +1,4 @@
-import { Inject } from '@nestjs/common';
+import { ForbiddenException, Inject } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { EncryptionService } from '../../../../../libs/auth';
 import { CommandResult, ICommandHandler } from '../../../../../libs/cqrs-es';
@@ -59,7 +59,10 @@ export class BeginSurveyCommandHandler implements ICommandHandler<BeginSurvey> {
       );
 
     if (targetSurvey instanceof TrueImpactError) {
-      return targetSurvey;
+      /**
+       * I'd prefer to return this error.
+       */
+      throw new ForbiddenException();
     }
 
     const newSurveyAttemptId = randomUUID();

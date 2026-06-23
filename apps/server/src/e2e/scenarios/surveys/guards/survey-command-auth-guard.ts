@@ -7,6 +7,10 @@ import type { IUserCommandRepository } from '../../../../features/users/reposito
 import { User } from '../../../../features/users/user.aggregate-root';
 import { ICommandFsa } from '../../../../libs/cqrs-es';
 
+/**
+ * TODO We should have a separate endpoint for survey completion.
+ * This would make the following logic much simpler.
+ */
 export class SurveyCommandAuthGuard implements CanActivate {
   constructor(
     @Inject(USER_COMMAND_REPOSITORY_INJECTION_TOKEN)
