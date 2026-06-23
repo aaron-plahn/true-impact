@@ -1,4 +1,4 @@
-import { IDomainEvent } from 'src/libs/cqrs-es';
+import { IDomainEvent } from '../../../../libs/cqrs-es';
 import {
   AggregateRoot,
   BooleanDataType,
@@ -265,7 +265,13 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
    * is calculated and could be a getter, except for the fact that it is easier
    * to cache this each time a new question is answered. We do not
    * persist this to the database.
+   *
+   * We need to find a way to opt out of validation of getter-like properties.
    */
+  @NonEmptyString({
+    label: 'next question label',
+    description: 'refers to the next question that the user should answer',
+  })
   nextQuestionLabel: string | DONE;
 
   @BooleanDataType({

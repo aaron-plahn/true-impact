@@ -241,11 +241,6 @@ describe(`Survey Completion Scenarios`, () => {
             stream: TestCommandStream.first(BeginSurvey, {
               surveyId,
               accessCode,
-              // TODO remove this
-              participantCompositeIdentifier: {
-                id: clientId,
-                type: CLIENT_AGGREGATE_TYPE,
-              },
             })
               .andThen(AnswerSurveyQuestion, {
                 questionLabel: 'q1',
@@ -300,10 +295,6 @@ describe(`Survey Completion Scenarios`, () => {
               stream: TestCommandStream.first(BeginSurvey, {
                 accessCode,
                 surveyId,
-                participantCompositeIdentifier: {
-                  id: clientId,
-                  type: CLIENT_AGGREGATE_TYPE,
-                },
               }).andThen(AnswerSurveyQuestion, {
                 questionLabel: targetQuestionLabel,
                 chosenOptionLabel: targetOptionLabel,
@@ -334,10 +325,6 @@ describe(`Survey Completion Scenarios`, () => {
                 // @ts-expect-error TODO find a better pattern for dealing with this dependent state
                 accessCode: secondAccessCode,
                 surveyId,
-                participantCompositeIdentifier: {
-                  id: clientId,
-                  type: CLIENT_AGGREGATE_TYPE,
-                },
               }),
             });
 
@@ -381,10 +368,6 @@ describe(`Survey Completion Scenarios`, () => {
               stream: TestCommandStream.first(BeginSurvey, {
                 accessCode,
                 surveyId,
-                participantCompositeIdentifier: {
-                  id: clientId,
-                  type: CLIENT_AGGREGATE_TYPE,
-                },
               })
                 .andThen(AnswerSurveyQuestion, {
                   questionLabel: 'q1',
@@ -438,10 +421,6 @@ describe(`Survey Completion Scenarios`, () => {
                 // @ts-expect-error We need to find a better pattern for sharing state between separate command streams
                 accessCode: secondAccessCode,
                 surveyId,
-                participantCompositeIdentifier: {
-                  id: clientId,
-                  type: CLIENT_AGGREGATE_TYPE,
-                },
               })
                 .andThen(AnswerSurveyQuestion, {
                   questionLabel: 'q1',
@@ -472,6 +451,42 @@ describe(`Survey Completion Scenarios`, () => {
 
     describe(`when the scenario is invalid`, () => {
       describe(`when beginning a survey`, () => {
+        describe(`when an explicit client composite identifier is included in the request`, () => {
+          beforeEach(async () => {
+            const { id: clientId } = (
+              (await adminHttpClient.get(clientBaseEndpoint)).data as Client[]
+            )[0];
+
+            const surveySeedResult = await seedPublishedSurvey(clientId);
+
+            accessCode = surveySeedResult.accessCode;
+          });
+
+          it.only(`should return the expected error`, async () => {
+            const { id: surveyId } = (
+              (await adminHttpClient.get(surveyIndexEndpoint))
+                .data as SurveyViewModel[]
+            )[0];
+
+            await assertCommandError({
+              httpClient: new TestHttpClient('http://localhost:4200'),
+              endpoint: surveyCompletionCommandsEndpoint,
+              commandFsa: TestCommandStream.buildOne(BeginSurvey, {
+                surveyId,
+                accessCode,
+                // @ts-expect-error We are testing a non-allowlisted property
+                participantCompositeIdentifier: {
+                  type: CLIENT_AGGREGATE_TYPE,
+                  id: clientId,
+                },
+              }),
+              assertErrorMessageAsExpected: (message) => {
+                expect(message).toContain('fuck you asshole!');
+              },
+            });
+          });
+        });
+
         /**
          * Note that if the survey doesn't exist, it's not possible to give the access code
          * any consideration.
@@ -481,10 +496,6 @@ describe(`Survey Completion Scenarios`, () => {
             const missingSurveyId = '404';
 
             const beginSurvey = TestCommandStream.first(BeginSurvey, {
-              participantCompositeIdentifier: {
-                type: CLIENT_AGGREGATE_TYPE,
-                id: clientId,
-              },
               surveyId: missingSurveyId,
             });
 
@@ -518,10 +529,6 @@ describe(`Survey Completion Scenarios`, () => {
             const { id: surveyId } = body[0];
 
             const beginSurvey = TestCommandStream.first(BeginSurvey, {
-              participantCompositeIdentifier: {
-                type: CLIENT_AGGREGATE_TYPE,
-                id: clientId,
-              },
               surveyId,
             });
 
@@ -614,10 +621,6 @@ describe(`Survey Completion Scenarios`, () => {
               stream: TestCommandStream.first(BeginSurvey, {
                 accessCode,
                 surveyId,
-                participantCompositeIdentifier: {
-                  type: CLIENT_AGGREGATE_TYPE,
-                  id: clientId,
-                },
               }).andThen(AnswerSurveyQuestion, {
                 questionLabel: missingQuestionLabel,
               }),
@@ -657,10 +660,6 @@ describe(`Survey Completion Scenarios`, () => {
               stream: TestCommandStream.first(BeginSurvey, {
                 accessCode,
                 surveyId,
-                participantCompositeIdentifier: {
-                  id: clientId,
-                  type: CLIENT_AGGREGATE_TYPE,
-                },
               })
                 .andThen(AnswerSurveyQuestion, {
                   questionLabel: repeatedQuestion,
@@ -707,10 +706,6 @@ describe(`Survey Completion Scenarios`, () => {
               stream: TestCommandStream.first(BeginSurvey, {
                 accessCode,
                 surveyId,
-                participantCompositeIdentifier: {
-                  id: clientId,
-                  type: CLIENT_AGGREGATE_TYPE,
-                },
               }).andThen(AnswerSurveyQuestion, {
                 questionLabel: outOfOrderQuestionLabel,
               }),
@@ -744,11 +739,6 @@ describe(`Survey Completion Scenarios`, () => {
               stream: TestCommandStream.first(BeginSurvey, {
                 accessCode,
                 surveyId,
-
-                participantCompositeIdentifier: {
-                  id: clientId,
-                  type: CLIENT_AGGREGATE_TYPE,
-                },
               }).andThen(AnswerSurveyQuestion, {
                 questionLabel: bogusQuestionLabel,
               }),
@@ -789,10 +779,6 @@ describe(`Survey Completion Scenarios`, () => {
               stream: TestCommandStream.first(BeginSurvey, {
                 accessCode,
                 surveyId,
-                participantCompositeIdentifier: {
-                  id: clientId,
-                  type: CLIENT_AGGREGATE_TYPE,
-                },
               })
                 .andThen(AnswerSurveyQuestion, {
                   questionLabel: 'q1',
@@ -847,10 +833,6 @@ describe(`Survey Completion Scenarios`, () => {
               stream: TestCommandStream.first(BeginSurvey, {
                 accessCode,
                 surveyId,
-                participantCompositeIdentifier: {
-                  id: clientId,
-                  type: CLIENT_AGGREGATE_TYPE,
-                },
               })
                 .andThen(AnswerSurveyQuestion, {
                   questionLabel: targetQuestionLabel,
@@ -921,10 +903,7 @@ describe(`Survey Completion Scenarios`, () => {
               endpoint: surveyCompletionCommandsEndpoint,
               stream: TestCommandStream.first(BeginSurvey, {
                 accessCode,
-                participantCompositeIdentifier: {
-                  id: clientId,
-                  type: CLIENT_AGGREGATE_TYPE,
-                },
+
                 surveyId,
               })
                 .andThen(AbandonSurveyCompletion)
@@ -962,10 +941,6 @@ describe(`Survey Completion Scenarios`, () => {
             const stream = TestCommandStream.first(BeginSurvey, {
               accessCode,
               surveyId,
-              participantCompositeIdentifier: {
-                id: clientId,
-                type: CLIENT_AGGREGATE_TYPE,
-              },
             })
               .andThen(AnswerSurveyQuestion, {
                 questionLabel: 'q1',
@@ -1055,10 +1030,6 @@ describe(`Survey Completion Scenarios`, () => {
               stream: TestCommandStream.first(BeginSurvey, {
                 accessCode,
                 surveyId,
-                participantCompositeIdentifier: {
-                  id: clientId,
-                  type: CLIENT_AGGREGATE_TYPE,
-                },
               })
                 .andThen(AnswerSurveyQuestion, {
                   questionLabel: 'q1',

@@ -1,4 +1,5 @@
 import {
+  NonEmptyString,
   TrueImpactBadUserInputError,
   TrueImpactDataExample,
   TrueImpactError,
@@ -23,10 +24,32 @@ export class SurveyAccessTokenPersistenceDto {
   },
 })
 export class SurveyAccessToken {
+  @NonEmptyString({
+    label: 'algorithm',
+    description: 'which algorithm was used to encrypt this token?',
+  })
   algorithm: string;
+
   // we use a salt as part of the secrets
+  @NonEmptyString({
+    label: 'hash',
+    description: 'an encrypted version of the token for future validation',
+  })
   hash: string;
+
+  // TODO use a proper DateTime format
+  @NonEmptyString({
+    label: 'date created',
+    description:
+      'the date this token was created to allow a user to begin a survey session',
+  })
   dateCreated: string;
+
+  // TODO timestamp?
+  @NonEmptyString({
+    label: 'expiry date',
+    description: 'the token will no longer be valid after this timestamp',
+  })
   dateExpires: string;
   /**
    * Possession of the un-hashed one-time passcode allows a user to authenticate as the participant within the context of completing just this one survey.

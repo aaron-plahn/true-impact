@@ -1,4 +1,5 @@
 import {
+  NestedDataType,
   NonEmptyString,
   TrueImpactDataExample,
 } from '../../../../libs/data-types';
@@ -17,6 +18,10 @@ import { SurveyCompositeIdentifier } from '../../survey.composite-identifier';
 export class AddQuestionToSurvey {
   static readonly type = 'ADD_QUESTION_TO_SURVEY';
 
+  @NestedDataType(() => SurveyCompositeIdentifier, {
+    label: 'composite ID',
+    description: 'system-wide unique identifier to this survey',
+  })
   aggregateCompositeIdentifier: SurveyCompositeIdentifier;
 
   @NonEmptyString({

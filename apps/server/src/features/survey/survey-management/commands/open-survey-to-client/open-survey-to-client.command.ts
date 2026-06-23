@@ -1,5 +1,8 @@
 import { SURVEY_AGGREGATE_TYPE } from '../../../../../features/survey/constants';
-import { SurveyCompositeIdentifier } from '../../../../../features/survey/survey.composite-identifier';
+import {
+  SurveyCompositeIdentifier,
+  SurveyCompositeIdentifierValuedProp,
+} from '../../../../../features/survey/survey.composite-identifier';
 import {
   NonEmptyString,
   TrueImpactDataExample,
@@ -17,6 +20,7 @@ import {
 export class OpenSurveyToClient {
   static readonly type = 'OPEN_SURVEY_TO_CLIENT';
 
+  @SurveyCompositeIdentifierValuedProp
   aggregateCompositeIdentifier: SurveyCompositeIdentifier;
 
   // TODO @ReferenceTo

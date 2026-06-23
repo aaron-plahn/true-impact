@@ -1,5 +1,8 @@
 import { TrueImpactDataExample } from '../../../../libs/data-types';
-import { SurveyCompositeIdentifier } from '../../survey.composite-identifier';
+import {
+  SurveyCompositeIdentifier,
+  SurveyCompositeIdentifierValuedProp,
+} from '../../survey.composite-identifier';
 
 @TrueImpactDataExample({
   example: {
@@ -12,5 +15,6 @@ import { SurveyCompositeIdentifier } from '../../survey.composite-identifier';
 export class PublishSurvey {
   static readonly type = 'PUBLISH_SURVEY';
 
+  @SurveyCompositeIdentifierValuedProp
   aggregateCompositeIdentifier: SurveyCompositeIdentifier;
 }

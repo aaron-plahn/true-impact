@@ -1,7 +1,7 @@
-import { AuthModule } from 'src/auth/auth.module';
-import { InMemoryQueryRepository } from 'src/common/persistence';
-import { UserModule } from 'src/features/users/user.module';
-import { CommandHandlerService } from 'src/libs/cqrs-es';
+import { AuthModule } from '../../../auth/auth.module';
+import { InMemoryQueryRepository } from '../../../common/persistence';
+import { UserModule } from '../../../features/users/user.module';
+import { CommandHandlerService } from '../../../libs/cqrs-es';
 import { Module, ModuleRef } from '../../../libs/framework';
 import { GroupProgramQueryService, GroupProgramViewModel } from '../queries';
 import { CreateGroupProgram } from './commands';

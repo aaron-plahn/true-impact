@@ -13,6 +13,7 @@ import {
   isArraySchemaPropertyMetadata,
   isLookupTablePropertyMetadata,
   isObjectSchemaPropertyMetadata,
+  isSetPropertyMetadata,
   SchemaPropertyMetadata,
 } from '../schema-management/decorators/append-metadata';
 import {
@@ -131,10 +132,16 @@ const validateSimpleDataType = (
   ]);
 };
 
+interface SchemaBasedValidationOptions {
+  shouldAllowUnknownProperties?: boolean;
+}
+
 export const validateObjectAgainstSchema = <T = object>(
   o: T,
   schema: DataSchema,
+  options: SchemaBasedValidationOptions = {},
 ): TrueImpactError[] => {
+  // schema based validation errors for known properties in the schema
   const allErrors = Object.entries(schema.properties).reduce(
     (
       acc: TrueImpactError[],
@@ -343,12 +350,68 @@ export const validateObjectAgainstSchema = <T = object>(
         return acc;
       }
 
+      if (isSetPropertyMetadata(propertySchema)) {
+        if (!(value instanceof Set)) {
+          acc.push(
+            new TrueImpactError(
+              `Invalid value for property [${k}]. Expected a Set, but received (${value === null ? 'null' : typeof value})`,
+            ),
+          );
+        }
+
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+        value.forEach((el: unknown) => {
+          if (typeof propertySchema.valueType === 'function') {
+            const nestedErrors = validateObjectAgainstSchema(
+              el,
+              getDataSchemaFromClassCtor(propertySchema.valueType()),
+            );
+
+            nestedErrors.forEach((ne) => acc.push(ne));
+
+            return;
+          }
+
+          const actualJsTypeOfValue = typeof el;
+
+          if (actualJsTypeOfValue !== propertySchema.valueType) {
+            acc.push(
+              new TrueImpactError(
+                `Invalid value for Set element. Expected [${propertySchema.valueType}], received: ${actualJsTypeOfValue}`,
+              ),
+            );
+
+            return;
+          }
+        });
+
+        return acc;
+      }
+
       acc.push(...validateSimpleDataType(k, value, propertySchema));
 
       return acc;
     },
     [],
   );
+
+  // here we prevent unknown properties from being included
+  const shouldAllowUnknownProperties =
+    typeof options.shouldAllowUnknownProperties === 'boolean'
+      ? options.shouldAllowUnknownProperties
+      : false;
+
+  if (!shouldAllowUnknownProperties) {
+    if (o !== null && typeof o === 'object') {
+      Object.keys(o).forEach((propertyName) => {
+        if (!(propertyName in schema.properties)) {
+          allErrors.push(
+            new TrueImpactError(`Unknown property: ${propertyName}`),
+          );
+        }
+      });
+    }
+  }
 
   return allErrors;
 };

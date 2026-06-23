@@ -1,5 +1,11 @@
-import { TrueImpactDataExample } from '../../../../libs/data-types';
-import { SurveyCompositeIdentifier } from '../../survey.composite-identifier';
+import {
+  NonEmptyString,
+  TrueImpactDataExample,
+} from '../../../../libs/data-types';
+import {
+  SurveyCompositeIdentifier,
+  SurveyCompositeIdentifierValuedProp,
+} from '../../survey.composite-identifier';
 
 @TrueImpactDataExample<OpenSurveyToAnonymousIndividual>({
   example: {
@@ -14,10 +20,15 @@ import { SurveyCompositeIdentifier } from '../../survey.composite-identifier';
 export class OpenSurveyToAnonymousIndividual {
   static readonly type = 'OPEN_SURVEY_TO_ANONYMOUS_INDIVIDUAL';
 
-  // TODO decorator
+  @SurveyCompositeIdentifierValuedProp
   aggregateCompositeIdentifier: SurveyCompositeIdentifier;
 
   // this will be required on the event and defaulted to a reasonable value based on the effective date
   // TIMESTAMP
+  @NonEmptyString({
+    label: 'deadline',
+    description: 'date and time by which the survey must be completed',
+    isOptional: true,
+  })
   deadline?: string;
 }

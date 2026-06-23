@@ -54,6 +54,7 @@ import {
   SurveySubmittedViewDiffer,
 } from './survey-completion';
 import { SduiViewDiffer } from './survey-completion/commands/sdui-view-differ';
+import { SurveyParticipantCompositeIdentifier } from './survey-completion/models';
 import {
   SURVEY_RESPONSE_QUERY_REPOSITORY_INJECTION_TOKEN,
   SurveyResponseQueryService,
@@ -355,7 +356,13 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
           fetchSurveyForParticipant: async function (
             surveyId: string,
             hashedAccessCode: string | undefined,
-          ): Promise<Survey | TrueImpactError> {
+          ): Promise<
+            | {
+                survey: Survey;
+                participantCompositeIdentifier?: SurveyParticipantCompositeIdentifier;
+              }
+            | TrueImpactError
+          > {
             const target = await repo.fetchById(surveyId);
 
             if (!target) {
@@ -386,7 +393,12 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
 
             await repo.update(updated);
 
-            return updated;
+            return {
+              survey: updated,
+              participantCompositeIdentifier:
+                target.getParticipantByAccessCode(hashedAccessCode) ||
+                undefined,
+            };
           },
         };
 

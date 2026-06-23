@@ -44,6 +44,12 @@ export class MultilingualTextPersistenceDto {
   },
 })
 export class MultilingualText extends Entity<MultilingualTextPersistenceDto> {
+  @LookupTable(() => MultilingualTextItem, {
+    label: 'items',
+    description:
+      'a lookup table of text items by language code by translation role',
+    depth: 2,
+  })
   items: Map<LanguageCode, Map<MultilingualTextItemRole, MultilingualTextItem>>; // lookup table from languageCode -> translation role -> text
 
   constructor({

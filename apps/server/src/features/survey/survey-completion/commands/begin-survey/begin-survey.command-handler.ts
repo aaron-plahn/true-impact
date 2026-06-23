@@ -7,6 +7,7 @@ import {
   TrueImpactError,
 } from '../../../../../libs/data-types';
 import { Survey } from '../../../survey-management';
+import { SurveyParticipantCompositeIdentifier } from '../../models';
 import { SurveyResponseRecord } from '../../models/survey-response-record.aggregate-root';
 import type { ISurveyResponseCommandRepository } from '../../repositories';
 import { SURVEY_RESPONSE_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../../repositories';
@@ -25,11 +26,16 @@ interface ISurveyParticipantManagementServiceProvider {
   ): ISurveyParticipantManagementService | TrueImpactError;
 }
 
+interface SurveyAndParticipant {
+  survey: Survey;
+  participantCompositeIdentifier?: SurveyParticipantCompositeIdentifier;
+}
+
 export interface ISurveyValidationServiceForSurveyResponses {
   fetchSurveyForParticipant(
     surveyId: string,
     hashedAccessCode: string | undefined,
-  ): Promise<Survey | TrueImpactError>;
+  ): Promise<SurveyAndParticipant | TrueImpactError>;
 }
 
 export class BeginSurveyCommandHandler implements ICommandHandler<BeginSurvey> {
@@ -44,7 +50,7 @@ export class BeginSurveyCommandHandler implements ICommandHandler<BeginSurvey> {
   ) {}
 
   async handle({
-    payload: { surveyId, participantCompositeIdentifier, accessCode },
+    payload: { surveyId, accessCode },
   }: {
     payload: BeginSurvey;
   }): Promise<CommandResult> {
@@ -52,18 +58,21 @@ export class BeginSurveyCommandHandler implements ICommandHandler<BeginSurvey> {
       ? this.cryptoService.encrypt(accessCode)
       : undefined;
 
-    const targetSurvey =
+    const surveyFetchResult =
       await this.surveyValidationService.fetchSurveyForParticipant(
         surveyId,
         hashedAccessCode,
       );
 
-    if (targetSurvey instanceof TrueImpactError) {
+    if (surveyFetchResult instanceof TrueImpactError) {
       /**
        * I'd prefer to return this error.
        */
       throw new ForbiddenException();
     }
+
+    const { participantCompositeIdentifier, survey: targetSurvey } =
+      surveyFetchResult;
 
     const newSurveyAttemptId = randomUUID();
 

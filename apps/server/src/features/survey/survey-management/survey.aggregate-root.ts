@@ -96,6 +96,10 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
    * have referenced the former when pointing to a follow up question. An interface or `SurveyFollowupQuestion` class
    * with the same public data type would solve this problem.
    */
+  @LookupTable(() => SurveyQuestion, {
+    label: 'question bank',
+    description: 'questions for this survey organized by question label',
+  })
   questionBank: Map<string, SurveyQuestion>;
 
   // See the comment about `questionBank`, which applies here as well.
@@ -110,6 +114,11 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
   // We might want this in the future
   // defaultAnalyzerName?: string;
 
+  @LookupTable(() => SurveyAnalyzer, {
+    label: 'analyzers by name',
+    description:
+      'lookup table of strategies available for analyzing survey responses',
+  })
   analyzersByName: Map<string, SurveyAnalyzer> = new Map();
 
   @LookupTable(() => SurveyAccessToken, {
@@ -180,6 +189,14 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
 
   hasAccessCode(hashedAccessCode: string): boolean {
     return this.accessTokensByHash.has(hashedAccessCode);
+  }
+
+  getParticipantByAccessCode(
+    hashedAccessCode: string,
+  ): SurveyParticipantCompositeIdentifier | null {
+    const token = this.accessTokensByHash.get(hashedAccessCode);
+
+    return token?.participantCompositeIdentifier || null;
   }
 
   toPersistenceDto(): SurveyPersistenceDto {

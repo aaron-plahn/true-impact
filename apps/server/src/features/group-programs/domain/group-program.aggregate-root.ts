@@ -1,4 +1,4 @@
-import { IDomainEvent } from 'src/libs/cqrs-es';
+import { IDomainEvent } from '../../../libs/cqrs-es';
 import {
   AggregateRoot,
   NestedDataType,

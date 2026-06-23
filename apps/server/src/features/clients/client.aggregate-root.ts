@@ -4,13 +4,16 @@ import { FullName, FullNameDto } from '../../common/full-name';
 import {
   AggregateRoot,
   isNonEmptyString,
+  NestedDataType,
   NonEmptyString,
+  NonNegativeInteger,
   TrueImpactBadUserInputError,
   TrueImpactDataExample,
   TrueImpactError,
   UpdateMethod,
-  YesNoOrUnknown,
 } from '../../libs/data-types';
+
+import type { YesNoOrUnknown } from '../../libs/data-types';
 import { CLIENT_AGGREGATE_TYPE } from './client.composite-identifier';
 
 interface ValidateInvariants<T> {
@@ -54,14 +57,36 @@ export class Client
 {
   static readonly type = CLIENT_AGGREGATE_TYPE;
 
+  @NonEmptyString({
+    label: 'ID',
+    description: 'system identifier for this client',
+  })
   id: string;
 
+  @NonNegativeInteger({
+    label: 'revision',
+    description: 'tracks historical versions of this client',
+  })
   revision: number;
 
+  @NestedDataType(() => FullName, {
+    label: 'full name',
+    description: `the client's given name`,
+  })
   fullName: FullName;
 
+  // TODO Make this a Date
+  @NonEmptyString({
+    label: 'DOB',
+    description: `the client's date of birth`,
+  })
   dateOfBirth: string; // Date?
 
+  // TODO Enum or `OneOf`
+  @NonEmptyString({
+    label: 'is Indigenous',
+    description: 'Is the client Indigenous',
+  })
   isIndigenous: YesNoOrUnknown; // Is there a better way to represent this?
 
   @NonEmptyString({

@@ -3,7 +3,7 @@ import {
   isNonEmptyString,
   TrueImpactDataExample,
   TrueImpactError,
-} from 'src/libs/data-types';
+} from '../../../libs/data-types';
 
 export class GroupSessionLocationDto {
   communityId?: string;
