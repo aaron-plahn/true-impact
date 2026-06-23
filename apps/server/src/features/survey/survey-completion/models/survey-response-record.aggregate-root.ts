@@ -609,6 +609,14 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
         );
       }
 
+      if (this.hasBeenCancelled) {
+        allErrors.push(
+          new TrueImpactError(
+            `Survey [${this.survey.name}] cannot be marked as submitted and cancelled.`,
+          ),
+        );
+      }
+
       const isComplete = this.isComplete();
 
       if (isComplete) {
@@ -618,39 +626,40 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
               `You cannot complete survey [${this.survey.name}], as it has no questions.`,
             ),
           );
-        }
+        } else {
+          const firstQuestion =
+            this.survey.getFirstQuestion() as SurveyQuestion;
 
-        const firstQuestion = this.survey.getFirstQuestion() as SurveyQuestion;
+          let currentQuestionLabel: string | DONE = firstQuestion.label;
 
-        let currentQuestionLabel: string | DONE = firstQuestion.label;
+          let currentResponse: string | undefined;
 
-        let currentResponse: string | undefined;
+          while (currentQuestionLabel !== DONE) {
+            currentResponse = this.getResponseFor(currentQuestionLabel);
 
-        while (currentQuestionLabel !== DONE) {
-          currentResponse = this.getResponseFor(currentQuestionLabel);
+            if (!currentResponse) {
+              allErrors.push(
+                new TrueImpactError(
+                  `Response for survey [${this.survey.name}] is missing an answer for required question [${currentQuestionLabel}]`,
+                ),
+              );
 
-          if (!currentResponse) {
-            allErrors.push(
-              new TrueImpactError(
-                `Response for survey [${this.survey.name}] is missing an answer for required question [${currentQuestionLabel}]`,
-              ),
-            );
+              break;
+            }
 
-            break;
+            currentQuestionLabel = this.survey.getNextQuestionLabel(
+              currentQuestionLabel,
+              currentResponse,
+            ) as string | DONE;
           }
 
-          currentQuestionLabel = this.survey.getNextQuestionLabel(
-            currentQuestionLabel,
-            currentResponse,
-          ) as string | DONE;
-        }
-
-        if (currentQuestionLabel !== DONE && currentResponse) {
-          allErrors.push(
-            new TrueImpactError(
-              `Response for survey [${this.survey.name}] is missing an answer for required question [${this.survey.getNextQuestionLabel(currentQuestionLabel, currentResponse) as string}]`,
-            ),
-          );
+          if (currentQuestionLabel !== DONE && currentResponse) {
+            allErrors.push(
+              new TrueImpactError(
+                `Response for survey [${this.survey.name}] is missing an answer for required question [${this.survey.getNextQuestionLabel(currentQuestionLabel, currentResponse) as string}]`,
+              ),
+            );
+          }
         }
       }
 
@@ -661,6 +670,14 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
           ),
         );
       }
+    }
+
+    if (this.hasBeenCancelled && this.hasBeenAbandoned) {
+      allErrors.push(
+        new TrueImpactError(
+          `Response for survey [${this.survey.name}] cannot be marked as cancelled and abandoned`,
+        ),
+      );
     }
 
     return allErrors;

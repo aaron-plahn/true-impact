@@ -67,9 +67,12 @@ export class BeginSurveyCommandHandler implements ICommandHandler<BeginSurvey> {
 
     const newSurveyAttemptId = randomUUID();
 
-    // TODO be sure this has good test coverage
-    // TODO How does the participant interact with the access code?
-    // can we pass this into the validator method?
+    /**
+     * Currently we are not hitting this path. Eventually,
+     * employees will be able to begin a survey if that
+     * survey permits employees (or the specific employee by ID)
+     * to participate.
+     */
     if (
       participantCompositeIdentifier !== null &&
       typeof participantCompositeIdentifier !== 'undefined'
@@ -94,7 +97,7 @@ export class BeginSurveyCommandHandler implements ICommandHandler<BeginSurvey> {
       }
 
       const surveyResponsesAlreadyInProgress =
-        await this.surveyCompletionRepository.fetchByParticipant(
+        await this.surveyCompletionRepository.fetchSurveyForParticipant(
           participantCompositeIdentifier,
           surveyId,
         );
@@ -105,6 +108,13 @@ export class BeginSurveyCommandHandler implements ICommandHandler<BeginSurvey> {
         ]);
       }
 
+      /**
+       * Note that this is not atomic. It's possible that we cancel the
+       * existing attempt but the request to begin the new attempt fails.
+       * This is a better state than allowing the user to begin the new survey
+       * but potentially failing to cancel an existing in-progress survey response
+       * session.
+       */
       if (surveyResponsesAlreadyInProgress.length > 0) {
         const errorsFromCancellingExistingSessions: TrueImpactError[] = [];
 

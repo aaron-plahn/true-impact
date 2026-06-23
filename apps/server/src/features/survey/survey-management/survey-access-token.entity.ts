@@ -30,7 +30,8 @@ export class SurveyAccessToken {
   dateExpires: string;
   /**
    * Possession of the un-hashed one-time passcode allows a user to authenticate as the participant within the context of completing just this one survey.
-   * It grants no access to any other system information such as previous survey submissions or client data.
+   * The one-time passcode is redeemed for a session and the passcode is atomically invalidated. It's not possible to retrieve the same passcode to begin the
+   * same survey or view survey responses afterwards.
    *
    * Eventually, we may give clients system accounts and require full authentication before completing a survey.
    */

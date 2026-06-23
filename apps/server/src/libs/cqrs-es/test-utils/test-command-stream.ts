@@ -140,7 +140,15 @@ export class TestCommandStream {
     let message = JSON.stringify(this.creationCommandFsa);
 
     for (const fsa of this.updateCommandFsas) {
-      message += `\n${JSON.stringify(fsa)}`;
+      const fsaToDisplay = clonePlainObject(fsa, {
+        payload: {
+          aggregateCompositeIdentifier: {
+            id: '$PENDING',
+          },
+        },
+      });
+
+      message += `\n${JSON.stringify(fsaToDisplay)}`;
     }
 
     return message;

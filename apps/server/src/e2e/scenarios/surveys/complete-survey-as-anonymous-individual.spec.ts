@@ -116,8 +116,6 @@ const buildAndPublishSurveyPriorToOpenning = TestCommandStream.first(
 const clientOrigin = 'http://localhost:4200';
 
 /**
- * TODO Use TestHttpClient now
- *
  * We need to support cookie management with axios \ RestCommandExecutor in order
  * to test this via direct HTTP requests to the server without a browser. We do have
  * robust automated browser e2e tests of these scenarios with webdriver.io.

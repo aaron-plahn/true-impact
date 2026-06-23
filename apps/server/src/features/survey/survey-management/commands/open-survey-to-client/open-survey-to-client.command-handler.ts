@@ -108,7 +108,11 @@ export class OpenSurveyToClientCommandHandler implements ICommandHandler<OpenSur
       return result;
     }
 
-    Object.assign(result, { accessCode: generatedOnetimePasscode });
+    Object.assign(result, {
+      accessCode: generatedOnetimePasscode,
+      // TODO Persist the event
+      // events: updatedResult.eventHistory.at(-1),
+    });
 
     return result;
   }

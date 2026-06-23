@@ -11,7 +11,7 @@ export interface ISurveyResponseCommandRepository {
 
   fetchById(id: string): Promise<SurveyResponseRecord | null>; // Maybe<SurveyResponseRecord>
 
-  fetchByParticipant(
+  fetchSurveyForParticipant(
     participant: SurveyParticipantCompositeIdentifier,
     surveyId: string,
   ): Promise<SurveyResponseRecord[] | TrueImpactError>;

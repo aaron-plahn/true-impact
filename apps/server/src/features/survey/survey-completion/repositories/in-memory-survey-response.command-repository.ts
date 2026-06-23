@@ -21,7 +21,7 @@ export class InMemorySurveyResponseCommandRepository implements ISurveyResponseC
     return this.base.fetchMany();
   }
 
-  async fetchByParticipant(
+  async fetchSurveyForParticipant(
     participant: SurveyParticipantCompositeIdentifier,
     surveyId: string,
   ): Promise<SurveyResponseRecord[] | TrueImpactError> {
