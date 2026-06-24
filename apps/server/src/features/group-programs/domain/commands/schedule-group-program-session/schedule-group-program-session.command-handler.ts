@@ -45,7 +45,9 @@ export class ScheduleGroupProgramSessionCommandHandler implements ICommandHandle
     const persistenceResult =
       await this.groupProgramRepository.update(updateResult);
 
-    // TODO deal with events
+    Object.assign(persistenceResult, {
+      events: updateResult.eventHistory.at(-1),
+    });
 
     return persistenceResult;
   }

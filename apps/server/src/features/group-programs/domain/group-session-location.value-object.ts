@@ -115,8 +115,6 @@ export class GroupSessionLocation extends Entity {
           ),
         );
       }
-
-      // TODO do the same for isUrban
     } else {
       // we know that communityId is omitted
       if (!this.name) {

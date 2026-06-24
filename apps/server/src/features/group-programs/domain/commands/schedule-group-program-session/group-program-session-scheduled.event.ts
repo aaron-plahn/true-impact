@@ -1,8 +1,8 @@
-import { SurveyResponseCompositeIdentifier } from 'src/features/survey/survey-completion';
+import { GroupProgramCompositeIdentifier } from '../../group-program.composite-identifier';
 
 // GroupSessionScheduled?
 export class GroupProgramSessionScheduledPayload {
-  aggregateCompositeIdentifier: SurveyResponseCompositeIdentifier;
+  aggregateCompositeIdentifier: GroupProgramCompositeIdentifier;
 
   // TODO make this a proper date
   date: string;

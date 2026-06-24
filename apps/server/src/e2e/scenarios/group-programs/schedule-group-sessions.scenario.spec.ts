@@ -121,8 +121,7 @@ describe(`Group Program Scheduling Scenarios`, () => {
           await assertCommandScenarioSuccess({
             httpClient: adminHttpClient,
             endpoint: groupProgramCommandEndpoint,
-            // TOOO make {} default for the overrides in `first`
-            stream: TestCommandStream.first(CreateGroupProgram, {}).andThen(
+            stream: TestCommandStream.first(CreateGroupProgram).andThen(
               ScheduleGroupProgramSession,
               {
                 date: sessionDate,
@@ -137,6 +136,12 @@ describe(`Group Program Scheduling Scenarios`, () => {
               ).data as GroupProgramViewModel;
 
               expect(searchResult.sessions).toHaveLength(1);
+
+              const newSession = searchResult.sessions[0];
+
+              expect(newSession.date).toBe(sessionDate);
+
+              expect(newSession.location).toEqual(sessionLocation);
             },
           });
         });
@@ -169,19 +174,29 @@ describe(`Group Program Scheduling Scenarios`, () => {
         });
 
         describe(`when a community is specified as the location`, () => {
-          it(`should return a not implemented error`, async () => {
-            await assertCommandScenarioError({
-              httpClient: adminHttpClient,
-              endpoint: groupProgramCommandEndpoint,
-              stream: TestCommandStream.first(CreateGroupProgram).andThen(
-                ScheduleGroupProgramSession,
-                {
-                  location: {
-                    communityId: '555',
+          describe(`when omitting all other location props`, () => {
+            it(`should return a not implemented error`, async () => {
+              await assertCommandScenarioError({
+                httpClient: adminHttpClient,
+                endpoint: groupProgramCommandEndpoint,
+                stream: TestCommandStream.first(CreateGroupProgram).andThen(
+                  ScheduleGroupProgramSession,
+                  {
+                    location: {
+                      communityId: '555',
+                    },
                   },
-                },
-              ),
+                ),
+              });
             });
+          });
+
+          describe(`when specifying [name]`, () => {
+            it.todo(`should return the expected error`);
+          });
+
+          describe(`when specifying [isUrban]`, () => {
+            it.todo(`should return the expected error`);
           });
         });
 

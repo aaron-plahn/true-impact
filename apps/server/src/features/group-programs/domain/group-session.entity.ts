@@ -107,10 +107,6 @@ export class GroupSession extends Entity {
 
     const sessionBuildResult = instance.validateInvariants();
 
-    if (sessionBuildResult instanceof Error) {
-      console.log('Oh no!');
-    }
-
     return sessionBuildResult;
   }
 }

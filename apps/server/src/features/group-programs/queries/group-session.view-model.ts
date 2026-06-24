@@ -17,22 +17,33 @@ export class GroupSessionViewModel {
   })
   location: GroupSessionLocationViewModel;
 
+  @NonEmptyString({
+    label: 'date',
+    description: 'date this session takes place',
+  })
+  // TODO update this format
+  date: string;
+
   constructor({
     id,
     location,
+    date,
   }: {
     id: string;
     location: GroupSessionLocationViewModel;
+    date: string;
   }) {
     this.id = id;
 
     this.location = location;
+
+    this.date = date;
   }
 
   static fromDomainModel(
     domainGroupSession: GroupSession,
   ): GroupSessionViewModel {
-    const { id, location: domainLocation } = domainGroupSession;
+    const { id, location: domainLocation, date } = domainGroupSession;
 
     const location =
       GroupSessionLocationViewModel.fromDomainModule(domainLocation);
@@ -40,6 +51,7 @@ export class GroupSessionViewModel {
     return new GroupSessionViewModel({
       id,
       location,
+      date,
     });
   }
 }
