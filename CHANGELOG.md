@@ -2,6 +2,10 @@
 
 This first release of the True Impact platform introduces a working model for user management, client management, and survey creation and completion.
 
+## 35
+In this PR, we enable strict allow-list property validation when validating data against schemas. This
+ensures that no unknown properties can be injected on user requests, for example. We also reinstate the scenario test for completing a survey as a client.
+
 ## 32
 In this PR, we introduce group programs, including a command to create a group program. Eventually, we will support specifying a group program as the subject of a survey.
 
