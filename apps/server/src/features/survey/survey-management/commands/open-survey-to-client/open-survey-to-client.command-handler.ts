@@ -87,11 +87,6 @@ export class OpenSurveyToClientCommandHandler implements ICommandHandler<OpenSur
       dateOfExpiry: '12345',
       dateOpened: '123',
       hash: hashedPasscode,
-      /**
-       * TODO validation via a participant validation service
-       * 1. the type here must be an allowed participant type
-       * 2. the client must exist
-       */
       participantCompositeIdentifier: {
         id: clientId,
         type: CLIENT_AGGREGATE_TYPE,

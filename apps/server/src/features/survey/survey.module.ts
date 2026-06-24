@@ -341,7 +341,7 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
 
             return new TrueImpactBadUserInputError([
               new TrueImpactError(
-                `Failed to validate survey participant of unknown type: ${entityType}`,
+                `Unsupported survey participant type: ${entityType}`,
               ),
             ]);
           },
