@@ -3,6 +3,7 @@ import {
   TrueImpactError,
   TrueImpactRuntimeException,
 } from '../../error-handling';
+import { clonePlainObject } from '../../serialization';
 import { Ctor, DeepPartial } from '../../utility-types';
 
 interface DomainFactoryBuildOptions {
@@ -35,7 +36,7 @@ type TrueImpactDataExampleMetadata<TPeristenceDto = unknown> = {
 };
 
 export const buildTestInstance = <
-  TPersistenceDto = unknown,
+  TPersistenceDto extends object,
   UInstance = unknown,
 >(
   ctor: Ctor<UInstance> &
@@ -58,12 +59,10 @@ export const buildTestInstance = <
     'default',
   ) as TPersistenceDto;
 
-  const dtoWithOverridesApplied = JSON.parse(
-    JSON.stringify({
-      ...defaultDto,
-      ...(overrides || {}),
-    }),
-  ) as TPersistenceDto;
+  const dtoWithOverridesApplied = clonePlainObject(
+    defaultDto,
+    overrides || ({} as DeepPartial<TPersistenceDto>),
+  );
 
   if (!isFromPersistenceDto(ctor)) {
     return plainToClass(ctor, dtoWithOverridesApplied);
@@ -77,7 +76,7 @@ export const buildTestInstance = <
     ]);
   }
 
-  return result;
+  return result as UInstance;
 };
 
 export function TrueImpactDataExample<TPersistenceDto>({

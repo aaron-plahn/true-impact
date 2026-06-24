@@ -18,6 +18,7 @@ import {
   SurveyAnalyzer,
   SurveyAnalyzerPersistenceDto,
 } from '../survey-analysis';
+import { SurveyParticipantCompositeIdentifier } from '../survey-completion/models';
 import { SurveyAccessToken } from './survey-access-token.entity';
 import { SurveyOption } from './survey-option.entity';
 import {
@@ -95,6 +96,10 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
    * have referenced the former when pointing to a follow up question. An interface or `SurveyFollowupQuestion` class
    * with the same public data type would solve this problem.
    */
+  @LookupTable(() => SurveyQuestion, {
+    label: 'question bank',
+    description: 'questions for this survey organized by question label',
+  })
   questionBank: Map<string, SurveyQuestion>;
 
   // See the comment about `questionBank`, which applies here as well.
@@ -109,6 +114,11 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
   // We might want this in the future
   // defaultAnalyzerName?: string;
 
+  @LookupTable(() => SurveyAnalyzer, {
+    label: 'analyzers by name',
+    description:
+      'lookup table of strategies available for analyzing survey responses',
+  })
   analyzersByName: Map<string, SurveyAnalyzer> = new Map();
 
   @LookupTable(() => SurveyAccessToken, {
@@ -179,6 +189,14 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
 
   hasAccessCode(hashedAccessCode: string): boolean {
     return this.accessTokensByHash.has(hashedAccessCode);
+  }
+
+  getParticipantByAccessCode(
+    hashedAccessCode: string,
+  ): SurveyParticipantCompositeIdentifier | null {
+    const token = this.accessTokensByHash.get(hashedAccessCode);
+
+    return token?.participantCompositeIdentifier || null;
   }
 
   toPersistenceDto(): SurveyPersistenceDto {
@@ -930,6 +948,34 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
     }
 
     this.analyzersByName.set(analyzerName, updatedAnalyzer);
+
+    return this;
+  }
+
+  openToParticipant({
+    dateOfExpiry,
+    dateOpened,
+    hash,
+    participantCompositeIdentifier,
+  }: {
+    dateOpened: string;
+    dateOfExpiry: string;
+    hash: string;
+    participantCompositeIdentifier: SurveyParticipantCompositeIdentifier;
+  }) {
+    const buildResult = SurveyAccessToken.openParticipantAccess({
+      dateCreated: dateOpened,
+      dateExpires: dateOfExpiry,
+      hash,
+      participantCompositeIdentifier,
+      algorithm: 'TODO add me now!',
+    });
+
+    if (buildResult instanceof Error) {
+      return buildResult;
+    }
+
+    this.accessTokensByHash.set(hash, buildResult);
 
     return this;
   }

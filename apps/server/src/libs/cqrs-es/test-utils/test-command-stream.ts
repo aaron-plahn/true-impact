@@ -74,8 +74,10 @@ export class TestCommandStream {
       return allResults;
     }
 
+    const id = (creationResult as PersistenceAcknowledgement).id;
+
     const updateCommandFsasToExecute = this.as({
-      id: (creationResult as PersistenceAcknowledgement).id,
+      id,
       // type (on the ack?)
     });
 
@@ -128,6 +130,28 @@ export class TestCommandStream {
 
   getCreationCommand(): ICommandFsa {
     return clonePlainObject(this.creationCommandFsa, {}, []);
+  }
+
+  /**
+   * Note that we can't display the actual `aggregateCompositeIdentifier.id` here
+   * because the ID is acquired upon execution.
+   */
+  toString() {
+    let message = JSON.stringify(this.creationCommandFsa);
+
+    for (const fsa of this.updateCommandFsas) {
+      const fsaToDisplay = clonePlainObject(fsa, {
+        payload: {
+          aggregateCompositeIdentifier: {
+            id: '$PENDING',
+          },
+        },
+      });
+
+      message += `\n${JSON.stringify(fsaToDisplay)}`;
+    }
+
+    return message;
   }
 
   static first<T extends ICommandPayload = ICommandPayload>(

@@ -8,6 +8,7 @@ import {
   TrueImpactError,
   UpdateMethod,
 } from '../../../../libs/data-types';
+import { LookupTable } from '../../../../libs/data-types/schema-management/decorators/lookup-table.decorator';
 import {
   SurveyAnalysisCategory,
   SurveyAnalysisCategoryPersistenceDto,
@@ -54,8 +55,16 @@ export class SurveyAnalyzer extends Entity {
    *
    * We use a map to ensure category labels are unique by design.
    */
+  @LookupTable(() => SurveyAnalysisCategory, {
+    label: 'categories by label',
+    description: 'a lookup table of categories organized by their labels',
+  })
   categoriesByLabel: Map<CategoryLabel, SurveyAnalysisCategory>;
 
+  @LookupTable('number', {
+    label: 'values by question',
+    description: `a lookup table of numeric values for each question, option, and category`,
+  })
   valuesByQuestion: ValuesByQuestion;
 
   constructor({

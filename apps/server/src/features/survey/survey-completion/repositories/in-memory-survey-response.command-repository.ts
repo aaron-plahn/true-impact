@@ -1,10 +1,8 @@
 import { isDeepStrictEqual } from 'util';
 import { InMemoryCommandRepository } from '../../../../common/persistence';
 import { PersistenceAcknowledgement } from '../../../../libs/cqrs-es';
-import {
-  TrueImpactBadUserInputError,
-  TrueImpactError,
-} from '../../../../libs/data-types';
+import { TrueImpactError } from '../../../../libs/data-types';
+import { SurveyParticipantCompositeIdentifier } from '../models';
 import { SurveyResponseRecord } from '../models/survey-response-record.aggregate-root';
 import { ISurveyResponseCommandRepository } from './survey-response-command-repository.interface';
 
@@ -23,6 +21,25 @@ export class InMemorySurveyResponseCommandRepository implements ISurveyResponseC
     return this.base.fetchMany();
   }
 
+  async fetchSurveyForParticipant(
+    participant: SurveyParticipantCompositeIdentifier,
+    surveyId: string,
+  ): Promise<SurveyResponseRecord[] | TrueImpactError> {
+    const all = await this.base.fetchMany();
+
+    return all.filter((s) => {
+      if (!isDeepStrictEqual(participant, s.participant)) {
+        return false;
+      }
+
+      if (s.survey.id !== surveyId) {
+        return false;
+      }
+
+      return true;
+    });
+  }
+
   create(
     instance: SurveyResponseRecord,
   ): Promise<PersistenceAcknowledgement | TrueImpactError> {
@@ -32,30 +49,6 @@ export class InMemorySurveyResponseCommandRepository implements ISurveyResponseC
   async begin(
     emptyCompletionRecord: SurveyResponseRecord,
   ): Promise<PersistenceAcknowledgement | TrueImpactError> {
-    if (emptyCompletionRecord.participant) {
-      // This is not how we should implement this in the production DB as it's not performant
-      const allAttempts = await this.base.fetchMany();
-
-      const activeAttemptsForThisParticipant = allAttempts.filter((attempt) => {
-        if (attempt.hasBeenSubmitted || attempt.hasBeenAbandoned) {
-          return false;
-        }
-
-        return isDeepStrictEqual(
-          attempt.participant,
-          emptyCompletionRecord.participant,
-        );
-      });
-
-      if (activeAttemptsForThisParticipant.length > 0) {
-        return new TrueImpactBadUserInputError([
-          new TrueImpactError(
-            `You cannot begin a new attempt of survey [${emptyCompletionRecord.survey.name}], as there is already an attempt [${activeAttemptsForThisParticipant[0].id}] in progress for participant ${emptyCompletionRecord.participant.type}/${emptyCompletionRecord.participant.id}`,
-          ),
-        ]);
-      }
-    }
-
     const result = await this.base.create(emptyCompletionRecord);
 
     if (result instanceof TrueImpactError) {

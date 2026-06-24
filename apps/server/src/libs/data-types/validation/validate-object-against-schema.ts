@@ -1,9 +1,11 @@
+import { isFunction } from 'rxjs/internal/util/isFunction';
 import { TrueImpactError, TrueImpactRuntimeException } from '../error-handling';
 import {
   BOOLEAN,
   ENUMERATED_TYPE,
   NON_EMPTY_STRING,
   NON_NEGATIVE_INTEGER,
+  RAW_OBJECT,
 } from '../schema-management';
 import {
   ArrayItemObjectSchema,
@@ -13,6 +15,7 @@ import {
   isArraySchemaPropertyMetadata,
   isLookupTablePropertyMetadata,
   isObjectSchemaPropertyMetadata,
+  isSetPropertyMetadata,
   SchemaPropertyMetadata,
 } from '../schema-management/decorators/append-metadata';
 import {
@@ -21,16 +24,40 @@ import {
   isNegativeNumber,
   isNonEmptyString,
   isNumber,
+  isObject,
 } from './predicates';
+
+const buildLabelForArbitraryValue = (value: unknown): string => {
+  if (value === null) {
+    return 'null';
+  }
+
+  if (typeof value === 'undefined') {
+    return 'undefined';
+  }
+
+  if (isObject(value)) {
+    return 'object';
+  }
+
+  if (isFunction(value)) {
+    return 'function';
+  }
+
+  return JSON.stringify(value);
+};
 
 const buildSimplePropertyErrorMessage = (
   propertyKey: string,
   value: unknown,
   expectedTypeLabel: string,
   index?: number,
-) =>
-  // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-  `Invalid value for property [${propertyKey}${index ? '@' + index : ''}]. Expected ${expectedTypeLabel}, but received [${value}]`;
+) => {
+  const valueLabel =
+    value === null ? 'null' : `${buildLabelForArbitraryValue(value)}`;
+
+  return `Invalid value for property [${propertyKey}${index ? '@' + index : ''}]. Expected ${expectedTypeLabel}, but received [${valueLabel}]`;
+};
 
 const validateSimpleDataType = (
   propertyKey: string,
@@ -124,6 +151,18 @@ const validateSimpleDataType = (
     return acc;
   }
 
+  if (propertySchema.type === RAW_OBJECT) {
+    if (!isObject(value)) {
+      acc.push(
+        new TrueImpactError(
+          buildSimplePropertyErrorMessage(propertyKey, value, `object`),
+        ),
+      );
+    }
+
+    return acc;
+  }
+
   throw new TrueImpactRuntimeException([
     new TrueImpactError(
       `Failed to validate property of unknown type: ${propertySchema.type}`,
@@ -131,10 +170,16 @@ const validateSimpleDataType = (
   ]);
 };
 
+interface SchemaBasedValidationOptions {
+  shouldAllowUnknownProperties?: boolean;
+}
+
 export const validateObjectAgainstSchema = <T = object>(
   o: T,
   schema: DataSchema,
+  options: SchemaBasedValidationOptions = {},
 ): TrueImpactError[] => {
+  // schema based validation errors for known properties in the schema
   const allErrors = Object.entries(schema.properties).reduce(
     (
       acc: TrueImpactError[],
@@ -343,12 +388,69 @@ export const validateObjectAgainstSchema = <T = object>(
         return acc;
       }
 
+      if (isSetPropertyMetadata(propertySchema)) {
+        if (!(value instanceof Set)) {
+          acc.push(
+            new TrueImpactError(
+              `Invalid value for property [${k}]. Expected a Set, but received (${value === null ? 'null' : typeof value})`,
+            ),
+          );
+        }
+
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+        value.forEach((el: unknown) => {
+          if (typeof propertySchema.valueType === 'function') {
+            const nestedErrors = validateObjectAgainstSchema(
+              el,
+              getDataSchemaFromClassCtor(propertySchema.valueType()),
+            );
+
+            nestedErrors.forEach((ne) => acc.push(ne));
+
+            return;
+          }
+
+          const actualJsTypeOfValue = typeof el;
+
+          if (actualJsTypeOfValue !== propertySchema.valueType) {
+            acc.push(
+              new TrueImpactError(
+                `Invalid value for Set element. Expected [${propertySchema.valueType}], received: ${actualJsTypeOfValue}`,
+              ),
+            );
+
+            return;
+          }
+        });
+
+        return acc;
+      }
+
       acc.push(...validateSimpleDataType(k, value, propertySchema));
 
       return acc;
     },
     [],
   );
+
+  // here we prevent unknown properties from being included
+  const shouldAllowUnknownProperties =
+    typeof options.shouldAllowUnknownProperties === 'boolean'
+      ? options.shouldAllowUnknownProperties
+      : false;
+
+  if (!shouldAllowUnknownProperties) {
+    if (o !== null && typeof o === 'object') {
+      Object.keys(o).forEach((propertyName) => {
+        if (!(propertyName in schema.properties)) {
+          console.log({ propertyName, schema });
+          allErrors.push(
+            new TrueImpactError(`Unknown property: ${propertyName}`),
+          );
+        }
+      });
+    }
+  }
 
   return allErrors;
 };

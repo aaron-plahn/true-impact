@@ -1,4 +1,4 @@
-import { Inject } from '@nestjs/common';
+import { ForbiddenException, Inject } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { EncryptionService } from '../../../../../libs/auth';
 import { CommandResult, ICommandHandler } from '../../../../../libs/cqrs-es';
@@ -7,6 +7,7 @@ import {
   TrueImpactError,
 } from '../../../../../libs/data-types';
 import { Survey } from '../../../survey-management';
+import { SurveyParticipantCompositeIdentifier } from '../../models';
 import { SurveyResponseRecord } from '../../models/survey-response-record.aggregate-root';
 import type { ISurveyResponseCommandRepository } from '../../repositories';
 import { SURVEY_RESPONSE_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../../repositories';
@@ -25,11 +26,16 @@ interface ISurveyParticipantManagementServiceProvider {
   ): ISurveyParticipantManagementService | TrueImpactError;
 }
 
+interface SurveyAndParticipant {
+  survey: Survey;
+  participantCompositeIdentifier?: SurveyParticipantCompositeIdentifier;
+}
+
 export interface ISurveyValidationServiceForSurveyResponses {
   fetchSurveyForParticipant(
     surveyId: string,
     hashedAccessCode: string | undefined,
-  ): Promise<Survey | TrueImpactError>;
+  ): Promise<SurveyAndParticipant | TrueImpactError>;
 }
 
 export class BeginSurveyCommandHandler implements ICommandHandler<BeginSurvey> {
@@ -44,7 +50,7 @@ export class BeginSurveyCommandHandler implements ICommandHandler<BeginSurvey> {
   ) {}
 
   async handle({
-    payload: { surveyId, participantCompositeIdentifier, accessCode },
+    payload: { surveyId, accessCode },
   }: {
     payload: BeginSurvey;
   }): Promise<CommandResult> {
@@ -52,18 +58,30 @@ export class BeginSurveyCommandHandler implements ICommandHandler<BeginSurvey> {
       ? this.cryptoService.encrypt(accessCode)
       : undefined;
 
-    const targetSurvey =
+    const surveyFetchResult =
       await this.surveyValidationService.fetchSurveyForParticipant(
         surveyId,
         hashedAccessCode,
       );
 
-    if (targetSurvey instanceof TrueImpactError) {
-      return targetSurvey;
+    if (surveyFetchResult instanceof TrueImpactError) {
+      /**
+       * I'd prefer to return this error.
+       */
+      throw new ForbiddenException();
     }
 
-    // TODO How does the participant interact with the access code?
-    // can we pass this into the validator method?
+    const { participantCompositeIdentifier, survey: targetSurvey } =
+      surveyFetchResult;
+
+    const newSurveyAttemptId = randomUUID();
+
+    /**
+     * Currently we are not hitting this path. Eventually,
+     * employees will be able to begin a survey if that
+     * survey permits employees (or the specific employee by ID)
+     * to participate.
+     */
     if (
       participantCompositeIdentifier !== null &&
       typeof participantCompositeIdentifier !== 'undefined'
@@ -86,10 +104,51 @@ export class BeginSurveyCommandHandler implements ICommandHandler<BeginSurvey> {
           ),
         ]);
       }
+
+      const surveyResponsesAlreadyInProgress =
+        await this.surveyCompletionRepository.fetchSurveyForParticipant(
+          participantCompositeIdentifier,
+          surveyId,
+        );
+
+      if (surveyResponsesAlreadyInProgress instanceof Error) {
+        return new TrueImpactBadUserInputError([
+          surveyResponsesAlreadyInProgress,
+        ]);
+      }
+
+      /**
+       * Note that this is not atomic. It's possible that we cancel the
+       * existing attempt but the request to begin the new attempt fails.
+       * This is a better state than allowing the user to begin the new survey
+       * but potentially failing to cancel an existing in-progress survey response
+       * session.
+       */
+      if (surveyResponsesAlreadyInProgress.length > 0) {
+        const errorsFromCancellingExistingSessions: TrueImpactError[] = [];
+
+        for (const r of surveyResponsesAlreadyInProgress) {
+          const updatedR = r.cancel({
+            replacementAttemptId: newSurveyAttemptId,
+          });
+
+          if (updatedR instanceof Error) {
+            errorsFromCancellingExistingSessions.push(updatedR);
+          } else {
+            await this.surveyCompletionRepository.update(updatedR);
+          }
+        }
+
+        if (errorsFromCancellingExistingSessions.length > 1) {
+          return new TrueImpactBadUserInputError(
+            errorsFromCancellingExistingSessions,
+          );
+        }
+      }
     }
 
     const emptyCompletionRecord = SurveyResponseRecord.begin({
-      id: randomUUID(),
+      id: newSurveyAttemptId,
       survey: targetSurvey,
       participantCompositeIdentifier,
     });

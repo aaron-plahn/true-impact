@@ -3,7 +3,7 @@ import { strict as assert } from 'node:assert';
 import { describe, it } from 'node:test';
 
 import { isDeepStrictEqual } from 'node:util';
-import { buildTestInstance } from 'src/libs/data-types';
+import { buildTestInstance } from '../../../libs/data-types';
 import { GroupSessionLocation } from './group-session-location.value-object';
 
 const assertValid = (instance: GroupSessionLocation) => {

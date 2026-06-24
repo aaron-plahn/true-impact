@@ -1,4 +1,4 @@
-import { NonEmptyString } from 'src/libs/data-types';
+import { NonEmptyString } from '../../../libs/data-types';
 
 /**
  * Note that the domain allows users to either use

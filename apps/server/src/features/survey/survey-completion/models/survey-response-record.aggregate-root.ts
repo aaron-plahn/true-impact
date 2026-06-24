@@ -1,4 +1,4 @@
-import { IDomainEvent } from 'src/libs/cqrs-es';
+import { IDomainEvent } from '../../../../libs/cqrs-es';
 import {
   AggregateRoot,
   BooleanDataType,
@@ -8,6 +8,7 @@ import {
   NestedDataType,
   NonEmptyString,
   NonNegativeInteger,
+  RawObject,
   TrueImpactBadUserInputError,
   TrueImpactDataExample,
   TrueImpactError,
@@ -23,6 +24,7 @@ import {
 import {
   SurveyBegan,
   SurveyCompletionAbandoned,
+  SurveyCompletionCancelled,
   SurveyQuestionAnswered,
   SurveySubmitted,
 } from '../commands';
@@ -34,6 +36,11 @@ class SurveyQuestionResponsePersistenceDto {
 }
 
 export class SurveyResponseCompositeIdentifier {
+  // TODO Literal
+  @NonEmptyString({
+    label: 'type',
+    description: 'type',
+  })
   readonly type = SURVEY_RESPONSE_AGGREGATE_TYPE;
 
   @NonEmptyString({
@@ -48,6 +55,13 @@ class SurveyQuestionResponse extends Entity {
    * Order is crucial here.
    */
   // TODO make `revision` a getter now.
+  @RawObject({
+    label: 'event history',
+    description: 'audit log containing all historical edits of this survey',
+    isArray: true,
+    // TODO rename this `canBeEmpty` for Array valued props?
+    isOptional: true, // i.e. can be empty
+  })
   eventHistory: IDomainEvent[] = [];
 
   @NonEmptyString({
@@ -129,7 +143,10 @@ export class SurveyResponseRecordPersistenceDto {
 
   survey: SurveyPersistenceDto;
 
+  // TODO the following 3 boolean flags have consistency rules that we should validate in "validateComplexInvariants"
   hasBeenAbandoned: boolean;
+
+  hasBeenCancelled: boolean;
 
   hasBeenSubmitted: boolean;
 
@@ -164,6 +181,7 @@ const testSurveyExample = buildTestInstance(Survey, {
     survey: testSurveyExample,
     hasBeenAbandoned: false,
     hasBeenSubmitted: false,
+    hasBeenCancelled: false,
     participantCompositeIdentifier: {
       type: CLIENT_AGGREGATE_TYPE,
       id: '55',
@@ -174,6 +192,12 @@ const testSurveyExample = buildTestInstance(Survey, {
   },
 })
 export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPersistenceDto> {
+  @NonEmptyString({
+    label: 'type',
+    description: SURVEY_RESPONSE_AGGREGATE_TYPE,
+  })
+  // @Literal
+  // this is hard wired. there's no need to validate it.
   static readonly type = SURVEY_RESPONSE_AGGREGATE_TYPE;
 
   // This is required in the persistence DTO, but optional here because it is generated upon creation in the database
@@ -181,7 +205,7 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
     label: 'ID',
     description: 'unique system identifier for a survey attempt',
   })
-  id?: string;
+  id: string;
 
   @NonNegativeInteger({
     label: 'revision number',
@@ -191,6 +215,10 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
   revision: number;
 
   // TODO we could decorate this with the event union for this aggregate type
+  @RawObject({
+    label: 'event history',
+    description: 'audit log of historical edits to this survey response',
+  })
   eventHistory: IDomainEvent[];
 
   /**
@@ -248,13 +276,27 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
   })
   hasBeenAbandoned: boolean;
 
+  @BooleanDataType({
+    label: 'has been cancelled',
+    description:
+      'has this survey been cancelled in favor of an additional attempt of the same survey?',
+  })
+  hasBeenCancelled: boolean;
+
   /**
    * Note that there is no need for schema-based validation of this. It
    * is calculated and could be a getter, except for the fact that it is easier
    * to cache this each time a new question is answered. We do not
    * persist this to the database.
+   *
+   * We need to find a way to opt out of validation of getter-like properties.
    */
-  nextQuestionLabel: string | DONE;
+  @NonEmptyString({
+    label: 'next question label',
+    description: 'refers to the next question that the user should answer',
+    isOptional: true,
+  })
+  nextQuestionLabel?: string | DONE;
 
   @BooleanDataType({
     label: 'has been submitted',
@@ -266,20 +308,22 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
     id,
     revision,
     hasBeenAbandoned,
+    hasBeenCancelled,
+    hasBeenSubmitted,
     survey,
     responses,
-    hasBeenSubmitted,
     participant,
     eventHistory,
   }: {
     id: string;
     revision: number;
     hasBeenAbandoned: boolean;
+    hasBeenCancelled: boolean;
+    hasBeenSubmitted?: boolean;
     survey: Survey;
     // surveys may be anonymous
     participant?: SurveyParticipantCompositeIdentifier;
     responses: SurveyQuestionResponse[];
-    hasBeenSubmitted?: boolean;
     eventHistory: IDomainEvent[];
   }) {
     super();
@@ -299,6 +343,9 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
 
     this.hasBeenSubmitted =
       typeof hasBeenSubmitted === 'boolean' ? hasBeenSubmitted : false;
+
+    this.hasBeenCancelled =
+      typeof hasBeenCancelled === 'boolean' ? hasBeenCancelled : false;
 
     this.eventHistory = eventHistory;
 
@@ -459,6 +506,41 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
     return this;
   }
 
+  handleSurveyCompletionCancelled(_event: SurveyCompletionCancelled) {
+    this.hasBeenCancelled = true;
+
+    return this;
+  }
+
+  @UpdateMethod()
+  cancel({
+    replacementAttemptId,
+  }: {
+    replacementAttemptId: string;
+  }): SurveyResponseRecord | TrueImpactError {
+    if (this.hasBeenAbandoned) {
+      return new TrueImpactError(
+        `You cannot cancel survey [${this.survey.name}], as it has already been abandoned`,
+      );
+    }
+
+    if (this.hasBeenSubmitted) {
+      return new TrueImpactError(
+        `You cannot cancel survey [${this.survey.name}], as it has already been submitted`,
+      );
+    }
+
+    return this.apply(
+      new SurveyCompletionCancelled({
+        payload: {
+          aggregateCompositeIdentifier:
+            this.getAggregateCompositeIdentifier() as SurveyResponseCompositeIdentifier,
+          nextAttemptId: replacementAttemptId,
+        },
+      }),
+    );
+  }
+
   handleSurveyCompletionAbandoned(_event: SurveyCompletionAbandoned) {
     this.hasBeenAbandoned = true;
 
@@ -502,6 +584,10 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
 
     if (event.type === 'SURVEY_COMPLETION_ABANDONED') {
       this.handleSurveyCompletionAbandoned(event as SurveyCompletionAbandoned);
+    }
+
+    if (event.type === 'SURVEY_COMPLETION_CANCELLED') {
+      this.handleSurveyCompletionCancelled(event as SurveyCompletionCancelled);
     }
 
     this.eventHistory.push(event);
@@ -553,6 +639,14 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
         );
       }
 
+      if (this.hasBeenCancelled) {
+        allErrors.push(
+          new TrueImpactError(
+            `Survey [${this.survey.name}] cannot be marked as submitted and cancelled.`,
+          ),
+        );
+      }
+
       const isComplete = this.isComplete();
 
       if (isComplete) {
@@ -562,39 +656,40 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
               `You cannot complete survey [${this.survey.name}], as it has no questions.`,
             ),
           );
-        }
+        } else {
+          const firstQuestion =
+            this.survey.getFirstQuestion() as SurveyQuestion;
 
-        const firstQuestion = this.survey.getFirstQuestion() as SurveyQuestion;
+          let currentQuestionLabel: string | DONE = firstQuestion.label;
 
-        let currentQuestionLabel: string | DONE = firstQuestion.label;
+          let currentResponse: string | undefined;
 
-        let currentResponse: string | undefined;
+          while (currentQuestionLabel !== DONE) {
+            currentResponse = this.getResponseFor(currentQuestionLabel);
 
-        while (currentQuestionLabel !== DONE) {
-          currentResponse = this.getResponseFor(currentQuestionLabel);
+            if (!currentResponse) {
+              allErrors.push(
+                new TrueImpactError(
+                  `Response for survey [${this.survey.name}] is missing an answer for required question [${currentQuestionLabel}]`,
+                ),
+              );
 
-          if (!currentResponse) {
-            allErrors.push(
-              new TrueImpactError(
-                `Response for survey [${this.survey.name}] is missing an answer for required question [${currentQuestionLabel}]`,
-              ),
-            );
+              break;
+            }
 
-            break;
+            currentQuestionLabel = this.survey.getNextQuestionLabel(
+              currentQuestionLabel,
+              currentResponse,
+            ) as string | DONE;
           }
 
-          currentQuestionLabel = this.survey.getNextQuestionLabel(
-            currentQuestionLabel,
-            currentResponse,
-          ) as string | DONE;
-        }
-
-        if (currentQuestionLabel !== DONE && currentResponse) {
-          allErrors.push(
-            new TrueImpactError(
-              `Response for survey [${this.survey.name}] is missing an answer for required question [${this.survey.getNextQuestionLabel(currentQuestionLabel, currentResponse) as string}]`,
-            ),
-          );
+          if (currentQuestionLabel !== DONE && currentResponse) {
+            allErrors.push(
+              new TrueImpactError(
+                `Response for survey [${this.survey.name}] is missing an answer for required question [${this.survey.getNextQuestionLabel(currentQuestionLabel, currentResponse) as string}]`,
+              ),
+            );
+          }
         }
       }
 
@@ -605,6 +700,14 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
           ),
         );
       }
+    }
+
+    if (this.hasBeenCancelled && this.hasBeenAbandoned) {
+      allErrors.push(
+        new TrueImpactError(
+          `Response for survey [${this.survey.name}] cannot be marked as cancelled and abandoned`,
+        ),
+      );
     }
 
     return allErrors;
@@ -627,18 +730,18 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
     return this.nextQuestionLabel === DONE;
   }
 
-  getNextQuestionLabel(): string | DONE {
+  getNextQuestionLabel(): string | DONE | undefined {
     return this.nextQuestionLabel;
   }
 
   toPersistenceDto(): SurveyResponseRecordPersistenceDto {
     return {
-      // @ts-expect-error We want this to be required, except on the first persistence. Is there a way to achieve this?
       id: this.id,
       revision: this.revision,
       survey: this.survey.toPersistenceDto(),
       hasBeenAbandoned: this.hasBeenAbandoned,
       hasBeenSubmitted: this.hasBeenSubmitted,
+      hasBeenCancelled: this.hasBeenCancelled,
       participantCompositeIdentifier: this.participant,
       responses: this.responses,
       eventHistory: this.eventHistory,
@@ -651,6 +754,7 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
       revision,
       hasBeenAbandoned,
       hasBeenSubmitted,
+      hasBeenCancelled,
       survey,
       responses,
       participantCompositeIdentifier,
@@ -697,6 +801,7 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
       revision: revision,
       hasBeenAbandoned,
       hasBeenSubmitted,
+      hasBeenCancelled,
       survey: surveyBuildResult,
       responses: questionResponses as SurveyQuestionResponse[],
       participant: participantCompositeIdentifier,
@@ -739,6 +844,7 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
       revision: 0,
       hasBeenAbandoned: false,
       hasBeenSubmitted: false,
+      hasBeenCancelled: false,
       participant: participantCompositeIdentifier,
       eventHistory: [
         new SurveyBegan({

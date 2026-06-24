@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { COMMUNITY_VALIDATION_SERVICE_INJECTION_TOKEN } from '../../../features/communities/constants';
 import { CommandResult, ICommandHandler } from '../../../libs/cqrs-es';
 import {
@@ -43,7 +44,15 @@ export class CreateClientCommandHandler implements ICommandHandler {
       }
     }
 
-    const buildResult = Client.fromCreateClientCommand(command);
+    const generatedId = randomUUID();
+
+    // There's no reason to clone as there is only 1 reference to the command
+    Object.assign(command, { id: generatedId });
+
+    const buildResult = Client.fromCreateClientCommand(
+      // TS is unaware of the Object.assign above
+      command as CreateClient & { id: string },
+    );
 
     if (buildResult instanceof TrueImpactError) {
       return buildResult;

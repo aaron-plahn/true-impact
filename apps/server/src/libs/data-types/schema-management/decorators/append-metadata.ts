@@ -86,13 +86,33 @@ export const isLookupTablePropertyMetadata = (
 ): input is LookupTablePropertyMetadata =>
   (input as LookupTablePropertyMetadata).type === 'lookup-table-object';
 
+export type SetDecoratorElementType =
+  | GetCtor
+  | 'string'
+  | 'integer'
+  | 'number'
+  | 'boolean';
+
+export type SetPropertyMetadata = {
+  type: 'set';
+  label: string;
+  description: string;
+  valueType: SetDecoratorElementType;
+};
+
+export const isSetPropertyMetadata = (
+  input: unknown,
+): input is SetPropertyMetadata =>
+  (input as SetPropertyMetadata).type === 'set';
+
 // This will be a union with `EnumPropertyMetadata`, `NestedSchemaMetadata`, and `UnionValuedSchemaPropertyMetadata`
 export type SchemaPropertyMetadata =
   | SimpleSchemaPropertyMetadata
   | ObjectSchemaPropertyMetadata
   | ArraySchemaPropertyMetadata
   | EnumeratedTypeSchemaPropertyMetadata
-  | LookupTablePropertyMetadata;
+  | LookupTablePropertyMetadata
+  | SetPropertyMetadata;
 
 export type DataSchema<T = object> = {
   properties: DataKeys<T> extends never

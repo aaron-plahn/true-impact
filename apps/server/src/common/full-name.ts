@@ -57,6 +57,8 @@ export class FullName {
 
     if (typeof middleName === 'string') {
       this.middleNames = middleName;
+    } else {
+      this.middleNames = [];
     }
   }
 

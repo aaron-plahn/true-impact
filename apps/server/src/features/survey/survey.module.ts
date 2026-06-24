@@ -6,6 +6,7 @@ import {
 import { EncryptionService } from '../../libs/auth';
 import { CommandHandlerService } from '../../libs/cqrs-es';
 import {
+  ResourceNotFoundError,
   TrueImpactBadUserInputError,
   TrueImpactError,
 } from '../../libs/data-types';
@@ -14,9 +15,16 @@ import { CLIENT_AGGREGATE_TYPE } from '../clients/client.composite-identifier';
 import { ClientModule } from '../clients/client.module';
 import { ClientValidationService } from '../clients/services';
 import { FlagModule } from '../flags/flag.module';
-import { AddFollowUpQuestionForSurveyOption } from '../survey/survey-management';
+import {
+  AddFollowUpQuestionForSurveyOption,
+  OpenSurveyToClient,
+  OpenSurveyToClientCommandHandler,
+} from '../survey/survey-management';
 import { UserModule } from '../users/user.module';
-import { SURVEY_COMMAND_REPOSITORY_DEPENDENCY_TOKEN } from './constants';
+import {
+  SURVEY_AGGREGATE_TYPE,
+  SURVEY_COMMAND_REPOSITORY_DEPENDENCY_TOKEN,
+} from './constants';
 import { SURVEY_QUERY_REPOSITORY_PROVIDER_TOKEN } from './queries/survey-query-repository.interface';
 import { SurveyQueryService } from './queries/survey-query.service';
 import { SurveyViewModel } from './queries/survey.view-model';
@@ -46,6 +54,7 @@ import {
   SurveySubmittedViewDiffer,
 } from './survey-completion';
 import { SduiViewDiffer } from './survey-completion/commands/sdui-view-differ';
+import { SurveyParticipantCompositeIdentifier } from './survey-completion/models';
 import {
   SURVEY_RESPONSE_QUERY_REPOSITORY_INJECTION_TOKEN,
   SurveyResponseQueryService,
@@ -108,6 +117,7 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
     PublishSurveyCommandHandler,
     FlagSurveyOptionCommandHandler,
     OpenSurveyToAnonymousIndividualCommandHandler,
+    OpenSurveyToClientCommandHandler,
     // Survey Completion Commands
     BeginSurveyCommandHandler,
     AnswerSurveyQuestionCommandHandler,
@@ -188,6 +198,10 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
           .register({
             CommandHandlerCtor: FlagSurveyOptionCommandHandler,
             CommandPayloadCtor: FlagSurveyOption,
+          })
+          .register({
+            CommandHandlerCtor: OpenSurveyToClientCommandHandler,
+            CommandPayloadCtor: OpenSurveyToClient,
           })
           // Survey Completion
           .register({
@@ -327,7 +341,7 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
 
             return new TrueImpactBadUserInputError([
               new TrueImpactError(
-                `Failed to validate survey participant of unknown type: ${entityType}`,
+                `Unsupported survey participant type: ${entityType}`,
               ),
             ]);
           },
@@ -342,8 +356,21 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
           fetchSurveyForParticipant: async function (
             surveyId: string,
             hashedAccessCode: string | undefined,
-          ): Promise<Survey | TrueImpactError> {
+          ): Promise<
+            | {
+                survey: Survey;
+                participantCompositeIdentifier?: SurveyParticipantCompositeIdentifier;
+              }
+            | TrueImpactError
+          > {
             const target = await repo.fetchById(surveyId);
+
+            if (!target) {
+              return new ResourceNotFoundError({
+                type: SURVEY_AGGREGATE_TYPE,
+                id: surveyId,
+              });
+            }
 
             if (
               !target?.isPublished ||
@@ -366,7 +393,12 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
 
             await repo.update(updated);
 
-            return updated;
+            return {
+              survey: updated,
+              participantCompositeIdentifier:
+                target.getParticipantByAccessCode(hashedAccessCode) ||
+                undefined,
+            };
           },
         };
 

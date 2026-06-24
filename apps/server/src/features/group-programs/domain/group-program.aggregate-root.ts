@@ -1,8 +1,10 @@
-import { IDomainEvent } from 'src/libs/cqrs-es';
+import { IDomainEvent } from '../../../libs/cqrs-es';
 import {
   AggregateRoot,
   NestedDataType,
   NonEmptyString,
+  NonNegativeInteger,
+  RawObject,
   TrueImpactBadUserInputError,
   TrueImpactError,
 } from '../../../libs/data-types';
@@ -26,12 +28,31 @@ export class GroupProgramPersistenceDto {
 }
 
 export class GroupProgram extends AggregateRoot {
+  @NonEmptyString({
+    label: 'type',
+    description: GROUP_PROGRAM_AGGREGATE_TYPE,
+  })
   type = GROUP_PROGRAM_AGGREGATE_TYPE;
 
+  @NonEmptyString({
+    label: 'ID',
+    description: 'unique system identifier for this group program',
+  })
   id: string;
 
+  // note that this is generated internally and detailed validation is not required
+  @RawObject({
+    label: 'event history',
+    description: 'audit log of historical edits to this group program',
+    isArray: true,
+  })
   eventHistory: IDomainEvent[];
 
+  @NonNegativeInteger({
+    label: 'revision',
+    description:
+      'tracks state of this group program across all historical edits',
+  })
   // Can we make this a getter? this.eventHistory.length
   revision: number;
 

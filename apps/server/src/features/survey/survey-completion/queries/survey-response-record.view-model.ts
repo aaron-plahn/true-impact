@@ -19,6 +19,7 @@ export class ActiveSurveyOptionViewModelClientDto {
     description: 'a label for this option',
   })
   label: string;
+
   @NonEmptyString({
     label: 'text',
     description: 'the text for this option',
@@ -179,6 +180,7 @@ export class SurveyQuestionResponseViewModel {
     name: 'long survey',
     revision: '5',
     hasBeenSubmitted: false,
+    hasBeenCancelled: false,
     participantCompositeIdentifier: {
       type: CLIENT_AGGREGATE_TYPE,
       id: 'c99',
@@ -261,6 +263,13 @@ export class SurveyResponseRecordViewModelClientDto {
     description: `a unique identifier for this survey attempt`,
   })
   id: string;
+
+  @BooleanDataType({
+    label: 'has been cancelled',
+    description:
+      'Has this attempt been cancelled in order to start a new attempt of the same survey?',
+  })
+  hasBeenCancelled: boolean;
 
   @NonEmptyString({
     label: 'name',
@@ -370,9 +379,16 @@ export class SurveyResponseRecordViewModel {
 
   @BooleanDataType({
     label: 'has been submitted',
-    description: 'has this survey been submitted by the participant?',
+    description: 'Has this survey been submitted by the participant?',
   })
   hasBeenSubmitted: boolean;
+
+  @BooleanDataType({
+    label: 'has been cancelled',
+    description:
+      'Has this survey been cancelled in order to start another attempt of the same survey?',
+  })
+  hasBeenCancelled: boolean;
 
   @NonEmptyString({
     label: 'participant identifier',
@@ -402,6 +418,7 @@ export class SurveyResponseRecordViewModel {
     revision,
     participantCompositeIdentifier,
     hasBeenSubmitted,
+    hasBeenCancelled,
     responses,
     nextQuestion,
     size,
@@ -410,6 +427,7 @@ export class SurveyResponseRecordViewModel {
     name: string;
     revision: string;
     hasBeenSubmitted: boolean;
+    hasBeenCancelled: boolean;
     participantCompositeIdentifier: {
       type: string;
       id: string;
@@ -441,6 +459,8 @@ export class SurveyResponseRecordViewModel {
 
     this.hasBeenSubmitted = hasBeenSubmitted;
 
+    this.hasBeenCancelled = hasBeenCancelled;
+
     this.size = size;
   }
 
@@ -450,6 +470,7 @@ export class SurveyResponseRecordViewModel {
       name: this.name,
       revision: this.revision,
       hasBeenSubmitted: this.hasBeenSubmitted,
+      hasBeenCancelled: this.hasBeenCancelled,
       participantCompositeIdentifier: this.participantCompositeIdentifier,
       responses: this.responses.map((response) => response.toClientDto()),
       nextQuestion: this.nextQuestion,
@@ -493,6 +514,7 @@ export class SurveyResponseRecordViewModel {
       name: `${domainModel.survey.getName()}`, // TODO - participant name - attempt # or date started
       participantCompositeIdentifier: domainModel.participant || null,
       hasBeenSubmitted: domainModel.hasBeenSubmitted,
+      hasBeenCancelled: domainModel.hasBeenCancelled,
       nextQuestion: nextQuestionViewModel,
       responses: domainModel.responses.map((r) => {
         const targetQuestion = domainModel.survey.get(

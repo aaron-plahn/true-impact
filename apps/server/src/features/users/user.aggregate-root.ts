@@ -3,7 +3,9 @@ import {
   AggregateRoot,
   BooleanDataType,
   Entity,
+  NestedDataType,
   NonEmptyString,
+  NonNegativeInteger,
   TrueImpactError,
   UpdateMethod,
 } from '../../libs/data-types';
@@ -25,6 +27,10 @@ export class UserPersistenceDto {
 export class User extends AggregateRoot<UserPersistenceDto> {
   static readonly type = USER_AGGREGATE_TYPE;
 
+  @NonEmptyString({
+    label: 'ID',
+    description: 'unique system-identifier for this user',
+  })
   id: string;
 
   @NonEmptyString({
@@ -60,11 +66,23 @@ export class User extends AggregateRoot<UserPersistenceDto> {
   })
   hasEmailBeenValidated = false;
 
+  @NonNegativeInteger({
+    label: 'revision',
+    description: `tracks historical versions of this user's data`,
+  })
   revision: number;
 
+  @NestedDataType(() => FullName, {
+    label: 'full name',
+    description: `this user's full name`,
+  })
   fullName: FullName;
 
   // TODO enum?
+  @NonEmptyString({
+    label: 'role',
+    description: `a user's role gives them course grained access to read or write data`,
+  })
   role: UserRole;
 
   constructor({

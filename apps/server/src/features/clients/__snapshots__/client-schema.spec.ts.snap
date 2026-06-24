@@ -11,6 +11,13 @@ exports[`ClientSchema should match the snapshot 1`] = `
       "mustBeUnique": false,
       "type": "NON_EMPTY_STRING",
     },
+    "dateOfBirth": {
+      "description": "the client's date of birth",
+      "isOptional": false,
+      "label": "DOB",
+      "mustBeUnique": false,
+      "type": "NON_EMPTY_STRING",
+    },
     "flagIds": {
       "canBeEmpty": true,
       "description": "a reference to flags that indicate warnings or other context when interacting with the given client",
@@ -19,6 +26,34 @@ exports[`ClientSchema should match the snapshot 1`] = `
       },
       "label": "flag IDs",
       "type": "array",
+    },
+    "fullName": {
+      "description": "the client's given name",
+      "getCtor": [Function],
+      "isOptional": false,
+      "label": "full name",
+      "type": "object",
+    },
+    "id": {
+      "description": "system identifier for this client",
+      "isOptional": false,
+      "label": "ID",
+      "mustBeUnique": false,
+      "type": "NON_EMPTY_STRING",
+    },
+    "isIndigenous": {
+      "description": "Is the client Indigenous",
+      "isOptional": false,
+      "label": "is Indigenous",
+      "mustBeUnique": false,
+      "type": "NON_EMPTY_STRING",
+    },
+    "revision": {
+      "description": "tracks historical versions of this client",
+      "isOptional": false,
+      "label": "revision",
+      "mustBeUnique": false,
+      "type": "NON_NEGATIVE_INTEGER",
     },
   },
 }

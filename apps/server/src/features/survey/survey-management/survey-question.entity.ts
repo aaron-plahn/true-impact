@@ -6,6 +6,7 @@ import {
   TrueImpactError,
   UpdateMethod,
 } from '../../../libs/data-types';
+import { LookupTable } from '../../../libs/data-types/schema-management/decorators/lookup-table.decorator';
 import {
   SurveyOption,
   SurveyOptionPersistenceDto,
@@ -44,7 +45,10 @@ export class SurveyQuestion extends Entity {
   })
   prompt: string;
 
-  // @LookupTable(SurveyOption,{...})
+  @LookupTable(() => SurveyOption, {
+    label: 'options',
+    description: `a lookup table of this question's multiple choice options by label`,
+  })
   options: Map<SurveyQuestionLabel, SurveyOption>;
 
   constructor({
@@ -120,35 +124,6 @@ export class SurveyQuestion extends Entity {
     }
 
     this.options.set(label, optionBuildResult);
-
-    return this;
-  }
-
-  @UpdateMethod()
-  addWeightsForOption({
-    optionLabel,
-    weights,
-  }: {
-    optionLabel: string;
-    weights: Record<string, number>;
-  }): this | TrueImpactError {
-    const targetOption =
-      this.get(optionLabel) ||
-      new TrueImpactError(
-        `You cannot add weights for option [${optionLabel}] in question [${this.label}] as there is no such option`,
-      );
-
-    if (targetOption instanceof TrueImpactError) {
-      return targetOption;
-    }
-
-    const updatedOption = targetOption.addValuesForCategories(weights);
-
-    if (updatedOption instanceof TrueImpactError) {
-      return updatedOption;
-    }
-
-    this.options.set(optionLabel, updatedOption);
 
     return this;
   }

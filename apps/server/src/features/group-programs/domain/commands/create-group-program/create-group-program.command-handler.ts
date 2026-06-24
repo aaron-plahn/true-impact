@@ -1,6 +1,6 @@
 import { Inject } from '@nestjs/common';
 import { randomUUID } from 'crypto';
-import { CommandResult, ICommandHandler } from 'src/libs/cqrs-es';
+import { CommandResult, ICommandHandler } from '../../../../../libs/cqrs-es';
 import { GROUP_PROGRAM_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../../constants';
 import { GroupProgram } from '../../group-program.aggregate-root';
 import type { IGroupCommandRepository } from '../group-command-repository.interface';

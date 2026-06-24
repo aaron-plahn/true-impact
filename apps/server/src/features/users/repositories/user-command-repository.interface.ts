@@ -1,5 +1,5 @@
-import { PersistenceAcknowledgement } from 'src/libs/cqrs-es';
-import { DeepPartial, TrueImpactError } from 'src/libs/data-types';
+import { PersistenceAcknowledgement } from '../../../libs/cqrs-es';
+import { DeepPartial, TrueImpactError } from '../../../libs/data-types';
 import { User } from '../user.aggregate-root';
 
 export interface IUserCommandRepository {

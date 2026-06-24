@@ -1,15 +1,22 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { Req, Res, Session, UseGuards } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Req,
+  Res,
+  Session,
+  UseGuards,
+} from '@nestjs/common';
 import type { Request, Response } from 'express';
+import { SurveyCommandAuthGuard } from 'src/e2e/scenarios/surveys/guards';
 import { tiSduiSectionToHtmlFragment } from 'src/libs/server-driven-ui/html/tisdui-to-html-fragment';
 import { isDeepStrictEqual } from 'util';
-import { AuthenticatedUserGuard, RbacAuthGuard } from '../../auth/guards';
 import type { ICommandFsa } from '../../libs/cqrs-es';
 import { CommandHandlerService, CommandResult } from '../../libs/cqrs-es';
 import {
   buildTestInstance,
   convertToOpenApiSchema,
   getDataSchemaFromClassCtor,
+  ResourceNotFoundError,
   TrueImpactBadUserInputError,
   TrueImpactError,
   TrueImpactRuntimeException,
@@ -18,12 +25,10 @@ import {
   ApiOkResponse,
   BadUserInputFilter,
   Body,
-  ConfigService,
   Controller,
   DetailQueryEndpoint,
   IdParam,
   IndexQueryEndpoint,
-  Inject,
   OnModuleInit,
   Post,
   QueryResponseInterceptor,
@@ -37,8 +42,6 @@ import { SURVEY_RESPONSE_AGGREGATE_TYPE } from './constants';
 import { SurveyQueryService } from './queries/survey-query.service';
 import { SurveyViewModelClientDto } from './queries/survey.view-model';
 import { SduiViewDiffer } from './survey-completion/commands/sdui-view-differ';
-import type { ISurveyResponseSessionRepository } from './survey-completion/repositories/survey-response.session-repository.interface';
-import { SURVEY_RESPONSE_SESSION_REPOSITORY_TOKEN } from './survey-completion/repositories/survey-response.session-repository.interface';
 import { CommandSuccessPage } from './survey-completion/views';
 import { CommandErrorPage } from './survey-completion/views/command-error-page';
 
@@ -57,9 +60,6 @@ export class SurveyController implements OnModuleInit {
     private readonly commandHandlerService: CommandHandlerService,
     // TODO naming
     private readonly surveyResponseViewDiffer: SduiViewDiffer,
-    @Inject(SURVEY_RESPONSE_SESSION_REPOSITORY_TOKEN)
-    private readonly sessionRepository: ISurveyResponseSessionRepository,
-    private readonly configService: ConfigService,
   ) {}
 
   @DetailQueryEndpoint()
@@ -96,7 +96,8 @@ export class SurveyController implements OnModuleInit {
    * a read-only state for certain deployment strategies or maintenance windows.
    */
   // TODO @CommandExecutionEndpoint()
-  @UseGuards(AuthenticatedUserGuard, RbacAuthGuard)
+  // @UseGuards(AuthenticatedUserGuard, RbacAuthGuard)
+  @UseGuards(SurveyCommandAuthGuard)
   @Post('commands')
   async executeCommand(
     @Body()
@@ -112,6 +113,8 @@ export class SurveyController implements OnModuleInit {
       throw new Error(`Missing fsa!`);
     }
 
+    // TODO think about the logic of this carefully
+    // Note that BEGIN_SURVEY will not be handled here because it doesn't have an `aggregateCompositeIdentifier`
     if (
       fsa.payload.aggregateCompositeIdentifier &&
       fsa.payload.aggregateCompositeIdentifier.type ==
@@ -127,8 +130,7 @@ export class SurveyController implements OnModuleInit {
        * TODO Remove the subject or clear the session entirely after the survey is submitted.
        */
       if (!session) {
-        // 404
-        return null;
+        throw new ForbiddenException();
       }
 
       if (
@@ -143,8 +145,20 @@ export class SurveyController implements OnModuleInit {
           session.subject,
         )
       ) {
-        return null;
+        throw new ForbiddenException();
       }
+    }
+
+    if (fsa.type === 'BEGIN_SURVEY' && session && session.subject) {
+      /**
+       * If the user has a different attempt in progress, we
+       * need to remove authorization for this survey from the session
+       * before starting a new session.
+       */
+      delete session.subject;
+
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+      session.save();
     }
 
     const result = await this.commandHandlerService.execute(fsa);
@@ -173,7 +187,8 @@ export class SurveyController implements OnModuleInit {
             ]);
           });
         } catch (_error) {
-          throw new Error(`Something went wrong!`);
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+          throw new Error(_error.toString());
         }
 
         return result;
@@ -184,23 +199,16 @@ export class SurveyController implements OnModuleInit {
          * Submitting a survey successfully amounts to logging out of the session
          * to complete a survey.
          */
-        session.subject = null;
-
-        res.clearCookie('survey-response-session');
-
-        req.session.destroy((err) => {
-          throw new TrueImpactRuntimeException([
-            new TrueImpactError(`Logout failed after submitting a survey`),
-            new TrueImpactError(
-              (err as { message?: string })?.message || 'Unknown error',
-            ),
-          ]);
-        });
+        this.destroySession(session, req, res);
 
         return result;
       }
 
       return result;
+    }
+
+    if (result instanceof ResourceNotFoundError) {
+      return null;
     }
 
     // TODO sort out where we wrap this in
@@ -309,6 +317,25 @@ export class SurveyController implements OnModuleInit {
     await this.surveyQueryService.surveyCommandRepository.clear();
 
     return 'OK';
+  }
+
+  private destroySession(
+    @Session() session: Record<string, any>,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    session.subject = null;
+
+    res.clearCookie('survey-response-session');
+
+    req.session.destroy((err) => {
+      throw new TrueImpactRuntimeException([
+        new TrueImpactError(`Logout failed after submitting a survey`),
+        new TrueImpactError(
+          (err as { message?: string })?.message || 'Unknown error',
+        ),
+      ]);
+    });
   }
 
   onModuleInit() {
