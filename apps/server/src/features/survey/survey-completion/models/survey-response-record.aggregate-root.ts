@@ -296,7 +296,7 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
     description: 'refers to the next question that the user should answer',
     isOptional: true,
   })
-  nextQuestionLabel?: string | DONE;
+  nextQuestionLabel?: string; // possibly `DONE`
 
   @BooleanDataType({
     label: 'has been submitted',
@@ -660,7 +660,7 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
           const firstQuestion =
             this.survey.getFirstQuestion() as SurveyQuestion;
 
-          let currentQuestionLabel: string | DONE = firstQuestion.label;
+          let currentQuestionLabel: string = firstQuestion.label;
 
           let currentResponse: string | undefined;
 
@@ -680,7 +680,7 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
             currentQuestionLabel = this.survey.getNextQuestionLabel(
               currentQuestionLabel,
               currentResponse,
-            ) as string | DONE;
+            ) as string;
           }
 
           if (currentQuestionLabel !== DONE && currentResponse) {
@@ -730,7 +730,7 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
     return this.nextQuestionLabel === DONE;
   }
 
-  getNextQuestionLabel(): string | DONE | undefined {
+  getNextQuestionLabel(): string | undefined {
     return this.nextQuestionLabel;
   }
 

@@ -23,7 +23,7 @@ import {
   ResourceNotFoundFilter,
   UseFilters,
 } from 'src/libs/framework/exceptions';
-import type { IGroupCommandRepository } from './commands/group-command-repository.interface';
+import type { IGroupProgramCommandRepository } from './commands/group-command-repository.interface';
 import { GROUP_PROGRAM_COMMAND_REPOSITORY_INJECTION_TOKEN } from './constants';
 
 @UseFilters(ResourceNotFoundFilter, BadUserInputFilter)
@@ -33,7 +33,7 @@ export class GroupProgramCommandController {
   constructor(
     private readonly commandHandlerService: CommandHandlerService,
     @Inject(GROUP_PROGRAM_COMMAND_REPOSITORY_INJECTION_TOKEN)
-    private readonly commandRepository: IGroupCommandRepository,
+    private readonly commandRepository: IGroupProgramCommandRepository,
   ) {}
 
   @UseGuards(AuthenticatedUserGuard, RbacAuthGuard)

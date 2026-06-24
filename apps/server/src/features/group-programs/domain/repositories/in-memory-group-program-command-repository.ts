@@ -6,11 +6,11 @@ import {
   TrueImpactError,
   TrueImpactRuntimeException,
 } from '../../../../libs/data-types';
-import { IGroupCommandRepository } from '../commands/group-command-repository.interface';
+import { IGroupProgramCommandRepository } from '../commands/group-command-repository.interface';
 import { GROUP_PROGRAM_AGGREGATE_TYPE } from '../constants';
 import { GroupProgram } from '../group-program.aggregate-root';
 
-export class InMemoryGroupProgramCommandRepository implements IGroupCommandRepository {
+export class InMemoryGroupProgramCommandRepository implements IGroupProgramCommandRepository {
   private _nextId = 0;
 
   private uniqueFields: Set<keyof GroupProgram> = new Set();
@@ -68,6 +68,26 @@ export class InMemoryGroupProgramCommandRepository implements IGroupCommandRepos
     };
 
     return Promise.resolve(result);
+  }
+
+  async update(
+    updatedInstance: GroupProgram,
+  ): Promise<PersistenceAcknowledgement | TrueImpactError> {
+    if (!this.entitiesById.has(updatedInstance.id)) {
+      return new TrueImpactError(
+        `There is no group program with the ID: ${updatedInstance.id}`,
+      );
+    }
+
+    this.entitiesById.set(updatedInstance.id, updatedInstance);
+
+    updatedInstance.revision++;
+
+    return Promise.resolve({
+      id: updatedInstance.id,
+      revision: updatedInstance.revision.toString(),
+      type: this.type,
+    });
   }
 
   private fetchWhere({

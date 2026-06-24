@@ -508,7 +508,7 @@ export class SurveyResponseRecordViewModel {
     }
 
     return new SurveyResponseRecordViewModel({
-      id: domainModel.id as string,
+      id: domainModel.id,
       size: domainModel.survey.size(),
       revision: domainModel.revision.toString(),
       name: `${domainModel.survey.getName()}`, // TODO - participant name - attempt # or date started

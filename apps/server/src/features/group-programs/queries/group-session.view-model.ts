@@ -1,4 +1,5 @@
 import { NonEmptyString } from '../../../libs/data-types';
+import { GroupSession } from '../domain/group-session.entity';
 import { GroupSessionLocationViewModel } from './group-session-location.view-model';
 
 export class GroupSessionViewModel {
@@ -15,4 +16,42 @@ export class GroupSessionViewModel {
     description: 'record describing where this group session took place',
   })
   location: GroupSessionLocationViewModel;
+
+  @NonEmptyString({
+    label: 'date',
+    description: 'date this session takes place',
+  })
+  // TODO update this format
+  date: string;
+
+  constructor({
+    id,
+    location,
+    date,
+  }: {
+    id: string;
+    location: GroupSessionLocationViewModel;
+    date: string;
+  }) {
+    this.id = id;
+
+    this.location = location;
+
+    this.date = date;
+  }
+
+  static fromDomainModel(
+    domainGroupSession: GroupSession,
+  ): GroupSessionViewModel {
+    const { id, location: domainLocation, date } = domainGroupSession;
+
+    const location =
+      GroupSessionLocationViewModel.fromDomainModule(domainLocation);
+
+    return new GroupSessionViewModel({
+      id,
+      location,
+      date,
+    });
+  }
 }

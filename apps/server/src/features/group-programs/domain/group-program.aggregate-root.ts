@@ -8,9 +8,10 @@ import {
   TrueImpactBadUserInputError,
   TrueImpactError,
 } from '../../../libs/data-types';
-import { CreateGroupProgram } from './commands';
+import { CreateGroupProgram, GroupProgramScheduled } from './commands';
 import { GroupProgramCreated } from './commands/create-group-program/group-program-created.event';
 import { GROUP_PROGRAM_AGGREGATE_TYPE } from './constants';
+import { GroupSessionLocationDto } from './group-session-location.value-object';
 import {
   GroupSession,
   GroupSessionPersistenceDto,
@@ -67,6 +68,8 @@ export class GroupProgram extends AggregateRoot {
     label: 'sessions',
     description:
       'A list of all current and historical sessions of this group program',
+    isArray: true,
+    isOptional: true, // i.e., can be empty
   })
   sessions: GroupSession[];
 
@@ -121,6 +124,10 @@ export class GroupProgram extends AggregateRoot {
     return this.name;
   }
 
+  getNextSessionId(): string {
+    return (this.sessions.length + 1).toString();
+  }
+
   toPersistenceDto(): GroupProgramPersistenceDto {
     return {
       id: this.id,
@@ -128,6 +135,50 @@ export class GroupProgram extends AggregateRoot {
       sessions: this.sessions.map((s) => s.toPersistenceDto()),
       revision: this.eventHistory.length,
     };
+  }
+
+  scheduleSession({
+    date,
+    location,
+  }: {
+    date: string;
+    location: GroupSessionLocationDto;
+  }): GroupProgram | TrueImpactError {
+    const sessionBuildResult = GroupSession.schedule({
+      id: this.getNextSessionId(),
+      date,
+      location,
+    });
+
+    if (sessionBuildResult instanceof Error) {
+      return sessionBuildResult;
+    }
+
+    this.sessions.push(sessionBuildResult);
+
+    return this.apply(
+      new GroupProgramScheduled({
+        payload: {
+          aggregateCompositeIdentifier: {
+            id: this.id,
+            type: GROUP_PROGRAM_AGGREGATE_TYPE,
+          },
+          date,
+          sessionId: sessionBuildResult.id,
+        },
+      }),
+    );
+  }
+
+  apply(event: IDomainEvent): GroupProgram | TrueImpactError {
+    if (event.type === 'GROUP_PROGRAM_SESSION_SCHEDULED') {
+      /**
+       * This might not be the pattern we want.
+       */
+      this.eventHistory.push(event);
+    }
+
+    return this;
   }
 
   static fromUserRequest({

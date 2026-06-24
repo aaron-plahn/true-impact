@@ -156,18 +156,21 @@ export class TestCommandStream {
 
   static first<T extends ICommandPayload = ICommandPayload>(
     C: Ctor<T> & { type: string },
-    overrides: DeepPartial<T>,
+    overrides?: DeepPartial<T>,
   ): TestCommandStream {
-    const creationCommandFsa = TestCommandStream.buildOne<T>(C, overrides);
+    const creationCommandFsa = TestCommandStream.buildOne<T>(
+      C,
+      overrides || ({} as DeepPartial<T>),
+    );
 
     return new TestCommandStream(creationCommandFsa, []);
   }
 
   static buildOne<T extends ICommandPayload = ICommandPayload>(
     C: Ctor<T> & { type: string },
-    overrides: DeepPartial<T>,
+    overrides?: DeepPartial<T>,
   ): ICommandFsa<T> {
-    const payloadWithOverrides = buildTestInstance(C, overrides, {
+    const payloadWithOverrides = buildTestInstance(C, overrides || {}, {
       shouldValidate: true,
     });
 

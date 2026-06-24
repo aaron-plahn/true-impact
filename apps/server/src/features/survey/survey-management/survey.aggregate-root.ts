@@ -587,7 +587,7 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
   getNextQuestionLabel(
     questionLabel: string,
     optionLabel: string,
-  ): string | TrueImpactError | DONE {
+  ): string | TrueImpactError {
     const question = this.questionBank.get(questionLabel) as SurveyQuestion;
 
     if (!question) {
