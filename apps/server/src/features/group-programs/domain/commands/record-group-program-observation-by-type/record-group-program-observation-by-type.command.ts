@@ -15,6 +15,8 @@ import {
   },
 })
 export class RecordGroupProgramObservationByType {
+  static readonly type = 'RECORD_GROUP_PROGRAM_OBSERVATION_BY_TYPE';
+
   @GroupProgramCompositeIdentifierValuedProperty
   aggregateCompositeIdentifier: GroupProgramCompositeIdentifier;
 

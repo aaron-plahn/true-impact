@@ -19,6 +19,8 @@ export class NoteDto {
 }
 
 export class MakeNoteAboutGroupProgramObservation {
+  static readonly type = 'MAKE_NOTE_ABOUT_GROUP_PROGRAM_OBSERVATION';
+
   @GroupProgramCompositeIdentifierValuedProperty
   aggregateCompositeIdentifier: GroupProgramCompositeIdentifier;
 

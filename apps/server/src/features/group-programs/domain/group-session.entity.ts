@@ -4,6 +4,7 @@ import {
   NonEmptyString,
   TrueImpactError,
 } from '../../../libs/data-types';
+import { GroupProgramObservation } from '../queries/group-program-observation.entity';
 import {
   GroupSessionLocation,
   GroupSessionLocationDto,
@@ -38,14 +39,23 @@ export class GroupSession extends Entity {
   })
   date: string;
 
+  @NestedDataType(() => GroupProgramObservation, {
+    label: 'observations',
+    description:
+      'a list of all observations (notes or classifications by interaction type) of group sessions',
+  })
+  observations: GroupProgramObservation[];
+
   constructor({
     id,
     location,
     date,
+    observations,
   }: {
     id: string;
     location: GroupSessionLocation;
     date: string;
+    observations: GroupProgramObservation[];
   }) {
     super();
 
@@ -54,6 +64,8 @@ export class GroupSession extends Entity {
     this.location = location;
 
     this.date = date;
+
+    this.observations = observations;
   }
 
   validateComplexInvariants(): TrueImpactError[] {
@@ -103,6 +115,8 @@ export class GroupSession extends Entity {
       id,
       date,
       location: locationBuildResult,
+      // a session must be scheduled prior to making observations
+      observations: [],
     });
 
     const sessionBuildResult = instance.validateInvariants();

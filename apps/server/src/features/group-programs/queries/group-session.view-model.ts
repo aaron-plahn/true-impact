@@ -1,5 +1,8 @@
+import { LookupTable } from 'src/libs/data-types/schema-management/decorators/lookup-table.decorator';
 import { NonEmptyString } from '../../../libs/data-types';
 import { GroupSession } from '../domain/group-session.entity';
+import { GroupProgramObservation } from './group-program-observation.entity';
+import { GroupProgramObservationViewModel } from './group-program-observation.view-model';
 import { GroupSessionLocationViewModel } from './group-session-location.view-model';
 
 export class GroupSessionViewModel {
@@ -24,34 +27,64 @@ export class GroupSessionViewModel {
   // TODO update this format
   date: string;
 
+  @LookupTable(() => GroupProgramObservation, {
+    label: 'observations',
+    description:
+      'a list of all observations (notes or classified interactions) made for this group session',
+  })
+  observationsById: Map<string, GroupProgramObservationViewModel>;
+
   constructor({
     id,
     location,
     date,
+    observationsById,
   }: {
     id: string;
     location: GroupSessionLocationViewModel;
     date: string;
+    observationsById: Map<string, GroupProgramObservationViewModel>;
   }) {
     this.id = id;
 
     this.location = location;
 
     this.date = date;
+
+    this.observationsById = observationsById;
   }
 
   static fromDomainModel(
     domainGroupSession: GroupSession,
   ): GroupSessionViewModel {
-    const { id, location: domainLocation, date } = domainGroupSession;
+    const {
+      id,
+      location: domainLocation,
+      date,
+      observations,
+    } = domainGroupSession;
 
     const location =
       GroupSessionLocationViewModel.fromDomainModule(domainLocation);
+
+    const observationsById = new Map<
+      string,
+      GroupProgramObservationViewModel
+    >();
+
+    observations.forEach((o, index) => {
+      const observationId = index + 1;
+
+      const view = GroupProgramObservationViewModel.fromDomainModel(o);
+
+      observationsById.set(observationId.toString(), view);
+    });
 
     return new GroupSessionViewModel({
       id,
       location,
       date,
+      observationsById,
     });
   }
 }

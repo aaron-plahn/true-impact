@@ -5,6 +5,8 @@ import {
 } from '../../group-program.composite-identifier';
 
 export class ClassifyNoteAboutGroupProgramObservation {
+  static readonly type = 'CLASSIFY_NOTE_ABOUT_GROUP_PROGRAM_OBSERVATION';
+
   @GroupProgramCompositeIdentifierValuedProperty
   aggregateCompositeIdentifier: GroupProgramCompositeIdentifier;
 
