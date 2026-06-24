@@ -1,15 +1,34 @@
 import {
+  BooleanDataType,
   Entity,
+  isBoolean,
   isNonEmptyString,
+  NonEmptyString,
   TrueImpactDataExample,
   TrueImpactError,
 } from '../../../libs/data-types';
 
 export class GroupSessionLocationDto {
+  @NonEmptyString({
+    label: 'community',
+    description: 'community where this session will take place (if relevant)',
+    isOptional: true,
+  })
   communityId?: string;
 
+  @NonEmptyString({
+    label: 'name',
+    description: 'name of the location',
+    isOptional: true,
+  })
   name?: string;
 
+  @BooleanDataType({
+    label: 'is urban',
+    description:
+      'is this location urban (if not, it is considered in-community)',
+    isOptional: true,
+  })
   isUrban?: boolean;
 }
 
@@ -27,10 +46,26 @@ export class GroupSessionLocationDto {
 export class GroupSessionLocation extends Entity {
   // geospatialCoordinates?
 
+  @NonEmptyString({
+    label: 'community',
+    description: 'community where this session will take place (if relevant)',
+    isOptional: true,
+  })
   communityId?: string;
 
+  @NonEmptyString({
+    label: 'name',
+    description: 'name of the location',
+    isOptional: true,
+  })
   name?: string;
 
+  @BooleanDataType({
+    label: 'is urban',
+    description:
+      'is this location urban (if not, it is considered in-community)',
+    isOptional: true,
+  })
   isUrban?: boolean;
 
   constructor({ communityId, name, isUrban }: GroupSessionLocationDto) {
@@ -66,11 +101,36 @@ export class GroupSessionLocation extends Entity {
     }
 
     if (isNonEmptyString(this.communityId)) {
+      errors.push(
+        new TrueImpactError(
+          `Specifying group session locations by community is not yet supported.`,
+        ),
+      );
+
       // TODO validate schema using decorators
       if (this.name !== null && typeof this.name !== 'undefined') {
         errors.push(
           new TrueImpactError(
             `The name and a community ID cannot both be specified for a group session location, as this could lead to inconsistencies.`,
+          ),
+        );
+      }
+
+      // TODO do the same for isUrban
+    } else {
+      // we know that communityId is omitted
+      if (!this.name) {
+        errors.push(
+          new TrueImpactError(
+            `You must specify the [name] of a group session location when not specifying a community by ID.`,
+          ),
+        );
+      }
+
+      if (!isBoolean(this.isUrban)) {
+        errors.push(
+          new TrueImpactError(
+            `You must specify [isUrban] for a group session location when not specifying a community by ID.`,
           ),
         );
       }
@@ -90,6 +150,12 @@ export class GroupSessionLocation extends Entity {
   isEmpty(): boolean {
     // note that empty-strings are equivalent to null \ undefined values for string-valued props here
     return !this.communityId && typeof this.isUrban !== 'boolean' && !this.name;
+  }
+
+  static fromUserRequest(
+    dto: GroupSessionLocationDto,
+  ): GroupSessionLocation | TrueImpactError {
+    return new GroupSessionLocation(dto).validateInvariants();
   }
 
   static fromPersistenceDto(

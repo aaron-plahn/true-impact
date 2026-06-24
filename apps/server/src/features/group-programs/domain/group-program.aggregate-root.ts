@@ -68,6 +68,8 @@ export class GroupProgram extends AggregateRoot {
     label: 'sessions',
     description:
       'A list of all current and historical sessions of this group program',
+    isArray: true,
+    isOptional: true, // i.e., can be empty
   })
   sessions: GroupSession[];
 

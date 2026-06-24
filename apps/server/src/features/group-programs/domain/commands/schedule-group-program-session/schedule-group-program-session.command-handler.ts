@@ -1,9 +1,12 @@
 import { Inject } from '@nestjs/common';
 import { CommandResult, ICommandHandler } from '../../../../../libs/cqrs-es';
-import { TrueImpactError } from '../../../../../libs/data-types';
+import {
+  TrueImpactBadUserInputError,
+  TrueImpactError,
+} from '../../../../../libs/data-types';
 import { GROUP_PROGRAM_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../../constants';
 import type { IGroupProgramCommandRepository } from '../group-command-repository.interface';
-import { ScheduleGroupProgramSession } from './schedule-group-program-session';
+import { ScheduleGroupProgramSession } from './schedule-group-program-session.command';
 
 export class ScheduleGroupProgramSessionCommandHandler implements ICommandHandler<ScheduleGroupProgramSession> {
   constructor(
@@ -23,9 +26,11 @@ export class ScheduleGroupProgramSessionCommandHandler implements ICommandHandle
     const target = await this.groupProgramRepository.fetchById(id);
 
     if (!target) {
-      return new TrueImpactError(
-        `You cannot schedule a session of group program: ${id} as there is no such program`,
-      );
+      return new TrueImpactBadUserInputError([
+        new TrueImpactError(
+          `You cannot schedule a session of group program: ${id} as there is no such program`,
+        ),
+      ]);
     }
 
     const updateResult = target.scheduleSession({

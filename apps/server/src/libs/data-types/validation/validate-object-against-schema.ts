@@ -443,7 +443,6 @@ export const validateObjectAgainstSchema = <T = object>(
     if (o !== null && typeof o === 'object') {
       Object.keys(o).forEach((propertyName) => {
         if (!(propertyName in schema.properties)) {
-          console.log({ propertyName, schema });
           allErrors.push(
             new TrueImpactError(`Unknown property: ${propertyName}`),
           );

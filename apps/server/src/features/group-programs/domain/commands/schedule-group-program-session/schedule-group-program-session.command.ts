@@ -1,6 +1,13 @@
-import { TrueImpactDataExample } from '../../../../../libs/data-types';
+import {
+  NestedDataType,
+  NonEmptyString,
+  TrueImpactDataExample,
+} from '../../../../../libs/data-types';
 import { GROUP_PROGRAM_AGGREGATE_TYPE } from '../../constants';
-import { GroupProgramCompositeIdentifier } from '../../group-program.composite-identifier';
+import {
+  GroupProgramCompositeIdentifier,
+  GroupProgramCompositeIdentifierValuedProperty,
+} from '../../group-program.composite-identifier';
 import { GroupSessionLocationDto } from '../../group-session-location.value-object';
 
 @TrueImpactDataExample<ScheduleGroupProgramSession>({
@@ -12,19 +19,29 @@ import { GroupSessionLocationDto } from '../../group-session-location.value-obje
     // TODO use proper dates
     date: '12-12-2012',
     location: {
-      name: 'Williams Lake',
-      isUrban: true,
+      // all properties are optional, so you must specify the ones you need for your test
+      // name: 'Williams Lake',
+      // isUrban: true,
     },
   },
 })
 export class ScheduleGroupProgramSession {
   static readonly type = 'SCHEDULE_GROUP_PROGRAM_SESSION';
 
+  @GroupProgramCompositeIdentifierValuedProperty
   aggregateCompositeIdentifier: GroupProgramCompositeIdentifier;
 
   // TODO deal with dates properly
+  @NonEmptyString({
+    label: 'date',
+    description: 'date this session will take place',
+  })
   date: string;
 
+  @NestedDataType(() => GroupSessionLocationDto, {
+    label: 'location',
+    description: 'where will this session take place?',
+  })
   location: GroupSessionLocationDto;
 
   // TODO startTime, endTime
