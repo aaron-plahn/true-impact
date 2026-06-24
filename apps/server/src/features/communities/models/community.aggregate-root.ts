@@ -45,6 +45,10 @@ export class CommunityPersistenceDto {
   },
 })
 export class Community extends AggregateRoot<CommunityPersistenceDto> {
+  @NonEmptyString({
+    label: 'type',
+    description: COMMUNITY_AGGREGATE_TYPE,
+  })
   static readonly type = COMMUNITY_AGGREGATE_TYPE;
 
   @NonEmptyString({

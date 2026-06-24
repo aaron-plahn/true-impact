@@ -1,9 +1,11 @@
+import { isFunction } from 'rxjs/internal/util/isFunction';
 import { TrueImpactError, TrueImpactRuntimeException } from '../error-handling';
 import {
   BOOLEAN,
   ENUMERATED_TYPE,
   NON_EMPTY_STRING,
   NON_NEGATIVE_INTEGER,
+  RAW_OBJECT,
 } from '../schema-management';
 import {
   ArrayItemObjectSchema,
@@ -22,16 +24,40 @@ import {
   isNegativeNumber,
   isNonEmptyString,
   isNumber,
+  isObject,
 } from './predicates';
+
+const buildLabelForArbitraryValue = (value: unknown): string => {
+  if (value === null) {
+    return 'null';
+  }
+
+  if (typeof value === 'undefined') {
+    return 'undefined';
+  }
+
+  if (isObject(value)) {
+    return 'object';
+  }
+
+  if (isFunction(value)) {
+    return 'function';
+  }
+
+  return JSON.stringify(value);
+};
 
 const buildSimplePropertyErrorMessage = (
   propertyKey: string,
   value: unknown,
   expectedTypeLabel: string,
   index?: number,
-) =>
-  // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-  `Invalid value for property [${propertyKey}${index ? '@' + index : ''}]. Expected ${expectedTypeLabel}, but received [${value}]`;
+) => {
+  const valueLabel =
+    value === null ? 'null' : `${buildLabelForArbitraryValue(value)}`;
+
+  return `Invalid value for property [${propertyKey}${index ? '@' + index : ''}]. Expected ${expectedTypeLabel}, but received [${valueLabel}]`;
+};
 
 const validateSimpleDataType = (
   propertyKey: string,
@@ -118,6 +144,18 @@ const validateSimpleDataType = (
             value,
             `one of: ${allowedValues.join(', ')}`,
           ),
+        ),
+      );
+    }
+
+    return acc;
+  }
+
+  if (propertySchema.type === RAW_OBJECT) {
+    if (!isObject(value)) {
+      acc.push(
+        new TrueImpactError(
+          buildSimplePropertyErrorMessage(propertyKey, value, `object`),
         ),
       );
     }
@@ -405,6 +443,7 @@ export const validateObjectAgainstSchema = <T = object>(
     if (o !== null && typeof o === 'object') {
       Object.keys(o).forEach((propertyName) => {
         if (!(propertyName in schema.properties)) {
+          console.log({ propertyName, schema });
           allErrors.push(
             new TrueImpactError(`Unknown property: ${propertyName}`),
           );

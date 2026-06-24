@@ -1,4 +1,7 @@
-import { TrueImpactDataExample } from '../../../libs/data-types';
+import {
+  NestedDataType,
+  TrueImpactDataExample,
+} from '../../../libs/data-types';
 import { USER_AGGREGATE_TYPE } from '../constants';
 import { UserCompositeIdentifier } from '../user.composite-identifier';
 
@@ -13,5 +16,9 @@ import { UserCompositeIdentifier } from '../user.composite-identifier';
 export class DeactivateUser {
   static readonly type = 'DEACTIVATE_USER';
 
+  @NestedDataType(() => UserCompositeIdentifier, {
+    label: 'composite ID',
+    description: 'a system-wide unique identifier for the user to deactivate',
+  })
   aggregateCompositeIdentifier: UserCompositeIdentifier;
 }

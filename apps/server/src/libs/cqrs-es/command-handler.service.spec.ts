@@ -1,6 +1,8 @@
 import { plainToInstance } from 'class-transformer';
 import {
   Ctor,
+  NestedDataType,
+  NonEmptyString,
   TrueImpactError,
   TrueImpactRuntimeException,
 } from '../data-types';
@@ -23,8 +25,16 @@ describe(`CommandHandlerService`, () => {
   let commandHandlerService: CommandHandlerService;
 
   class CompositeIdentifier {
+    @NonEmptyString({
+      label: 'type',
+      description: 'type of entity you are updating',
+    })
     readonly type: string;
 
+    @NonEmptyString({
+      label: 'ID',
+      description: 'system reference to the entity you are updating',
+    })
     readonly id: string;
   }
 
@@ -35,6 +45,10 @@ describe(`CommandHandlerService`, () => {
   class HappyCommand {
     static type = happyCommandType;
 
+    @NestedDataType(() => CompositeIdentifier, {
+      label: 'composite ID',
+      description: 'system-wide unique reference to the entity being updated',
+    })
     aggregateCompositeIdentifier: CompositeIdentifier;
   }
 
@@ -73,6 +87,10 @@ describe(`CommandHandlerService`, () => {
   class SadCommand {
     static type = sadCommandType;
 
+    @NestedDataType(() => CompositeIdentifier, {
+      label: 'composite ID',
+      description: 'system-wide unique reference to the entity being updated',
+    })
     aggregateCompositeIdentifier: CompositeIdentifier;
   }
 

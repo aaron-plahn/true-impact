@@ -35,11 +35,12 @@ export class MultilingualTextPersistenceDto {
 @TrueImpactDataExample<MultilingualTextPersistenceDto>({
   example: {
     items: {
-      en: {
-        [MultilingualTextItemRole.original]: {
-          text: 'horse',
-        },
-      },
+      // You must add your own items
+      // en: {
+      //   [MultilingualTextItemRole.original]: {
+      //     text: 'horse',
+      //   },
+      // },
     },
   },
 })

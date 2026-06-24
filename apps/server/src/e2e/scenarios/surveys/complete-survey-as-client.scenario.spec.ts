@@ -462,7 +462,7 @@ describe(`Survey Completion Scenarios`, () => {
             accessCode = surveySeedResult.accessCode;
           });
 
-          it.only(`should return the expected error`, async () => {
+          it(`should return the expected error`, async () => {
             const { id: surveyId } = (
               (await adminHttpClient.get(surveyIndexEndpoint))
                 .data as SurveyViewModel[]
@@ -481,7 +481,11 @@ describe(`Survey Completion Scenarios`, () => {
                 },
               }),
               assertErrorMessageAsExpected: (message) => {
-                expect(message).toContain('fuck you asshole!');
+                assertTextMatchesAll(
+                  message,
+                  'Unknown property',
+                  'participantCompositeIdentifier',
+                );
               },
             });
           });
@@ -504,7 +508,7 @@ describe(`Survey Completion Scenarios`, () => {
               endpoint: surveyCompletionCommandsEndpoint,
               stream: beginSurvey,
               assertErrorMessageAsExpected: (message: string) => {
-                assertTextMatchesAll(message, 'Resource not found');
+                assertTextMatchesAll(message, 'Forbidden');
               },
             });
           });
@@ -974,7 +978,7 @@ describe(`Survey Completion Scenarios`, () => {
                  * so that the user still has an invalid cookie? How can we test
                  * this scenario?
                  */
-                assertTextMatchesAll(message, 'Resource not found');
+                assertTextMatchesAll(message, 'Forbidden');
               },
             });
           });

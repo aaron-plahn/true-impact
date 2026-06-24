@@ -2,6 +2,10 @@ import { NestedDataType, NonEmptyString } from '../../../libs/data-types';
 import { COMMUNITY_AGGREGATE_TYPE } from '../constants';
 
 export class CommunityCompositeIdentifier {
+  @NonEmptyString({
+    label: 'type',
+    description: COMMUNITY_AGGREGATE_TYPE,
+  })
   readonly type = COMMUNITY_AGGREGATE_TYPE;
 
   @NonEmptyString({

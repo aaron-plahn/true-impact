@@ -8,6 +8,7 @@ import {
   NestedDataType,
   NonEmptyString,
   NonNegativeInteger,
+  RawObject,
   TrueImpactBadUserInputError,
   TrueImpactDataExample,
   TrueImpactError,
@@ -35,6 +36,11 @@ class SurveyQuestionResponsePersistenceDto {
 }
 
 export class SurveyResponseCompositeIdentifier {
+  // TODO Literal
+  @NonEmptyString({
+    label: 'type',
+    description: 'type',
+  })
   readonly type = SURVEY_RESPONSE_AGGREGATE_TYPE;
 
   @NonEmptyString({
@@ -49,6 +55,13 @@ class SurveyQuestionResponse extends Entity {
    * Order is crucial here.
    */
   // TODO make `revision` a getter now.
+  @RawObject({
+    label: 'event history',
+    description: 'audit log containing all historical edits of this survey',
+    isArray: true,
+    // TODO rename this `canBeEmpty` for Array valued props?
+    isOptional: true, // i.e. can be empty
+  })
   eventHistory: IDomainEvent[] = [];
 
   @NonEmptyString({
@@ -179,6 +192,12 @@ const testSurveyExample = buildTestInstance(Survey, {
   },
 })
 export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPersistenceDto> {
+  @NonEmptyString({
+    label: 'type',
+    description: SURVEY_RESPONSE_AGGREGATE_TYPE,
+  })
+  // @Literal
+  // this is hard wired. there's no need to validate it.
   static readonly type = SURVEY_RESPONSE_AGGREGATE_TYPE;
 
   // This is required in the persistence DTO, but optional here because it is generated upon creation in the database
@@ -186,7 +205,7 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
     label: 'ID',
     description: 'unique system identifier for a survey attempt',
   })
-  id?: string;
+  id: string;
 
   @NonNegativeInteger({
     label: 'revision number',
@@ -196,6 +215,10 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
   revision: number;
 
   // TODO we could decorate this with the event union for this aggregate type
+  @RawObject({
+    label: 'event history',
+    description: 'audit log of historical edits to this survey response',
+  })
   eventHistory: IDomainEvent[];
 
   /**
@@ -271,8 +294,9 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
   @NonEmptyString({
     label: 'next question label',
     description: 'refers to the next question that the user should answer',
+    isOptional: true,
   })
-  nextQuestionLabel: string | DONE;
+  nextQuestionLabel?: string | DONE;
 
   @BooleanDataType({
     label: 'has been submitted',
@@ -706,13 +730,12 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
     return this.nextQuestionLabel === DONE;
   }
 
-  getNextQuestionLabel(): string | DONE {
+  getNextQuestionLabel(): string | DONE | undefined {
     return this.nextQuestionLabel;
   }
 
   toPersistenceDto(): SurveyResponseRecordPersistenceDto {
     return {
-      // @ts-expect-error We want this to be required, except on the first persistence. Is there a way to achieve this?
       id: this.id,
       revision: this.revision,
       survey: this.survey.toPersistenceDto(),

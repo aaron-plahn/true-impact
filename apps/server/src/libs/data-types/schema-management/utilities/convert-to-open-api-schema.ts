@@ -3,7 +3,6 @@ import {
   TrueImpactRuntimeException,
 } from '../../error-handling';
 import {
-  BOOLEAN,
   DataSchema,
   getDataSchemaFromClassCtor,
   isArrayItemObjectSchema,
@@ -11,17 +10,16 @@ import {
   isEnumeratedTypeSchemaPropertyMetadata,
   isLookupTablePropertyMetadata,
   isObjectSchemaPropertyMetadata,
-  NON_EMPTY_STRING,
-  NON_NEGATIVE_INTEGER,
   SchemaPropertyMetadata,
 } from '../../schema-management/decorators';
 import { convertLookupTableToOpenApiStandard } from './convert-lookup-table-to-open-api-standard';
 import { SchemaObject as OpenApiSchema } from './open-api-spec.interface';
 
 const trueImpactDataTypeToOpenApiDataType = {
-  [NON_EMPTY_STRING]: 'string',
-  [NON_NEGATIVE_INTEGER]: 'integer',
-  [BOOLEAN]: 'boolean',
+  NON_EMPTY_STRING: 'string',
+  NON_NEGATIVE_INTEGER: 'integer',
+  BOOLEAN: 'boolean',
+  RAW_OBJECT: 'object',
 } as const;
 
 const getOpenApiDataTypeForTrueImpactDataType = (

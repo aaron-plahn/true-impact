@@ -116,7 +116,7 @@ export class Client
     communityId,
     flagIds,
   }: {
-    id?: string;
+    id: string;
 
     revision: number;
 
@@ -233,9 +233,10 @@ export class Client
   }
 
   public static fromCreateClientCommand(
-    command: CreateClient,
+    command: CreateClient & { id: string },
   ): Client | TrueImpactBadUserInputError {
     const {
+      id,
       firstName,
       lastName,
       dateOfBirth,
@@ -244,6 +245,7 @@ export class Client
     } = command;
 
     const unverifiedInstance = new Client({
+      id,
       fullName: { firstName, lastName, middleNames: [] },
       dateOfBirth,
       isIndigenous,

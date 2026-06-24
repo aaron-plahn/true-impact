@@ -24,6 +24,10 @@ export class FlagPersistenceDto {
   },
 })
 export class Flag extends AggregateRoot<FlagPersistenceDto> {
+  @NonEmptyString({
+    label: 'type',
+    description: FLAG_AGGREGATE_TYPE,
+  })
   static readonly type = FLAG_AGGREGATE_TYPE;
 
   @NonEmptyString({

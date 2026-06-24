@@ -6,6 +6,9 @@ import {
 import { assertTextMatchesAll } from '../../../../libs/test-utils';
 import { Survey } from '../../survey-management';
 
+/**
+ * TODO Why are there two separate tests for this?
+ */
 describe(`SurveyResponseRecord.validateInvariants`, () => {
   describe(`when the survey response record is valid`, () => {
     it.todo(`should return the expected response`);

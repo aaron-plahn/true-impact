@@ -11,7 +11,6 @@ import type { YesNoOrUnknown } from '../../../libs/data-types';
     firstName: 'Jane',
     middleNames: [],
     lastName: 'Jones',
-
     dateOfBirth: '2010-11-04',
     isIndigenous: 'Yes',
     // TODO validate this in the command handler against known communities

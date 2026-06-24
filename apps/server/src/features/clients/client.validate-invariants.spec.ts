@@ -7,7 +7,7 @@ const validDtoWihtoutOptionalProperties: ClientPersistenceDto = {
   revision: 1,
   fullName: {
     firstName: 'Ronald',
-    // middleName: undefined,
+    middleNames: [],
     lastName: 'McDonnald',
   },
   dateOfBirth: '2022-08-01',
