@@ -2,6 +2,20 @@ import { NotImplementedException } from '@nestjs/common';
 import { isBoolean, NonEmptyString } from '../../../libs/data-types';
 import { GroupSessionLocation } from '../domain/group-session-location.value-object';
 
+export class GroupSessionLocationViewModelClientDto {
+  @NonEmptyString({
+    label: 'name',
+    description: 'location name',
+  })
+  name: string;
+
+  @NonEmptyString({
+    label: 'is urban',
+    description: 'Is this location urban (as opposed to in-community)?',
+  })
+  isUrban: boolean;
+}
+
 /**
  * Note that the domain allows users to either use
  * 1. a community ID
@@ -29,6 +43,13 @@ export class GroupSessionLocationViewModel {
     this.name = name;
 
     this.isUrban = isUrban;
+  }
+
+  toClientDto(): GroupSessionLocationViewModelClientDto {
+    return {
+      name: this.name,
+      isUrban: this.isUrban,
+    };
   }
 
   static fromDomainModule(domainLocation: GroupSessionLocation) {

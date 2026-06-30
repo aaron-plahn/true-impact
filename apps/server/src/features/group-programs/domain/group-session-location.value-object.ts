@@ -95,8 +95,6 @@ export class GroupSessionLocation extends Entity {
         `Inconsistent location definition. A group session location must be specified either by \n1.community or by \n2. name and urban / rural`,
       );
 
-      console.log({ returning: e });
-
       return [e];
     }
 

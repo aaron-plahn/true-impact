@@ -6,7 +6,10 @@ import {
 import { GroupSession } from '../domain/group-session.entity';
 import { GroupProgramObservation } from './group-program-observation.entity';
 import { GroupProgramObservationViewModel } from './group-program-observation.view-model';
-import { GroupSessionLocationViewModel } from './group-session-location.view-model';
+import {
+  GroupSessionLocationViewModel,
+  GroupSessionLocationViewModelClientDto,
+} from './group-session-location.view-model';
 
 export class GroupSessionViewModelClientDto {
   id: string;
@@ -14,6 +17,8 @@ export class GroupSessionViewModelClientDto {
   date: string;
 
   observationsById: Record<string, GroupProgramObservationViewModel>;
+
+  location: GroupSessionLocationViewModelClientDto;
 }
 
 export class GroupSessionViewModel {
@@ -73,6 +78,7 @@ export class GroupSessionViewModel {
       id: this.id,
       date: this.date,
       observationsById: deepConvertMapToObject(this.observationsById),
+      location: this.location.toClientDto(),
     };
   }
 
