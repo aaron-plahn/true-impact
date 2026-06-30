@@ -1,4 +1,9 @@
-import { NestedDataType, NonEmptyString } from '../../../../../libs/data-types';
+import {
+  NestedDataType,
+  NonEmptyString,
+  TrueImpactDataExample,
+} from '../../../../../libs/data-types';
+import { GROUP_PROGRAM_AGGREGATE_TYPE } from '../../constants';
 import {
   GroupProgramCompositeIdentifier,
   GroupProgramCompositeIdentifierValuedProperty,
@@ -22,6 +27,19 @@ export class NoteAboutGroupProgramClassifiedPayload {
   interactionType: string;
 }
 
+@TrueImpactDataExample<NoteAboutGroupProgramClassified>({
+  example: {
+    type: 'NOTE_ABOUT_GROUP_PROGRAM_CLASSIFIED',
+    payload: {
+      aggregateCompositeIdentifier: {
+        type: GROUP_PROGRAM_AGGREGATE_TYPE,
+        id: '565',
+      },
+      observationId: '1',
+      interactionType: 'befuddlement',
+    },
+  },
+})
 export class NoteAboutGroupProgramClassified {
   readonly type = 'NOTE_ABOUT_GROUP_PROGRAM_CLASSIFIED';
 
