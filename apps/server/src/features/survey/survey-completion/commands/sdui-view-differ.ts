@@ -1,9 +1,9 @@
-import { IDomainEvent } from 'src/libs/cqrs-es';
+import { IDomainEvent } from '../../../../libs/cqrs-es';
 import {
   TrueImpactError,
   TrueImpactRuntimeException,
-} from 'src/libs/data-types';
-import { Section } from 'src/libs/server-driven-ui';
+} from '../../../../libs/data-types';
+import { Section } from '../../../../libs/server-driven-ui';
 
 export interface SDUIViewDiff {
   target: string; // element ID

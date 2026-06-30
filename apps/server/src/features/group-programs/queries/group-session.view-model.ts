@@ -1,9 +1,20 @@
-import { LookupTable } from 'src/libs/data-types/schema-management/decorators/lookup-table.decorator';
-import { NonEmptyString } from '../../../libs/data-types';
+import {
+  deepConvertMapToObject,
+  LookupTable,
+  NonEmptyString,
+} from '../../../libs/data-types';
 import { GroupSession } from '../domain/group-session.entity';
 import { GroupProgramObservation } from './group-program-observation.entity';
 import { GroupProgramObservationViewModel } from './group-program-observation.view-model';
 import { GroupSessionLocationViewModel } from './group-session-location.view-model';
+
+export class GroupSessionViewModelClientDto {
+  id: string;
+
+  date: string;
+
+  observationsById: Record<string, GroupProgramObservationViewModel>;
+}
 
 export class GroupSessionViewModel {
   @NonEmptyString({
@@ -32,6 +43,9 @@ export class GroupSessionViewModel {
     description:
       'a list of all observations (notes or classified interactions) made for this group session',
   })
+  /**
+   * The local identifier should be a timestamp here.
+   */
   observationsById: Map<string, GroupProgramObservationViewModel>;
 
   constructor({
@@ -52,6 +66,14 @@ export class GroupSessionViewModel {
     this.date = date;
 
     this.observationsById = observationsById;
+  }
+
+  toClientDto(): GroupSessionViewModelClientDto {
+    return {
+      id: this.id,
+      date: this.date,
+      observationsById: deepConvertMapToObject(this.observationsById),
+    };
   }
 
   static fromDomainModel(

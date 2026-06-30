@@ -7,9 +7,9 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
-import { USER_COMMAND_REPOSITORY_INJECTION_TOKEN } from 'src/features/users/constants';
-import type { IUserCommandRepository } from 'src/features/users/repositories';
-import { UserAuthenticationService } from 'src/features/users/user-authentication.service';
+import { USER_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../features/users/constants';
+import type { IUserCommandRepository } from '../features/users/repositories';
+import { UserAuthenticationService } from '../features/users/user-authentication.service';
 import {
   convertToOpenApiSchema,
   getDataSchemaFromClassCtor,
@@ -17,7 +17,7 @@ import {
   TrueImpactBadUserInputError,
   TrueImpactError,
   TrueImpactRuntimeException,
-} from 'src/libs/data-types';
+} from '../libs/data-types';
 import { ApiBody, Body, Controller, Post } from '../libs/framework';
 import { LogInRequestDto } from './log-in-request.dto';
 

@@ -158,8 +158,15 @@ export class GroupSessionLocation extends Entity {
 
   static fromPersistenceDto(
     dto: GroupSessionLocationDto,
+    buildOptions: { shouldValidate?: boolean } = {},
   ): GroupSessionLocation | TrueImpactError {
-    return new GroupSessionLocation(dto);
+    const instance = new GroupSessionLocation(dto);
+
+    if (buildOptions?.shouldValidate) {
+      return instance.validateInvariants();
+    }
+
+    return instance;
   }
 
   getId(): string {

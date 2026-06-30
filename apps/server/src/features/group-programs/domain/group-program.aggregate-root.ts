@@ -1,16 +1,20 @@
 import { IDomainEvent } from '../../../libs/cqrs-es';
 import {
   AggregateRoot,
+  Entity,
   NestedDataType,
   NonEmptyString,
   NonNegativeInteger,
   RawObject,
+  ResourceNotFoundError,
   TrueImpactBadUserInputError,
   TrueImpactError,
+  UpdateMethod,
 } from '../../../libs/data-types';
 import { CreateGroupProgram, GroupProgramScheduled } from './commands';
 import { GroupProgramCreated } from './commands/create-group-program/group-program-created.event';
 import { GROUP_PROGRAM_AGGREGATE_TYPE } from './constants';
+import { GroupProgramCompositeIdentifier } from './group-program.composite-identifier';
 import { GroupSessionLocationDto } from './group-session-location.value-object';
 import {
   GroupSession,
@@ -26,6 +30,8 @@ export class GroupProgramPersistenceDto {
   revision: number;
 
   sessions: GroupSessionPersistenceDto[];
+
+  eventHistory: IDomainEvent[];
 }
 
 export class GroupProgram extends AggregateRoot {
@@ -134,9 +140,22 @@ export class GroupProgram extends AggregateRoot {
       name: this.name,
       sessions: this.sessions.map((s) => s.toPersistenceDto()),
       revision: this.eventHistory.length,
+      eventHistory: this.eventHistory,
     };
   }
 
+  getSessionById(sessionId: string): GroupSession | null {
+    return this.sessions.find((s) => s.id === sessionId) || null;
+  }
+
+  getCompositeIdentifier(): GroupProgramCompositeIdentifier {
+    return {
+      type: GROUP_PROGRAM_AGGREGATE_TYPE,
+      id: this.id,
+    };
+  }
+
+  @UpdateMethod()
   scheduleSession({
     date,
     location,
@@ -168,6 +187,99 @@ export class GroupProgram extends AggregateRoot {
         },
       }),
     );
+  }
+
+  makeNote({
+    sessionId,
+    note,
+  }: {
+    sessionId: string;
+    note: { text: string; languageCode: string };
+  }): GroupProgram | TrueImpactError {
+    const { languageCode } = note;
+
+    // TODO include all languages relevant to the tenant
+    if (languageCode !== 'en') {
+      return new TrueImpactError(
+        `You cannot make a note about group program: ${this.getName()} in the language: ${languageCode}, as this language is not supported by the system.`,
+      );
+    }
+
+    const targetSession = this.getSessionById(sessionId);
+
+    if (!targetSession) {
+      return new TrueImpactError(
+        `You cannot make a note about an interaction at group session: ${sessionId} as there is no such session of group program ${this.getName()}`,
+      );
+    }
+
+    const updateResult = targetSession.makeNoteAboutInteraction(note);
+
+    if (updateResult instanceof Error) {
+      return updateResult;
+    }
+
+    /**
+     * Note that the nested update method executes a side effect that mutates
+     * the target session.
+     */
+    return this;
+  }
+
+  @UpdateMethod()
+  recordObservationByType({
+    sessionId,
+    interactionType,
+  }: {
+    sessionId: string;
+    interactionType: string;
+  }): GroupProgram | TrueImpactError {
+    const targetSession = this.getSessionById(sessionId);
+
+    if (!targetSession) {
+      return new ResourceNotFoundError(this.getCompositeIdentifier());
+    }
+
+    const updateResult = targetSession.recordObservationByType(interactionType);
+
+    if (updateResult instanceof Error) {
+      return updateResult;
+    }
+
+    /**
+     * Note that the nested update method executes a side effect that updates the target session.
+     */
+    return this;
+  }
+
+  @UpdateMethod()
+  classifyObservation({
+    sessionId,
+    observationId,
+    interactionType,
+  }: {
+    sessionId: string;
+    observationId: string;
+    interactionType: string;
+  }): GroupProgram | TrueImpactError {
+    const targetSession = this.getSessionById(sessionId);
+
+    if (!targetSession) {
+      return new TrueImpactError(
+        `You cannot update session ${sessionId} of group program: ${this.getName()} as there is no such session`,
+      );
+    }
+
+    const updateResult = targetSession.classifyInteraction({
+      observationId,
+      interactionType,
+    });
+
+    if (updateResult instanceof Error) {
+      return updateResult;
+    }
+
+    return this;
   }
 
   apply(event: IDomainEvent): GroupProgram | TrueImpactError {
@@ -206,5 +318,50 @@ export class GroupProgram extends AggregateRoot {
     });
 
     return buildResult.validateInvariants();
+  }
+
+  static fromPersistenceDto(
+    {
+      id,
+      sessions: sessionDtos,
+      name,
+      eventHistory,
+    }: GroupProgramPersistenceDto,
+    buildOptions: { shouldValidate?: boolean } = {},
+  ): Entity | TrueImpactError {
+    const sessions: GroupSession[] = [];
+
+    const sessionErrors: TrueImpactError[] = [];
+
+    sessionDtos.forEach((sessionDto) => {
+      const buildResult = GroupSession.fromPersistenceDto(
+        sessionDto,
+        buildOptions,
+      );
+
+      if (buildResult instanceof Error) {
+        sessionErrors.push(buildResult);
+      } else {
+        sessions.push(buildResult);
+      }
+    });
+
+    if (sessionErrors.length > 0) {
+      return new TrueImpactError(
+        `Failed to build a group program due to invalid existing session data.`,
+        sessionErrors,
+      );
+    }
+
+    const instance = new GroupProgram({
+      id,
+      name,
+      sessions,
+      eventHistory,
+    });
+
+    return buildOptions?.shouldValidate
+      ? instance.validateInvariants()
+      : instance;
   }
 }

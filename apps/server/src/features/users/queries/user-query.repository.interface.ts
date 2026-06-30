@@ -1,4 +1,4 @@
-import { TrueImpactError } from 'src/libs/data-types';
+import { TrueImpactError } from '../../../libs/data-types';
 import { UserViewModel } from './user.view-model';
 
 export interface IUserQueryRepository {

@@ -1,4 +1,7 @@
-import { NonEmptyString, TrueImpactDataExample } from 'src/libs/data-types';
+import {
+  NonEmptyString,
+  TrueImpactDataExample,
+} from '../../../../../libs/data-types';
 import { GROUP_PROGRAM_AGGREGATE_TYPE } from '../../constants';
 import {
   GroupProgramCompositeIdentifier,
@@ -12,6 +15,7 @@ import {
       id: '123',
     },
     interactionType: 'exclamation',
+    sessionId: '1',
   },
 })
 export class RecordGroupProgramObservationByType {
@@ -24,10 +28,8 @@ export class RecordGroupProgramObservationByType {
     label: 'session ID',
     description:
       'uniquely identifies the session at which the observation was made amongst other sessions of this group program',
-    isOptional: true,
   })
-  // TODO should this be optional?
-  sessionId?: string;
+  sessionId: string;
 
   @NonEmptyString({
     label: 'interaction type',

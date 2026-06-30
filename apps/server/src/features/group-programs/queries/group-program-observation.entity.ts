@@ -1,16 +1,30 @@
-import { NotImplementedException } from '@nestjs/common';
-import { MultilingualText } from 'src/common/multilingual-text';
 import {
+  MultilingualText,
+  MultilingualTextPersistenceDto,
+} from '../../../common/multilingual-text';
+import {
+  InvariantValidationError,
   NestedDataType,
   NonEmptyString,
+  TrueImpactDataExample,
   TrueImpactError,
-} from 'src/libs/data-types';
+} from '../../../libs/data-types';
 import { NoteDto } from '../domain/commands';
 
+class GroupProgramObservationPersistenceDto {
+  interactionType?: string;
+
+  note?: MultilingualTextPersistenceDto;
+}
+
+@TrueImpactDataExample<GroupProgramObservationPersistenceDto>({
+  example: {},
+})
 export class GroupProgramObservation {
   @NonEmptyString({
     label: 'interaction type',
     description: 'a classification of this interaction',
+    isOptional: true,
   })
   interactionType?: string;
 
@@ -37,14 +51,32 @@ export class GroupProgramObservation {
    * When one has recorded an observation by making a note, this interaction can later
    * be classified using an `interaction type`.
    */
-  classify(
-    _interactionType: string,
-  ): GroupProgramObservation | TrueImpactError {
-    // if(this.interactionType){
-    //     // TODO validate that ther eis not already an observation
-    // }
+  classify(interactionType: string): GroupProgramObservation | TrueImpactError {
+    if (this.interactionType) {
+      throw new TrueImpactError(
+        `You cannot classify intection as [${interactionType}], as it has already been classified as [${this.interactionType}]`,
+      );
+    }
 
-    throw new NotImplementedException();
+    this.interactionType = interactionType;
+
+    return this;
+  }
+
+  validateInvariants(): InvariantValidationError | GroupProgramObservation {
+    if (!this.interactionType && !this.note) {
+      return new InvariantValidationError(
+        GroupProgramObservation,
+        'group program observation',
+        [
+          new TrueImpactError(
+            `Encountered an empty group program observation record. You must specify at least one of: [interaction type, note]`,
+          ),
+        ],
+      );
+    }
+
+    return this;
   }
 
   static fromUserNote(note: NoteDto): GroupProgramObservation {
@@ -64,5 +96,16 @@ export class GroupProgramObservation {
     return new GroupProgramObservation({
       interactionType,
     });
+  }
+
+  static fromPersistenceDto(
+    dto: GroupProgramObservation,
+    buildOptions: { shouldValidate?: boolean } = {},
+  ): GroupProgramObservation | TrueImpactError {
+    const instance = new GroupProgramObservation(dto);
+
+    return buildOptions?.shouldValidate
+      ? instance.validateInvariants()
+      : instance;
   }
 }

@@ -1,5 +1,5 @@
 import { ConfigService } from '@nestjs/config';
-import { PersistenceAcknowledgement } from 'src/libs/cqrs-es';
+import { PersistenceAcknowledgement } from '../../../libs/cqrs-es';
 import {
   DeepPartial,
   getDataSchemaFromClassCtor,
@@ -7,7 +7,7 @@ import {
   TrueImpactBadUserInputError,
   TrueImpactError,
   TrueImpactRuntimeException,
-} from 'src/libs/data-types';
+} from '../../../libs/data-types';
 import { USER_AGGREGATE_TYPE } from '../constants';
 import { UserRole } from '../types';
 import { User } from '../user.aggregate-root';

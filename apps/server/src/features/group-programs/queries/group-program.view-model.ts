@@ -1,6 +1,17 @@
 import { NestedDataType, NonEmptyString } from '../../../libs/data-types';
 import { GroupProgram } from '../domain/group-program.aggregate-root';
-import { GroupSessionViewModel } from './group-session.view-model';
+import {
+  GroupSessionViewModel,
+  GroupSessionViewModelClientDto,
+} from './group-session.view-model';
+
+export class GroupProgramViewModelClientDto {
+  id: string;
+  name: string;
+  revision: string;
+  // TODO sessionsByStartTime
+  sessions: GroupSessionViewModelClientDto[];
+}
 
 export class GroupProgramViewModel {
   @NonEmptyString({
@@ -45,6 +56,15 @@ export class GroupProgramViewModel {
     this.revision = revision;
 
     this.sessions = sessions;
+  }
+
+  toClientDto(): GroupProgramViewModelClientDto {
+    return {
+      id: this.id,
+      name: this.name,
+      revision: this.revision,
+      sessions: this.sessions.map((s) => s.toClientDto()),
+    };
   }
 
   static fromDomainModel(domainModel: GroupProgram) {
