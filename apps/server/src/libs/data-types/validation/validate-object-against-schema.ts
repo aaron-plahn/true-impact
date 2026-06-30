@@ -440,7 +440,11 @@ export const validateObjectAgainstSchema = <T = object>(
       : false;
 
   if (!shouldAllowUnknownProperties) {
-    if (o !== null && typeof o === 'object') {
+    /**
+     * Arrays can only have integer-indexed properties. There is no risk of superfluous
+     * property injection when validating arrays.
+     */
+    if (o !== null && typeof o === 'object' && !Array.isArray(o)) {
       Object.keys(o).forEach((propertyName) => {
         if (!(propertyName in schema.properties)) {
           allErrors.push(

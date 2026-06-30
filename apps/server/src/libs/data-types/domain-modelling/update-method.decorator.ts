@@ -6,7 +6,10 @@ import {
 import { Entity } from './entity';
 
 interface FromPersistenceDto<TDto = unknown, UInstance = unknown> {
-  fromPersistenceDto(dto: TDto): UInstance;
+  fromPersistenceDto(
+    dto: TDto,
+    options?: { shouldValidate?: boolean },
+  ): UInstance;
 }
 
 const isFromPersistenceDto = <T = unknown>(
@@ -48,6 +51,9 @@ export function UpdateMethod(): MethodDecorator {
       const cloned = ctor.fromPersistenceDto(
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
         this.toPersistenceDto() as unknown,
+        {
+          shouldValidate: true,
+        },
       );
 
       // TODO put a clone method on the entities?

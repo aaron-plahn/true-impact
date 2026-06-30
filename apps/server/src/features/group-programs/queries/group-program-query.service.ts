@@ -2,7 +2,10 @@ import { Inject } from '@nestjs/common';
 import type { IGroupProgramCommandRepository } from '../domain/commands/group-command-repository.interface';
 import { GROUP_PROGRAM_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../domain/constants';
 import { GroupProgram } from '../domain/group-program.aggregate-root';
-import { GroupProgramViewModel } from './group-program.view-model';
+import {
+  GroupProgramViewModel,
+  GroupProgramViewModelClientDto,
+} from './group-program.view-model';
 
 export class GroupProgramQueryService {
   constructor(
@@ -10,7 +13,7 @@ export class GroupProgramQueryService {
     private readonly groupProgramQueryRepo: IGroupProgramCommandRepository,
   ) {}
 
-  async fetchById(id: string): Promise<GroupProgramViewModel | null> {
+  async fetchById(id: string): Promise<GroupProgramViewModelClientDto | null> {
     const domainModel = await this.groupProgramQueryRepo.fetchById(id);
 
     if (!domainModel) {
@@ -23,6 +26,9 @@ export class GroupProgramQueryService {
   // TODO Fetch many
 
   private buildView(domainModel: GroupProgram) {
-    return GroupProgramViewModel.fromDomainModel(domainModel);
+    const result =
+      GroupProgramViewModel.fromDomainModel(domainModel).toClientDto();
+
+    return result;
   }
 }

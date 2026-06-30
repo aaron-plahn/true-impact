@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { CLIENT_AGGREGATE_TYPE } from '../../../features/clients/client.composite-identifier';
 import { CreateClient } from '../../../features/clients/commands/create-client.command';
 import { CreateCommunity } from '../../../features/communities/commands';
 import { CreateFlag } from '../../../features/flags/commands';
@@ -184,6 +183,8 @@ const httpClient = new TestHttpClient('http://localhost:4200');
  * This test suite become broken when introducing session-based auth for completing surveys. We need a
  * way to seed test survey responses that bypasses this flow. Alternatively, we can add cookie support to
  * axios for our `RestCommandExecutor`.
+ *
+ * TODO Re-instate this test
  */
 describe.skip(`when reviewing a survey (e.g. when a clinician reviews a client's response to a particular survey)`, () => {
   let communityId: string;
@@ -273,10 +274,6 @@ describe.skip(`when reviewing a survey (e.g. when a clinician reviews a client's
 
     const completeSurveyAsClient = TestCommandStream.first(BeginSurvey, {
       surveyId,
-      participantCompositeIdentifier: {
-        type: CLIENT_AGGREGATE_TYPE,
-        id: clientId,
-      },
       accessCode,
     })
       .andThen(AnswerSurveyQuestion, {
@@ -396,10 +393,6 @@ describe.skip(`when reviewing a survey (e.g. when a clinician reviews a client's
             endpoint: commandEndpointForSurveyReviews,
             stream: TestCommandStream.first(BeginSurvey, {
               surveyId,
-              participantCompositeIdentifier: {
-                type: CLIENT_AGGREGATE_TYPE,
-                id: clientId,
-              },
             }),
           });
 

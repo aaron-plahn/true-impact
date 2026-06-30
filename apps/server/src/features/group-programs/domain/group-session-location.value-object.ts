@@ -95,8 +95,6 @@ export class GroupSessionLocation extends Entity {
         `Inconsistent location definition. A group session location must be specified either by \n1.community or by \n2. name and urban / rural`,
       );
 
-      console.log({ returning: e });
-
       return [e];
     }
 
@@ -158,8 +156,15 @@ export class GroupSessionLocation extends Entity {
 
   static fromPersistenceDto(
     dto: GroupSessionLocationDto,
+    buildOptions: { shouldValidate?: boolean } = {},
   ): GroupSessionLocation | TrueImpactError {
-    return new GroupSessionLocation(dto);
+    const instance = new GroupSessionLocation(dto);
+
+    if (buildOptions?.shouldValidate) {
+      return instance.validateInvariants();
+    }
+
+    return instance;
   }
 
   getId(): string {

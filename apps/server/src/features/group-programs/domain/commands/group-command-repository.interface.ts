@@ -1,5 +1,5 @@
 import { PersistenceAcknowledgement } from 'src/libs/cqrs-es';
-import { TrueImpactError } from 'src/libs/data-types';
+import { TrueImpactError } from '../../../../libs/data-types';
 import { GroupProgram } from '../group-program.aggregate-root';
 
 export interface IGroupProgramCommandRepository {

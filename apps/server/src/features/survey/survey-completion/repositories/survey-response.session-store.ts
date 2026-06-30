@@ -1,5 +1,5 @@
 import session from 'express-session';
-import { TrueImpactError } from 'src/libs/data-types';
+import { TrueImpactError } from '../../../../libs/data-types';
 import { Inject } from '../../../../libs/framework';
 import { SurveyResponseCompositeIdentifier } from '../models';
 import {

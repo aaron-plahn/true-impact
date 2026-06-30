@@ -5,7 +5,13 @@ import { CommandHandlerService } from '../../../libs/cqrs-es';
 import { Module, ModuleRef } from '../../../libs/framework';
 import { GroupProgramQueryService, GroupProgramViewModel } from '../queries';
 import {
+  ClassifyNoteAboutGroupProgramObservation,
+  ClassifyNoteAboutGroupProgramObservationCommandHandler,
   CreateGroupProgram,
+  MakeNoteAboutGroupProgramObservation,
+  MakeNoteAboutGroupProgramObservationCommandHandler,
+  RecordGroupProgramObservationByType,
+  RecordGroupProgramObservationByTypeCommandHandler,
   ScheduleGroupProgramSession,
   ScheduleGroupProgramSessionCommandHandler,
 } from './commands';
@@ -24,6 +30,9 @@ import { InMemoryGroupProgramCommandRepository } from './repositories/in-memory-
     GroupProgramQueryService,
     CreateGroupProgramCommandHandler,
     ScheduleGroupProgramSessionCommandHandler,
+    RecordGroupProgramObservationByTypeCommandHandler,
+    MakeNoteAboutGroupProgramObservationCommandHandler,
+    ClassifyNoteAboutGroupProgramObservationCommandHandler,
     {
       provide: GROUP_PROGRAM_COMMAND_REPOSITORY_INJECTION_TOKEN,
       useClass: InMemoryGroupProgramCommandRepository,
@@ -57,6 +66,21 @@ import { InMemoryGroupProgramCommandRepository } from './repositories/in-memory-
           .register({
             CommandHandlerCtor: ScheduleGroupProgramSessionCommandHandler,
             CommandPayloadCtor: ScheduleGroupProgramSession,
+          })
+          .register({
+            CommandHandlerCtor:
+              RecordGroupProgramObservationByTypeCommandHandler,
+            CommandPayloadCtor: RecordGroupProgramObservationByType,
+          })
+          .register({
+            CommandHandlerCtor:
+              MakeNoteAboutGroupProgramObservationCommandHandler,
+            CommandPayloadCtor: MakeNoteAboutGroupProgramObservation,
+          })
+          .register({
+            CommandHandlerCtor:
+              ClassifyNoteAboutGroupProgramObservationCommandHandler,
+            CommandPayloadCtor: ClassifyNoteAboutGroupProgramObservation,
           });
 
         return commandHandlerService;

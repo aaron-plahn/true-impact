@@ -1,11 +1,11 @@
-import { PersistenceAcknowledgement } from 'src/libs/cqrs-es';
+import { PersistenceAcknowledgement } from '../../../libs/cqrs-es';
 import {
   getDataSchemaFromClassCtor,
   SimpleSchemaPropertyMetadata,
   TrueImpactBadUserInputError,
   TrueImpactError,
   TrueImpactRuntimeException,
-} from 'src/libs/data-types';
+} from '../../../libs/data-types';
 import { SURVEY_AGGREGATE_TYPE } from '../constants';
 import { Survey } from '../survey-management';
 import { ISurveyCommandRepository } from './survey-command-repository.interface';

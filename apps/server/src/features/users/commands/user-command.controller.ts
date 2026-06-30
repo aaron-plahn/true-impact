@@ -1,10 +1,10 @@
-import { AuthenticatedUserGuard, RbacAuthGuard } from 'src/auth/guards';
+import { AuthenticatedUserGuard, RbacAuthGuard } from '../../../auth/guards';
+import type { CommandResult, ICommandFsa } from '../../../libs/cqrs-es';
+import { CommandHandlerService } from '../../../libs/cqrs-es';
 import {
   TrueImpactError,
   TrueImpactRuntimeException,
-} from 'src/libs/data-types';
-import type { CommandResult, ICommandFsa } from '../../../libs/cqrs-es';
-import { CommandHandlerService } from '../../../libs/cqrs-es';
+} from '../../../libs/data-types';
 import {
   BadUserInputFilter,
   Body,

@@ -6,23 +6,23 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { AuthenticatedUserGuard, RbacAuthGuard } from 'src/auth/guards';
-import { UserCommandController } from 'src/features/users/commands/user-command.controller';
-import type { ICommandFsa } from 'src/libs/cqrs-es';
-import { CommandHandlerService, CommandResult } from 'src/libs/cqrs-es';
+import { AuthenticatedUserGuard, RbacAuthGuard } from '../../../auth/guards';
+import { UserCommandController } from '../../../features/users/commands/user-command.controller';
+import type { ICommandFsa } from '../../../libs/cqrs-es';
+import { CommandHandlerService, CommandResult } from '../../../libs/cqrs-es';
 import {
   TrueImpactError,
   TrueImpactRuntimeException,
-} from 'src/libs/data-types';
+} from '../../../libs/data-types';
 import {
   QueryResponseInterceptor,
   TestSetupEndpoint,
-} from 'src/libs/framework';
+} from '../../../libs/framework';
 import {
   BadUserInputFilter,
   ResourceNotFoundFilter,
   UseFilters,
-} from 'src/libs/framework/exceptions';
+} from '../../../libs/framework/exceptions';
 import type { IGroupProgramCommandRepository } from './commands/group-command-repository.interface';
 import { GROUP_PROGRAM_COMMAND_REPOSITORY_INJECTION_TOKEN } from './constants';
 

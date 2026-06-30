@@ -1,4 +1,4 @@
-import { TrueImpactError } from 'src/libs/data-types';
+import { TrueImpactError } from '../../../../libs/data-types';
 import { SurveyResponseSession } from '../models/survey-response-session';
 import { ISurveyResponseSessionRepository } from './survey-response.session-repository.interface';
 
