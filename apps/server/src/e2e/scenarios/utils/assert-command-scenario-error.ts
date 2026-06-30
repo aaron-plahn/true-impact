@@ -56,6 +56,8 @@ export const assertCommandScenarioError = async ({
     console.log('Test command scenario should have errored out, but did not.');
   }
 
+  console.log({ results: JSON.stringify(results) });
+
   expect(failingCommands).toHaveLength(1);
 
   const resultForLastCommand = failingCommands.at(-1)?.[1];

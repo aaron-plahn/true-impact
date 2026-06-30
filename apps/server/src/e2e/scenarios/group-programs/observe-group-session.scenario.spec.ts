@@ -1,4 +1,3 @@
-import { GroupSessionLocationDto } from 'src/features/group-programs/domain/group-session-location.value-object';
 import {
   ClassifyNoteAboutGroupProgramObservation,
   CreateGroupProgram,
@@ -6,9 +5,15 @@ import {
   RecordGroupProgramObservationByType,
   ScheduleGroupProgramSession,
 } from '../../../features/group-programs/domain/commands';
+import { GroupSessionLocationDto } from '../../../features/group-programs/domain/group-session-location.value-object';
 import { GroupProgramViewModelClientDto } from '../../../features/group-programs/queries';
 import { TestCommandStream } from '../../../libs/cqrs-es';
-import { assertCommandScenarioSuccess } from '../utils';
+import { assertTextMatchesAll } from '../../../libs/test-utils';
+import {
+  assertCommandError,
+  assertCommandScenarioError,
+  assertCommandScenarioSuccess,
+} from '../utils';
 import { signInAsAdmin } from '../utils/sign-in';
 import { TestHttpClient } from '../utils/test-http-client';
 
@@ -24,7 +29,9 @@ const groupProgramTestSetupEndpoint = `${baseEndpoint}/group-programs/test-setup
 
 const programName = "Wreckin' Rollerbladez";
 
-const missingId = 'group-program-id-404';
+const missingGroupProgramId = 'group-program-id-404';
+
+const missingSessionId = '67';
 
 /**
  * This isn't the focus of the present test, but due to the way our clone with overrides
@@ -59,16 +66,16 @@ const interactionTypeForNoteThatIsClassifiedLater = 'shock';
 describe(`Group Program Observation Scenarios`, () => {
   const adminHttpClient = new TestHttpClient('http://localhost:4200');
 
+  beforeAll(async () => {
+    await signInAsAdmin(adminHttpClient);
+  });
+
+  beforeEach(async () => {
+    await adminHttpClient.patch(groupProgramTestSetupEndpoint);
+  });
+
   describe(`when the user has permission to observe the given program`, () => {
-    describe(`when recording several observations`, () => {
-      beforeAll(async () => {
-        await signInAsAdmin(adminHttpClient);
-      });
-
-      beforeEach(async () => {
-        await adminHttpClient.patch(groupProgramTestSetupEndpoint);
-      });
-
+    describe(`when recording several observations (Full Happy Path)`, () => {
       it(`should record these observations`, async () => {
         await assertCommandScenarioSuccess({
           httpClient: adminHttpClient,
@@ -94,6 +101,13 @@ describe(`Group Program Observation Scenarios`, () => {
               // see note above about `sessionId`
               observationId: '2',
               interactionType: interactionTypeForNoteThatIsClassifiedLater,
+            })
+            .andThen(MakeNoteAboutGroupProgramObservation, {
+              sessionId: '2',
+              note: {
+                text: 'other note text',
+                languageCode: noteLanguageCode,
+              },
             }),
           assertSuccess: async (acks) => {
             const updatedView = (
@@ -104,10 +118,6 @@ describe(`Group Program Observation Scenarios`, () => {
 
             // should this be sessionsByDate?
             const targetSession = updatedView.sessions[1];
-
-            console.log({
-              observationsById: JSON.stringify(targetSession.observationsById),
-            });
 
             const firstObservation = targetSession.observationsById['1'];
 
@@ -131,14 +141,236 @@ describe(`Group Program Observation Scenarios`, () => {
               interactionTypeForNoteThatIsClassifiedLater,
             );
 
-            // TODO check a third observation that only has a note
+            const observationWithOnlyANote =
+              targetSession.observationsById['3'];
+
+            expect(observationWithOnlyANote.note).toBeTruthy();
+
+            expect(observationWithOnlyANote.interactionType).toBeUndefined();
           },
+        });
+      });
+    });
+
+    describe(`when the request is invalid`, () => {
+      describe(`when adding a note`, () => {
+        describe(`when the group program does not exist`, () => {
+          it(`should return the expected error`, async () => {
+            await assertCommandError({
+              httpClient: adminHttpClient,
+              endpoint: groupProgramCommandEndpoint,
+              commandFsa: TestCommandStream.buildOne(
+                MakeNoteAboutGroupProgramObservation,
+                {
+                  aggregateCompositeIdentifier: {
+                    id: missingGroupProgramId,
+                  },
+                },
+              ),
+              assertErrorMessageAsExpected: (message) => {
+                assertTextMatchesAll(message, 'not found');
+              },
+            });
+          });
+        });
+
+        describe(`when the target session does not exist`, () => {
+          it(`should return the expected error`, async () => {
+            await assertCommandScenarioError({
+              httpClient: adminHttpClient,
+              endpoint: groupProgramCommandEndpoint,
+              stream: scheduleSessions.andThen(
+                MakeNoteAboutGroupProgramObservation,
+                {
+                  sessionId: missingSessionId,
+                },
+              ),
+              assertErrorMessageAsExpected: (message) => {
+                assertTextMatchesAll(
+                  message,
+                  missingSessionId,
+                  'no such session',
+                  programName,
+                );
+              },
+            });
+          });
+        });
+
+        describe(`when the note's text is empty`, () => {
+          it(`should return the expected error`, async () => {
+            await assertCommandScenarioError({
+              httpClient: adminHttpClient,
+              endpoint: groupProgramCommandEndpoint,
+              stream: scheduleSessions.andThen(
+                MakeNoteAboutGroupProgramObservation,
+                {
+                  sessionId: '1',
+                  note: {
+                    text: '',
+                  },
+                },
+              ),
+              assertErrorMessageAsExpected: (message) => {
+                assertTextMatchesAll(
+                  message,
+                  'text',
+                  'Expected non-empty text',
+                );
+              },
+            });
+          });
+        });
+      });
+
+      describe(`when recording an interaction by type`, () => {
+        describe(`when the group program does not exist`, () => {
+          it(`should return the expected error`, async () => {
+            await assertCommandError({
+              httpClient: adminHttpClient,
+              endpoint: groupProgramCommandEndpoint,
+              commandFsa: TestCommandStream.buildOne(
+                RecordGroupProgramObservationByType,
+                {
+                  aggregateCompositeIdentifier: {
+                    id: missingGroupProgramId,
+                  },
+                },
+              ),
+
+              assertErrorMessageAsExpected: (message) => {
+                assertTextMatchesAll(message, 'not found');
+              },
+            });
+          });
+        });
+
+        describe(`when the target session does not exist`, () => {
+          it(`should return the expected error`, async () => {
+            await assertCommandScenarioError({
+              httpClient: adminHttpClient,
+              endpoint: groupProgramCommandEndpoint,
+              stream: scheduleSessions.andThen(
+                RecordGroupProgramObservationByType,
+                {
+                  sessionId: missingSessionId,
+                },
+              ),
+              assertErrorMessageAsExpected: (message) => {
+                assertTextMatchesAll(
+                  message,
+                  missingSessionId,
+                  'no such session',
+                  programName,
+                );
+              },
+            });
+          });
+        });
+
+        describe(`when the interaction type is empty`, () => {
+          it(`return the expected error`, async () => {
+            await assertCommandScenarioError({
+              httpClient: adminHttpClient,
+              endpoint: groupProgramCommandEndpoint,
+              stream: scheduleSessions.andThen(
+                RecordGroupProgramObservationByType,
+                {
+                  interactionType: '',
+                },
+              ),
+              assertErrorMessageAsExpected: (message) => {
+                assertTextMatchesAll(
+                  message,
+                  // it would be nice to include this
+                  // programName,
+                  'interactionType',
+                  'non-empty text',
+                );
+              },
+            });
+          });
+        });
+      });
+
+      describe(`when classifying an existing interaction that is the subject of a note`, () => {
+        describe(`when the group program does not exist`, () => {
+          it(`should return an error`, async () => {
+            await assertCommandError({
+              httpClient: adminHttpClient,
+              endpoint: groupProgramCommandEndpoint,
+              commandFsa: TestCommandStream.buildOne(
+                ClassifyNoteAboutGroupProgramObservation,
+                {
+                  aggregateCompositeIdentifier: {
+                    id: missingGroupProgramId,
+                  },
+                },
+              ),
+              assertErrorMessageAsExpected: (message) => {
+                assertTextMatchesAll(message, 'not found');
+              },
+            });
+          });
+        });
+
+        describe(`when the target session does not exist`, () => {
+          it(`should return an error`, async () => {
+            await assertCommandScenarioError({
+              httpClient: adminHttpClient,
+              endpoint: groupProgramCommandEndpoint,
+              stream: scheduleSessions.andThen(
+                ClassifyNoteAboutGroupProgramObservation,
+                {
+                  sessionId: missingSessionId,
+                },
+              ),
+              assertErrorMessageAsExpected: (message) => {
+                assertTextMatchesAll(
+                  message,
+                  'no such session',
+                  missingSessionId,
+                  programName,
+                );
+              },
+            });
+          });
+        });
+
+        describe(`when the target observation does not exist`, () => {
+          const missingObservationId = '404';
+
+          const sessionId = '1';
+
+          const interactionType = 'neutral response';
+
+          it(`should return an error`, async () => {
+            await assertCommandScenarioError({
+              httpClient: adminHttpClient,
+              endpoint: groupProgramCommandEndpoint,
+              stream: scheduleSessions.andThen(
+                ClassifyNoteAboutGroupProgramObservation,
+                {
+                  sessionId,
+                  observationId: missingObservationId,
+                  interactionType,
+                },
+              ),
+              assertErrorMessageAsExpected: (message) => {
+                assertTextMatchesAll(
+                  message,
+                  'cannot classify',
+                  interactionType,
+                  missingObservationId,
+                  'no such observation',
+                );
+              },
+            });
+          });
         });
       });
     });
   });
 
-  describe(`when the user does not have permission to observe the given program`, () => {
-    it.todo(`should return forbidden`);
-  });
+  // note that we test route guards in the `schedule-group-sessions.scenario` test
 });

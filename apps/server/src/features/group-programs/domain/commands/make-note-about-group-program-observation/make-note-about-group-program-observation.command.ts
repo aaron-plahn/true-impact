@@ -19,6 +19,7 @@ export class NoteDto {
   @NonEmptyString({
     label: 'langauge',
     description: 'the language in which you are making a note',
+    isOptional: true,
   })
   languageCode?: string; // Language Code enum?
 }

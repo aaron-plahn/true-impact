@@ -6,7 +6,6 @@ import {
   NonEmptyString,
   NonNegativeInteger,
   RawObject,
-  ResourceNotFoundError,
   TrueImpactBadUserInputError,
   TrueImpactError,
   UpdateMethod,
@@ -189,6 +188,7 @@ export class GroupProgram extends AggregateRoot {
     );
   }
 
+  @UpdateMethod()
   makeNote({
     sessionId,
     note,
@@ -237,7 +237,9 @@ export class GroupProgram extends AggregateRoot {
     const targetSession = this.getSessionById(sessionId);
 
     if (!targetSession) {
-      return new ResourceNotFoundError(this.getCompositeIdentifier());
+      return new TrueImpactError(
+        `You cannot record an interaction of type [${interactionType}] for session ${sessionId} of group program [${this.getName()}, as there is no such session.]`,
+      );
     }
 
     const updateResult = targetSession.recordObservationByType(interactionType);
