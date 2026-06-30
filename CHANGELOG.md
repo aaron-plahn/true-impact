@@ -2,6 +2,9 @@
 
 This first release of the True Impact platform introduces a working model for user management, client management, and survey creation and completion.
 
+## 37
+In this PR, we support the group program observation work flow on the server. This allows facilitators to record observations of a group program session by type or by notes which can later be classified by type. This is crucial for qualitative analysis of programs.
+
 ## 36
 In this PR, we introduce the ability to schedule a group program session.
 
