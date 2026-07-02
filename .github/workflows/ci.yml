@@ -28,7 +28,9 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: server
-          path: ./apps/server/dist
+          path: | 
+            ./apps/server/dist
+            ./apps/server/node_modules
           if-no-files-found:
             error
           
