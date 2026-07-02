@@ -24,7 +24,7 @@ jobs:
         run: npm run build
         working-directory: ./apps/server 
 
-      - name: Upload server artifacts
+      - name: Upload server artifact
         uses: actions/upload-artifacts@v4
         with:
           name: server
