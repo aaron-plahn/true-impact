@@ -41,4 +41,18 @@ jobs:
             ./apps/server/node_modules
           if-no-files-found:
             error
-          
+
+      - name: Start containerized app
+        run: docker compose up -d --build
+      - name: Wait for Docker health check
+          run: 
+            |
+              until [ "$(docker inspect --format='{{.State.Health.Status}}' $(docker compose ps -q web-app))" == "healthy" ]; do
+                sleep 3
+              done
+      
+      - name: e2e test server
+        run: npm run jest --runInBand
+        working-directory: ./apps/server
+      - if: always():
+        run: docker compose down -v         
