@@ -42,6 +42,9 @@ jobs:
           if-no-files-found:
             error
 
+      - name: Copy sample.env to .env.e2e
+        run: cp sample.env .env.e2e
+
       - name: Start containerized app
         run: docker compose up -d --build
       - name: Wait for Docker health check
@@ -50,6 +53,9 @@ jobs:
             until [ "$(docker inspect --format='{{.State.Health.Status}}' $(docker compose ps -q web-app))" == "healthy" ]; do
               sleep 3
             done
+
+      - name: source environment for server e2e tests
+        run: source .env.e2e
       
       - name: e2e test server
         run: npm run jest --runInBand
