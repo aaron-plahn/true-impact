@@ -1,5 +1,5 @@
 # Stage 1: Build the React application
-FROM node:24-alpine AS build
+FROM node:24.13.0-alpine AS build
 WORKDIR /app
 COPY apps/web-client/package.json apps/web-client/yarn.lock ./
 RUN yarn install --frozen-lock-file
