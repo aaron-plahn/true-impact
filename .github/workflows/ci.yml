@@ -61,4 +61,4 @@ jobs:
         run: npm run jest --runInBand
         working-directory: ./apps/server
       - if: always()
-        run: docker compose down -v         
+        run: docker compose --env-file .env.e2e down -v         
