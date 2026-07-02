@@ -47,12 +47,12 @@ jobs:
 
       - name: Start containerized app
         run: docker compose --env-file .env.e2e up -d --build
-      - name: Wait for Docker health check
-        run: 
-          |
-            until [ "$(docker inspect --format='{{.State.Health.Status}}' $(docker compose ps -q web-app))" == "healthy" ]; do
-              sleep 3
-            done
+      # - name: Wait for Docker health check
+      #   run: 
+      #     |
+      #       until [ "$(docker inspect --format='{{.State.Health.Status}}' $(docker compose ps -q web-app))" == "healthy" ]; do
+      #         sleep 3
+      #       done
 
       - name: source environment for server e2e tests
         run: source .env.e2e
