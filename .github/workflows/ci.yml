@@ -54,5 +54,5 @@ jobs:
       - name: e2e test server
         run: npm run jest --runInBand
         working-directory: ./apps/server
-      - if: always():
+      - if: always()
         run: docker compose down -v         
