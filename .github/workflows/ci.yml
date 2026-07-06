@@ -70,10 +70,13 @@ jobs:
           docker compose --env-file .env.e2e down -v  
 
   ci-gate:
-    - name: Verify CI Quality Checks(lint, build, unit test, server e2e tests)
-      run: |
-        if [[ "${{ needs.build_and_test.result }}" != "success" ]]; then
-          echo "Required jobs failed!"
-          exit 1
-        fi       
+    runs-on: ubuntu-latest
+    if: always() 
+    steps:
+      - name: Verify CI Quality Checks(lint, build, unit test, server e2e tests)
+        run: |
+          if [[ "${{ needs.build_and_test.result }}" != "success" ]]; then
+            echo "Required jobs failed!"
+            exit 1
+          fi       
           
