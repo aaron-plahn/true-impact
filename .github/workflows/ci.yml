@@ -45,6 +45,7 @@ jobs:
             error
 
       - name: Copy sample.env to .env.e2e
+        # TODO use environment
         run: cp sample.env .env.e2e
 
       - name: Start containerized app
