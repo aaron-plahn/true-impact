@@ -60,7 +60,7 @@ jobs:
       
       - name: e2e test server
         run: |
-          source .env.e2e
+          source ../../.env.e2e
           echo Test system admin user name
           echo $SYSTEM_ADMIN_USERNAME
           yarn run jest --runInBand
