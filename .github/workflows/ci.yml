@@ -62,7 +62,7 @@ jobs:
         run: |
           source ../../.env.e2e
           echo Test system admin user name
-          echo "SYSTEM_ADMIN_USERNAME=$SYSTEM_ADMIN_USERNAME" >> $GITHUB_ENV
+          echo "SYSTEM_ADMIN_USERNAME=tiuser" >> $GITHUB_ENV
           echo "INITIAL_ADMIN_PASSWORD=$INITIAL_ADMIN_PASSWORD" >> $GITHUB_ENV
           echo "NODE_ENV=e2e" >> $GITHUB_ENV          
           yarn run jest --runInBand
