@@ -62,16 +62,16 @@ jobs:
       #   run: source .env.e2e
     
       
-      - name: wait for server
-        run: |
-          timeout 60s bash -c 'until curl --silent --output /dev/null http://localhost:3234; do sleep 1; done'
+      # - name: wait for server
+      #   run: |
+      #     timeout 60s bash -c 'until curl --silent --output /dev/null http://localhost:3234; do sleep 1; done'
 
       - name: e2e test server
         env:
           SYSTEM_ADMIN_USERNAME: ${{ secrets.SYSTEM_ADMIN_USERNAME }}
           INITIAL_ADMIN_PASSWORD: ${{ secrets.INITIAL_ADMIN_PASSWORD }}
         run: |    
-          wget http://localhost:3234
+          wget http://127.0.0.1:3234
           cat index.html
           rm index.html
           yarn run jest --runInBand
