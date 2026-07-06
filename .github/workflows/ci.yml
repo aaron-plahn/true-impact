@@ -64,6 +64,6 @@ jobs:
         run: yarn run jest --runInBand
         working-directory: ./apps/server
       - if: always()
-        run: Test system admin user name:
+        run: echo Test system admin user name
         run: echo $SYSTEM_ADMIN_USERNAME
         run: docker compose --env-file .env.e2e down -v         
