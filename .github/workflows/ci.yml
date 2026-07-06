@@ -59,10 +59,8 @@ jobs:
       #   run: source .env.e2e
       
       - name: e2e test server
-        env:
-          SYSTEM_ADMIN_USERNAME: "tiuser"
-          # TODO this needs to come from elsewhere
-          INITIAL_ADMIN_PASSWORD: "hardpassword1"
+        environment:
+          name: test
         run: |
           source ../../.env.e2e
           echo Test system admin user name
