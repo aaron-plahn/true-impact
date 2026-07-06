@@ -1,4 +1,4 @@
-import { TrueImpactDataExample } from 'src/libs/data-types';
+import { TrueImpactDataExample } from '../../../../../libs/data-types';
 import { GROUP_PROGRAM_AGGREGATE_TYPE } from '../../constants';
 import { GroupProgramCompositeIdentifier } from '../../group-program.composite-identifier';
 

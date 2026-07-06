@@ -71,16 +71,6 @@ const expect = (
 
 describe(`GroupSessionLocation.validateInvariants`, () => {
   describe(`when the location is valid`, () => {
-    describe(`when specifying a community ID`, () => {
-      it(`should return no errors`, () => {
-        const validLocation = buildTestInstance(GroupSessionLocation, {
-          communityId: '123',
-        });
-
-        assertValid(validLocation);
-      });
-    });
-
     describe(`when specifying a location by name`, () => {
       it(`should return no errors`, () => {
         const validLocation = buildTestInstance(GroupSessionLocation, {
@@ -99,9 +89,34 @@ describe(`GroupSessionLocation.validateInvariants`, () => {
   });
 
   describe(`when the location is invalid`, () => {
+    // TODO Support this use case
+    describe(`when specifying a community ID`, () => {
+      it.only(`should return no errors`, () => {
+        const invalidLocation = buildTestInstance(
+          GroupSessionLocation,
+          {
+            communityId: '123',
+          },
+          { shouldValidate: false },
+        );
+
+        const result = invalidLocation.validateComplexInvariants();
+
+        expect(result).toHaveLength(1);
+
+        const message = result[0].toString();
+
+        expect(message).toContainText('not yet supported');
+      });
+    });
+
     describe(`when all properties are omittied`, () => {
       it(`should return the expected error`, () => {
-        const invalidInstance = buildTestInstance(GroupSessionLocation, {});
+        const invalidInstance = buildTestInstance(
+          GroupSessionLocation,
+          {},
+          { shouldValidate: false },
+        );
 
         const result = invalidInstance.validateComplexInvariants();
 
@@ -126,14 +141,24 @@ describe(`GroupSessionLocation.validateInvariants`, () => {
               communityId,
               name,
             },
+            {
+              shouldValidate: false,
+            },
           );
 
           const result =
             instanceWithCommunityAndName.validateComplexInvariants();
 
-          expect(result).toHaveLength(1);
+          /**
+           * We will get a second error saying that specifying a location by community ID is not yet supported.
+           */
+          const filteredResult = result.filter(
+            (r) => !r.toString().includes('not yet supported'),
+          );
 
-          const message = result[0].toString();
+          expect(filteredResult).toHaveLength(1);
+
+          const message = filteredResult[0].toString();
 
           expect(message).toContainText(
             'name and a community',

@@ -2,6 +2,22 @@
 
 This first release of the True Impact platform introduces a working model for user management, client management, and survey creation and completion.
 
+## 38
+In this PR, we introduce a Continuous Integration (software quality) pipeline. The CI step runs
+- server
+    - lint
+    - build
+    - unit test
+    - server e2e test (tests the build artifact)
+- client
+    - lint
+    - build (via Docker Compose)
+
+### Future Scoped
+We do not yet run the UI e2e (WebDriver.io) tests. We will gate `staging` with these as they will soon become to slow to gate `integration` for rapid iteration.
+
+We do not automate deployments in this PR.
+
 ## 37
 In this PR, we support the group program observation work flow on the server. This allows facilitators to record observations of a group program session by type or by notes which can later be classified by type. This is crucial for qualitative analysis of programs.
 

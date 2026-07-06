@@ -188,7 +188,7 @@ const httpClient = new TestHttpClient('http://localhost:4200');
  */
 describe.skip(`when reviewing a survey (e.g. when a clinician reviews a client's response to a particular survey)`, () => {
   let communityId: string;
-  let clientId: string;
+  let _clientId: string;
   let surveyId: string;
   let flagId: string;
   let surveyResponseRecordId: string;
@@ -221,7 +221,7 @@ describe.skip(`when reviewing a survey (e.g. when a clinician reviews a client's
       })
     ).id;
 
-    clientId = (
+    _clientId = (
       await seedRequiredState({
         indexEndpoint: indexEndpoints.clients,
         commandEndpoint: buildCommandEndpoint(indexEndpoints.clients),

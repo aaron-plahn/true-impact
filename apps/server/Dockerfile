@@ -1,5 +1,5 @@
 # Use a Node.js base image
-FROM node:24-alpine AS build
+FROM node:24.13.0-alpine AS build
 
 # Set the working directory
 WORKDIR /usr/src/app
@@ -18,7 +18,7 @@ COPY apps/server ./
 RUN yarn build
 
 # Production stage
-FROM node:24-alpine AS production
+FROM node:24.13.0-alpine AS production
 
 WORKDIR /usr/src/app
 
