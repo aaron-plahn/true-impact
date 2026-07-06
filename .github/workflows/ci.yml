@@ -66,8 +66,9 @@ jobs:
           SYSTEM_ADMIN_USERNAME: ${{ secrets.SYSTEM_ADMIN_USERNAME }}
           INITIAL_ADMIN_PASSWORD: ${{ secrets.INITIAL_ADMIN_PASSWORD }}
         run: |    
-          echo TESTTTTTTTTTTTTt
-          echo $SYSTEM_ADMIN_USERNAME
+          wget http://localhost:3234
+          cat index.html
+          rm index.html
           yarn run jest --runInBand
         working-directory: ./apps/server
       - if: always()
