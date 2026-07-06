@@ -63,6 +63,8 @@ jobs:
       
       - name: e2e test server
         run: |    
+          echo TESTTTTTTTTTTTTt
+          echo $SYSTEM_ADMIN_USERNAME
           yarn run jest --runInBand
         working-directory: ./apps/server
       - if: always()
