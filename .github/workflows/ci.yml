@@ -67,5 +67,13 @@ jobs:
         working-directory: ./apps/server
       - if: always()
         run: | 
-          docker compose --env-file .env.e2e down -v         
+          docker compose --env-file .env.e2e down -v  
+
+    ci-gate:
+      - name: Verify CI Quality Checks(lint, build, unit test, server e2e tests)
+        run: |
+          if [[ "${{ needs.build_and_test.result }}" != "success" ]]; then
+            echo "Required jobs failed!"
+            exit 1
+          fi       
           
