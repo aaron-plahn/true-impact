@@ -63,6 +63,7 @@ jobs:
           source ../../.env.e2e
           echo Test system admin user name
           echo $SYSTEM_ADMIN_USERNAME
+          echo Node Env: $NODE_ENV
           yarn run jest --runInBand
         working-directory: ./apps/server
       - if: always()
