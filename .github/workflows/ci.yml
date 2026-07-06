@@ -5,6 +5,7 @@ on:
     branches:
       - integration
 
+# cancel in-progress runs on next push
 concurrency:
   group: ci-${{ github.event.pull_request.number }}
   cancel-in-progress: true
