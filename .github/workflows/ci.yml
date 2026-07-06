@@ -48,8 +48,7 @@ jobs:
       - name: Start containerized app
         run: |
           docker compose --env-file .env.e2e up -d --build
-          echo Test system admin user name
-          echo $SYSTEM_ADMIN_USERNAME
+          cat .env.e2e
       # - name: Wait for Docker health check
       #   run: 
       #     |
@@ -67,4 +66,7 @@ jobs:
         run: yarn run jest --runInBand
         working-directory: ./apps/server
       - if: always()
-        run: docker compose --env-file .env.e2e down -v         
+        run: | 
+          docker compose --env-file .env.e2e down -v         
+          echo Test system admin user name
+          echo $SYSTEM_ADMIN_USERNAME
