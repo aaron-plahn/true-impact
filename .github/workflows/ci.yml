@@ -50,7 +50,18 @@ jobs:
             ./apps/server/node_modules
           if-no-files-found: error
 
-      # TODO Build the client as well
+      - name: build web admin client
+        run: yarn run build
+        working-directory: ./apps/web-client
+
+      - name: Upload admin web-client artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: web-client
+          path: |
+            ./apps/web-client/build
+
+          if-no-files-found: error 
 
       - name: Copy sample.env to .env.e2e
         # TODO use environment
