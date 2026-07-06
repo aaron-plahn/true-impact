@@ -63,7 +63,7 @@ jobs:
     
       
       - name: Wait for Server
-        run: npx wait-on http://127.0.0.1:3000 --timeout 60000
+        run: npx wait-on http://127.0.0.1:3234 --timeout 60000
       
       - name: e2e test server
         env:
