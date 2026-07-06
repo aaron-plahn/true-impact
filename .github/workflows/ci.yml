@@ -50,6 +50,10 @@ jobs:
             ./apps/server/node_modules
           if-no-files-found: error
 
+      - name: Install web-client dependencies
+        run: yarn install --frozen-lock-file
+        working-directory: ./apps/web-client
+
       - name: build web admin client
         run: yarn run build
         working-directory: ./apps/web-client
