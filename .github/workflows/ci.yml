@@ -60,7 +60,12 @@ jobs:
 
       # - name: source environment for server e2e tests
       #   run: source .env.e2e
+    
       
+      - name: wait for server
+        run: |
+          timeout 60s bash -c 'until curl --silent --output /dev/null http://localhost:3234; do sleep 1; done'
+
       - name: e2e test server
         env:
           SYSTEM_ADMIN_USERNAME: ${{ secrets.SYSTEM_ADMIN_USERNAME }}
