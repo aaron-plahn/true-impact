@@ -71,6 +71,7 @@ jobs:
 
   ci-gate:
     runs-on: ubuntu-latest
+    needs: [build]
     if: always() 
     steps:
       - name: Verify CI Quality Checks(lint, build, unit test, server e2e tests)
