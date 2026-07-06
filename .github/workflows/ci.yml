@@ -62,10 +62,9 @@ jobs:
       #   run: source .env.e2e
     
       
-      # - name: wait for server
-      #   run: |
-      #     timeout 60s bash -c 'until curl --silent --output /dev/null http://localhost:3234; do sleep 1; done'
-
+      - name: Wait for Server
+        run: npx wait-on http://127.0.0.1:3000 --timeout 60000
+      
       - name: e2e test server
         env:
           SYSTEM_ADMIN_USERNAME: ${{ secrets.SYSTEM_ADMIN_USERNAME }}
