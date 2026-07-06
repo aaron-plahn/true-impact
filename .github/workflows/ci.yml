@@ -75,7 +75,7 @@ jobs:
     steps:
       - name: Verify CI Quality Checks(lint, build, unit test, server e2e tests)
         run: |
-          if [[ "${{ needs.build_and_test.result }}" != "success" ]]; then
+          if [[ "${{ needs.build.result }}" != "success" ]]; then
             echo "Required jobs failed!"
             exit 1
           fi       
