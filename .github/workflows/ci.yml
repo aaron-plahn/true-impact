@@ -21,15 +21,15 @@ jobs:
         working-directory: ./apps/server
 
       - name: Lint server
-        run: npm run lint
+        run: yarn run lint
         working-directory: ./apps/server
 
       - name: Build server
-        run: npm run build
+        run: yarn run build
         working-directory: ./apps/server 
 
       - name: Unit test server
-        run: npm run test
+        run: yarn run test
         working-directory: ./apps/server
 
       - name: Upload server artifact
@@ -61,7 +61,7 @@ jobs:
         env:
           SYSTEM_ADMIN_USERNAME: tiuser
           INITIAL_ADMIN_PASSWORD: hardPASSWORD1
-        run: npm run jest --runInBand
+        run: yarn run jest --runInBand
         working-directory: ./apps/server
       - if: always()
         run: docker compose --env-file .env.e2e down -v         
