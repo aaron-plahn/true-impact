@@ -16,7 +16,6 @@
   },
   "dependencies": {
     "axios": "^1.16.0",
-    "chromedriver": "147.0.7727",
     "dotenv": "^17.4.2",
     "wdio-chromedriver-service": "^8.1.1",
     "wdio-video-reporter": "^6.2.0",
