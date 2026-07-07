@@ -46,8 +46,7 @@ jobs:
         with:
           node-version: 24.13.0
       - name: NPM Audit server dependencies
-        run: ls | grep yarn
-        # run: yarn audit --groups dependencies
+        run: yarn audit --groups dependencies
         working-directory: ./apps/server
     
 
