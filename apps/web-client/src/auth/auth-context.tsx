@@ -93,10 +93,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   const logOut = async () => {
-    const logOutResponse = await fetch("http://localhost:3234/auth/logOut", {
-      method: "POST",
-      credentials: "include",
-    });
+    // const logOutResponse = await fetch("http://localhost:3234/auth/logOut", {
+    //   method: "POST",
+    //   credentials: "include",
+    // });
 
     // const _logOutData = await logOutResponse.json();
 
