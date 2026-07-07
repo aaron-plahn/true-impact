@@ -37,7 +37,7 @@ jobs:
           node-version: 24.13.0
 
       - name: Set Up ChromeDriver
-        uses: browser-actions/setup-chrome@73954683cc80eced513145a42b668b9b91f753c3 # v2.1.2
+        uses: browser-actions/setup-chrome@v2 # TODO Pin this
         with:
           chromedriver-version: '147.0.7727'
 
