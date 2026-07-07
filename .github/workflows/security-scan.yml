@@ -8,32 +8,32 @@ on:
     schedule:
       - cron '0 0 * * 0' # Every Sunday at midnight
 
-  jobs:
-    codeql:
-      name: GitHub CodeQL Scan
-      runs-on:
-        ubuntu-latest
-      permissions:
-        security-events: write
-        actions: read
-        contents: read
-      steps:
-        - name: Checkout repository
-          uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+jobs:
+  codeql:
+    name: GitHub CodeQL Scan
+    runs-on:
+      ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
-        - name: Initialize codeql
-          uses: github/codeql-action/init@v3 # TODO pin this
-          with:
-            languages: 'javascript-typescript'
-            queries: security-extended,security-and-quality
+      - name: Initialize codeql
+        uses: github/codeql-action/init@v3 # TODO pin this
+        with:
+          languages: 'javascript-typescript'
+          queries: security-extended,security-and-quality
 
-        - name: Autobuild
-          uses: github/codeql-action/autobuild@v3 #TODO pin
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3 #TODO pin
 
-        - name: CodeQL Analysis
-          uses: github/codeql-action/analyze@v3 # TODO pin
-          with: 
-            category: "/language:javascript-typescript"
+      - name: CodeQL Analysis
+        uses: github/codeql-action/analyze@v3 # TODO pin
+        with: 
+          category: "/language:javascript-typescript"
     # TODO opt-in
     # npm-audit:
     #   name: NPM Dependency audit
