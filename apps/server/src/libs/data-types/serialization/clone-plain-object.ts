@@ -21,6 +21,11 @@ export const clonePlainObject = <
    */
   Object.entries(overrides).forEach(([key, newValue]: [string, unknown]) => {
     if (!(key in input)) {
+      /**
+       * We use allow-list based schema validation on all user input. There is no risk of superfluous
+       * property injection here.
+       */
+      // nosemgrep: javascript.lang.security.insecure-object-assign.insecure-object-assign
       Object.assign(cloned, {
         [key]: newValue,
       });
