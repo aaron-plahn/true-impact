@@ -3,8 +3,7 @@ name: UI E2E
 on: 
   push:
     branches:
-    # TODO make this integration
-      - e2e-in-ci
+      - integration
 
 # note that we don't want to cancel concurrent runs as it can be helpful to know which push to `integration` broke the UI tests
 
@@ -16,6 +15,7 @@ jobs:
     environment:
       name: test
     steps:
+      # TODO use shared actions to share steps with other workflows
       # TODO pin all actions to a specific SHA
       - name: Checkout code
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
