@@ -44,7 +44,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   ) => {
     // setIsLoading(true);
 
-
     // TODO can we refactor this? The try catch is really hard to follow. Throwing for control flow is confusing.
     try {
       const signInResponse = await fetch("http://localhost:3234/auth/logIn", {
@@ -99,7 +98,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       credentials: "include",
     });
 
-    const _logOutData = await logOutResponse.json();
+    // const _logOutData = await logOutResponse.json();
 
     setUser(null);
   };
