@@ -47,8 +47,10 @@ jobs:
         with:
           node-version: 24.13.0
           cache: 'npm'
-      - name: NPM Audit
+      - name: NPM Audit server dependencies
         run: yarn audit --groups dependencies
+        working-directory: ./apps/server
+    
 
     # secret-scan:
     #   name: Secret & Dotenv Leak Scan
