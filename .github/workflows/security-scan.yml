@@ -22,16 +22,16 @@ jobs:
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
       - name: Initialize codeql
-        uses: github/codeql-action/init@v3 # TODO pin this
+        uses: github/codeql-action/init@v4 # TODO pin this
         with:
           languages: 'javascript-typescript'
           queries: security-extended,security-and-quality
 
       - name: Autobuild
-        uses: github/codeql-action/autobuild@v3 #TODO pin
+        uses: github/codeql-action/autobuild@v4 #TODO pin
 
       - name: CodeQL Analysis
-        uses: github/codeql-action/analyze@v3 # TODO pin
+        uses: github/codeql-action/analyze@v4 # TODO pin
         with: 
           category: "/language:javascript-typescript"
     # TODO opt-in
