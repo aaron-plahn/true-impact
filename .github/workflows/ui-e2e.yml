@@ -39,7 +39,7 @@ jobs:
       - name: Set Up ChromeDriver
         uses: browser-actions/setup-chrome@v2 # TODO Pin this
         with:
-          chromedriver-version: '147.0.7727'
+          chrome-version: '147.0.7727'
 
       - name: Install e2e npm dependencies
         run: yarn install --frozen-lock-file
