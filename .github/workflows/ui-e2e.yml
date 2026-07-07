@@ -50,7 +50,7 @@ jobs:
           SYSTEM_ADMIN_USERNAME: ${{ secrets.SYSTEM_ADMIN_USERNAME }}
           INITIAL_ADMIN_PASSWORD: ${{ secrets.INITIAL_ADMIN_PASSWORD }}
         run: |
-          yarn run wdio
+          yarn run wdio:ci
         working-directory: ./apps/e2e
       - if: always()
         run: |
