@@ -1,0 +1,57 @@
+name: UI E2E
+
+on: 
+  push:
+    branches:
+      - integration
+
+# note that we don't want to cancel concurrent runs as it can be helpful to know which push to `integration` broke the UI tests
+
+permissions: {}
+
+jobs:
+  uie2e:
+    runs-on: ubuntu-latest
+    environment:
+      name: test
+    steps:
+      # TODO use shared actions to share steps with other workflows
+      # TODO pin all actions to a specific SHA
+      - name: Checkout code
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Copy sample.env to .env.e2e
+        # TODO use environment
+        run: cp sample.env .env.e2e
+
+      - name: Start containerized app
+        run: |
+          docker compose --env-file .env.e2e up -d --build
+
+      - name: Wait for Server
+        run: npx wait-on http://127.0.0.1:3234 --timeout 60000
+
+      - name: Set Up Node.js
+        uses: actions/setup-node/@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: 24.13.0
+
+      - name: Set Up ChromeDriver
+        uses: browser-actions/setup-chrome@2e1d749697dd1612b833dba4a722266286fbefcd # v2.1.2
+        with:
+          chrome-version: '147.0.7727'
+
+      - name: Install e2e npm dependencies
+        run: yarn install --frozen-lock-file
+        working-directory: ./apps/e2e
+
+      - name: e2e test UI
+        env:
+          SYSTEM_ADMIN_USERNAME: ${{ secrets.SYSTEM_ADMIN_USERNAME }}
+          INITIAL_ADMIN_PASSWORD: ${{ secrets.INITIAL_ADMIN_PASSWORD }}
+        run: |
+          yarn run wdio:ci
+        working-directory: ./apps/e2e
+      - if: always()
+        run: |
+          docker compose --env-file .env.e2e down -v

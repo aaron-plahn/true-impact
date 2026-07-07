@@ -2,6 +2,9 @@
 
 This first release of the True Impact platform introduces a working model for user management, client management, and survey creation and completion.
 
+## 40
+In this PR, we run the UI e2e tests in the CI as a gate that prevents moving from `integration` to `staging`.
+
 ## 39
 In this PR, we build the admin web-client in the CI step and publish the artifacts. Note that for the web-client, lint is part of the build. Also note that this is redundant with the Docker Compose build that is used for e2e tests. When automating deployments, we will address which build is the source of truth.
 
