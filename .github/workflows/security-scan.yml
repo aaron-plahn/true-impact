@@ -8,6 +8,13 @@ on:
     schedule:
       - cron '0 0 * * 0' # Every Sunday at midnight
 
+# cancel in-progress runs on next push
+concurrency:
+  group: ci-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions: {}
+
 jobs:
   codeql:
     name: GitHub CodeQL Scan

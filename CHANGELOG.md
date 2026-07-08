@@ -2,6 +2,9 @@
 
 This first release of the True Impact platform introduces a working model for user management, client management, and survey creation and completion.
 
+## 41
+In this PR, we include several security scans in the CI pipeline.
+
 ## 40
 In this PR, we run the UI e2e tests in the CI as a gate that prevents moving from `integration` to `staging`.
 
