@@ -12,7 +12,7 @@ export interface Headers {
  */
 export class TestHttpClient implements Omit<
   axios.AxiosInstance,
-  'constructor'
+  'constructor' | 'query'
 > {
   private axiosInstance: axios.AxiosInstance;
 

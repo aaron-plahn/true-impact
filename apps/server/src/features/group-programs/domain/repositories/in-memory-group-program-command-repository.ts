@@ -26,7 +26,7 @@ export class InMemoryGroupProgramCommandRepository implements IGroupProgramComma
       if (
         (propertySchema as SimpleSchemaPropertyMetadata | null)?.mustBeUnique
       ) {
-        return [propertyKey as keyof GroupProgram];
+        return [propertyKey];
       }
 
       return [];

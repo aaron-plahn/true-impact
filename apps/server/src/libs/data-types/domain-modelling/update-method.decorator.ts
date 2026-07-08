@@ -60,8 +60,7 @@ export function UpdateMethod(): MethodDecorator {
       //   const cloned = this.clone();
 
       const updated = originalImplementation.apply(cloned, args) as
-        | Entity
-        | TrueImpactError;
+        Entity | TrueImpactError;
 
       if (!updated) {
         throw new Error(

@@ -26,7 +26,7 @@ export class InMemoryCommunityCommandRepository implements ICommunityCommandRepo
       if (
         (propertySchema as SimpleSchemaPropertyMetadata | null)?.mustBeUnique
       ) {
-        return [propertyKey as keyof Community];
+        return [propertyKey];
       }
 
       return [];

@@ -26,7 +26,7 @@ export class InMemorySurveyCommandRepository implements ISurveyCommandRepository
       if (
         (propertySchema as SimpleSchemaPropertyMetadata | null)?.mustBeUnique
       ) {
-        return [propertyKey as keyof Survey];
+        return [propertyKey];
       }
 
       return [];

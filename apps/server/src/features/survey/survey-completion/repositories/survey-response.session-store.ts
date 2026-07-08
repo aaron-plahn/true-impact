@@ -82,9 +82,7 @@ export class SurveyResponseSessionStore extends session.Store {
     callback: (
       err: any,
       obj?:
-        | session.SessionData[]
-        | { [sid: string]: session.SessionData }
-        | null,
+        session.SessionData[] | { [sid: string]: session.SessionData } | null,
     ) => void,
   ): void {
     this.sessionRepository

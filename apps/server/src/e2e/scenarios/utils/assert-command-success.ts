@@ -34,7 +34,8 @@ export const assertCommandSuccess = async ({
       },
     );
 
-  if ((response.status as HttpStatus) !== HttpStatus.CREATED) {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
+  if (response.status !== HttpStatus.CREATED) {
     console.log('test setup failed here');
   }
 
@@ -44,7 +45,7 @@ export const assertCommandSuccess = async ({
     status: response.status,
 
     body: (response as AxiosResponse).data as PersistenceAcknowledgement,
-  } as unknown as SuccessResponse;
+  };
 
   if (typeof assertSuccess === 'function') {
     await assertSuccess(successResponse.body);

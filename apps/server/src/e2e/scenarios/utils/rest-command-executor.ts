@@ -28,8 +28,7 @@ export class RestCommandStreamExecutor {
       );
 
     const result = response.data as
-      | PersistenceAcknowledgement
-      | CommandErrorResponseBody;
+      PersistenceAcknowledgement | CommandErrorResponseBody;
 
     return result;
   }

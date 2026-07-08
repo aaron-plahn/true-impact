@@ -1,8 +1,5 @@
 import { CreateFlag } from '../../../features/flags/commands';
-import {
-  FlagViewModel,
-  FlagViewModelClientDto,
-} from '../../../features/flags/queries';
+import { FlagViewModel } from '../../../features/flags/queries';
 import {
   SurveyViewModel,
   SurveyViewModelClientDto,
@@ -927,11 +924,7 @@ describe(`Survey Management Scenarios`, () => {
                             );
 
                           const flaggedFollowUpOptions =
-                            flaggedFollowUpQuestion?.options ||
-                            ({} as Record<
-                              string,
-                              { flags: Record<string, FlagViewModelClientDto> }
-                            >);
+                            flaggedFollowUpQuestion?.options || {};
 
                           const flaggedFollowUpOption =
                             flaggedFollowUpOptions[labelOfFollowUpOptionToFlag];
