@@ -1,8 +1,7 @@
 version: 2
-updates: 
+updates:
   - package-ecosystem: "npm"
     directory: "/"
     target-branch: "integration"
-    schedule: 
+    schedule:
       interval: "weekly"
-      
