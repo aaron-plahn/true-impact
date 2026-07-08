@@ -9,7 +9,6 @@ import {
   TrueImpactRuntimeException,
 } from '../../../libs/data-types';
 import { USER_AGGREGATE_TYPE } from '../constants';
-import { UserRole } from '../types';
 import { User } from '../user.aggregate-root';
 import { IUserCommandRepository } from './user-command-repository.interface';
 
@@ -33,7 +32,7 @@ export class InMemoryUserCommandRepository implements IUserCommandRepository {
       if (
         (propertySchema as SimpleSchemaPropertyMetadata | null)?.mustBeUnique
       ) {
-        return [propertyKey as keyof UserRole];
+        return [propertyKey];
       }
 
       return [];

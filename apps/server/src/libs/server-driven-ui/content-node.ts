@@ -35,7 +35,4 @@ export interface LinkContentNode {
 }
 
 export type ContentNode =
-  | TextContentNode
-  | ImageContentNode
-  | ActionContentNode
-  | LinkContentNode;
+  TextContentNode | ImageContentNode | ActionContentNode | LinkContentNode;

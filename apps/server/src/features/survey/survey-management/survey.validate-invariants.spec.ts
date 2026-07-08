@@ -6,11 +6,9 @@ import { Survey } from './survey.aggregate-root';
 const surveyName = 'my survey';
 
 const testCategories = ['white', 'yellow', 'red', 'black']
-  .map(
-    (category): SurveyAnalysisCategoryPersistenceDto => ({
-      label: category,
-    }),
-  )
+  .map((category): SurveyAnalysisCategoryPersistenceDto => ({
+    label: category,
+  }))
   .reduce(
     (acc, c) => {
       acc[c.label] = c;

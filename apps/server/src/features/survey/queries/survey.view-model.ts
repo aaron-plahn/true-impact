@@ -304,7 +304,7 @@ export class SurveyViewModel {
                     questionBank.get(followUpQuestionLabel) as SurveyQuestion,
                     questionBank,
                     context,
-                  ) as FollowUpQuestionViewModel, // We do this to avoid circularities with our type definitions when recursing
+                  ), // We do this to avoid circularities with our type definitions when recursing
                 ]
               : ([] as FollowUpQuestionViewModel[]);
 

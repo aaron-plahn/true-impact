@@ -87,11 +87,7 @@ export const isLookupTablePropertyMetadata = (
   (input as LookupTablePropertyMetadata).type === 'lookup-table-object';
 
 export type SetDecoratorElementType =
-  | GetCtor
-  | 'string'
-  | 'integer'
-  | 'number'
-  | 'boolean';
+  GetCtor | 'string' | 'integer' | 'number' | 'boolean';
 
 export type SetPropertyMetadata = {
   type: 'set';

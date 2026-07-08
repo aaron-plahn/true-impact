@@ -1,6 +1,5 @@
 import { TrueImpactError } from '../../../libs/data-types';
 import { ActionContentNode } from '../content-node';
-import { TISduiFormField } from '../forms';
 
 export const actionToHtmlFragment = ({
   id,
@@ -61,7 +60,7 @@ export const actionToHtmlFragment = ({
 
       const exhaustiveCheck: never = field;
 
-      return `<div>Unsupported type for form field: ${JSON.stringify(exhaustiveCheck as unknown as TISduiFormField)}</div>`;
+      return `<div>Unsupported type for form field: ${JSON.stringify(exhaustiveCheck)}</div>`;
     })
     .concat(hiddenFieldsFromContext)
     .join('\n');
