@@ -1,6 +1,7 @@
 import { PersistenceAcknowledgement } from '../../../../libs/cqrs-es';
 import {
   getDataSchemaFromClassCtor,
+  SchemaPropertyMetadata,
   SimpleSchemaPropertyMetadata,
   TrueImpactBadUserInputError,
   TrueImpactError,
@@ -22,15 +23,20 @@ export class InMemoryGroupProgramCommandRepository implements IGroupProgramComma
 
     const uniqueFields: (keyof GroupProgram)[] = Array.from(
       Object.entries(schema.properties),
-    ).flatMap(([propertyKey, propertySchema]) => {
-      if (
-        (propertySchema as SimpleSchemaPropertyMetadata | null)?.mustBeUnique
-      ) {
-        return [propertyKey];
-      }
+    ).flatMap(
+      ([propertyKey, propertySchema]: [
+        keyof GroupProgram,
+        SchemaPropertyMetadata,
+      ]) => {
+        if (
+          (propertySchema as SimpleSchemaPropertyMetadata | null)?.mustBeUnique
+        ) {
+          return [propertyKey];
+        }
 
-      return [];
-    });
+        return [];
+      },
+    );
 
     uniqueFields.forEach((f) => {
       this.uniqueFields.add(f);

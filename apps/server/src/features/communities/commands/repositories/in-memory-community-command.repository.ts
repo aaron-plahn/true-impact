@@ -1,6 +1,7 @@
 import { PersistenceAcknowledgement } from '../../../../libs/cqrs-es';
 import {
   getDataSchemaFromClassCtor,
+  SchemaPropertyMetadata,
   SimpleSchemaPropertyMetadata,
   TrueImpactBadUserInputError,
   TrueImpactError,
@@ -22,15 +23,20 @@ export class InMemoryCommunityCommandRepository implements ICommunityCommandRepo
 
     const uniqueFields: (keyof Community)[] = Array.from(
       Object.entries(schema.properties),
-    ).flatMap(([propertyKey, propertySchema]) => {
-      if (
-        (propertySchema as SimpleSchemaPropertyMetadata | null)?.mustBeUnique
-      ) {
-        return [propertyKey];
-      }
+    ).flatMap(
+      ([propertyKey, propertySchema]: [
+        keyof Community,
+        SchemaPropertyMetadata,
+      ]) => {
+        if (
+          (propertySchema as SimpleSchemaPropertyMetadata | null)?.mustBeUnique
+        ) {
+          return [propertyKey];
+        }
 
-      return [];
-    });
+        return [];
+      },
+    );
 
     uniqueFields.forEach((f) => {
       this.uniqueFields.add(f);
