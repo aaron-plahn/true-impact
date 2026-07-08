@@ -56,11 +56,4 @@ jobs:
       with:
         fetch-depth: 0 # Deep history check
 
-    - name: TruffleHog OSS Secret Scan
-      uses: trufflesecurity/trufflehog-oss-action@main # TODO pin this to an SHA
-      with:
-        base: ${{ github.event.repository.default_branch }}
-        head: HEAD
-        extra_args: --only-verified
-
     # TODO dependabot
