@@ -35,6 +35,18 @@ jobs:
         with: 
           category: "/language:javascript-typescript"
 
+  semgrep:
+    name: semgrep-scan
+    runs-on: ubuntu-latest
+    container:
+      image: semgrep/semgrep
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Run Semgrep Scan
+        run: semgrep scan --config auto
+
   npm-audit:
     name: NPM Dependency audit
     runs-on: ubuntu-latest
