@@ -42,3 +42,4 @@ jobs:
       - name: NPM Audit server dependencies
         run: yarn audit --groups dependencies
         working-directory: ./apps/web-client
+        
