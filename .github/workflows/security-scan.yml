@@ -65,7 +65,7 @@ jobs:
 
   security-scan-gate:
     runs-on: ubuntu-latest
-    needs: [codeql,semgrep,secret-scan]
+    needs: [codeql,semgrep,secretscan]
     if: always()
     steps:
       - name: Verify all security scans have succeeded
