@@ -47,20 +47,20 @@ jobs:
       - name: Run Semgrep Scan
         run: semgrep scan --config auto
 
-    secret-scan:
-      name: Secret & Dotenv Leak Scan
-      runs-on: ubuntu-latest
-      steps:
-      - name: Checkout repository
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-        with:
-          fetch-depth: 0 # Deep history check
+  secret-scan:
+    name: Secret & Dotenv Leak Scan
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      with:
+        fetch-depth: 0 # Deep history check
 
-      - name: TruffleHog OSS Secret Scan
-        uses: trufflesecurity/trufflehog-oss-action@main # TODO pin this to an SHA
-        with:
-          base: ${{ github.event.repository.default_branch }}
-          head: HEAD
-          extra_args: --only-verified
+    - name: TruffleHog OSS Secret Scan
+      uses: trufflesecurity/trufflehog-oss-action@main # TODO pin this to an SHA
+      with:
+        base: ${{ github.event.repository.default_branch }}
+        head: HEAD
+        extra_args: --only-verified
 
     # TODO dependabot
