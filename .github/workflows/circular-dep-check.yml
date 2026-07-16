@@ -30,7 +30,6 @@ jobs:
       run: |
         n_new_circular_deps=$(npx madge --circular --extensions ts,tsx --ts-config ./tsconfig.json src/ 2>&1 >/dev/null | grep -oP '[0-9]+' | head -n 1)
         echo "$n_new_circular_deps circular dependencies found"
-        # (( $n_new_circular_deps > 18 )) && echo "Found $n_new_circular_deps circular deps. This is more than the existing [18]"
-        echo "Found $n_new_circular_deps circular deps. This is more than the existing [18]"
+        (( $n_new_circular_deps > 18 )) && echo "Found $n_new_circular_deps circular deps. This is more than the existing [18]"
 
       working-directory: ./apps/server
