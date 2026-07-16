@@ -29,11 +29,20 @@ resource "digitalocean_droplet" "backend_server"{
     ssh_keys        =   var.ssh_access_key_fingerprints
 }
 
-resource "digitalocean_record" "dns" {
+resource "digitalocean_record" "client_dns_record" {
     domain  = var.apex_domain
     type    =   "A"
     name    =   "client.staging"
     value   =   digitalocean_droplet.web_server.ipv4_address
+    ttl     =   300
+}
+
+
+resource "digitalocean_record" "server_dns_record" {
+    domain  = var.apex_domain
+    type    =   "A"
+    name    =   "server.staging"
+    value   =   digitalocean_droplet.backend_server.ipv4_address
     ttl     =   300
 }
 
@@ -45,7 +54,12 @@ resource "digitalocean_project_resources" "project_membership" {
     ]
 }
 
-output "droplet_public_ip" {
+output "client_public_ip" {
     description =   "Public IP of the (static asset) web server"
     value       =   digitalocean_droplet.web_server.ipv4_address
+}
+
+output "server_public_ip" {
+    description =   "Public IP of the (backend) server"
+    value       =   digitalocean_droplet.backend_server.ipv4_address
 }
