@@ -1,0 +1,35 @@
+name: Circular Dependency Check
+
+
+on:
+  pull_request:
+    branches:
+      - integration
+
+permissions: {}
+
+jobs:
+  circ_dep_check:
+    runs-on: ubuntu-latest
+    environment:
+      name: test
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+    
+    - name: Setup Node.js
+      uses: actions/setup-node/@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+      with:
+        node-version: 24.13.0
+      
+    # Existing circular deps are grandfathered, but we can strangle them out over time
+    # run the madge command with --json and diff this against another branch's output to see what's new
+    - name: Madge Circular Build Dependency Check
+      run: |
+        baseline_n_circular_deps=8
+        n_new_circular_deps=$(npx madge --circular --extensions ts,tsx --ts-config ./tsconfig.json src/ 2>&1 >/dev/null | grep -oP '[0-9]+' | head -n 1)
+        echo "$n_new_circular_deps circular dependencies found"
+        if [ $n_new_circular_deps -gt $baseline_n_circular_deps ]; then echo "$n_new_circular_deps > $baseline_n_circular_deps. You have introduced new circular dependencies."; else echo "no new circular dependencies found. still at $baseline_n_circular_deps"; fi
+
+      working-directory: ./apps/server
+      
