@@ -30,5 +30,5 @@ jobs:
       run: |
         n_existing_circ_deps=10
         n_current_circ_deps=$(npx madge --circular --extensions ts,tsx --ts-config ./tsconfig.json src/ 2>&1 >/dev/null | grep -oP '[0-9]+' | head -n 1)
-        (( $n_current_circ_deps > $n_existing_circ_deps )) && echo "Found $n_current_circ_deps circular deps. This is more than the existing [$n_existing_circ_deps]" && exit 1
+        (( $n_current_circ_deps > $n_existing_circ_deps )) && echo "Found $n_current_circ_deps circular deps. This is more than the existing [$n_existing_circ_deps]" >&2 && exit 1
       working-directory: ./apps/server
