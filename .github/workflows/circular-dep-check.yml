@@ -29,7 +29,10 @@ jobs:
       
       
 
+    # Existing circular deps are grandfathered, but we can strangle them out over time
+    # run the madge command with --json and diff this against another branch's output to see what's new
     - name: Madge Circular Build Dependency Check
       run: |
-        npx madge --circular src/
+        export n_existing_circ_deps=10
+        (( $(npx madge --circular --extensions ts,tsx --ts-config ./tsconfig.json src/ 2>&1 >/dev/null | grep -oP '[0-9]+' | head -n 1) > $n_existing_circ_deps )) && exit 1
       working-directory: ./apps/server
