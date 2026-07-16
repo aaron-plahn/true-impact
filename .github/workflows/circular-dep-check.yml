@@ -22,8 +22,6 @@ jobs:
       with:
         node-version: 24.13.0
       
-      
-
     # Existing circular deps are grandfathered, but we can strangle them out over time
     # run the madge command with --json and diff this against another branch's output to see what's new
     - name: Madge Circular Build Dependency Check
@@ -34,3 +32,4 @@ jobs:
         if [ $n_new_circular_deps -gt $baseline_n_circular_deps ]; then echo "$n_new_circular_deps > $baseline_n_circular_deps. You have introduced new circular dependencies."; else echo "no new circular dependencies found. still at $baseline_n_circular_deps"; fi
 
       working-directory: ./apps/server
+      
