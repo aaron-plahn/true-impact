@@ -14,10 +14,19 @@ resource "digitalocean_droplet" "web_server" {
     size            =   "s-1vcpu-512mb-10gb"
     region          =   var.region
     vpc_uuid        = digitalocean_vpc.vpc.id
-    image           =   "ubuntu-24-04-x64"
+    image           =   var.client_image_id
     droplet_agent   = true
-    ssh_keys       =   var.ssh_access_key_fingerprints
- #                       EOF
+    ssh_keys        =   var.ssh_access_key_fingerprints
+}
+
+resource "digitalocean_droplet" "backend_server"{
+    name            =   "backend"
+    size            =   "s-1vcpu-512mb-10gb"
+    region          =   var.region
+    vpc_uuid        =   digitalocean_vpc.vpc.id
+    image           =   var.server_image_id
+    droplet_agent   =   true
+    ssh_keys        =   var.ssh_access_key_fingerprints
 }
 
 resource "digitalocean_record" "dns" {
@@ -31,7 +40,8 @@ resource "digitalocean_record" "dns" {
 resource "digitalocean_project_resources" "project_membership" {
     project     =   data.digitalocean_project.project.id
     resources = [
-        digitalocean_droplet.web_server.urn
+        digitalocean_droplet.web_server.urn,
+        digitalocean_droplet.backend_server.urn
     ]
 }
 

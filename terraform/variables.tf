@@ -25,3 +25,15 @@ variable "ssh_access_key_fingerprints" {
     description =   "Existing DO SSH key fingerprints for access"
     default     =   []
 }
+
+variable "client_image_id"{
+    type        =   string
+    description =   "DigitalOcean base image for the web client droplet"
+    default     =   "ubuntu-24-04-x64"
+}
+
+variable "server_image_id" {
+    type        =   string
+    description =   "DigitalOcean base image for the server droplet"
+    default     =   "ubuntu-24-04-x64"
+}
