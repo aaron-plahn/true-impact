@@ -28,5 +28,6 @@ jobs:
     # run the madge command with --json and diff this against another branch's output to see what's new
     - name: Madge Circular Build Dependency Check
       run: |
-        (( $(npx madge --circular --extensions ts,tsx --ts-config ./tsconfig.json src/ 2>&1 >/dev/null | grep -oP '[0-9]+' | head -n 1) > 18 )) && echo "Found $n_current_circ_deps circular deps. This is more than the existing [18]" >&2 && exit 1
+        npx madge --circular --extensions ts,tsx --ts-config ./tsconfig.json src/
+      #  (( $(npx madge --circular --extensions ts,tsx --ts-config ./tsconfig.json src/ 2>&1 >/dev/null | grep -oP '[0-9]+' | head -n 1) > 18 )) && echo "Found $n_current_circ_deps circular deps. This is more than the existing [18]" >&2 && exit 1
       working-directory: ./apps/server
