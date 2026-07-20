@@ -20,19 +20,21 @@ fi
 
 # Config
 echo "using ssh key: ${DEPLOYMENT_SSH_KEY_PATH}"
-LOCAL_BUILD_DIR="${LOCAL_BUILD_DIR_BASE}/web-client"
+LOCAL_BUILD_DIR="${LOCAL_BUILD_DIR_BASE}/server"
 echo "deploying web-client build from local path: ${LOCAL_BUILD_DIR}"
 DEV_ENV="staging"
 echo "to environment: ${DEV_ENV}"
-# Make this a non-root user?
+# REMOTE_USER="appuser"
 REMOTE_USER="root"
-REMOTE_HOST="client.${DEV_ENV}.${APEX_HOST}"
-# TODO Customize this?
-# TODO do we need the trailing slash?
-REMOTE_TARGET_DIR="/var/www/html/"
+REMOTE_HOST="server.${DEV_ENV}.${APEX_HOST}"
+REMOTE_TARGET_DIR="/apps"
 
 # Currently we use ephemeral droplets with dynamic public IPs.
 ssh-keygen -f ~/.ssh/known_hosts -R "${REMOTE_HOST}"
 
+SSH_CONNECTION_STRING="${REMOTE_USER}@${REMOTE_HOST}"
+
+ssh -i "${DEPLOYMENT_SSH_KEY_PATH}" -o StrictHostKeyChecking=accept-new "${SSH_CONNECTION_STRING}" "mkdir ${REMOTE_TARGET_DIR}"
+
 rsync -avze "ssh -i ${DEPLOYMENT_SSH_KEY_PATH} -o StrictHostKeyChecking=accept-new" \
-   "${LOCAL_BUILD_DIR}/" "${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_TARGET_DIR}/"
+   "${LOCAL_BUILD_DIR}/" "${SSH_CONNECTION_STRING}:${REMOTE_TARGET_DIR}/"
