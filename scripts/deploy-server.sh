@@ -24,7 +24,7 @@ LOCAL_BUILD_DIR="${LOCAL_BUILD_DIR_BASE}/server"
 echo "deploying web-client build from local path: ${LOCAL_BUILD_DIR}"
 DEV_ENV="staging"
 echo "to environment: ${DEV_ENV}"
-# REMOTE_USER="appuser"
+# TODO Make this a non-root user
 REMOTE_USER="root"
 REMOTE_HOST="backend.${DEV_ENV}.${APEX_HOST}"
 REMOTE_TARGET_DIR="/apps"
@@ -45,4 +45,5 @@ rsync -avze "ssh -i ${DEPLOYMENT_SSH_KEY_PATH} -o StrictHostKeyChecking=accept-n
 rsync -avze "ssh -i ${DEPLOYMENT_SSH_KEY_PATH} -o StrictHostKeyChecking=accept-new" \
    ./start-server.sh "${SSH_CONNECTION_STRING}:${REMOTE_TARGET_DIR}/"
 
+# TODO Make this work. Currently, we have to ssh in and run this script on the new server.
 # ssh -i "${DEPLOYMENT_SSH_KEY_PATH}" -o StrictHostKeyChecking=accept-new "${SSH_CONNECTION_STRING}" "cd ${REMOTE_TARGET_DIR}/dist && NODE_ENV=staging && /root/.nvm/nvm.sh bash start-backend.sh"

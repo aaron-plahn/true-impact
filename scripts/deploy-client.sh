@@ -24,7 +24,7 @@ LOCAL_BUILD_DIR="${LOCAL_BUILD_DIR_BASE}/web-client"
 echo "deploying web-client build from local path: ${LOCAL_BUILD_DIR}"
 DEV_ENV="staging"
 echo "to environment: ${DEV_ENV}"
-# Make this a non-root user?
+# TODO Make this a non-root user
 REMOTE_USER="root"
 REMOTE_HOST="client.${DEV_ENV}.${APEX_HOST}"
 # TODO Customize this?
