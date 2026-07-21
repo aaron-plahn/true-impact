@@ -2,6 +2,9 @@
 
 This first release of the True Impact platform introduces a working model for user management, client management, and survey creation and completion.
 
+## 50
+In this PR, we automate deployments to a staging environment. 
+
 ## 49
 In this PR, we run circular dependency checks in the CI. 
 
