@@ -17,7 +17,11 @@ const nodeEnv = process.env.NODE_ENV || 'local';
     ConfigModule.forRoot({
       isGlobal: true,
       // TODO Support a different env per environment. Use a different NODE_ENV for Docker runs vs. local npm runs.
-      envFilePath: [`.env.${nodeEnv}`, `../../.env.${nodeEnv}`],
+      envFilePath: [
+        `.env.${nodeEnv}`,
+        `../../.env.${nodeEnv}`,
+        `../../.env.${nodeEnv}`,
+      ],
     }),
     CryptographyModule,
     AuthModule,
