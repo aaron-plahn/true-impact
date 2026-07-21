@@ -1,5 +1,6 @@
 import { SubmitEventHandler, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { config } from "../../../config";
 
 export const NewSurveyPage = () => {
   const [error, setError] = useState<Error | null>(null);
@@ -21,7 +22,7 @@ export const NewSurveyPage = () => {
     };
 
     try {
-      const response = await fetch("http://localhost:3234/surveys/commands", {
+      const response = await fetch(`${config.API_URL}/surveys/commands`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

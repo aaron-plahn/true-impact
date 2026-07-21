@@ -1,4 +1,5 @@
 import { createContext, ReactNode, useContext, useState } from "react";
+import { config } from "../config";
 
 interface AppCredentials {
   username: string;
@@ -46,7 +47,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
     // TODO can we refactor this? The try catch is really hard to follow. Throwing for control flow is confusing.
     try {
-      const signInResponse = await fetch("http://localhost:3234/auth/logIn", {
+      const signInResponse = await fetch(`${config.API_URL}/auth/logIn`, {
         method: "POST",
         credentials: "include",
         headers: {
@@ -60,7 +61,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
 
       const userProfileResponse = await fetch(
-        "http://localhost:3234/auth/session",
+        `${config.API_URL}/auth/session`,
         {
           method: "GET",
           credentials: "include",
@@ -93,7 +94,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   const logOut = async () => {
-    // const logOutResponse = await fetch("http://localhost:3234/auth/logOut", {
+    // const logOutResponse = await fetch(`${config.API_URL}/auth/logOut`, {
     //   method: "POST",
     //   credentials: "include",
     // });

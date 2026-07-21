@@ -1,5 +1,5 @@
 import { JSX, useEffect, useState } from "react";
-import { config } from "../../config/config.local";
+import { config } from "../../config";
 import { Loading } from "../loading";
 
 type UserInfo = {};
@@ -29,7 +29,7 @@ export const UserProfile = (): JSX.Element => {
     }
 
     try {
-      fetch(new URL(`${config.apiDomain}/sessioninfo`).toString()).then(
+      fetch(new URL(`${config.API_URL}/sessioninfo`).toString()).then(
         async (response) => {
           const body = await response.json();
 
