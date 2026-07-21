@@ -26,7 +26,7 @@ DEV_ENV="staging"
 echo "to environment: ${DEV_ENV}"
 # REMOTE_USER="appuser"
 REMOTE_USER="root"
-REMOTE_HOST="server.${DEV_ENV}.${APEX_HOST}"
+REMOTE_HOST="backend.${DEV_ENV}.${APEX_HOST}"
 REMOTE_TARGET_DIR="/apps"
 
 # Currently we use ephemeral droplets with dynamic public IPs.
@@ -38,3 +38,11 @@ ssh -i "${DEPLOYMENT_SSH_KEY_PATH}" -o StrictHostKeyChecking=accept-new "${SSH_C
 
 rsync -avze "ssh -i ${DEPLOYMENT_SSH_KEY_PATH} -o StrictHostKeyChecking=accept-new" \
    "${LOCAL_BUILD_DIR}/" "${SSH_CONNECTION_STRING}:${REMOTE_TARGET_DIR}/"
+
+rsync -avze "ssh -i ${DEPLOYMENT_SSH_KEY_PATH} -o StrictHostKeyChecking=accept-new" \
+   "${LOCAL_BUILD_DIR_BASE}/env/" "${SSH_CONNECTION_STRING}:${REMOTE_TARGET_DIR}/dist"
+
+rsync -avze "ssh -i ${DEPLOYMENT_SSH_KEY_PATH} -o StrictHostKeyChecking=accept-new" \
+   ./start-server.sh "${SSH_CONNECTION_STRING}:${REMOTE_TARGET_DIR}/"
+
+# ssh -i "${DEPLOYMENT_SSH_KEY_PATH}" -o StrictHostKeyChecking=accept-new "${SSH_CONNECTION_STRING}" "cd ${REMOTE_TARGET_DIR}/dist && NODE_ENV=staging && /root/.nvm/nvm.sh bash start-backend.sh"

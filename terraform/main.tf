@@ -41,7 +41,7 @@ resource "digitalocean_record" "client_dns_record" {
 resource "digitalocean_record" "server_dns_record" {
     domain  = var.apex_domain
     type    =   "A"
-    name    =   "server.staging"
+    name    =   "backend.staging"
     value   =   digitalocean_droplet.backend_server.ipv4_address
     ttl     =   300
 }
