@@ -19,9 +19,14 @@ async function bootstrap() {
     'http://localhost',
   );
 
-  const clientPort = configService.get<number>('CLIENT_PORT', 8080);
+  const rawClientPort = configService.get<string>('CLIENT_PORT', '8080');
 
-  const CLIENT_DOMAIN = `${clientBaseUrl}:${clientPort}`;
+  const clientPortAsInt = parseInt(rawClientPort);
+
+  const CLIENT_DOMAIN =
+    clientPortAsInt === 443
+      ? clientBaseUrl
+      : `${clientBaseUrl}:${rawClientPort}`;
 
   app.enableCors({
     origin: [CLIENT_DOMAIN],
@@ -38,6 +43,8 @@ async function bootstrap() {
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   });
+
+  console.log(`Enabled CORS for client origin: ${CLIENT_DOMAIN}`);
 
   // Validate the complexity
   // TODO Use vault \ encryption as a service
