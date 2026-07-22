@@ -39,6 +39,8 @@ async function bootstrap() {
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   });
 
+  // Validate the complexity
+  // TODO Use vault \ encryption as a service
   const cookiesSecret = configService.get<string>('TI_COOKIES_SECRET'); // process.env.TI_COOKIES_SECRET;
 
   // TODO Make this part of a config

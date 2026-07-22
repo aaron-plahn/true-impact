@@ -1,4 +1,5 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { config } from "../../../config";
 
 interface Flag {
   id: string;
@@ -43,7 +44,7 @@ interface CommandFsa {
 export const surveyApi = createApi({
   reducerPath: "surveys",
   tagTypes: ["survey"],
-  baseQuery: fetchBaseQuery({ baseUrl: "http://localhost:3234/" }),
+  baseQuery: fetchBaseQuery({ baseUrl: config.API_URL }),
   endpoints: (builder) => ({
     fetchSurveyById: builder.query<SurveyDetailResponse, string>({
       query: (id: string) => `surveys/${id}`,

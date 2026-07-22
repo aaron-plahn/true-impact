@@ -1,6 +1,7 @@
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import { Box, Button, Paper, Tooltip, Typography } from "@mui/material";
 import { JSX } from "react";
+import { config } from "../../../config";
 import { ClearAccessCodeButton } from "./clear-access-button";
 
 interface AccessCodeClipboardProps {
@@ -41,7 +42,7 @@ export const AccessCodeClipboard = ({
         {/* TODO We need to host the SPA on the same server as the back-end or else store the back-end URL in the config and deal with CORS */}
         <a
           id="surveyResponseLink"
-          href={`http://localhost:3234/surveys/responses/begin/${attemptId}`}
+          href={`${config.API_URL}/surveys/responses/begin/${attemptId}`}
           rel="noopener noreferrer"
           target="_blank"
         >
