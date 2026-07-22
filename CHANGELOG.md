@@ -2,6 +2,9 @@
 
 This first release of the True Impact platform introduces a working model for user management, client management, and survey creation and completion.
 
+## 53
+In this PR, we remove an explicit port in the client origin when configuring CORS on port 443 (staging and production environments, for example).
+
 ## 52
 In this PR, we add a more robust approach to configuring the web client. The new approach allows us to swap out the configuration (e.g. API endpoints) without
 running a new build.
