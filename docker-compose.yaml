@@ -1,8 +1,26 @@
 services:
-  # In the future we will have one or more database nodes and potentially a messaging queue.
-  # During development, we have injected an in-memory implementation of the persistence layer.
-  # This is because choosing a concrete DB and implementing repositories is predictable work
-  # and we want to tackle uncertain \ unknown parts of the system before committing to this work.
+  # Note: If you are assigning a custom name to your db service on the line below, make sure it does not contain underscores
+  # Currently, the `db` is only used for `SuperTokens`
+  db:
+    image: "postgres:latest"
+    env_file:
+      - .env.${NODE_ENV}
+    # environment:
+      # POSTGRES_USER: todo
+      # POSTGRES_PASSWORD: todo
+      # POSTGRES_DB: $EVENT_STORE_DB_NAME # why doesn't this work?
+    ports:
+      - 5432:5432
+    networks:
+      - app_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL","pg_isready -U $$POSTGRES_USER"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - pgdata:/var/lib/postgresql
 
   api:
     build:
