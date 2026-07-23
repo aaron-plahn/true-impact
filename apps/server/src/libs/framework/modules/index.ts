@@ -1,3 +1,4 @@
+export { Global } from '@nestjs/common';
 export * from './middleware-consumer.decorator';
 export * from './module-ref';
 export * from './module.decorator';
