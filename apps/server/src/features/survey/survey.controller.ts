@@ -163,7 +163,7 @@ export class SurveyController implements OnModuleInit {
     const result = await this.commandHandlerService.execute(fsa);
 
     if (!(result instanceof Error)) {
-      if (fsa.type === 'BEGIN_SURVEY') {
+      if (fsa.type === 'BEGIN_SURVEY' || fsa.type === 'BEGIN_PUBLIC_SURVEY') {
         if (session.subject) {
           throw new TrueImpactError(
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access

@@ -53,6 +53,10 @@ import {
   SurveyQuestionAnsweredViewDiffer,
   SurveySubmittedViewDiffer,
 } from './survey-completion';
+import {
+  BeginPublicSurvey,
+  BeginPublicSurveyCommandHandler,
+} from './survey-completion/commands/begin-public-survey';
 import { SduiViewDiffer } from './survey-completion/commands/sdui-view-differ';
 import { SurveyParticipantCompositeIdentifier } from './survey-completion/models';
 import {
@@ -80,6 +84,8 @@ import {
 } from './survey-management';
 import { OpenSurveyToAnonymousIndividual } from './survey-management/commands/open-survey-to-anonymous-individual.command';
 import { OpenSurveyToAnonymousIndividualCommandHandler } from './survey-management/commands/open-survey-to-anonymous-individual.command-handler';
+import { OpenSurveyToPublic } from './survey-management/commands/open-survey-to-client/open-survey-to-public.command';
+import { OpenSurveyToPublicCommandHandler } from './survey-management/commands/open-survey-to-client/open-survey-to-public.command-handler';
 import {
   AcknowledgeResponseForSurveyQuestionHasBeenViewed,
   AcknowledgeResponseForSurveyQuestionHasBeenViewedCommandHandler,
@@ -118,8 +124,10 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
     FlagSurveyOptionCommandHandler,
     OpenSurveyToAnonymousIndividualCommandHandler,
     OpenSurveyToClientCommandHandler,
+    OpenSurveyToPublicCommandHandler,
     // Survey Completion Commands
     BeginSurveyCommandHandler,
+    BeginPublicSurveyCommandHandler,
     AnswerSurveyQuestionCommandHandler,
     AbandonSurveyCompletionCommandHandler,
     SubmitSurveyCommandHandler,
@@ -139,7 +147,6 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
     SurveyQueryService,
     SurveyResponseQueryService,
     SurveyReviewQueryService,
-
     // View Diff Producers
     SurveyBeganViewDiffer,
     SurveyQuestionAnsweredViewDiffer,
@@ -203,10 +210,18 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
             CommandHandlerCtor: OpenSurveyToClientCommandHandler,
             CommandPayloadCtor: OpenSurveyToClient,
           })
+          .register({
+            CommandHandlerCtor: OpenSurveyToPublicCommandHandler,
+            CommandPayloadCtor: OpenSurveyToPublic,
+          })
           // Survey Completion
           .register({
             CommandHandlerCtor: BeginSurveyCommandHandler,
             CommandPayloadCtor: BeginSurvey,
+          })
+          .register({
+            CommandHandlerCtor: BeginPublicSurveyCommandHandler,
+            CommandPayloadCtor: BeginPublicSurvey,
           })
           .register({
             CommandHandlerCtor: AnswerSurveyQuestionCommandHandler,

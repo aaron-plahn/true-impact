@@ -1,11 +1,13 @@
 import { Stack, Typography } from "@mui/material";
 import { JSX } from "react";
 import { useParams } from "react-router-dom";
+import { config } from "../../../config";
 import {
   AddOptionToSurveyQuestionCommandForm,
   AddQuestionCommandForm,
   CommandExecutor,
   OpenSurveyToAnonymousIndividualForm,
+  OpenSurveyToPublicForm,
   PublishSurveyCommandForm,
 } from "../../command-execution";
 import { Loading } from "../../loading";
@@ -30,7 +32,7 @@ export const SurveyDetailPage = (): JSX.Element => {
     return <div>Something went wrong.</div>;
   }
 
-  const { name, questions, isPublished, accessCode } = data;
+  const { name, questions, isPublished, accessCode, isOpenToPublic } = data;
 
   const isEditable = !isPublished;
 
@@ -96,7 +98,7 @@ export const SurveyDetailPage = (): JSX.Element => {
       ) : null}
       {shouldShowOpenAccessButton ? (
         <Stack>
-          <Typography variant="body1">** PUBLISHED FOR USE**</Typography>
+          <Typography variant="body1">** PUBLISHED FOR USE **</Typography>
           <CommandExecutor
             type={"OPEN_SURVEY_TO_ANONYMOUS_INDIVIDUAL"}
             label={"Open to Anonymous Participant"}
@@ -110,7 +112,30 @@ export const SurveyDetailPage = (): JSX.Element => {
               />
             )}
           />
+          <CommandExecutor
+            type="OPEN_SURVEY_TO_PUBLIC"
+            label="Open to the General Public"
+            description="Allow public users to complete this survey"
+            form={({ onClose }) => (
+              <OpenSurveyToPublicForm
+                context={{
+                  id: id || "",
+                }}
+                onClose={onClose}
+              />
+            )}
+          />
         </Stack>
+      ) : null}
+      {isOpenToPublic ? (
+        <a
+          id="surveyResponseLink"
+          href={`${config.API_URL}/surveys/responses/begin/${id || ""}`}
+          rel="noopener noreferrer"
+          target="_blank"
+        >
+          Survey Link
+        </a>
       ) : null}
       {accessCode ? (
         <AccessCodeClipboard accessCode={accessCode} attemptId={id || ""} />

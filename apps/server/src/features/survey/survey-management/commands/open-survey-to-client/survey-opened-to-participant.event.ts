@@ -1,5 +1,5 @@
-import { SurveyParticipantCompositeIdentifier } from 'src/features/survey/survey-completion/models';
-import { SurveyCompositeIdentifier } from 'src/features/survey/survey.composite-identifier';
+import { SurveyParticipantCompositeIdentifier } from '../../../../../features/survey/survey-completion/models';
+import { SurveyCompositeIdentifier } from '../../../../../features/survey/survey.composite-identifier';
 
 export class SurveyOpenedToParticipantPayload {
   aggregateCompositeIdentifier: SurveyCompositeIdentifier;

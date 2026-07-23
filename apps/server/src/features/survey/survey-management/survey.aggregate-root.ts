@@ -3,6 +3,7 @@ import {
   BooleanDataType,
   deepConvertMapToObject,
   InvariantValidationError,
+  isBoolean,
   isPositiveNumber,
   NonEmptyString,
   NonNegativeInteger,
@@ -121,6 +122,15 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
   })
   analyzersByName: Map<string, SurveyAnalyzer> = new Map();
 
+  /**
+   * TODO Decide how this interacts with access codes.
+   */
+  @BooleanDataType({
+    label: 'is open to the public',
+    description: `can this survey be completed anonymously without an access code?`,
+  })
+  isOpenToPublic: boolean;
+
   @LookupTable(() => SurveyAccessToken, {
     label: 'access tokens by hash',
     description: 'provide access to a user',
@@ -144,6 +154,7 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
     questions?: Record<string, SurveyQuestion>;
     questionLabels?: string[];
     analyzersByName: Map<string, SurveyAnalyzer>;
+    isOpenToPublic: boolean;
     accessTokensByHash: Map<string, SurveyAccessToken>;
   }) {
     super();
@@ -170,6 +181,10 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
     this.analyzersByName = new Map(analyzersByName.entries());
 
     this.accessTokensByHash = new Map(accessTokensByHash.entries());
+
+    this.isOpenToPublic = isBoolean(this.isOpenToPublic)
+      ? this.isOpenToPublic
+      : false;
   }
 
   getId(): string {
@@ -952,6 +967,20 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
     return this;
   }
 
+  // TODO presumably we want a `closeSurvey` as well.
+  openToPublic(): TrueImpactError | Survey {
+    // TODO if this survey is already open to the public, return an error
+
+    // TODO error if this survey is not published,
+
+    // TODO should we allow opening to the public if there are already access codes?
+    // TODO should we allow access codes if the survey is already open to the public?
+
+    this.isOpenToPublic = true;
+
+    return this;
+  }
+
   openToParticipant({
     dateOfExpiry,
     dateOpened,
@@ -1034,6 +1063,7 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
       revision: 0,
       analyzersByName: new Map(),
       accessTokensByHash: new Map(),
+      isOpenToPublic: false,
     });
 
     const result = instance.validateInvariants();
@@ -1132,6 +1162,7 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
       ),
       analyzersByName: analyzersBuildResult,
       accessTokensByHash: accessTokenBuildResult,
+      isOpenToPublic: false,
     });
 
     if (buildOptions.shouldValidate) {
