@@ -127,9 +127,9 @@ describe(`Survey Completion Scenarios: Public Participant (no access code requir
 
   beforeEach(async () => {
     // clear all test data between runs
-    await axios.patch(surveyCompletionTestSetupEndpoint);
+    await adminHttpClient.patch(surveyCompletionTestSetupEndpoint);
 
-    await axios.patch(surveyTestSetupEndpoint);
+    await adminHttpClient.patch(surveyTestSetupEndpoint);
   });
 
   describe(`when an admin has opened the survey for public completion`, () => {

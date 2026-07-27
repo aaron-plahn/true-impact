@@ -148,7 +148,10 @@ export class SurveyController implements OnModuleInit {
       }
     }
 
-    if (fsa.type === 'BEGIN_SURVEY' && session && session.subject) {
+    const isRequestToBeginSurvey =
+      fsa.type === 'BEGIN_SURVEY' || fsa.type === 'BEGIN_PUBLIC_SURVEY';
+
+    if (isRequestToBeginSurvey && session && session.subject) {
       /**
        * If the user has a different attempt in progress, we
        * need to remove authorization for this survey from the session
