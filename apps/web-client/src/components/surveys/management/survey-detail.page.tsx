@@ -1,5 +1,6 @@
 import { Stack, Typography } from "@mui/material";
-import { JSX } from "react";
+import QRCode from "qrcode";
+import { JSX, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { config } from "../../../config";
 import {
@@ -13,6 +14,18 @@ import {
 import { Loading } from "../../loading";
 import { useFetchSurveyByIdQuery } from "../store/survey.api";
 import { AccessCodeClipboard } from "./access-code-clipboard";
+
+const QrCodeForLink = ({ link }: { link: string }): JSX.Element => {
+  const canvasRef = useRef(null);
+
+  useEffect(() => {
+    if (canvasRef.current) {
+      QRCode.toCanvas(canvasRef?.current, link);
+    }
+  }, [canvasRef, link]);
+
+  return <canvas ref={canvasRef} />;
+};
 
 export const SurveyDetailPage = (): JSX.Element => {
   const { id } = useParams();
@@ -34,9 +47,22 @@ export const SurveyDetailPage = (): JSX.Element => {
 
   const { name, questions, isPublished, accessCode, isOpenToPublic } = data;
 
+  /**
+   * The following conditions can be avoided by simply sending back an
+   * `availableActions` from the server. Conceptually, this would look like:
+   * ```ts
+   * {
+   *  actions.has("PUBLISH_SURVEY") && <DynamicForm schema=actions.get("PUBLISH_SURVEY") />
+   * }
+   * ```
+   * Alternatively, the form could be fully created on the client for more interactivity.
+   */
   const isEditable = !isPublished;
 
-  const shouldShowOpenAccessButton = isPublished && !accessCode;
+  const shouldShowOpenAccessButton =
+    isPublished && !accessCode && !isOpenToPublic;
+
+  const shouldShowOpenToPublicButton = isPublished && !isOpenToPublic;
 
   return (
     <div data-testid="survey-management-detail-page">
@@ -96,9 +122,11 @@ export const SurveyDetailPage = (): JSX.Element => {
           )}
         />
       ) : null}
+      {isPublished ? (
+        <Typography variant="body1">** PUBLISHED FOR USE **</Typography>
+      ) : null}
       {shouldShowOpenAccessButton ? (
         <Stack>
-          <Typography variant="body1">** PUBLISHED FOR USE **</Typography>
           <CommandExecutor
             type={"OPEN_SURVEY_TO_ANONYMOUS_INDIVIDUAL"}
             label={"Open to Anonymous Participant"}
@@ -112,31 +140,37 @@ export const SurveyDetailPage = (): JSX.Element => {
               />
             )}
           />
-          <CommandExecutor
-            type="OPEN_SURVEY_TO_PUBLIC"
-            label="Open to the General Public"
-            description="Allow public users to complete this survey"
-            form={({ onClose }) => (
-              <OpenSurveyToPublicForm
-                context={{
-                  id: id || "",
-                }}
-                onClose={onClose}
-              />
-            )}
-          />
         </Stack>
       ) : null}
-      {isOpenToPublic ? (
-        <a
-          id="surveyResponseLink"
-          href={`${config.API_URL}/surveys/responses/begin/${id || ""}`}
-          rel="noopener noreferrer"
-          target="_blank"
-        >
-          Survey Link
-        </a>
-      ) : null}
+      {shouldShowOpenToPublicButton ? (
+        <CommandExecutor
+          type="OPEN_SURVEY_TO_PUBLIC"
+          label="Open to the General Public"
+          description="Allow public users to complete this survey"
+          form={({ onClose }) => (
+            <OpenSurveyToPublicForm
+              context={{
+                id: id || "",
+              }}
+              onClose={onClose}
+            />
+          )}
+        />
+      ) : (
+        <>
+          <a
+            id="surveyResponseLink"
+            href={`${config.API_URL}/surveys/responses/begin/${id || ""}`}
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            Survey Link
+          </a>
+          <QrCodeForLink
+            link={`${config.API_URL}/surveys/responses/begin/${id || ""}`}
+          />
+        </>
+      )}
       {accessCode ? (
         <AccessCodeClipboard accessCode={accessCode} attemptId={id || ""} />
       ) : null}

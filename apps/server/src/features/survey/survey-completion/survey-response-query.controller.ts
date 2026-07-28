@@ -61,11 +61,9 @@ export class SurveyResponseQueryController {
 
     const { isOpenToPublic } = targetSurvey;
 
-    console.log({ isOpenToPublic });
-
     const dataView = new BeginSurveyPage({
       id: surveyId,
-      name: 'Aro Survey',
+      name: targetSurvey.name,
       isOpenToPublic,
     });
 

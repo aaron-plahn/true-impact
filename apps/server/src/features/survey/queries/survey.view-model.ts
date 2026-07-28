@@ -263,7 +263,7 @@ export class SurveyViewModel {
     this.isPublished = typeof isPublished === 'boolean' ? isPublished : false;
 
     this.isOpenToPublic =
-      typeof isOpenToPublic === 'boolean' ? isPublished : false;
+      typeof isOpenToPublic === 'boolean' ? isOpenToPublic : false;
 
     this.analyzersByName = analyzersByName;
   }

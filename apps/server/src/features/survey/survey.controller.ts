@@ -113,7 +113,7 @@ export class SurveyController implements OnModuleInit {
     }
 
     // TODO think about the logic of this carefully
-    // Note that BEGIN_SURVEY will not be handled here because it doesn't have an `aggregateCompositeIdentifier`
+    // Note that BEGIN_SURVEY \ BEGIN_PUBLIC_SURVEY will not be handled here because it doesn't have an `aggregateCompositeIdentifier`
     if (
       fsa.payload.aggregateCompositeIdentifier &&
       fsa.payload.aggregateCompositeIdentifier.type ==
@@ -129,6 +129,7 @@ export class SurveyController implements OnModuleInit {
        * TODO Remove the subject or clear the session entirely after the survey is submitted.
        */
       if (!session) {
+        console.log('Missing session for update!');
         throw new ForbiddenException();
       }
 
@@ -144,6 +145,11 @@ export class SurveyController implements OnModuleInit {
           session.subject,
         )
       ) {
+        console.log({
+          fsaACI: fsa.payload.aggregateCompositeIdentifier,
+          sessionSubject: session.subject as object,
+        });
+
         throw new ForbiddenException();
       }
     }
@@ -162,6 +168,8 @@ export class SurveyController implements OnModuleInit {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call
       session.save();
     }
+
+    console.log({ executing: JSON.stringify(fsa) });
 
     const result = await this.commandHandlerService.execute(fsa);
 
@@ -237,6 +245,7 @@ export class SurveyController implements OnModuleInit {
    * SDUI (JSON DSL) to UX without any domain knowledge.
    */
   @Post('commands-html')
+  @UseGuards(SurveyCommandAuthGuard)
   async executeCommandWithSduiResponse(
     @Body()
     fsa: ICommandFsa<{
