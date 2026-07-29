@@ -7,5 +7,5 @@ export const config = {
   APP_ENV: (window.APP_CONFIG?.APP_ENV as string) || "production",
   KEYSTONE_EXCLUDES:
     // @ts-expect-error same as above
-    (window.KEYSTONE_EXCLUDES as Set<string>) || new Set<string>(),
+    (window.APP_CONFIG?.KEYSTONE_EXCLUDES as Set<string>) || new Set<string>(),
 };

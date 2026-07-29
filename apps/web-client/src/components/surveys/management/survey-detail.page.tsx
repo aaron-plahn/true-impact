@@ -10,7 +10,6 @@ import {
   OpenSurveyToPublicForm,
   PublishSurveyCommandForm,
 } from "../../command-execution";
-import { QrCodeForLink } from "../../common";
 import { Loading } from "../../loading";
 import { useFetchSurveyByIdQuery } from "../store/survey.api";
 import { AccessCodeClipboard } from "./access-code-clipboard";
@@ -49,6 +48,8 @@ export const SurveyDetailPage = (): JSX.Element => {
 
   const shouldShowOpenAccessButton =
     isPublished && !accessCode && !isOpenToPublic;
+
+  console.log({ keystone: config.KEYSTONE_EXCLUDES });
 
   const shouldShowOpenToPublicButton =
     isPublished &&
@@ -147,21 +148,7 @@ export const SurveyDetailPage = (): JSX.Element => {
             />
           )}
         />
-      ) : (
-        <>
-          <a
-            id="surveyResponseLink"
-            href={`${config.API_URL}/surveys/responses/begin/${id || ""}`}
-            rel="noopener noreferrer"
-            target="_blank"
-          >
-            Survey Link
-          </a>
-          <QrCodeForLink
-            link={`${config.API_URL}/surveys/responses/begin/${id || ""}`}
-          />
-        </>
-      )}
+      ) : null}
       {accessCode ? (
         <AccessCodeClipboard accessCode={accessCode} attemptId={id || ""} />
       ) : null}
