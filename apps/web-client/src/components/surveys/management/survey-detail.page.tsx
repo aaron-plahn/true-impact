@@ -1,11 +1,13 @@
 import { Stack, Typography } from "@mui/material";
 import { JSX } from "react";
 import { useParams } from "react-router-dom";
+import { config } from "../../../config";
 import {
   AddOptionToSurveyQuestionCommandForm,
   AddQuestionCommandForm,
   CommandExecutor,
   OpenSurveyToAnonymousIndividualForm,
+  OpenSurveyToPublicForm,
   PublishSurveyCommandForm,
 } from "../../command-execution";
 import { Loading } from "../../loading";
@@ -30,11 +32,29 @@ export const SurveyDetailPage = (): JSX.Element => {
     return <div>Something went wrong.</div>;
   }
 
-  const { name, questions, isPublished, accessCode } = data;
+  const { name, questions, isPublished, accessCode, isOpenToPublic } = data;
 
+  /**
+   * The following conditions can be avoided by simply sending back an
+   * `availableActions` from the server. Conceptually, this would look like:
+   * ```ts
+   * {
+   *  actions.has("PUBLISH_SURVEY") && <DynamicForm schema=actions.get("PUBLISH_SURVEY") />
+   * }
+   * ```
+   * Alternatively, the form could be fully created on the client for more interactivity.
+   */
   const isEditable = !isPublished;
 
-  const shouldShowOpenAccessButton = isPublished && !accessCode;
+  const shouldShowOpenAccessButton =
+    isPublished && !accessCode && !isOpenToPublic;
+
+  console.log({ keystone: config.KEYSTONE_EXCLUDES });
+
+  const shouldShowOpenToPublicButton =
+    isPublished &&
+    !isOpenToPublic &&
+    !config.KEYSTONE_EXCLUDES.has("PUBLIC_SURVEY_COMPLETION");
 
   return (
     <div data-testid="survey-management-detail-page">
@@ -94,9 +114,11 @@ export const SurveyDetailPage = (): JSX.Element => {
           )}
         />
       ) : null}
+      {isPublished ? (
+        <Typography variant="body1">** PUBLISHED FOR USE **</Typography>
+      ) : null}
       {shouldShowOpenAccessButton ? (
         <Stack>
-          <Typography variant="body1">** PUBLISHED FOR USE**</Typography>
           <CommandExecutor
             type={"OPEN_SURVEY_TO_ANONYMOUS_INDIVIDUAL"}
             label={"Open to Anonymous Participant"}
@@ -111,6 +133,21 @@ export const SurveyDetailPage = (): JSX.Element => {
             )}
           />
         </Stack>
+      ) : null}
+      {shouldShowOpenToPublicButton ? (
+        <CommandExecutor
+          type="OPEN_SURVEY_TO_PUBLIC"
+          label="Open to the General Public"
+          description="Allow public users to complete this survey"
+          form={({ onClose }) => (
+            <OpenSurveyToPublicForm
+              context={{
+                id: id || "",
+              }}
+              onClose={onClose}
+            />
+          )}
+        />
       ) : null}
       {accessCode ? (
         <AccessCodeClipboard accessCode={accessCode} attemptId={id || ""} />

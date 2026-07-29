@@ -41,6 +41,14 @@ export class SurveyCommandAuthGuard implements CanActivate {
       return false;
     }
 
+    if (test.type === 'BEGIN_PUBLIC_SURVEY') {
+      /**
+       * It's the handler's responsibility to return not found
+       * or unauthorized if the survey is not available for public completion.
+       */
+      return true;
+    }
+
     if (test.type === 'BEGIN_SURVEY') {
       const payload = test.payload as BeginSurvey;
 

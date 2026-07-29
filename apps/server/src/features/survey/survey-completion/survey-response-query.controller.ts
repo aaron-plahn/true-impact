@@ -48,8 +48,24 @@ export class SurveyResponseQueryController {
   // commands are routed through the base /surveys command controller
 
   @Get('begin/:id')
-  beginSurvey(@IdParam() surveyId: string) {
-    const dataView = new BeginSurveyPage({ id: surveyId, name: 'Aro Survey' });
+  async beginSurvey(@IdParam() surveyId: string) {
+    const targetSurvey = await this.surveyQueryService.fetchById(surveyId);
+
+    if (!targetSurvey) {
+      return null;
+    }
+
+    if (targetSurvey instanceof Error) {
+      return 'TODO Error Response';
+    }
+
+    const { isOpenToPublic } = targetSurvey;
+
+    const dataView = new BeginSurveyPage({
+      id: surveyId,
+      name: targetSurvey.name,
+      isOpenToPublic,
+    });
 
     const sduiView = dataView.render();
 

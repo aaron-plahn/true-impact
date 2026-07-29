@@ -9,12 +9,15 @@ import {
 interface BeginSurveyPageProps {
   id: string;
   name: string;
+  isOpenToPublic: boolean;
 }
 
 export class BeginSurveyPage {
   constructor(private readonly props: BeginSurveyPageProps) {}
 
   render(): TIScreen {
+    const { isOpenToPublic } = this.props;
+
     const screenId = `BEGIN_SURVEY`;
 
     const textNode: TextContentNode = {
@@ -30,25 +33,45 @@ export class BeginSurveyPage {
     };
 
     // TODO inject the command metadata and use that here
-    const beginSurveyAction: ActionContentNode = {
-      type: 'ACTION',
-      id: `BEGIN_SURVEY_${this.props.id}`,
-      title: 'Begin Survey',
-      label: 'Begin',
-      description: 'Begin a new attempt of the given survey',
-      swap: 'outer',
-      form: {
-        fields: [accessCodeTextInputField],
-        context: {
-          surveyId: this.props.id,
-        },
-        action: {
-          path: '/surveys/commands',
-          method: 'POST',
-          type: 'BEGIN_SURVEY',
-        },
-      },
-    };
+    const beginSurveyAction: ActionContentNode = !isOpenToPublic
+      ? {
+          type: 'ACTION',
+          id: `BEGIN_SURVEY_${this.props.id}`,
+          title: 'Begin Survey',
+          label: 'Begin',
+          description: 'Begin a new attempt of the given survey',
+          swap: 'outer',
+          form: {
+            fields: [accessCodeTextInputField],
+            context: {
+              surveyId: this.props.id,
+            },
+            action: {
+              path: '/surveys/commands',
+              method: 'POST',
+              type: 'BEGIN_SURVEY',
+            },
+          },
+        }
+      : {
+          type: 'ACTION',
+          id: `BEGIN_SURVEY_${this.props.id}`,
+          title: 'Begin Survey',
+          label: 'Begin',
+          description: 'Begin a new attempt of the given survey',
+          swap: 'outer',
+          form: {
+            fields: [],
+            context: {
+              surveyId: this.props.id,
+            },
+            action: {
+              path: '/surveys/commands',
+              method: 'POST',
+              type: 'BEGIN_PUBLIC_SURVEY',
+            },
+          },
+        };
 
     const firstSection: Section = {
       id: `${screenId}_1`,

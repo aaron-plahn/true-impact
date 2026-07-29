@@ -53,7 +53,7 @@ export class SurveyQuestionCompletionPage {
         fields: [field],
         context: {
           aggregateCompositeIdentifier: {
-            type: 'surveyCompletion',
+            type: 'survey response record',
             id: this.props.attemptId,
           },
           questionLabel: this.props.question.label,

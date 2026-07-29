@@ -2,6 +2,7 @@ import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import { Box, Button, Paper, Tooltip, Typography } from "@mui/material";
 import { JSX } from "react";
 import { config } from "../../../config";
+import { QrCodeForLink } from "../../common";
 import { ClearAccessCodeButton } from "./clear-access-button";
 
 interface AccessCodeClipboardProps {
@@ -21,6 +22,8 @@ export const AccessCodeClipboard = ({
     }
   };
 
+  const surveyParticipationLink = `${config.API_URL}/surveys/responses/begin/${attemptId}`;
+
   return (
     <Paper sx={{ height: "96px" }}>
       <Box>
@@ -35,19 +38,19 @@ export const AccessCodeClipboard = ({
             <ContentCopyIcon sx={{ height: "24px" }} />
           </Button>
         </Tooltip>
-
         <Typography variant="body1">
           Share this link with the participant:
         </Typography>
         {/* TODO We need to host the SPA on the same server as the back-end or else store the back-end URL in the config and deal with CORS */}
         <a
           id="surveyResponseLink"
-          href={`${config.API_URL}/surveys/responses/begin/${attemptId}`}
+          href={surveyParticipationLink}
           rel="noopener noreferrer"
           target="_blank"
         >
           Survey Link
         </a>
+        <QrCodeForLink link={surveyParticipationLink} />
         <ClearAccessCodeButton attemptId={attemptId}></ClearAccessCodeButton>
       </Box>
     </Paper>

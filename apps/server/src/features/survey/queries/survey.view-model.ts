@@ -30,6 +30,7 @@ import { SurveyQuestionViewModel } from './survey-question.view-model';
   example: {
     id: '1',
     isPublished: false,
+    isOpenToPublic: false,
     name: 'Food Allergies Survey',
     size: 10,
     analyzersByName: {},
@@ -160,6 +161,13 @@ export class SurveyViewModelClientDto {
   })
   isPublished: boolean;
 
+  @NonEmptyString({
+    label: 'is open to public',
+    description:
+      'can this survey be completed by members of the general public?',
+  })
+  isOpenToPublic: boolean;
+
   // TODO Multilingual Text
   @NonEmptyString({
     label: 'name',
@@ -225,6 +233,8 @@ export class SurveyViewModel {
 
   isPublished: boolean;
 
+  isOpenToPublic: boolean;
+
   constructor({
     id,
     name,
@@ -232,6 +242,7 @@ export class SurveyViewModel {
     analyzersByName,
     questions,
     isPublished,
+    isOpenToPublic,
   }: {
     id: string;
     name: string;
@@ -239,6 +250,7 @@ export class SurveyViewModel {
     questions?: SurveyQuestionViewModel[];
     analyzersByName: Map<string, SurveyAnalyzerViewModel>;
     isPublished: boolean;
+    isOpenToPublic: boolean;
   }) {
     this.id = id;
 
@@ -249,6 +261,9 @@ export class SurveyViewModel {
     this.questions = questions || [];
 
     this.isPublished = typeof isPublished === 'boolean' ? isPublished : false;
+
+    this.isOpenToPublic =
+      typeof isOpenToPublic === 'boolean' ? isOpenToPublic : false;
 
     this.analyzersByName = analyzersByName;
   }
@@ -263,6 +278,7 @@ export class SurveyViewModel {
     return {
       id: this.id,
       isPublished: this.isPublished,
+      isOpenToPublic: this.isOpenToPublic,
       name: this.name,
       size: this.size,
       analyzersByName,
@@ -378,6 +394,7 @@ export class SurveyViewModel {
       questions: Array.from(questionViewsByLabel.values()),
       analyzersByName,
       isPublished: survey.isPublished,
+      isOpenToPublic: survey.isOpenToPublic,
     });
 
     return result;

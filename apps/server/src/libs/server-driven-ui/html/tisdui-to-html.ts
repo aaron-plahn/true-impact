@@ -8,6 +8,10 @@ export const tiSduiToHtml = (input: TIScreen): string => {
         <head>
             <meta charset="utf-8" />
             <title>${input.title}</title>
+            <link
+                rel="stylesheet"
+                href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css"
+            >
         </head>
         <body>
             ${tiSduiScreenToHtmlFragment(input)}

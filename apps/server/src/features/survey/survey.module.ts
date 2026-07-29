@@ -53,6 +53,11 @@ import {
   SurveyQuestionAnsweredViewDiffer,
   SurveySubmittedViewDiffer,
 } from './survey-completion';
+import {
+  BeginPublicSurvey,
+  BeginPublicSurveyCommandHandler,
+  ISurveyValidationServiceForBeginPublicSurvey,
+} from './survey-completion/commands/begin-public-survey';
 import { SduiViewDiffer } from './survey-completion/commands/sdui-view-differ';
 import { SurveyParticipantCompositeIdentifier } from './survey-completion/models';
 import {
@@ -80,6 +85,8 @@ import {
 } from './survey-management';
 import { OpenSurveyToAnonymousIndividual } from './survey-management/commands/open-survey-to-anonymous-individual.command';
 import { OpenSurveyToAnonymousIndividualCommandHandler } from './survey-management/commands/open-survey-to-anonymous-individual.command-handler';
+import { OpenSurveyToPublic } from './survey-management/commands/open-survey-to-client/open-survey-to-public.command';
+import { OpenSurveyToPublicCommandHandler } from './survey-management/commands/open-survey-to-client/open-survey-to-public.command-handler';
 import {
   AcknowledgeResponseForSurveyQuestionHasBeenViewed,
   AcknowledgeResponseForSurveyQuestionHasBeenViewedCommandHandler,
@@ -118,8 +125,10 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
     FlagSurveyOptionCommandHandler,
     OpenSurveyToAnonymousIndividualCommandHandler,
     OpenSurveyToClientCommandHandler,
+    OpenSurveyToPublicCommandHandler,
     // Survey Completion Commands
     BeginSurveyCommandHandler,
+    BeginPublicSurveyCommandHandler,
     AnswerSurveyQuestionCommandHandler,
     AbandonSurveyCompletionCommandHandler,
     SubmitSurveyCommandHandler,
@@ -139,7 +148,6 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
     SurveyQueryService,
     SurveyResponseQueryService,
     SurveyReviewQueryService,
-
     // View Diff Producers
     SurveyBeganViewDiffer,
     SurveyQuestionAnsweredViewDiffer,
@@ -203,10 +211,18 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
             CommandHandlerCtor: OpenSurveyToClientCommandHandler,
             CommandPayloadCtor: OpenSurveyToClient,
           })
+          .register({
+            CommandHandlerCtor: OpenSurveyToPublicCommandHandler,
+            CommandPayloadCtor: OpenSurveyToPublic,
+          })
           // Survey Completion
           .register({
             CommandHandlerCtor: BeginSurveyCommandHandler,
             CommandPayloadCtor: BeginSurvey,
+          })
+          .register({
+            CommandHandlerCtor: BeginPublicSurveyCommandHandler,
+            CommandPayloadCtor: BeginPublicSurvey,
           })
           .register({
             CommandHandlerCtor: AnswerSurveyQuestionCommandHandler,
@@ -352,7 +368,8 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
     {
       provide: 'SURVEY_VALIDATION_SERVICE_FOR_RESPONSES_INJECTION_TOKEN',
       useFactory: (repo: ISurveyCommandRepository) => {
-        const validator: ISurveyValidationServiceForSurveyResponses = {
+        const validator: ISurveyValidationServiceForSurveyResponses &
+          ISurveyValidationServiceForBeginPublicSurvey = {
           fetchSurveyForParticipant: async function (
             surveyId: string,
             hashedAccessCode: string | undefined,
@@ -399,6 +416,21 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
                 target.getParticipantByAccessCode(hashedAccessCode) ||
                 undefined,
             };
+          },
+          fetchForPublicConsumption: async function (surveyId: string) {
+            const target = await repo.fetchById(surveyId);
+
+            if (!target) {
+              return null;
+            }
+
+            if (!target.isOpenToPublic) {
+              return new TrueImpactError(
+                `Survey [${surveyId}] is not available for public completion`,
+              );
+            }
+
+            return target;
           },
         };
 

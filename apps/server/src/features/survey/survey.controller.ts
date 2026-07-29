@@ -113,7 +113,7 @@ export class SurveyController implements OnModuleInit {
     }
 
     // TODO think about the logic of this carefully
-    // Note that BEGIN_SURVEY will not be handled here because it doesn't have an `aggregateCompositeIdentifier`
+    // Note that BEGIN_SURVEY \ BEGIN_PUBLIC_SURVEY will not be handled here because it doesn't have an `aggregateCompositeIdentifier`
     if (
       fsa.payload.aggregateCompositeIdentifier &&
       fsa.payload.aggregateCompositeIdentifier.type ==
@@ -148,7 +148,10 @@ export class SurveyController implements OnModuleInit {
       }
     }
 
-    if (fsa.type === 'BEGIN_SURVEY' && session && session.subject) {
+    const isRequestToBeginSurvey =
+      fsa.type === 'BEGIN_SURVEY' || fsa.type === 'BEGIN_PUBLIC_SURVEY';
+
+    if (isRequestToBeginSurvey && session && session.subject) {
       /**
        * If the user has a different attempt in progress, we
        * need to remove authorization for this survey from the session
@@ -163,7 +166,7 @@ export class SurveyController implements OnModuleInit {
     const result = await this.commandHandlerService.execute(fsa);
 
     if (!(result instanceof Error)) {
-      if (fsa.type === 'BEGIN_SURVEY') {
+      if (fsa.type === 'BEGIN_SURVEY' || fsa.type === 'BEGIN_PUBLIC_SURVEY') {
         if (session.subject) {
           throw new TrueImpactError(
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
@@ -234,6 +237,7 @@ export class SurveyController implements OnModuleInit {
    * SDUI (JSON DSL) to UX without any domain knowledge.
    */
   @Post('commands-html')
+  @UseGuards(SurveyCommandAuthGuard)
   async executeCommandWithSduiResponse(
     @Body()
     fsa: ICommandFsa<{
