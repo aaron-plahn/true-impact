@@ -1070,52 +1070,6 @@ describe(`Survey Management Scenarios`, () => {
           });
         });
       });
-
-      describe(`when opening a survey for private anonymous completion`, () => {
-        describe(`when the survey is published`, () => {
-          describe(`when no access has yet been granted`, () => {
-            // this is redundant with `complete-survey-as-anonymous-individual` scenario test
-            it.todo(`should grant access`);
-          });
-
-          describe(`when private access has already been granted for a client`, () => {
-            it.todo(`should grant access`);
-          });
-
-          describe(`when public access has already been granted`, () => {
-            it.todo(`should return the expected error`);
-          });
-        });
-
-        describe(`when the survey is not published`, () => {
-          it.todo('should return the expected erro');
-        });
-      });
-
-      describe(`when opening a survey to the general public`, () => {
-        // TODO replace publish with 'finalize'
-        describe(`when the survey is published`, () => {
-          describe(`when there is no current access to the survey`, () => {
-            it.todo(`should open access to the survey`);
-          });
-
-          describe(`when there is private anonymous access`, () => {
-            it.todo(`should return the expected error`);
-          });
-
-          describe(`when there is private known-client access`, () => {
-            it.todo(`should return the expected error`);
-          });
-
-          describe(`when the survey is already open to the public`, () => {
-            it.todo(`should return the expected error`);
-          });
-        });
-
-        describe(`when the survey is not published`, () => {
-          it.todo(`should return the expected error`);
-        });
-      });
     });
   });
 });
