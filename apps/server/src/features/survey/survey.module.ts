@@ -56,6 +56,7 @@ import {
 import {
   BeginPublicSurvey,
   BeginPublicSurveyCommandHandler,
+  ISurveyValidationServiceForBeginPublicSurvey,
 } from './survey-completion/commands/begin-public-survey';
 import { SduiViewDiffer } from './survey-completion/commands/sdui-view-differ';
 import { SurveyParticipantCompositeIdentifier } from './survey-completion/models';
@@ -367,7 +368,8 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
     {
       provide: 'SURVEY_VALIDATION_SERVICE_FOR_RESPONSES_INJECTION_TOKEN',
       useFactory: (repo: ISurveyCommandRepository) => {
-        const validator: ISurveyValidationServiceForSurveyResponses = {
+        const validator: ISurveyValidationServiceForSurveyResponses &
+          ISurveyValidationServiceForBeginPublicSurvey = {
           fetchSurveyForParticipant: async function (
             surveyId: string,
             hashedAccessCode: string | undefined,
@@ -414,6 +416,21 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
                 target.getParticipantByAccessCode(hashedAccessCode) ||
                 undefined,
             };
+          },
+          fetchForPublicConsumption: async function (surveyId: string) {
+            const target = await repo.fetchById(surveyId);
+
+            if (!target) {
+              return null;
+            }
+
+            if (!target.isOpenToPublic) {
+              return new TrueImpactError(
+                `Survey [${surveyId}] is not available for public completion`,
+              );
+            }
+
+            return target;
           },
         };
 

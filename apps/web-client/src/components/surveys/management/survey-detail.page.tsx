@@ -1,6 +1,5 @@
 import { Stack, Typography } from "@mui/material";
-import QRCode from "qrcode";
-import { JSX, useEffect, useRef } from "react";
+import { JSX } from "react";
 import { useParams } from "react-router-dom";
 import { config } from "../../../config";
 import {
@@ -11,21 +10,10 @@ import {
   OpenSurveyToPublicForm,
   PublishSurveyCommandForm,
 } from "../../command-execution";
+import { QrCodeForLink } from "../../common";
 import { Loading } from "../../loading";
 import { useFetchSurveyByIdQuery } from "../store/survey.api";
 import { AccessCodeClipboard } from "./access-code-clipboard";
-
-const QrCodeForLink = ({ link }: { link: string }): JSX.Element => {
-  const canvasRef = useRef(null);
-
-  useEffect(() => {
-    if (canvasRef.current) {
-      QRCode.toCanvas(canvasRef?.current, link);
-    }
-  }, [canvasRef, link]);
-
-  return <canvas ref={canvasRef} />;
-};
 
 export const SurveyDetailPage = (): JSX.Element => {
   const { id } = useParams();
@@ -62,7 +50,10 @@ export const SurveyDetailPage = (): JSX.Element => {
   const shouldShowOpenAccessButton =
     isPublished && !accessCode && !isOpenToPublic;
 
-  const shouldShowOpenToPublicButton = isPublished && !isOpenToPublic;
+  const shouldShowOpenToPublicButton =
+    isPublished &&
+    !isOpenToPublic &&
+    !config.KEYSTONE_EXCLUDES.has("PUBLIC_SURVEY_COMPLETION");
 
   return (
     <div data-testid="survey-management-detail-page">

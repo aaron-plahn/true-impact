@@ -129,7 +129,6 @@ export class SurveyController implements OnModuleInit {
        * TODO Remove the subject or clear the session entirely after the survey is submitted.
        */
       if (!session) {
-        console.log('Missing session for update!');
         throw new ForbiddenException();
       }
 
@@ -145,11 +144,6 @@ export class SurveyController implements OnModuleInit {
           session.subject,
         )
       ) {
-        console.log({
-          fsaACI: fsa.payload.aggregateCompositeIdentifier,
-          sessionSubject: session.subject as object,
-        });
-
         throw new ForbiddenException();
       }
     }
@@ -168,8 +162,6 @@ export class SurveyController implements OnModuleInit {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call
       session.save();
     }
-
-    console.log({ executing: JSON.stringify(fsa) });
 
     const result = await this.commandHandlerService.execute(fsa);
 

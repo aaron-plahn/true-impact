@@ -1,10 +1,7 @@
 import { ForbiddenException } from '@nestjs/common';
 import { randomUUID } from 'crypto';
-import {
-  SURVEY_AGGREGATE_TYPE,
-  SURVEY_COMMAND_REPOSITORY_DEPENDENCY_TOKEN,
-} from '../../../../../features/survey/constants';
-import type { ISurveyCommandRepository } from '../../../../../features/survey/repositories';
+import { Survey } from 'src/features/survey/survey-management';
+import { SURVEY_AGGREGATE_TYPE } from '../../../../../features/survey/constants';
 import { CommandResult, ICommandHandler } from '../../../../../libs/cqrs-es';
 import {
   ResourceNotFoundError,
@@ -18,11 +15,16 @@ import {
 } from '../../repositories';
 import { BeginPublicSurvey } from './begin-public-survey.command';
 
+export interface ISurveyValidationServiceForBeginPublicSurvey {
+  fetchForPublicConsumption(
+    surveyId: string,
+  ): Promise<Survey | TrueImpactError | null>;
+}
+
 export class BeginPublicSurveyCommandHandler implements ICommandHandler<BeginPublicSurvey> {
   constructor(
-    // TODO use a `SurveyValidationService` to decouple at the DB layer
-    @Inject(SURVEY_COMMAND_REPOSITORY_DEPENDENCY_TOKEN)
-    private readonly surveyRepository: ISurveyCommandRepository,
+    @Inject('SURVEY_VALIDATION_SERVICE_FOR_RESPONSES_INJECTION_TOKEN')
+    private readonly surveyValidationService: ISurveyValidationServiceForBeginPublicSurvey,
     @Inject(SURVEY_RESPONSE_COMMAND_REPOSITORY_INJECTION_TOKEN)
     private readonly surveyCompletionRepository: ISurveyResponseCommandRepository,
   ) {}
@@ -32,7 +34,8 @@ export class BeginPublicSurveyCommandHandler implements ICommandHandler<BeginPub
   }: {
     payload: BeginPublicSurvey;
   }): Promise<CommandResult> {
-    const targetSurvey = await this.surveyRepository.fetchById(surveyId);
+    const targetSurvey =
+      await this.surveyValidationService.fetchForPublicConsumption(surveyId);
 
     if (!targetSurvey) {
       return new ResourceNotFoundError({
@@ -41,7 +44,7 @@ export class BeginPublicSurveyCommandHandler implements ICommandHandler<BeginPub
       });
     }
 
-    if (!targetSurvey.isOpenToPublic) {
+    if (targetSurvey instanceof Error) {
       throw new ForbiddenException();
     }
 
