@@ -8,7 +8,7 @@ import {
   getDataSchemaFromClassCtor,
   LookupTablePropertyMetadata,
 } from '../schema-management';
-import { validateObjectAgainstSchema } from '../validation';
+import { isObject, validateObjectAgainstSchema } from '../validation';
 
 export const validateLookupTable = (
   propertySchema: LookupTablePropertyMetadata,
@@ -23,7 +23,19 @@ export const validateLookupTable = (
       depth: 1,
     };
 
-    return validateLookupTable(reducedSchema, propertyKey, value);
+    if (!isObject(value)) {
+      errors.push(
+        new TrueImpactError(
+          `Invalid value for lookup table [${propertyKey}] at depth ${propertySchema.depth}. Expected a nested lookup table, received: ${typeof value}`,
+        ),
+      );
+
+      return errors;
+    }
+
+    return Object.entries(value).flatMap(([nestedKey, nestedValue]) =>
+      validateLookupTable(reducedSchema, nestedKey, nestedValue),
+    );
   }
 
   // lookup tables are never optional, although they may be empty
