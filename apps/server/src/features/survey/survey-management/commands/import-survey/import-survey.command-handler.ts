@@ -25,6 +25,50 @@ export class ImportSurveyCommandHandler implements ICommandHandler<ImportSurvey>
   }: {
     payload: ImportSurvey;
   }): Promise<CommandResult> {
+    const duplicateFlagErrors: TrueImpactError[] = [];
+
+    questions.forEach(({ options, label: questionLabel }) =>
+      options.forEach(({ flags, label: optionLabel }) => {
+        const duplicateFlags = new Set<{
+          questionLabel: string;
+          optionLabel: string;
+          flag: string;
+        }>();
+
+        const uniqueFlags = new Set<string>();
+
+        flags.forEach((flag) => {
+          if (uniqueFlags.has(flag)) {
+            duplicateFlags.add({
+              flag,
+              questionLabel,
+              optionLabel,
+            });
+          } else {
+            uniqueFlags.add(flag);
+          }
+        });
+
+        if (duplicateFlags.size > 0) {
+          duplicateFlagErrors.push(
+            ...Array.from(duplicateFlags).map(
+              ({ flag, questionLabel, optionLabel }) =>
+                new TrueImpactError(
+                  `Duplicate flag: ${flag} for question [${questionLabel}], option [${optionLabel}]`,
+                ),
+            ),
+          );
+        }
+      }),
+    );
+
+    if (duplicateFlagErrors.length > 0) {
+      return new TrueImpactError(
+        `Encountered duplicate flags when importing question survey [${name}]`,
+        duplicateFlagErrors,
+      );
+    }
+
     const newSurvey = Survey.buildEmpty({ name, id: randomUUID() });
 
     if (newSurvey instanceof TrueImpactError) {

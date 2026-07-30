@@ -88,6 +88,15 @@ const question1: SurveyQuestionImportDto = {
 // TODO add more
 const validQuestions = [question1];
 
+const validCategories = ['red', 'white', 'yellow', 'black'];
+
+const validAnalyzer = buildTestInstance(SurveyAnalyzerImportDto, {
+  name: {
+    text: 'medicine wheel',
+  },
+  categories: validCategories,
+});
+
 describe(`Survey Import Scenarios`, () => {
   beforeAll(async () => {
     // TODO test when the user does not have sufficient permissions
@@ -284,7 +293,7 @@ describe(`Survey Import Scenarios`, () => {
           analyzers: [invalidAnalyzerDto],
         });
 
-        it.only(shouldError, async () => {
+        it(shouldError, async () => {
           await assertCommandScenarioError({
             httpClient,
             endpoint: surveyCommandsEndpoint,
@@ -296,7 +305,6 @@ describe(`Survey Import Scenarios`, () => {
         });
       });
 
-      // TODO when the option is on a follow-up question
       describe(`when an option references an unlisted analyzer`, () => {
         const invalidAnalyzerDto = buildTestInstance(SurveyAnalyzerImportDto, {
           categories: ['red', 'white', 'yellow', 'black'],
@@ -306,9 +314,221 @@ describe(`Survey Import Scenarios`, () => {
 
         const validValue = 200;
 
-        const importWithInvalidAnalyzer = TestCommandStream.first(
-          ImportSurvey,
-          {
+        describe(`when the option belongs to a top-level question`, () => {
+          const importWithInvalidAnalyzer = TestCommandStream.first(
+            ImportSurvey,
+            {
+              name: {
+                text: surveyName,
+              },
+              questions: [
+                {
+                  ...question1,
+                  options: [
+                    {
+                      ...optionA,
+                      valuesByAnalyzerName: {
+                        [invalidAnalyzerDto.name.text]: {
+                          [invalidCategoryName]: validValue,
+                        },
+                      },
+                    },
+                    {
+                      label: 'x',
+                      text: 'this one is ok',
+                      flags: [],
+                      valuesByAnalyzerName: {},
+                    },
+                  ],
+                },
+              ],
+            },
+          );
+
+          it(`should error`, async () => {
+            await assertCommandScenarioError({
+              httpClient,
+              endpoint: surveyCommandsEndpoint,
+              stream: importWithInvalidAnalyzer,
+              assertErrorMessageAsExpected: (message) => {
+                assertTextMatchesAll(
+                  message,
+                  surveyName,
+                  question1.label,
+                  optionA.label,
+                  invalidAnalyzerDto.name.text,
+                  // invalidCategoryName,
+                );
+              },
+            });
+          });
+        });
+      });
+
+      describe(`when an option references an unlisted category for a listed analyzer`, () => {
+        const invalidCategoryName = 'purple';
+
+        const validValue = 200;
+
+        describe(`when the option belongs to a top-level question`, () => {
+          const importWithInvalidOptionValue = TestCommandStream.first(
+            ImportSurvey,
+            {
+              name: {
+                text: surveyName,
+              },
+              analyzers: [validAnalyzer],
+              questions: [
+                {
+                  ...question1,
+                  options: [
+                    {
+                      ...optionA,
+                      valuesByAnalyzerName: {
+                        [validAnalyzer.name.text]: {
+                          [invalidCategoryName]: validValue,
+                        },
+                      },
+                    },
+                    {
+                      label: 'x',
+                      text: 'this one is ok',
+                      flags: [],
+                      valuesByAnalyzerName: {},
+                    },
+                  ],
+                },
+              ],
+            },
+          );
+
+          it(shouldError, async () => {
+            await assertCommandScenarioError({
+              httpClient,
+              endpoint: surveyCommandsEndpoint,
+              stream: importWithInvalidOptionValue,
+              assertErrorMessageAsExpected: (message) => {
+                assertTextMatchesAll(
+                  message,
+                  question1.label,
+                  optionA.label,
+                  validAnalyzer.name.text,
+                  invalidCategoryName,
+                  'no such category',
+                );
+              },
+            });
+          });
+        });
+      });
+
+      /**
+       * array-valued props
+       * categories
+       * options
+       * flags
+       * questions
+       * analyzers
+       */
+
+      describe(`when identity is duplicated across a list of nested entities`, () => {
+        describe(`categories`, () => {
+          const repeatedCategory = 'red';
+
+          const analyzerName = 'RBG';
+
+          const invalidImport = TestCommandStream.first(ImportSurvey, {
+            questions: [question1],
+            analyzers: [
+              buildTestInstance(SurveyAnalyzerImportDto, {
+                name: { text: analyzerName },
+                categories: [
+                  repeatedCategory,
+                  repeatedCategory,
+                  'blue',
+                  'green',
+                ],
+              }),
+            ],
+          });
+
+          it(shouldError, async () => {
+            await assertCommandScenarioError({
+              httpClient,
+              endpoint: surveyCommandsEndpoint,
+              stream: invalidImport,
+              assertErrorMessageAsExpected: (message) => {
+                assertTextMatchesAll(
+                  message,
+                  repeatedCategory,
+                  analyzerName,
+                  'already has the given category',
+                );
+              },
+            });
+          });
+        });
+
+        describe(`questions`, () => {
+          const invalidImport = TestCommandStream.first(ImportSurvey, {
+            name: {
+              text: surveyName,
+            },
+            questions: [question1, question1],
+          });
+
+          it(shouldError, async () => {
+            await assertCommandScenarioError({
+              httpClient,
+              endpoint: surveyCommandsEndpoint,
+              stream: invalidImport,
+              assertErrorMessageAsExpected: (message) => {
+                assertTextMatchesAll(
+                  message,
+                  surveyName,
+                  question1.label,
+                  'cannot add',
+                  'already',
+                );
+              },
+            });
+          });
+        });
+
+        describe(`options`, () => {
+          const invalidImport = TestCommandStream.first(ImportSurvey, {
+            name: {
+              text: surveyName,
+            },
+            questions: [
+              {
+                ...question1,
+                options: [optionA, optionA],
+              },
+            ],
+          });
+
+          it(shouldError, async () => {
+            await assertCommandScenarioError({
+              httpClient,
+              endpoint: surveyCommandsEndpoint,
+              stream: invalidImport,
+              assertErrorMessageAsExpected: (message) => {
+                assertTextMatchesAll(
+                  message,
+                  surveyName,
+                  question1.label,
+                  optionA.label,
+                );
+              },
+            });
+          });
+        });
+
+        describe(`flags`, () => {
+          const repeatedFlag = 'dangerous dog';
+
+          const invalidImport = TestCommandStream.first(ImportSurvey, {
             name: {
               text: surveyName,
             },
@@ -318,11 +538,7 @@ describe(`Survey Import Scenarios`, () => {
                 options: [
                   {
                     ...optionA,
-                    valuesByAnalyzerName: {
-                      [invalidAnalyzerDto.name.text]: {
-                        [invalidCategoryName]: validValue,
-                      },
-                    },
+                    flags: [repeatedFlag, repeatedFlag],
                   },
                   {
                     label: 'x',
@@ -333,33 +549,53 @@ describe(`Survey Import Scenarios`, () => {
                 ],
               },
             ],
-          },
-        );
+          });
 
-        it(`should error`, async () => {
-          await assertCommandScenarioError({
-            httpClient,
-            endpoint: surveyCommandsEndpoint,
-            stream: importWithInvalidAnalyzer,
-            assertErrorMessageAsExpected: (message) => {
-              assertTextMatchesAll(
-                message,
-                surveyName,
-                question1.label,
-                optionA.label,
-                invalidAnalyzerDto.name.text,
-                // invalidCategoryName,
-              );
+          it(shouldError, async () => {
+            await assertCommandScenarioError({
+              httpClient,
+              endpoint: surveyCommandsEndpoint,
+              stream: invalidImport,
+              assertErrorMessageAsExpected: (message) => {
+                assertTextMatchesAll(
+                  message,
+                  surveyName,
+                  repeatedFlag,
+                  question1.label,
+                  optionA.label,
+                );
+              },
+            });
+          });
+        });
+
+        describe(`analyzers`, () => {
+          const invalidImport = TestCommandStream.first(ImportSurvey, {
+            name: {
+              text: surveyName,
             },
+            questions: [question1],
+            analyzers: [validAnalyzer, validAnalyzer],
+          });
+
+          it(shouldError, async () => {
+            await assertCommandScenarioError({
+              httpClient,
+              endpoint: surveyCommandsEndpoint,
+              stream: invalidImport,
+              assertErrorMessageAsExpected: (message) => {
+                assertTextMatchesAll(
+                  message,
+                  surveyName,
+                  'cannot add',
+                  validAnalyzer.name.text,
+                  'already has',
+                );
+              },
+            });
           });
         });
       });
-
-      describe(`when an option references an unlisted category for a listed analyzer`, () => {
-        it.todo(shouldError);
-      });
-
-      // TODO check for duplicates in any arrayed value props
     });
   });
 });
