@@ -7,6 +7,7 @@ import type { IUserCommandRepository } from '../../../../features/users/reposito
 import { User } from '../../../../features/users/user.aggregate-root';
 import { ICommandFsa } from '../../../../libs/cqrs-es';
 
+// TODO move this file!
 /**
  * TODO We should have a separate endpoint for survey completion.
  * This would make the following logic much simpler.

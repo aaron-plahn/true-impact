@@ -17,6 +17,8 @@ import { ClientValidationService } from '../clients/services';
 import { FlagModule } from '../flags/flag.module';
 import {
   AddFollowUpQuestionForSurveyOption,
+  ImportSurvey,
+  ImportSurveyCommandHandler,
   OpenSurveyToClient,
   OpenSurveyToClientCommandHandler,
 } from '../survey/survey-management';
@@ -117,6 +119,7 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
   imports: [ClientModule, FlagModule, UserModule, AuthModule],
   providers: [
     // core survey commands
+    ImportSurveyCommandHandler,
     CreateSurveyCommandHandler,
     AddQuestionToSurveyCommandHandler,
     AddOptionToSurveyQuestionCommandHandler,
@@ -283,7 +286,12 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
           .register({
             CommandHandlerCtor: OpenSurveyToAnonymousIndividualCommandHandler,
             CommandPayloadCtor: OpenSurveyToAnonymousIndividual,
+          })
+          .register({
+            CommandHandlerCtor: ImportSurveyCommandHandler,
+            CommandPayloadCtor: ImportSurvey,
           });
+
         return commandHandlerService;
       },
       inject: [ModuleRef],
