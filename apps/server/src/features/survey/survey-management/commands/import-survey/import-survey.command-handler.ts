@@ -31,6 +31,42 @@ export class ImportSurveyCommandHandler implements ICommandHandler<ImportSurvey>
       return newSurvey;
     }
 
+    const surveyWithAnalyzers = analyzers.reduce(
+      (acc: Survey | TrueImpactError, analyzer) => {
+        if (acc instanceof Error) {
+          return acc;
+        }
+
+        // TODO we should make this ML text on the model, too
+        const withAnalyzer = acc.createAnalyzer({ name: analyzer.name.text });
+
+        if (withAnalyzer instanceof Error) {
+          return withAnalyzer;
+        }
+
+        const withCategories = analyzer.categories.reduce(
+          (acc: Survey | TrueImpactError, category) => {
+            if (acc instanceof Error) {
+              return acc;
+            }
+
+            return acc.addCategoryForAnalyzer({
+              analyzerName: analyzer.name.text,
+              category,
+            });
+          },
+          withAnalyzer,
+        );
+
+        return withCategories;
+      },
+      newSurvey,
+    );
+
+    if (surveyWithAnalyzers instanceof Error) {
+      return surveyWithAnalyzers;
+    }
+
     /**
      * TODO can we make our update methods chainable (use monad)?
      */
@@ -65,13 +101,41 @@ export class ImportSurveyCommandHandler implements ICommandHandler<ImportSurvey>
               return surveyWithThisOption;
             }
 
-            if (!option.followUpQuestion) {
-              return surveyWithThisOption;
+            const surveyWithAnalysisValuesForThisOption = Object.entries(
+              option.valuesByAnalyzerName,
+            ).reduce(
+              (
+                acc: Survey | TrueImpactError,
+                [analyzerName, valuesByCategory],
+              ) => {
+                if (acc instanceof Error) {
+                  return acc;
+                }
+
+                return acc.addValueForOption({
+                  analyzerName,
+                  questionLabel: question.label,
+                  optionLabel: option.label,
+                  valuesByCategory,
+                });
+              },
+              surveyWithThisOption,
+            );
+
+            if (
+              surveyWithAnalysisValuesForThisOption instanceof TrueImpactError
+            ) {
+              return surveyWithAnalysisValuesForThisOption;
             }
 
+            if (!option.followUpQuestion) {
+              return surveyWithAnalysisValuesForThisOption;
+            }
+
+            // TODO what about analysis values for follow up question options?
             // TODO naming - I'm assuming `followup` is an adjective and `follow up` is a verb phrase
             const surveyWithFollowupQuestionForThisOption =
-              surveyWithThisOption.addFollowUpQuestion({
+              surveyWithAnalysisValuesForThisOption.addFollowUpQuestion({
                 questionLabel: question.label,
                 optionLabel: option.label,
                 followUpQuestion: option.followUpQuestion,
@@ -108,51 +172,15 @@ export class ImportSurveyCommandHandler implements ICommandHandler<ImportSurvey>
 
         return surveyWithAllOptions;
       },
-      newSurvey,
+      surveyWithAnalyzers,
     );
 
     if (surveyWithQuestions instanceof Error) {
       return surveyWithQuestions;
     }
 
-    const surveyWithAnalyzers = analyzers.reduce(
-      (acc: Survey | TrueImpactError, analyzer) => {
-        if (acc instanceof Error) {
-          return acc;
-        }
-
-        // TODO we should make this ML text on the model, too
-        const withAnalyzer = acc.createAnalyzer({ name: analyzer.name.text });
-
-        if (withAnalyzer instanceof Error) {
-          return withAnalyzer;
-        }
-
-        const withCategories = analyzer.categories.reduce(
-          (acc: Survey | TrueImpactError, category) => {
-            if (acc instanceof Error) {
-              return acc;
-            }
-
-            return acc.addCategoryForAnalyzer({
-              analyzerName: analyzer.name.text,
-              category,
-            });
-          },
-          withAnalyzer,
-        );
-
-        return withCategories;
-      },
-      surveyWithQuestions,
-    );
-
-    if (surveyWithAnalyzers instanceof Error) {
-      return surveyWithAnalyzers;
-    }
-
     // TODO we need to rename this to finalize
-    const finalizedSurvey = surveyWithAnalyzers.publish();
+    const finalizedSurvey = surveyWithQuestions.publish();
 
     if (finalizedSurvey instanceof Error) {
       return finalizedSurvey;

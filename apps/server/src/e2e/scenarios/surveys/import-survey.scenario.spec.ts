@@ -296,6 +296,7 @@ describe(`Survey Import Scenarios`, () => {
         });
       });
 
+      // TODO when the option is on a follow-up question
       describe(`when an option references an unlisted analyzer`, () => {
         const invalidAnalyzerDto = buildTestInstance(SurveyAnalyzerImportDto, {
           categories: ['red', 'white', 'yellow', 'black'],
@@ -326,6 +327,8 @@ describe(`Survey Import Scenarios`, () => {
                   {
                     label: 'x',
                     text: 'this one is ok',
+                    flags: [],
+                    valuesByAnalyzerName: {},
                   },
                 ],
               },
@@ -333,13 +336,20 @@ describe(`Survey Import Scenarios`, () => {
           },
         );
 
-        it.only(`should error`, async () => {
+        it(`should error`, async () => {
           await assertCommandScenarioError({
             httpClient,
             endpoint: surveyCommandsEndpoint,
             stream: importWithInvalidAnalyzer,
             assertErrorMessageAsExpected: (message) => {
-              assertTextMatchesAll(message, 'blahoo');
+              assertTextMatchesAll(
+                message,
+                surveyName,
+                question1.label,
+                optionA.label,
+                invalidAnalyzerDto.name.text,
+                // invalidCategoryName,
+              );
             },
           });
         });
