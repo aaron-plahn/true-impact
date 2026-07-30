@@ -17,9 +17,9 @@ export const validateLookupTable = (
 ) => {
   const errors: TrueImpactError[] = [];
 
-  if (propertySchema.depth > 1) {
-    throw new Error(`Lookup Tables with depth != 1 are not yet supported`);
-  }
+  //   if (propertySchema.depth > 1) {
+  //     throw new Error(`Lookup Tables with depth != 1 are not yet supported`);
+  //   }
 
   // lookup tables are never optional, although they may be empty
   if (!value) {
