@@ -26,6 +26,7 @@ import {
   isNumber,
   isObject,
 } from './predicates';
+import { validateLookupTable } from './validate-lookup-table';
 
 const buildLabelForArbitraryValue = (value: unknown): string => {
   if (value === null) {
@@ -264,126 +265,7 @@ export const validateObjectAgainstSchema = <T = object>(
       }
 
       if (isLookupTablePropertyMetadata(propertySchema)) {
-        // lookup tables are never optional, although they may be empty
-        if (!value) {
-          acc.push(
-            new TrueImpactError(
-              `Invalid value for property [${k}]. Expected a lookup table (Record<string,T>), received [${value}]`,
-            ),
-          );
-
-          return acc;
-        }
-
-        const jsType = typeof value;
-
-        if (
-          jsType === 'string' ||
-          jsType === 'bigint' ||
-          jsType === 'boolean' ||
-          jsType === 'function' ||
-          jsType === 'number' ||
-          jsType === 'symbol'
-        ) {
-          acc.push(
-            new TrueImpactError(
-              `Invalid value for property [${k}]. Expected a lookup table (Record<string,T>), received [${value} <${jsType}>]`,
-            ),
-          );
-          return acc;
-        }
-
-        if (Array.isArray(value)) {
-          acc.push(
-            new TrueImpactError(
-              `Invalid value for property [${k}]. Expected a lookup table (Record<string,T>), received an array.`,
-            ),
-          );
-
-          return acc;
-        }
-
-        // the lookup table has primitive type values
-        Object.entries(value as Record<string, unknown>).forEach(
-          ([lookupKey, lookupValue]) => {
-            if (typeof propertySchema.valueType === 'function') {
-              const schemaForLookupTableValues = getDataSchemaFromClassCtor(
-                propertySchema.valueType(),
-              );
-
-              Object.entries(value as Record<string, unknown>).forEach(
-                ([lookupKey, lookupValue]) => {
-                  const result = validateObjectAgainstSchema(
-                    lookupValue,
-                    schemaForLookupTableValues,
-                  );
-
-                  if (result.length > 0) {
-                    acc.push(
-                      new TrueImpactError(
-                        `Invalid value for property [${k}] @key [${lookupKey}].`,
-                        result,
-                      ),
-                    );
-                  }
-                },
-              );
-
-              return acc;
-            }
-
-            if (
-              propertySchema.valueType === 'number' ||
-              propertySchema.valueType === 'integer'
-            ) {
-              if (typeof lookupValue !== 'number') {
-                acc.push(
-                  new TrueImpactError(
-                    `Invalid value for property [${k}] @key [${lookupKey}]. Expected ${propertySchema.valueType}, recevied [${value} <${typeof value}>]`,
-                  ),
-                );
-              }
-
-              return acc;
-            }
-
-            if (propertySchema.valueType === 'boolean') {
-              if (typeof lookupValue !== 'boolean') {
-                acc.push(
-                  new TrueImpactError(
-                    `Invalid value for property [${k}] @key [${lookupKey}]. Expected boolean, recevied [${value} <${typeof value}>]`,
-                  ),
-                );
-
-                return acc;
-              }
-
-              return acc;
-            }
-
-            if (propertySchema.valueType === 'string') {
-              if (typeof lookupValue !== 'string') {
-                acc.push(
-                  new TrueImpactError(
-                    `Invalid value for property [${k}] @key [${lookupKey}]. Expected string, recevied [${value} <${typeof value}>]`,
-                  ),
-                );
-
-                return acc;
-              }
-
-              return acc;
-            }
-
-            const exhaustiveCheck: never = propertySchema.valueType;
-
-            throw new TrueImpactRuntimeException([
-              new TrueImpactError(
-                `Failed to validate lookup table [${k}] with values of invalid type [${exhaustiveCheck as string}].`,
-              ),
-            ]);
-          },
-        );
+        acc.push(...validateLookupTable(propertySchema, k, value));
 
         return acc;
       }

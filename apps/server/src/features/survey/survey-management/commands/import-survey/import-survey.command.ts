@@ -2,6 +2,7 @@ import {
   LookupTable,
   NestedDataType,
   NonEmptyString,
+  RawObject,
   TrueImpactDataExample,
 } from '../../../../../libs/data-types';
 
@@ -14,6 +15,14 @@ class MultilingualTextDto {
   // languageCode
 }
 
+@TrueImpactDataExample<SurveyAnalyzerImportDto>({
+  example: {
+    name: {
+      text: '4 learning styles',
+    },
+    categories: [],
+  },
+})
 export class SurveyAnalyzerImportDto {
   @NestedDataType(() => MultilingualTextDto, {
     label: 'name',
@@ -30,10 +39,24 @@ export class SurveyAnalyzerImportDto {
 }
 
 export class SurveyQuestionImportDto {
+  @NonEmptyString({
+    label: 'label',
+    description: 'label ("question number")',
+  })
   label: string;
 
+  @NonEmptyString({
+    label: 'label',
+    description: 'prompt for this question',
+  })
   prompt: string;
 
+  @NestedDataType(() => SurveyOptionImportDto, {
+    label: 'options',
+    description: 'list of options available to the user',
+    isArray: true,
+    isOptional: true, // can be empty
+  })
   options: SurveyOptionImportDto[];
 }
 
@@ -50,11 +73,16 @@ export class SurveyOptionImportDto {
   })
   text: string;
 
-  @NestedDataType(() => SurveyQuestionImportDto, {
-    isOptional: true,
+  /**
+   * Currently, our data-types lib does not support recursive types.
+   * Follow-up questions must be validated manually.
+   *
+   * TODO do this!
+   */
+  @RawObject({
     label: 'follow-up question',
-    description:
-      'a question to ask in case the user selects this option for the given option',
+    description: 'Question to be asked in case the user selects this option',
+    isOptional: true,
   })
   followUpQuestion?: SurveyQuestionImportDto;
 
