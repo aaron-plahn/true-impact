@@ -14,12 +14,17 @@ export const validateLookupTable = (
   propertySchema: LookupTablePropertyMetadata,
   propertyKey: string,
   value: unknown,
-) => {
+): TrueImpactError[] => {
   const errors: TrueImpactError[] = [];
 
-  //   if (propertySchema.depth > 1) {
-  //     throw new Error(`Lookup Tables with depth != 1 are not yet supported`);
-  //   }
+  if (propertySchema.depth > 1) {
+    const reducedSchema = {
+      ...propertySchema,
+      depth: 1,
+    };
+
+    return validateLookupTable(reducedSchema, propertyKey, value);
+  }
 
   // lookup tables are never optional, although they may be empty
   if (!value) {
