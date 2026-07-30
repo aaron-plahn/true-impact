@@ -43,7 +43,7 @@ const followUpQuestion = {
     {
       label: 'a',
       text: 'yes',
-      flags: [newFlag],
+      flags: [],
       valuesByAnalyzerName: {},
     },
     {
@@ -58,7 +58,7 @@ const followUpQuestion = {
 const optionA: SurveyOptionImportDto = {
   label: 'a',
   text: 'yes',
-  flags: [newFlag],
+  flags: [],
   valuesByAnalyzerName: {},
   followUpQuestion,
 };
@@ -176,6 +176,43 @@ describe(`Survey Import Scenarios`, () => {
 
             // TODO check flags here or elsewhere
           },
+        });
+      });
+    });
+
+    describe(`when a flag is provided`, () => {
+      describe(`when there is an existing flag with the given label`, () => {
+        it.todo(`should have a test`);
+      });
+
+      describe(`when a new flag (not yet in DB) is provided`, () => {
+        const invalidImport = TestCommandStream.first(ImportSurvey, {
+          questions: [
+            {
+              ...question1,
+              options: [
+                question1.options[0],
+                {
+                  ...question1.options[1],
+                  flags: [newFlag],
+                },
+              ],
+            },
+          ],
+        });
+
+        it(`should throw an unsupported error`, async () => {
+          await assertCommandScenarioError({
+            httpClient,
+            endpoint: surveyCommandsEndpoint,
+            stream: invalidImport,
+            assertErrorMessageAsExpected: (message) => {
+              assertTextMatchesAll(
+                message,
+                `Importing flags to a survey is not yet supported`,
+              );
+            },
+          });
         });
       });
     });
@@ -310,9 +347,13 @@ describe(`Survey Import Scenarios`, () => {
           categories: ['red', 'white', 'yellow', 'black'],
         });
 
-        const invalidCategoryName = 'purple';
-
         const validValue = 200;
+
+        const invalidValues = {
+          [invalidAnalyzerDto.name.text]: {
+            [validCategories[0]]: validValue,
+          },
+        };
 
         describe(`when the option belongs to a top-level question`, () => {
           const importWithInvalidAnalyzer = TestCommandStream.first(
@@ -327,11 +368,7 @@ describe(`Survey Import Scenarios`, () => {
                   options: [
                     {
                       ...optionA,
-                      valuesByAnalyzerName: {
-                        [invalidAnalyzerDto.name.text]: {
-                          [invalidCategoryName]: validValue,
-                        },
-                      },
+                      valuesByAnalyzerName: invalidValues,
                     },
                     {
                       label: 'x',
@@ -358,6 +395,57 @@ describe(`Survey Import Scenarios`, () => {
                   optionA.label,
                   invalidAnalyzerDto.name.text,
                   // invalidCategoryName,
+                );
+              },
+            });
+          });
+        });
+
+        describe(`when the option belongs to a follow-up question`, () => {
+          const invalidImport = TestCommandStream.first(ImportSurvey, {
+            name: {
+              text: surveyName,
+            },
+            questions: [
+              {
+                ...question1,
+                options: [
+                  {
+                    ...optionA,
+                    followUpQuestion: {
+                      ...followUpQuestion,
+                      options: [
+                        {
+                          ...followUpQuestion.options[0],
+                          valuesByAnalyzerName: invalidValues,
+                        },
+                        followUpQuestion.options[1],
+                      ],
+                    },
+                  },
+                  {
+                    label: 'x',
+                    text: 'this one is ok',
+                    flags: [],
+                    valuesByAnalyzerName: {},
+                  },
+                ],
+              },
+            ],
+          });
+
+          it(shouldError, async () => {
+            await assertCommandScenarioError({
+              httpClient,
+              endpoint: surveyCommandsEndpoint,
+              stream: invalidImport,
+              assertErrorMessageAsExpected: (message) => {
+                assertTextMatchesAll(
+                  message,
+                  surveyName,
+                  followUpQuestion.label,
+                  followUpQuestion.options[0].label,
+                  invalidAnalyzerDto.name.text,
                 );
               },
             });
@@ -415,6 +503,54 @@ describe(`Survey Import Scenarios`, () => {
                   validAnalyzer.name.text,
                   invalidCategoryName,
                   'no such category',
+                );
+              },
+            });
+          });
+        });
+
+        describe(`when the option belongs to a follow-up question`, () => {
+          const invalidImport = TestCommandStream.first(ImportSurvey, {
+            name: {
+              text: surveyName,
+            },
+            analyzers: [validAnalyzer],
+            questions: [
+              {
+                ...question1,
+                options: [
+                  {
+                    ...optionA,
+                    valuesByAnalyzerName: {
+                      [validAnalyzer.name.text]: {
+                        [invalidCategoryName]: validValue,
+                      },
+                    },
+                  },
+                  {
+                    label: 'x',
+                    text: 'this one is ok',
+                    flags: [],
+                    valuesByAnalyzerName: {},
+                  },
+                ],
+              },
+            ],
+          });
+
+          it(shouldError, async () => {
+            await assertCommandScenarioError({
+              httpClient,
+              endpoint: surveyCommandsEndpoint,
+              stream: invalidImport,
+              assertErrorMessageAsExpected: (message) => {
+                assertTextMatchesAll(
+                  message,
+                  surveyName,
+                  validAnalyzer.name.text,
+                  invalidCategoryName,
+                  question1.label,
+                  optionA.label,
                 );
               },
             });
@@ -525,7 +661,11 @@ describe(`Survey Import Scenarios`, () => {
           });
         });
 
-        describe(`flags`, () => {
+        /**
+         * TODO Opt back in to this test when supporting flags on survey imports
+         * This currently fails because it hits the "importing flags for surveys is unsupported" error.
+         */
+        describe.skip(`flags`, () => {
           const repeatedFlag = 'dangerous dog';
 
           const invalidImport = TestCommandStream.first(ImportSurvey, {

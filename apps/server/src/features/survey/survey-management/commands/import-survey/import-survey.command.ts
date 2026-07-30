@@ -84,6 +84,7 @@ export class SurveyOptionImportDto {
     description: 'Question to be asked in case the user selects this option',
     isOptional: true,
   })
+  // TODO spelling? followupQuestion?
   followUpQuestion?: SurveyQuestionImportDto;
 
   @NonEmptyString({

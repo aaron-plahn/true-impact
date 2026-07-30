@@ -62,6 +62,16 @@ export class ImportSurveyCommandHandler implements ICommandHandler<ImportSurvey>
       }),
     );
 
+    if (
+      questions.some(({ options }) =>
+        options.some(({ flags }) => flags.length > 0),
+      )
+    ) {
+      return new TrueImpactError(
+        `Importing flags to a survey is not yet supported`,
+      );
+    }
+
     if (duplicateFlagErrors.length > 0) {
       return new TrueImpactError(
         `Encountered duplicate flags when importing question survey [${name}]`,
@@ -196,13 +206,38 @@ export class ImportSurveyCommandHandler implements ICommandHandler<ImportSurvey>
                     return acc;
                   }
 
-                  const updated = acc.addOptionToQuestion({
+                  const withThisOption = acc.addOptionToQuestion({
                     questionLabel: option.followUpQuestion?.label as string,
                     optionLabel: followupOption.label,
                     text: followupOption.text,
                   });
 
-                  return updated;
+                  if (withThisOption instanceof TrueImpactError) {
+                    return withThisOption;
+                  }
+
+                  const withAnalysisValues = Object.entries(
+                    followupOption.valuesByAnalyzerName,
+                  ).reduce(
+                    (
+                      acc: Survey | TrueImpactError,
+                      [analyzerName, valuesByCategory],
+                    ) => {
+                      if (acc instanceof Error) {
+                        return acc;
+                      }
+
+                      return acc.addValueForOption({
+                        analyzerName,
+                        questionLabel: option.followUpQuestion?.label as string,
+                        optionLabel: followupOption.label,
+                        valuesByCategory,
+                      });
+                    },
+                    withThisOption,
+                  );
+
+                  return withAnalysisValues;
                 },
                 surveyWithFollowupQuestionForThisOption,
               );
