@@ -323,6 +323,10 @@ describe(`Survey Import Scenarios`, () => {
                       },
                     },
                   },
+                  {
+                    label: 'x',
+                    text: 'this one is ok',
+                  },
                 ],
               },
             ],
