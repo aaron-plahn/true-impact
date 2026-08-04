@@ -1,5 +1,8 @@
 /* eslint-disable @typescript-eslint/restrict-template-expressions */
 /* eslint-disable @typescript-eslint/no-base-to-string */
+/**
+ * We need an explicit stringify helper that deals with arrays, instances, and all possible primitives gracefully.
+ */
 import {
   TrueImpactError,
   TrueImpactRuntimeException,

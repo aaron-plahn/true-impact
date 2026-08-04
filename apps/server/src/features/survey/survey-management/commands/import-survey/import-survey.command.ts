@@ -75,9 +75,9 @@ export class SurveyOptionImportDto {
 
   /**
    * Currently, our data-types lib does not support recursive types.
-   * Follow-up questions must be validated manually.
-   *
-   * TODO do this!
+   * Follow-up questions are validated indirectly via `Survey.validateInvariants`.
+   * This works, but we may want to manually validate this property against a schema
+   * in the command-handler to fail faster and to provide more meaningful error messages.
    */
   @RawObject({
     label: 'follow-up question',

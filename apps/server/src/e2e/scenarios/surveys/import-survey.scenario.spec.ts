@@ -85,8 +85,62 @@ const question1: SurveyQuestionImportDto = {
   options: optionsForQuestionToManuallyVerify,
 };
 
-// TODO add more
-const validQuestions = [question1];
+const questionWithFollowupQuestion: SurveyQuestionImportDto = {
+  prompt: 'Say no to me to find your next adventure!',
+  label: '2',
+  options: [
+    {
+      label: 'a',
+      text: 'no',
+      valuesByAnalyzerName: {},
+      flags: [],
+      followUpQuestion: {
+        label: '2.1',
+        prompt: 'Are you happy with yourself now?',
+        options: [
+          {
+            label: 'a',
+            text: 'yes',
+            flags: [],
+            valuesByAnalyzerName: {},
+          },
+          {
+            label: 'b',
+            text: 'no',
+            flags: [],
+            valuesByAnalyzerName: {},
+            followUpQuestion: {
+              label: '2.1.1',
+              prompt: 'Is it because you followed your own adventure?',
+              options: [
+                {
+                  label: 'a',
+                  text: 'yes',
+                  flags: [],
+                  valuesByAnalyzerName: {},
+                },
+                {
+                  label: 'b',
+                  text: 'no',
+                  flags: [],
+                  valuesByAnalyzerName: {},
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      label: 'b',
+      text: 'yes',
+      flags: [],
+      valuesByAnalyzerName: {},
+    },
+  ],
+};
+
+const validQuestions = [question1, questionWithFollowupQuestion];
 
 const validCategories = ['red', 'white', 'yellow', 'black'];
 
@@ -306,6 +360,79 @@ describe(`Survey Import Scenarios`, () => {
               );
             },
           });
+        });
+      });
+    });
+
+    // TODO general fuzz testing
+    describe(`when a follow-up question has an invalid schema`, () => {
+      const invalidQuestionLabel = '10';
+
+      const invalidOptionLabel = 'b';
+
+      const importWithInvalidFollowupQuestion = TestCommandStream.first(
+        ImportSurvey,
+        {
+          name: {
+            text: surveyName,
+          },
+          questions: [
+            ...validQuestions,
+            {
+              label: invalidQuestionLabel,
+              prompt: 'Something is wrong with one of my followup questions',
+              options: [
+                {
+                  label: 'a',
+                  text: 'this one is ok',
+                  flags: [],
+                  valuesByAnalyzerName: {},
+                },
+                {
+                  label: invalidOptionLabel,
+                  text: 'this option has an invalid follow-up question',
+                  followUpQuestion: {
+                    label: ['why am I an array?'] as unknown as string,
+                    options: [
+                      {
+                        label: 'a',
+                        text: 'True',
+                        valuesByAnalyzerName: {},
+                        flags: [],
+                      },
+                      {
+                        label: 'b',
+                        text: 'False',
+                        valuesByAnalyzerName: {},
+                        flags: [],
+                      },
+                    ],
+                  },
+                  flags: [],
+                  valuesByAnalyzerName: {},
+                },
+              ],
+            },
+          ],
+        },
+      );
+
+      it(`should return the expected error`, async () => {
+        await assertCommandScenarioError({
+          httpClient,
+          endpoint: surveyCommandsEndpoint,
+          stream: importWithInvalidFollowupQuestion,
+          assertErrorMessageAsExpected: (message) => {
+            assertTextMatchesAll(
+              message,
+              surveyName,
+              invalidQuestionLabel,
+              'ill-formed entity',
+              'SurveyOption',
+              'Expected non-empty text',
+              'received [object]',
+            );
+          },
         });
       });
     });
