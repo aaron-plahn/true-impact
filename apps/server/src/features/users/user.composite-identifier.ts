@@ -1,10 +1,8 @@
-import { NonEmptyString } from '../../libs/data-types';
+import { Literal, NonEmptyString } from '../../libs/data-types';
 import { USER_AGGREGATE_TYPE } from './constants';
 
 export class UserCompositeIdentifier {
-  // Or can we make this static or a getter? It shouldn't be required from the outside.
-  // TODO @Literal
-  @NonEmptyString({
+  @Literal(USER_AGGREGATE_TYPE, {
     label: 'user',
     description: 'user',
   })

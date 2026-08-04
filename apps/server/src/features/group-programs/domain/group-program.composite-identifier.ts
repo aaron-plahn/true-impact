@@ -1,4 +1,8 @@
-import { NestedDataType, NonEmptyString } from '../../../libs/data-types';
+import {
+  Literal,
+  NestedDataType,
+  NonEmptyString,
+} from '../../../libs/data-types';
 import { GROUP_PROGRAM_AGGREGATE_TYPE } from './constants';
 
 export const GroupProgramCompositeIdentifierValuedProperty = NestedDataType(
@@ -10,7 +14,7 @@ export const GroupProgramCompositeIdentifierValuedProperty = NestedDataType(
 );
 
 export class GroupProgramCompositeIdentifier {
-  @NonEmptyString({
+  @Literal(GROUP_PROGRAM_AGGREGATE_TYPE, {
     label: 'type',
     description: GROUP_PROGRAM_AGGREGATE_TYPE,
   })
