@@ -70,6 +70,8 @@ export class SurveyOptionViewModelClientDto {
   followUpQuestions: FollowUpQuestionViewModelClientDto[];
 
   flags: Record<string, SurveyFlagViewModelClientDto>;
+
+  valuesByAnalyzerName: Record<string, Record<string, number>>;
 }
 
 export class SurveyOptionViewModel {
@@ -81,16 +83,20 @@ export class SurveyOptionViewModel {
 
   flags: Map<string, SurveyFlagViewModelClientDto>;
 
+  valuesByAnalyzerName: Map<string, Map<string, number>>;
+
   constructor({
     label,
     text,
     followUpQuestions,
     flags,
+    valuesByAnalyzerName,
   }: {
     label: string;
     text: string;
     flags: Map<string, SurveyFlagViewModelClientDto>;
     followUpQuestions?: FollowUpQuestionViewModel[];
+    valuesByAnalyzerName: Map<string, Map<string, number>>;
   }) {
     this.label = label;
 
@@ -103,6 +109,8 @@ export class SurveyOptionViewModel {
     }
 
     this.flags = flags;
+
+    this.valuesByAnalyzerName = valuesByAnalyzerName;
   }
 
   toClientDto(): SurveyOptionViewModelClientDto {
@@ -110,18 +118,29 @@ export class SurveyOptionViewModel {
       fuq.toClientDto(),
     );
 
+    const valuesByAnalyzerName = deepConvertMapToObject(
+      this.valuesByAnalyzerName,
+    );
+
     return {
       label: this.label,
       text: this.text,
       followUpQuestions,
       flags: deepConvertMapToObject(this.flags),
+      valuesByAnalyzerName,
     };
   }
 
   static fromDomainModel(
     surveyOption: SurveyOption,
     questionsByLabel: Map<string, FollowUpQuestionViewModel>,
-    context: { flags: Map<string, FlagViewModelClientDto> },
+    context: {
+      flags: Map<string, FlagViewModelClientDto>;
+      analyzerValuesByOptionLabel: Map<
+        string,
+        Map<string, Map<string, number>>
+      >;
+    },
   ) {
     const followUpQuestions: FollowUpQuestionViewModel[] = [];
 
@@ -154,11 +173,16 @@ export class SurveyOptionViewModel {
       });
     });
 
+    const valuesByAnalyzerName =
+      context.analyzerValuesByOptionLabel.get(surveyOption.label) ||
+      new Map<string, Map<string, number>>();
+
     return new SurveyOptionViewModel({
       label: surveyOption.label,
       text: surveyOption.text,
       followUpQuestions,
       flags,
+      valuesByAnalyzerName,
     });
   }
 }

@@ -34,6 +34,7 @@ import { SurveyQuestionViewModel } from './survey-question.view-model';
     name: 'Food Allergies Survey',
     size: 10,
     analyzersByName: {},
+    // @ts-expect-error TODO we need better type safety in combination with the recursive nature of this structure
     questions: Array(10)
       .fill(null)
       .map((_, index) => ({
@@ -53,6 +54,7 @@ import { SurveyQuestionViewModel } from './survey-question.view-model';
                     text: 'I am weak.',
                     followUpQuestions: [],
                     flags: {},
+                    valuesByAnalyzerName: {},
                   },
                   b: {
                     label: 'b',
@@ -67,6 +69,7 @@ import { SurveyQuestionViewModel } from './survey-question.view-model';
                             text: 'yes',
                             flags: {},
                             followUpQuestions: [],
+                            valuesByAnalyzerName: {},
                           },
                           b: {
                             label: 'b',
@@ -78,6 +81,7 @@ import { SurveyQuestionViewModel } from './survey-question.view-model';
                                 description: 'this client is super chill',
                               },
                             },
+                            valuesByAnalyzerName: {},
                             followUpQuestions: [],
                           },
                         },
@@ -90,6 +94,7 @@ import { SurveyQuestionViewModel } from './survey-question.view-model';
                     text: 'You are really smart.',
                     followUpQuestions: [],
                     flags: {},
+                    valuesByAnalyzerName: {},
                   },
                   d: {
                     label: 'c',
@@ -102,6 +107,7 @@ import { SurveyQuestionViewModel } from './survey-question.view-model';
                         description: 'this client is always being sarcastic',
                       },
                     },
+                    valuesByAnalyzerName: {},
                   },
                 },
               },
@@ -113,18 +119,21 @@ import { SurveyQuestionViewModel } from './survey-question.view-model';
                 description: 'will say yes to any question asked',
               },
             },
+            valuesByAnalyzerName: {},
           },
           b: {
             label: 'b',
             text: `agree`,
             followUpQuestions: [],
             flags: {},
+            valuesByAnalyzerName: {},
           },
           c: {
             label: 'c',
             text: `disagree`,
             followUpQuestions: [],
             flags: {},
+            valuesByAnalyzerName: {},
           },
           d: {
             label: 'd',
@@ -141,6 +150,7 @@ import { SurveyQuestionViewModel } from './survey-question.view-model';
                 description: 'this one is fiesty!',
               },
             },
+            valuesByAnalyzerName: {},
             followUpQuestions: [],
           },
         },
@@ -301,9 +311,15 @@ export class SurveyViewModel {
   static buildSurveyQuestionViewModel(
     surveyQuestion: SurveyQuestion,
     questionBank: Map<string, SurveyQuestion>,
-    context: { flags: Map<string, FlagViewModelClientDto> },
+    context: {
+      flags: Map<string, FlagViewModelClientDto>;
+      analyzerValuesByOptionLabel: Map<
+        string,
+        Map<string, Map<string, Map<string, number>>>
+      >;
+    },
   ): SurveyQuestionViewModel {
-    const { label, prompt, options } = surveyQuestion;
+    const { label: questionLabel, prompt, options } = surveyQuestion;
 
     const surveyOptionsAsArray: SurveyOption[] = Array.from(options.values());
 
@@ -311,7 +327,7 @@ export class SurveyViewModel {
       surveyOptionsAsArray.reduce(
         (
           acc: Map<string, SurveyOptionViewModel>,
-          { label, text, followUpQuestionLabel }: SurveyOption,
+          { label: optionLabel, text, followUpQuestionLabel }: SurveyOption,
         ): Map<string, SurveyOptionViewModel> => {
           const followUpQuestions: FollowUpQuestionViewModel[] =
             typeof followUpQuestionLabel === 'string'
@@ -333,14 +349,20 @@ export class SurveyViewModel {
             );
           });
 
+          const valuesByAnalyzerName =
+            context.analyzerValuesByOptionLabel
+              .get(questionLabel)
+              ?.get(optionLabel) || new Map<string, Map<string, number>>();
+
           const optionView = new SurveyOptionViewModel({
-            label,
+            label: optionLabel,
             text,
             followUpQuestions,
             flags,
+            valuesByAnalyzerName,
           });
 
-          acc.set(label, optionView);
+          acc.set(optionLabel, optionView);
 
           return acc;
         },
@@ -348,7 +370,7 @@ export class SurveyViewModel {
       );
 
     return new SurveyQuestionViewModel({
-      label,
+      label: questionLabel,
       prompt,
       options: optionViews,
     });
@@ -360,8 +382,24 @@ export class SurveyViewModel {
    */
   static fromDomainModel(
     survey: Survey,
-    context: { flags: Map<string, FlagViewModelClientDto> },
+    context: {
+      flags: Map<string, FlagViewModelClientDto>;
+    },
   ) {
+    const supplementedContext = context as {
+      flags: Map<string, FlagViewModelClientDto>;
+      analyzerValuesByOptionLabel: Map<
+        string,
+        Map<string, Map<string, Map<string, number>>>
+      >;
+    };
+
+    const analyzerValuesByOptionLabel = survey.getAnalyzerValuesByOptionLabel();
+
+    Object.assign(supplementedContext, {
+      analyzerValuesByOptionLabel,
+    });
+
     const questionViewsByLabel: Map<string, SurveyQuestionViewModel> =
       new Map();
 
@@ -372,7 +410,7 @@ export class SurveyViewModel {
         SurveyViewModel.buildSurveyQuestionViewModel(
           surveyQuestion,
           survey.questionBank,
-          context,
+          supplementedContext,
         );
 
       questionViewsByLabel.set(ql, questionView);

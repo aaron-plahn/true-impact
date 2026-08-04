@@ -695,6 +695,59 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
     return this.questionBank.get(nextQuestionLabel) || null;
   }
 
+  /**
+   * Note that this query helper is only useful for projecting views off of domain
+   * models. Once we have denormalized views that are synchronized via event consumers,
+   * we won't need this. For that reason, performance is not super critical here.
+   */
+  getAnalyzerValuesByOptionLabel(): Map<
+    string,
+    Map<string, Map<string, Map<string, number>>>
+  > {
+    // questionLabel -> optionLabel -> analyzer -> category -> number
+    const result = new Map<
+      string,
+      Map<string, Map<string, Map<string, number>>>
+    >();
+
+    this.questionBank.forEach((question, questionLabel) => {
+      if (!result.has(questionLabel)) {
+        result.set(questionLabel, new Map());
+      }
+
+      const byQuestion = result.get(questionLabel) as Map<
+        string,
+        Map<string, Map<string, number>>
+      >;
+
+      question.options.forEach((_option, optionLabel) => {
+        this.analyzersByName.forEach((analyzer, analyzerName) => {
+          if (!byQuestion.has(optionLabel)) {
+            byQuestion.set(optionLabel, new Map<string, Map<string, number>>());
+          }
+
+          const target = byQuestion.get(optionLabel) as Map<
+            string,
+            Map<string, number>
+          >;
+
+          if (!target.has(analyzerName)) {
+            target.set(analyzerName, new Map<string, number>());
+          }
+
+          const allValuesForThisOption = analyzer.getAllValuesForOption({
+            questionLabel,
+            optionLabel,
+          });
+
+          target.set(analyzerName, allValuesForThisOption);
+        });
+      });
+    });
+
+    return result;
+  }
+
   @UpdateMethod()
   addOptionToQuestion(userRequest: {
     questionLabel: string;

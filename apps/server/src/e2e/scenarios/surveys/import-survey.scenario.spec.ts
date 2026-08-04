@@ -34,6 +34,20 @@ const httpClient = new TestHttpClient('http://localhost:4200');
 
 const newFlag = 'flight risk';
 
+const RED = 'red';
+const WHITE = 'white';
+const YELLOW = 'yellow';
+const BLACK = 'black';
+
+const validCategories = [RED, WHITE, YELLOW, BLACK];
+
+const validAnalyzer = buildTestInstance(SurveyAnalyzerImportDto, {
+  name: {
+    text: 'medicine wheel',
+  },
+  categories: validCategories,
+});
+
 // TODO test new flag generation
 
 const followUpQuestion = {
@@ -44,22 +58,34 @@ const followUpQuestion = {
       label: 'a',
       text: 'yes',
       flags: [],
-      valuesByAnalyzerName: {},
+      valuesByAnalyzerName: {
+        [validAnalyzer.name.text]: {
+          [RED]: 1,
+        },
+      },
     },
     {
       label: 'b',
       text: 'no',
       flags: [],
-      valuesByAnalyzerName: {},
+      valuesByAnalyzerName: {
+        [validAnalyzer.name.text]: {
+          [WHITE]: 1,
+        },
+      },
     },
   ],
 };
 
 const optionA: SurveyOptionImportDto = {
   label: 'a',
-  text: 'yes',
+  text: 'yes (leads to black)',
   flags: [],
-  valuesByAnalyzerName: {},
+  valuesByAnalyzerName: {
+    [validAnalyzer.name.text]: {
+      [BLACK]: 1,
+    },
+  },
   followUpQuestion,
 };
 
@@ -69,13 +95,21 @@ const optionsForQuestionToManuallyVerify = [
     label: 'b',
     text: 'no',
     flags: [],
-    valuesByAnalyzerName: {},
+    valuesByAnalyzerName: {
+      [validAnalyzer.name.text]: {
+        [YELLOW]: 1,
+      },
+    },
   },
   {
     label: 'c',
     text: 'maybe',
     flags: [],
-    valuesByAnalyzerName: {},
+    valuesByAnalyzerName: {
+      [validAnalyzer.name.text]: {
+        [WHITE]: 1,
+      },
+    },
   },
 ];
 
@@ -142,15 +176,6 @@ const questionWithFollowupQuestion: SurveyQuestionImportDto = {
 
 const validQuestions = [question1, questionWithFollowupQuestion];
 
-const validCategories = ['red', 'white', 'yellow', 'black'];
-
-const validAnalyzer = buildTestInstance(SurveyAnalyzerImportDto, {
-  name: {
-    text: 'medicine wheel',
-  },
-  categories: validCategories,
-});
-
 describe(`Survey Import Scenarios`, () => {
   beforeAll(async () => {
     // TODO test when the user does not have sufficient permissions
@@ -164,17 +189,11 @@ describe(`Survey Import Scenarios`, () => {
 
   describe(`when the import is valid`, () => {
     describe(`when an analyzer is provided`, () => {
-      it.todo(
-        `should create a published (finalized) survey with the given analyzer`,
-      );
-    });
-
-    describe(`when no analyzer is provided`, () => {
       const validImport = TestCommandStream.first(ImportSurvey, {
         name: {
           text: surveyName,
         },
-        analyzers: [],
+        analyzers: [validAnalyzer],
         questions: validQuestions,
       });
 
@@ -220,6 +239,16 @@ describe(`Survey Import Scenarios`, () => {
 
             expect(foundOption.followUpQuestions).toHaveLength(1);
 
+            const valuesForMedicineWheel =
+              foundOption.valuesByAnalyzerName[validAnalyzer.name.text];
+
+            expect(BLACK in valuesForMedicineWheel).toBe(true);
+            expect(valuesForMedicineWheel[BLACK]).toBe(1);
+
+            expect(RED in valuesForMedicineWheel).toBe(false);
+            expect(WHITE in valuesForMedicineWheel).toBe(false);
+            expect(YELLOW in valuesForMedicineWheel).toBe(false);
+
             const foundFollowupQuestion = foundOption.followUpQuestions[0];
 
             expect(foundFollowupQuestion.label).toBe(followUpQuestion.label);
@@ -241,6 +270,7 @@ describe(`Survey Import Scenarios`, () => {
 
       describe(`when a new flag (not yet in DB) is provided`, () => {
         const invalidImport = TestCommandStream.first(ImportSurvey, {
+          analyzers: [validAnalyzer],
           questions: [
             {
               ...question1,
@@ -278,7 +308,7 @@ describe(`Survey Import Scenarios`, () => {
         name: {
           text: surveyName,
         },
-        analyzers: [],
+        analyzers: [validAnalyzer],
         questions: [],
       });
 
@@ -301,6 +331,7 @@ describe(`Survey Import Scenarios`, () => {
           name: {
             text: surveyName,
           },
+          analyzers: [validAnalyzer],
           questions: [
             {
               ...question1,
@@ -336,6 +367,7 @@ describe(`Survey Import Scenarios`, () => {
             name: {
               text: surveyName,
             },
+            analyzers: [validAnalyzer],
             questions: [
               {
                 ...question1,
@@ -376,6 +408,7 @@ describe(`Survey Import Scenarios`, () => {
           name: {
             text: surveyName,
           },
+          analyzers: [validAnalyzer],
           questions: [
             ...validQuestions,
             {
@@ -533,6 +566,7 @@ describe(`Survey Import Scenarios`, () => {
             name: {
               text: surveyName,
             },
+            analyzers: [validAnalyzer],
             questions: [
               {
                 ...question1,
@@ -737,6 +771,7 @@ describe(`Survey Import Scenarios`, () => {
             name: {
               text: surveyName,
             },
+            analyzers: [validAnalyzer],
             questions: [question1, question1],
           });
 
@@ -763,6 +798,7 @@ describe(`Survey Import Scenarios`, () => {
             name: {
               text: surveyName,
             },
+            analyzers: [validAnalyzer],
             questions: [
               {
                 ...question1,
@@ -799,6 +835,7 @@ describe(`Survey Import Scenarios`, () => {
             name: {
               text: surveyName,
             },
+            analyzers: [validAnalyzer],
             questions: [
               {
                 ...question1,
