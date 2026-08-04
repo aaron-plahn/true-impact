@@ -2,6 +2,9 @@
 
 This first release of the True Impact platform introduces a working model for user management, client management, and survey creation and completion.
 
+# 56
+In this PR, we support importing an entire survey with a single request.
+
 ## 55
 In this PR, we begin to add support for public surveys. We introduce a "keystone" flag that allows us to disable this feature in the UI. We still need to sort out the interplay between private (passcode protected) and public surveys and introduce supplementary security features for public responses. We also introduce a QR code for survey links.
 
