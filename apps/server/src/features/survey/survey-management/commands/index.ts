@@ -8,6 +8,7 @@ export * from './create-survey.command';
 export * from './create-survey.command-handler';
 export * from './flag-survey-option.command';
 export * from './flag-survey-option.command-handler';
+export * from './import-survey';
 export * from './open-survey-to-client';
 export * from './publish-survey.command';
 export * from './publish-survey.command-handler';

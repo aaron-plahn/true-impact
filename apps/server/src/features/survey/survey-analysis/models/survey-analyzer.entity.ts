@@ -235,6 +235,20 @@ export class SurveyAnalyzer extends Entity {
     return this.categoriesByLabel.size;
   }
 
+  getAllValuesForOption({
+    questionLabel,
+    optionLabel,
+  }: {
+    questionLabel: string;
+    optionLabel: string;
+  }): Map<string, number> {
+    const searchResult = this.valuesByQuestion
+      .get(questionLabel)
+      ?.get(optionLabel);
+
+    return searchResult || new Map<string, number>();
+  }
+
   getValueFor({
     questionLabel,
     optionLabel,

@@ -106,9 +106,23 @@ export class SurveyQueryService {
 
   private buildViewModel(
     domainModel: Survey,
-    context: { flags: Map<string, FlagViewModelClientDto> },
+    context: {
+      flags: Map<string, FlagViewModelClientDto>;
+    },
   ): SurveyViewModelClientDto {
-    const view = SurveyViewModel.fromDomainModel(domainModel, context);
+    const fullContext = context as {
+      flags: Map<string, FlagViewModelClientDto>;
+      analyzerValuesByOptionLabel: Map<
+        string,
+        Map<string, Map<string, number>>
+      >;
+    };
+
+    Object.assign(fullContext, {
+      analyzerValuesByOptionLabel: domainModel.getAnalyzerValuesByOptionLabel(),
+    });
+
+    const view = SurveyViewModel.fromDomainModel(domainModel, fullContext);
 
     return view.toClientDto();
   }

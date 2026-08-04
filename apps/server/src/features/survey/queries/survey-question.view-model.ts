@@ -59,10 +59,17 @@ export class SurveyQuestionViewModel {
     };
   }
 
+  // TODO why isn't this used?
   static fromDomainModel(
     surveyQuestion: SurveyQuestion,
     questionsByLabel: Map<string, FollowUpQuestionViewModel>,
-    context: { flags: Map<string, FlagViewModelClientDto> },
+    context: {
+      flags: Map<string, FlagViewModelClientDto>;
+      analyzerValuesByOptionLabel: Map<
+        string,
+        Map<string, Map<string, number>>
+      >;
+    },
   ) {
     const options = new Map<string, SurveyOptionViewModel>();
 
