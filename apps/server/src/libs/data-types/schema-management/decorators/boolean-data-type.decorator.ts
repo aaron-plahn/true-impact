@@ -3,6 +3,7 @@ import { SimpleDataTypeDecoratorOptions } from './type-decorator-options';
 
 export const BOOLEAN = 'BOOLEAN';
 
+// TODO remove this in favour of `@Literal`
 /**
  * We call this decorator factory `BooleanDataType` because `Boolean` is already
  * taken (wrapper class for `boolean` primitive type).

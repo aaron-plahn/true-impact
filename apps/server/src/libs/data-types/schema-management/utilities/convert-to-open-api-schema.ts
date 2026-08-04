@@ -8,6 +8,7 @@ import {
   isArrayItemObjectSchema,
   isArraySchemaPropertyMetadata,
   isEnumeratedTypeSchemaPropertyMetadata,
+  isLiteralDataTypeMetadata,
   isLookupTablePropertyMetadata,
   isObjectSchemaPropertyMetadata,
   SchemaPropertyMetadata,
@@ -84,6 +85,14 @@ const convertPropertySchemaMetadataToOpenApiSchema = (
 
   if (isLookupTablePropertyMetadata(meta)) {
     return convertLookupTableToOpenApiStandard(meta);
+  }
+
+  if (isLiteralDataTypeMetadata(meta)) {
+    return {
+      type: typeof meta.value,
+      // OpenAPI treats literals as enums with only one variant
+      enum: [meta.value],
+    };
   }
 
   // we have a simple-property definition here
