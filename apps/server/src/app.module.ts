@@ -9,7 +9,6 @@ import { UserModule } from './features/users/user.module';
 import { CryptographyModule } from './libs/auth';
 import { ConfigModule, Module } from './libs/framework';
 
-// @ts-expect-error Why does this break in CI?
 const nodeEnv = process.env.NODE_ENV || 'local';
 
 @Module({
