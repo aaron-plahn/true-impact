@@ -1,6 +1,10 @@
 name: UI E2E
 
-on: 
+on:
+  # We run on PR, but the check only gates moving beyond integration
+  pull_request:
+    branches:
+      - integration
   push:
     branches:
       - integration
