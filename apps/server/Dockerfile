@@ -13,8 +13,10 @@ RUN yarn install --frozen-lock-file
 # Copy the source code
 COPY apps/server ./
 
+RUN ls node_modules
+
 # Build the server
-RUN NODE_ENV=e2e yarn build
+RUN yarn build
 
 # Production stage
 FROM node:24.13.0-alpine AS production
