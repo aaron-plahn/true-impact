@@ -1,8 +1,8 @@
-import { NonEmptyString } from '../../../libs/data-types';
+import { Literal, NonEmptyString } from '../../../libs/data-types';
 import { FLAG_AGGREGATE_TYPE } from '../constants';
 
 export class FlagCompositeIdentifier {
-  @NonEmptyString({
+  @Literal(FLAG_AGGREGATE_TYPE, {
     label: 'type',
     description: FLAG_AGGREGATE_TYPE,
   })

@@ -2,6 +2,9 @@
 
 This first release of the True Impact platform introduces a working model for user management, client management, and survey creation and completion.
 
+# 57
+In this PR, we tighten up our validation of literal values.
+
 # 56
 In this PR, we support importing an entire survey with a single request.
 

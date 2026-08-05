@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/restrict-template-expressions */
 import { isFunction } from 'rxjs/internal/util/isFunction';
 import { TrueImpactError, TrueImpactRuntimeException } from '../error-handling';
 import {
@@ -16,6 +17,7 @@ import {
   isLookupTablePropertyMetadata,
   isObjectSchemaPropertyMetadata,
   isSetPropertyMetadata,
+  LiteralDataTypeMetadata,
   SchemaPropertyMetadata,
 } from '../schema-management/decorators/append-metadata';
 import {
@@ -157,6 +159,22 @@ const validateSimpleDataType = (
       acc.push(
         new TrueImpactError(
           buildSimplePropertyErrorMessage(propertyKey, value, `object`),
+        ),
+      );
+    }
+
+    return acc;
+  }
+
+  if (propertySchema.type === 'LITERAL') {
+    const { value: onlyAllowedValue } =
+      propertySchema as LiteralDataTypeMetadata;
+
+    if (value !== onlyAllowedValue) {
+      acc.push(
+        new TrueImpactError(
+          // eslint-disable-next-line @typescript-eslint/no-base-to-string
+          buildSimplePropertyErrorMessage(propertyKey, value, `${value}`),
         ),
       );
     }

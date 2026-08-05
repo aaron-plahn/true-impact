@@ -5,6 +5,7 @@ import {
   buildTestInstance,
   Entity,
   InvariantValidationError,
+  Literal,
   NestedDataType,
   NonEmptyString,
   NonNegativeInteger,
@@ -36,8 +37,7 @@ class SurveyQuestionResponsePersistenceDto {
 }
 
 export class SurveyResponseCompositeIdentifier {
-  // TODO Literal
-  @NonEmptyString({
+  @Literal(SURVEY_RESPONSE_AGGREGATE_TYPE, {
     label: 'type',
     description: 'type',
   })

@@ -1,7 +1,11 @@
-import { NonEmptyString } from '../../../libs/data-types';
+import { Literal, NonEmptyString } from '../../../libs/data-types';
 import { SURVEY_REVIEW_AGGREGATE_TYPE } from './constants';
 
 export class SurveyReviewCompositeIdentifier {
+  @Literal(SURVEY_REVIEW_AGGREGATE_TYPE, {
+    label: 'type',
+    description: SURVEY_REVIEW_AGGREGATE_TYPE,
+  })
   readonly type = SURVEY_REVIEW_AGGREGATE_TYPE;
 
   @NonEmptyString({

@@ -101,6 +101,17 @@ export const isSetPropertyMetadata = (
 ): input is SetPropertyMetadata =>
   (input as SetPropertyMetadata).type === 'set';
 
+export type LiteralDataTypeMetadata =
+  Required<SimpleDataTypeDecoratorOptions> & {
+    value: string | boolean | number;
+    type: 'LITERAL';
+  };
+
+export const isLiteralDataTypeMetadata = (
+  input: unknown,
+): input is LiteralDataTypeMetadata =>
+  (input as LiteralDataTypeMetadata).type === 'LITERAL';
+
 // This will be a union with `EnumPropertyMetadata`, `NestedSchemaMetadata`, and `UnionValuedSchemaPropertyMetadata`
 export type SchemaPropertyMetadata =
   | SimpleSchemaPropertyMetadata
