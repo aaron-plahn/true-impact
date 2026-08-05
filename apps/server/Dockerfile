@@ -36,6 +36,8 @@ EXPOSE $API_PORT
 
 USER appuser
 
+RUN echo "NODE_ENV as appuser: $NODE_ENV"
+
 # Start the application
 CMD ["node", "dist/main.js"]
 
