@@ -18,7 +18,6 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: test
-      NODE_ENV: e2e
     steps:
       # TODO use shared actions to share steps with other workflows
       # TODO pin all actions to a specific SHA
