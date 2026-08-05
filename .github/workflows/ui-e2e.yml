@@ -16,9 +16,8 @@ permissions: {}
 jobs:
   uie2e:
     runs-on: ubuntu-latest
-    env:
-      # name: 
-      NODE_ENV: e2e
+    environment:
+      name: test
     steps:
       # TODO use shared actions to share steps with other workflows
       # TODO pin all actions to a specific SHA
@@ -50,7 +49,7 @@ jobs:
         run: echo "The current environment is $NODE_ENV"
 
       - name: Install e2e npm dependencies
-        run: yarn install 
+        run: NODE_ENV=e2e yarn install --frozen-lock-file
         working-directory: ./apps/e2e
 
       - name: e2e test UI
