@@ -49,7 +49,7 @@ jobs:
         run: echo "The current environment is $NODE_ENV"
 
       - name: Install e2e npm dependencies
-        run: yarn install --frozen-lock-file
+        run: yarn install 
         working-directory: ./apps/e2e
 
       - name: e2e test UI
