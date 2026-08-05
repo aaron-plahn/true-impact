@@ -4,14 +4,16 @@ FROM node:24.13.0-alpine AS build
 # Set the working directory
 WORKDIR /usr/src/app
 
-RUN echo "NODE_ENV in Docker server build: $NODE_ENV"
+RUN echo "Building the server for NODE_ENV: $NODE_ENV"
+
+# Copy the source code
+COPY apps/server ./
 
 # Install dependencies
 RUN npm i -g @nestjs/cli
 RUN yarn install --frozen-lock-file
 
-# Copy the source code
-COPY apps/server ./
+
 
 RUN ls node_modules
 
