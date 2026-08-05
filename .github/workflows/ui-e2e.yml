@@ -16,7 +16,7 @@ permissions: {}
 jobs:
   uie2e:
     runs-on: ubuntu-latest
-    environment:
+    env:
       # name: 
       NODE_ENV: e2e
     steps:
