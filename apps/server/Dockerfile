@@ -4,6 +4,8 @@ FROM node:24.13.0-alpine AS build
 # Set the working directory
 WORKDIR /usr/src/app
 
+RUN echo "NODE_ENV in Docker server build: $NODE_ENV"
+
 # Install dependencies
 RUN npm i -g @nestjs/cli
 RUN yarn install --frozen-lock-file
@@ -35,8 +37,6 @@ COPY --chown=appuser:appgroup --from=build /usr/src/app/dist ./dist
 EXPOSE $API_PORT
 
 USER appuser
-
-RUN echo "NODE_ENV as appuser: $NODE_ENV"
 
 # Start the application
 CMD ["node", "dist/main.js"]
