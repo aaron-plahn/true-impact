@@ -30,12 +30,13 @@ jobs:
         # TODO use environment
         run: |
           cp sample.env .env.e2e  
-          docker logs -f true-impact-client
+          
 
       - name: Start containerized app
         run: |
           echo "Starting app in Docker with client port: $CLIENT_PORT"
           docker compose --env-file .env.e2e up -d --build
+          docker logs -f true-impact-client
 
       - name: Wait for Server
         run: npx wait-on http://localhost:3234 --timeout 60000
