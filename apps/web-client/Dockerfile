@@ -18,9 +18,15 @@ RUN chown -R appuser:appgroup /var/cache/nginx /var/log/nginx /etc/nginx/conf.d 
     touch /var/run/nginx.pid && \
     chown appuser:appgroup /var/run/nginx.pid
 
+# Comment out the global "user" directive so Nginx doesn't complain when run as non-root
+RUN sed -i 's/^user/#user/' /etc/nginx/nginx.conf
+
 # Copy configuration and build assets with correct permissions
 COPY --chown=appuser:appgroup apps/web-client/default.conf /etc/nginx/conf.d/default.conf
 COPY --chown=appuser:appgroup --from=build app/build /usr/share/nginx/html
+
+# Comment out the global "user" directive so Nginx doesn't complain when run as non-root
+RUN sed -i 's/^user/#user/' /etc/nginx/nginx.conf
 
 # Switch to unprivileged port (8080) because non-root users cannot bind to 80
 EXPOSE 8080
