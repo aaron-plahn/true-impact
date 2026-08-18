@@ -45,18 +45,17 @@ jobs:
         with:
           chrome-version: '147.0.7727'
 
-      - name: Check Node environment
-        run: echo "The current environment is $NODE_ENV"
-
       - name: Install e2e npm dependencies
         run: yarn install --frozen-lock-file
         working-directory: ./apps/e2e
 
       - name: e2e test UI
         env:
+          NODE_ENV: e2e
           SYSTEM_ADMIN_USERNAME: ${{ secrets.SYSTEM_ADMIN_USERNAME }}
           INITIAL_ADMIN_PASSWORD: ${{ secrets.INITIAL_ADMIN_PASSWORD }}
         run: |
+          echo "The current environment is $NODE_ENV"
           yarn run wdio:ci
         working-directory: ./apps/e2e
       - if: always()
