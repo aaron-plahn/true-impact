@@ -37,7 +37,7 @@ jobs:
         run: |
           echo "Starting app in Docker with client port: $CLIENT_PORT"
           echo "and server API port: $API_PORT"
-          docker compose --env-file .env.e2e up --build --abort-on-container-exit
+          docker compose --env-file .env.e2e up --build --abort-on-container-exit --attach api --attach client
           docker logs -f true-impact-client-1
 
       - name: Wait for Server
