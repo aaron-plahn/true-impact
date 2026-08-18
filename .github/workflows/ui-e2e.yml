@@ -36,7 +36,7 @@ jobs:
         run: |
           echo "Starting app in Docker with client port: $CLIENT_PORT"
           docker compose --env-file .env.e2e up -d --build
-          docker logs -f true-impact-client
+          docker logs -f true-impact-client-1
 
       - name: Wait for Server
         run: npx wait-on http://localhost:3234 --timeout 60000
