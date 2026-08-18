@@ -20,6 +20,7 @@ services:
       context: .
       dockerfile: apps/web-client/Dockerfile
     ports:
+    # TODO make sure this works
       - "$CLIENT_PORT:80"
     depends_on:
       - api
