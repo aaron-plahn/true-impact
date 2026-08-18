@@ -35,6 +35,7 @@ jobs:
       - name: Start containerized app
         run: |
           echo "Starting app in Docker with client port: $CLIENT_PORT"
+          echo "and server API port: $API_PORT"
           docker compose --env-file .env.e2e up -d --build
           docker logs -f true-impact-client-1
 
