@@ -18,6 +18,8 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: test
+    env:
+      CLIENT_PORT: ${{ vars.CLIENT_PORT }}
     steps:
       # TODO use shared actions to share steps with other workflows
       # TODO pin all actions to a specific SHA
