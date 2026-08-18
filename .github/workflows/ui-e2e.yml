@@ -30,6 +30,7 @@ jobs:
 
       - name: Start containerized app
         run: |
+          echo "Starting app in Docker with client port: $CLIENT_PORT"
           docker compose --env-file .env.e2e up -d --build
 
       - name: Wait for Server
