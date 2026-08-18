@@ -16,6 +16,6 @@ RUN addgroup -g 10001 appgroup && \
 COPY --chown=appuser:appgroup apps/web-client/default.conf /etc/nginx/conf.d/default.conf
 COPY --chown=appuser:appgroup --from=build app/build /usr/share/nginx/html
 EXPOSE 80
-USER appuser
+# USER appuser
 RUN echo "Static asset server for client started"
 CMD ["nginx", "-g", "daemon off;"]
