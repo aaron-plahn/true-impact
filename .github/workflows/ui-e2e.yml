@@ -41,6 +41,7 @@ jobs:
           docker logs -f true-impact-client-1
 
       - name: Wait for Server
+      # TODO remove all hard-wired ports
         run: npx wait-on http://localhost:3234 --timeout 60000
 
       - name: Temp Diagnostics
