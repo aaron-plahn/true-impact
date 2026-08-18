@@ -7,6 +7,8 @@ COPY apps/web-client .
 RUN yarn run react-scripts build
 
 # Stage 2: Serve the React application with Nginx
+# nginx does not run as root. There is no explicitly add a non-root user here.
+# nosemgrep: dockerfile.security.missing-user.missing-user
 FROM nginx:alpine AS client
 # create non-root user
 RUN addgroup -g 10001 appgroup && \
