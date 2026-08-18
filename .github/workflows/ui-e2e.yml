@@ -36,11 +36,11 @@ jobs:
           docker compose --env-file .env.e2e up -d --build
 
       - name: Wait for Server
-        run: npx wait-on http://127.0.0.1:3234 --timeout 60000
+        run: npx wait-on http://localhost:3234 --timeout 60000
 
       - name: Wait for Client
       # TODO Don't hardwire ports here
-        run: npx wait-on http://127.0.0.1:4200 --timeout 60000
+        run: npx wait-on http://localhost:4200 --timeout 60000
 
       - name: Set Up Node.js
         uses: actions/setup-node/@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
