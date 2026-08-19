@@ -1,6 +1,10 @@
 # <next>
 
 This first release of the True Impact platform introduces a working model for user management, client management, and survey creation and completion.
+
+# 61 
+In this PR, we add enhanced validation for edge cases when openning a survey to the public. This validation was missed initially.
+
 # 60
 In this PR, we change the language to refer to survey finalization instead of survey pubication. Going forward, "publishing" a survey refers to making it available for completion by some target audience (e.g., general public, a known client), while "finalizing" a survey refers to freezing its questions and options
 indicating that it is ready for publication. Note that this step is required to ensure that a survey isn't changed while in the process of being completed by a participant. While we could implicitly finalize the survey when the survey is published to some target participant(s), we opted to make the freezing behaviour explicit with a finalization step.

@@ -1022,10 +1022,17 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
 
   // TODO presumably we want a `closeSurvey` as well.
   openToPublic(): TrueImpactError | Survey {
-    // TODO if this survey is already open to the public, return an error
+    if (this.isOpenToPublic) {
+      return new TrueImpactError(
+        `You cannot open survey [${this.name}] to the public, as it is already open to the public.`,
+      );
+    }
 
-    // TODO are we actually checking this?
-    // TODO error if this survey is not finalized,
+    if (!this.isFinal) {
+      return new TrueImpactError(
+        `You cannot open survey [${this.name}] to the public, as it has not been finalized.`,
+      );
+    }
 
     // TODO should we allow opening to the public if there are already access codes?
     // TODO should we allow access codes if the survey is already open to the public?

@@ -8,6 +8,7 @@ import { CreateSurvey } from '../../../features/survey/survey-management/command
 import { FinalizeSurvey } from '../../../features/survey/survey-management/commands/finalize-survey.command';
 import { OpenSurveyToPublic } from '../../../features/survey/survey-management/commands/open-survey-to-client/open-survey-to-public.command';
 import { TestCommandStream } from '../../../libs/cqrs-es';
+import { assertTextMatchesAll } from '../../../libs/test-utils';
 import {
   assertCommandScenarioError,
   assertCommandScenarioSuccess,
@@ -36,12 +37,9 @@ const targetQuestionLabel = 'q1';
 
 const targetOptionLabel = 'b';
 
-const buildAndFinalizeSurveyPriorToOpenning = TestCommandStream.first(
-  CreateSurvey,
-  {
-    name: surveyName,
-  },
-)
+const buildSurveyWithoutFinalizing = TestCommandStream.first(CreateSurvey, {
+  name: surveyName,
+})
   .andThen(AddQuestionToSurvey, {
     label: targetQuestionLabel,
   })
@@ -106,8 +104,10 @@ const buildAndFinalizeSurveyPriorToOpenning = TestCommandStream.first(
     questionLabel: 'q3',
     optionLabel: 'c',
     text: 'ugly',
-  })
-  .andThen(FinalizeSurvey);
+  });
+
+const buildAndFinalizeSurveyPriorToOpenning =
+  buildSurveyWithoutFinalizing.andThen(FinalizeSurvey);
 
 const clientOrigin = 'http://localhost:4200';
 
@@ -130,6 +130,48 @@ describe(`Survey Completion Scenarios: Public Participant (no access code requir
     await adminHttpClient.patch(surveyCompletionTestSetupEndpoint);
 
     await adminHttpClient.patch(surveyTestSetupEndpoint);
+  });
+
+  describe(`when an admin issues an invalid request to open a survey to the public`, () => {
+    describe(`when the survey has not yet been finalized`, () => {
+      it(`should return the expected error`, async () => {
+        await assertCommandScenarioError({
+          httpClient: adminHttpClient,
+          endpoint: surveyCompletionCommandsEndpoint,
+          stream: buildSurveyWithoutFinalizing.andThen(OpenSurveyToPublic),
+          assertErrorMessageAsExpected: (message) => {
+            assertTextMatchesAll(
+              message,
+              surveyName,
+              'cannot open',
+              'has not been finalized',
+            );
+          },
+        });
+      });
+    });
+
+    describe(`when the survey is already open to the public`, () => {
+      it(`should return the expected error`, async () => {
+        await assertCommandScenarioError({
+          httpClient: adminHttpClient,
+          endpoint: surveyCompletionCommandsEndpoint,
+          stream: buildAndFinalizeSurveyPriorToOpenning
+            .andThen(OpenSurveyToPublic)
+            .andThen(OpenSurveyToPublic),
+          assertErrorMessageAsExpected: (message) => {
+            assertTextMatchesAll(
+              message,
+              'cannot open',
+              surveyName,
+              'already open',
+            );
+          },
+        });
+      });
+    });
+
+    // TODO consider whether it should be possible to open the survey to a specific client or group and the public
   });
 
   describe(`when an admin has opened the survey for public completion`, () => {
