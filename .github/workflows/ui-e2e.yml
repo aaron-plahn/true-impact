@@ -39,7 +39,7 @@ jobs:
 
       - name: Wait for Server
       # TODO remove all hard-wired ports
-        run: npx wait-on http://localhost:3234 --timeout 60000
+        run: npx wait-on "http://localhost:$API_PORT" --timeout 60000
 
       - name: Temp Diagnostics
         run : docker ps -a
