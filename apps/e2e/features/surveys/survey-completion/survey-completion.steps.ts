@@ -42,8 +42,8 @@ Given(
   },
 );
 
-Given("The survey is published", async () => {
-  await surveyPage.publish();
+Given("The survey has been finalized", async () => {
+  await surveyPage.finalize();
 });
 
 Given("The survey is open with a one-time passcode", async () => {

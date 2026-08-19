@@ -7,7 +7,7 @@ Feature: Completing a survey
         And Question "i" has an option "a": "Barely at all"
         And Question "i" has an option "b": "Hard enuff"
         And Question "i" has an option "c": "Who Cares"
-        And The survey is published
+        And The survey has been finalized
         And The survey is open with a one-time passcode
         And I am on the survey response page
         When I begin the survey "Staff Questionnaire"
@@ -26,7 +26,7 @@ Feature: Completing a survey
         And Question "ii" has an option "a": "Yes"
         And Question "ii" has an option "b": "No"
         And Question "ii" has an option "c": "Maybe"
-        And The survey is published
+        And The survey has been finalized
         And The survey is open with a one-time passcode
         And I am on the survey response page
         When I begin the survey "Staff Evaluation"
