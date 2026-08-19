@@ -13,10 +13,6 @@ COPY apps/server ./
 RUN npm i -g @nestjs/cli
 RUN yarn install --frozen-lock-file
 
-
-
-RUN ls node_modules
-
 # Build the server
 RUN yarn build
 
