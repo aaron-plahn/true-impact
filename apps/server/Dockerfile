@@ -4,12 +4,14 @@ FROM node:24.13.0-alpine AS build
 # Set the working directory
 WORKDIR /usr/src/app
 
-# Install dependencies
-RUN npm i -g @nestjs/cli
-RUN yarn install --frozen-lock-file
+RUN echo "Building the server for NODE_ENV: $NODE_ENV"
 
 # Copy the source code
 COPY apps/server ./
+
+# Install dependencies
+RUN npm i -g @nestjs/cli
+RUN yarn install --frozen-lock-file
 
 # Build the server
 RUN yarn build
