@@ -2,6 +2,9 @@
 
 This first release of the True Impact platform introduces a working model for user management, client management, and survey creation and completion.
 
+# 58
+UX end-to-end tests were not originally a gate for merging PRs and we only set them to run on push to integration. At some point the configuration became broken and the e2e tests were failing, but because they weren't a gate to integration, we missed this. The UX e2e tests were passing locally, however, so it wasn't a real regression. In this PR, we fix the Docker and GitHub actions (ux-e2e) configurations so that UX e2e tests again pass in the CI.
+
 # 57
 In this PR, we tighten up our validation of literal values.
 
