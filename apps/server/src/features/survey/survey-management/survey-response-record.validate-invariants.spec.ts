@@ -6,7 +6,7 @@ import {
 import { Survey, SurveyPersistenceDto } from './survey.aggregate-root';
 
 const targetSurvey = buildTestInstance<SurveyPersistenceDto>(Survey, {
-  isPublished: true,
+  isFinal: true,
   topLevelQuestionLabels: ['1'],
   questions: {
     '1': {
@@ -27,7 +27,7 @@ const targetSurvey = buildTestInstance<SurveyPersistenceDto>(Survey, {
 }) as Survey;
 
 const complexSurvey = buildTestInstance(Survey, {
-  isPublished: true,
+  isFinal: true,
   topLevelQuestionLabels: ['1', '4'],
   questions: {
     '1': {

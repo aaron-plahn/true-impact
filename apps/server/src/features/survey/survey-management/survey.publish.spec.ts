@@ -19,23 +19,23 @@ const surveyWithOneOption = surveyWithEmptyQuestion.addOptionToQuestion({
   text: 'I am your first option',
 }) as Survey;
 
-const publishableSurvey = surveyWithOneOption.addOptionToQuestion({
+const surveyThatIsReadyToBeFinalized = surveyWithOneOption.addOptionToQuestion({
   questionLabel: targetQuestionLabel,
   optionLabel: 'b',
   text: 'I give you a second option',
 }) as Survey;
 
-describe(`Survey.publish`, () => {
-  describe(`when the survey is not yet published`, () => {
-    describe(`when the survey meets all publication requirements`, () => {
-      const result = publishableSurvey.publish();
+describe(`Survey.finalize`, () => {
+  describe(`when the survey is not yet finalization`, () => {
+    describe(`when the survey meets all finalization requirements`, () => {
+      const result = surveyThatIsReadyToBeFinalized.finalize();
 
       it(`should update the publication status`, () => {
         expect(result).toBeInstanceOf(Survey);
 
         const updatedSurvey = result as Survey;
 
-        expect(updatedSurvey.isPublished).toBe(true);
+        expect(updatedSurvey.isFinal).toBe(true);
       });
 
       // note that we have scenario tests to ensure that edits to the survey are locked upon publication
@@ -44,7 +44,7 @@ describe(`Survey.publish`, () => {
     describe(`when the survey fails one of the publication status checks`, () => {
       describe(`when the survey has no questions`, () => {
         it(`should return the expected errors`, () => {
-          const result = emptySurvey.publish();
+          const result = emptySurvey.finalize();
 
           expect(result).toBeInstanceOf(TrueImpactError);
 
@@ -53,14 +53,14 @@ describe(`Survey.publish`, () => {
           // Do we want this?
           //   expect(message).toContain(emptySurvey.name);
           expect(message).toContain('at least one question');
-          expect(message).toContain('to be published');
+          expect(message).toContain('to be finalized');
         });
       });
 
       describe(`when one of the questions has less than 2 options`, () => {
         describe(`when one of the questions has no options`, () => {
           it(`should return the expected error`, () => {
-            const result = surveyWithEmptyQuestion.publish();
+            const result = surveyWithEmptyQuestion.finalize();
 
             expect(result).toBeInstanceOf(TrueImpactError);
 
@@ -74,7 +74,7 @@ describe(`Survey.publish`, () => {
 
         describe(`when one of the questions has only 1 option`, () => {
           it(`should return the expected error`, () => {
-            const result = surveyWithOneOption.publish();
+            const result = surveyWithOneOption.finalize();
 
             expect(result).toBeInstanceOf(TrueImpactError);
 
@@ -89,18 +89,18 @@ describe(`Survey.publish`, () => {
     });
   });
 
-  describe(`when the survey has already been published`, () => {
-    const publishedSurvey = publishableSurvey.publish() as Survey;
+  describe(`when the survey has already been finalized`, () => {
+    const finalizedSurvey = surveyThatIsReadyToBeFinalized.finalize() as Survey;
 
     it(`should return the expected error`, () => {
-      const result = publishedSurvey.publish();
+      const result = finalizedSurvey.finalize();
 
       expect(result).toBeInstanceOf(TrueImpactError);
 
       const message = (result as TrueImpactError).toString();
 
-      expect(message).toContain(publishedSurvey.name);
-      expect(message).toContain(`has been published`);
+      expect(message).toContain(finalizedSurvey.name);
+      expect(message).toContain(`has been finalized`);
     });
   });
 });

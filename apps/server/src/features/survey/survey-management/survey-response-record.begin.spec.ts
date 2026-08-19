@@ -26,9 +26,9 @@ const questions = {
   },
 };
 
-const publishedSurvey = buildTestInstance<SurveyPersistenceDto>(Survey, {
+const finalizedSurvey = buildTestInstance<SurveyPersistenceDto>(Survey, {
   topLevelQuestionLabels,
-  isPublished: true,
+  isFinal: true,
   questions,
 }) as Survey;
 
@@ -41,7 +41,7 @@ describe(`SurveyResponseRecord.begin`, () => {
   describe(`when the request is valid`, () => {
     it(`should return an empty response record with the associated survey`, () => {
       const result = SurveyResponseRecord.begin({
-        survey: publishedSurvey,
+        survey: finalizedSurvey,
         hashedAccessCode: 'DUMMY-ACCESS-CODE',
       });
 
@@ -56,19 +56,16 @@ describe(`SurveyResponseRecord.begin`, () => {
   });
 
   describe(`when the request is invalid`, () => {
-    describe(`when the survey has not been published`, () => {
-      const unpublishedSurvey = buildTestInstance<SurveyPersistenceDto>(
-        Survey,
-        {
-          topLevelQuestionLabels,
-          questions,
-          isPublished: false,
-        },
-      ) as Survey;
+    describe(`when the survey has not been finalized`, () => {
+      const draftSurvey = buildTestInstance<SurveyPersistenceDto>(Survey, {
+        topLevelQuestionLabels,
+        questions,
+        isFinal: false,
+      }) as Survey;
 
       it(`should return the expected error`, () => {
         const result = SurveyResponseRecord.begin({
-          survey: unpublishedSurvey,
+          survey: draftSurvey,
           hashedAccessCode: 'DUMMY-ACCESS-CODE',
           participantCompositeIdentifier: clientCompositeIdentifier,
         });
@@ -77,9 +74,9 @@ describe(`SurveyResponseRecord.begin`, () => {
 
         const message = (result as TrueImpactError).toString();
 
-        expect(message).toContain(unpublishedSurvey.name);
+        expect(message).toContain(draftSurvey.name);
         expect(message).toContain(`cannot begin`);
-        expect(message).toContain(`not been published`);
+        expect(message).toContain(`not been finalized`);
       });
     });
 
@@ -88,7 +85,8 @@ describe(`SurveyResponseRecord.begin`, () => {
 
       it(`should return the expected error`, () => {
         const result = SurveyResponseRecord.begin({
-          survey: publishedSurvey,
+          survey: finalizedSurvey,
+          // TODO Is this a stale property?
           hashedAccessCode: 'DUMMY-ACCESS-CODE-123',
           participantCompositeIdentifier: {
             type: invalidParticipantType,
@@ -100,7 +98,7 @@ describe(`SurveyResponseRecord.begin`, () => {
 
         const message = (result as TrueImpactError).toString();
 
-        expect(message).toContain(publishedSurvey.name);
+        expect(message).toContain(finalizedSurvey.name);
         expect(message).toContain('cannot begin');
         expect(message).toContain('invalid participant type');
         expect(message).toContain(invalidParticipantType);

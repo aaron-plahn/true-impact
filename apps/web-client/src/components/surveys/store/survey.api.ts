@@ -31,7 +31,7 @@ export interface SurveyDetailResponse {
   id: string;
   name: string;
   size: number;
-  isPublished: boolean;
+  isFinal: boolean;
   isOpenToPublic: boolean;
   questions: SurveyQuestion[];
   accessCode?: string;

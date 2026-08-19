@@ -49,9 +49,9 @@ class SurveyBuilderPage extends Page {
     await $("*=Add Option").click();
   }
 
-  public async publish() {
-    await $("#PUBLISH_SURVEY_command-executor-button").click();
-    await $("*=Publish").click();
+  public async finalize() {
+    await $("#FINALIZE_SURVEY_command-executor-button").click();
+    await $("*=Finalize").click();
   }
 
   public async openToAnonymousParticipant() {

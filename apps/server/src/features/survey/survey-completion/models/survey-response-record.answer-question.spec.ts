@@ -13,7 +13,7 @@ const targetQuestionLabel = '2';
 const targetOptionLabel = 'c';
 
 const survey = buildTestInstance<SurveyPersistenceDto>(Survey, {
-  isPublished: true,
+  isFinal: true,
   /**
    * It's awkward that there is overlap between this and the questions.
    * Can we find a more graph-like DTO structure?

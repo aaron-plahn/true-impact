@@ -13,8 +13,8 @@ import { AddFollowUpQuestionForSurveyOption } from '../../../features/survey/sur
 import { AddOptionToSurveyQuestion } from '../../../features/survey/survey-management/commands/add-option-to-survey-question.command';
 import { AddQuestionToSurvey } from '../../../features/survey/survey-management/commands/add-question-to-survey.command';
 import { CreateSurvey } from '../../../features/survey/survey-management/commands/create-survey.command';
+import { FinalizeSurvey } from '../../../features/survey/survey-management/commands/finalize-survey.command';
 import { OpenSurveyToAnonymousIndividual } from '../../../features/survey/survey-management/commands/open-survey-to-anonymous-individual.command';
-import { PublishSurvey } from '../../../features/survey/survey-management/commands/publish-survey.command';
 import { SurveyOptionPersistenceDto } from '../../../features/survey/survey-management/survey-option.entity';
 import { SurveyQuestionPersistenceDto } from '../../../features/survey/survey-management/survey-question.entity';
 import {
@@ -264,7 +264,7 @@ describe.skip(`when reviewing a survey (e.g. when a clinician reviews a client's
             name: surveyName,
           }),
         )
-        .andThen(PublishSurvey)
+        .andThen(FinalizeSurvey)
         .andThen(OpenSurveyToAnonymousIndividual),
     });
 

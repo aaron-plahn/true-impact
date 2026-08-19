@@ -76,7 +76,7 @@ When("I start a new survey", async () => {
     text: option1d,
   });
 
-  await surveyPage.publish();
+  await surveyPage.finalize();
 
   await surveyPage.openToAnonymousParticipant();
 });
@@ -88,7 +88,7 @@ Then("It should display the newly created survey", async () => {
     option1b,
     option1c,
     option1d,
-    "** PUBLISHED FOR USE**",
+    "** FINALIZED FOR USE**",
   ].forEach(async (textToFind) => {
     await expect($('[data-testid="survey-management-detail-page"]')).toHaveText(
       textToFind,

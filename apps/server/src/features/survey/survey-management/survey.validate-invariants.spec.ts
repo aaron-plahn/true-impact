@@ -328,7 +328,7 @@ describe(`Survey.validateInvariants`, () => {
               prompt: 'Am I really next?',
             },
           },
-          isPublished: false,
+          isFinal: false,
         },
         { shouldValidate: false },
       );

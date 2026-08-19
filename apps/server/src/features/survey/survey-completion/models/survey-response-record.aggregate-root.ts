@@ -168,7 +168,7 @@ export class SurveyResponseRecordPersistenceDto {
 }
 
 const testSurveyExample = buildTestInstance(Survey, {
-  isPublished: false,
+  isFinal: false,
 }).toPersistenceDto();
 
 @TrueImpactDataExample<SurveyResponseRecordPersistenceDto>({
@@ -227,7 +227,7 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
    * versioned.
    *
    * Technically, we should build a specific `SurveyRecordForResponse` that doesn't have `flags`, `analyzers` or any
-   * irrelevant information that can be edited after the survey is `published` for use. We avoid accessing these to
+   * irrelevant information that can be edited after the survey is `finalized` for use. We avoid accessing these to
    * validate survey responses by convention at present.
    */
   @NestedDataType(() => Survey, {
@@ -622,10 +622,10 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
       );
     }
 
-    if (!this.survey.isPublished) {
+    if (!this.survey.isFinal) {
       allErrors.push(
         new TrueImpactError(
-          `You cannot respond to survey [${this.survey.name}] as it has not been published`,
+          `You cannot respond to survey [${this.survey.name}] as it has not been finalized`,
         ),
       );
     }
@@ -829,10 +829,10 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
       );
     }
 
-    if (!survey.isPublished) {
+    if (!survey.isFinal) {
       return new TrueImpactBadUserInputError([
         new TrueImpactError(
-          `You cannot begin survey [${survey.name}], as it has not been published`,
+          `You cannot begin survey [${survey.name}], as it has not been finalized`,
         ),
       ]);
     }

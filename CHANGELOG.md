@@ -1,6 +1,9 @@
 # <next>
 
 This first release of the True Impact platform introduces a working model for user management, client management, and survey creation and completion.
+# 60
+In this PR, we change the language to refer to survey finalization instead of survey pubication. Going forward, "publishing" a survey refers to making it available for completion by some target audience (e.g., general public, a known client), while "finalizing" a survey refers to freezing its questions and options
+indicating that it is ready for publication. Note that this step is required to ensure that a survey isn't changed while in the process of being completed by a participant. While we could implicitly finalize the survey when the survey is published to some target participant(s), we opted to make the freezing behaviour explicit with a finalization step.
 
 # 58
 UX end-to-end tests were not originally a gate for merging PRs and we only set them to run on push to integration. At some point the configuration became broken and the e2e tests were failing, but because they weren't a gate to integration, we missed this. The UX e2e tests were passing locally, however, so it wasn't a real regression. In this PR, we fix the Docker and GitHub actions (ux-e2e) configurations so that UX e2e tests again pass in the CI.

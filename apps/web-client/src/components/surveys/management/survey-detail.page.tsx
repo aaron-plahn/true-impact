@@ -6,9 +6,9 @@ import {
   AddOptionToSurveyQuestionCommandForm,
   AddQuestionCommandForm,
   CommandExecutor,
+  FinalizeSurveyCommandForm,
   OpenSurveyToAnonymousIndividualForm,
   OpenSurveyToPublicForm,
-  PublishSurveyCommandForm,
 } from "../../command-execution";
 import { Loading } from "../../loading";
 import { useFetchSurveyByIdQuery } from "../store/survey.api";
@@ -32,27 +32,26 @@ export const SurveyDetailPage = (): JSX.Element => {
     return <div>Something went wrong.</div>;
   }
 
-  const { name, questions, isPublished, accessCode, isOpenToPublic } = data;
+  const { name, questions, isFinal, accessCode, isOpenToPublic } = data;
 
   /**
    * The following conditions can be avoided by simply sending back an
    * `availableActions` from the server. Conceptually, this would look like:
    * ```ts
    * {
-   *  actions.has("PUBLISH_SURVEY") && <DynamicForm schema=actions.get("PUBLISH_SURVEY") />
+   *  actions.has("FINALIZE_SURVEY") && <DynamicForm schema=actions.get("FINALIZE_SURVEY") />
    * }
    * ```
    * Alternatively, the form could be fully created on the client for more interactivity.
    */
-  const isEditable = !isPublished;
+  const isEditable = !isFinal;
 
-  const shouldShowOpenAccessButton =
-    isPublished && !accessCode && !isOpenToPublic;
+  const shouldShowOpenAccessButton = isFinal && !accessCode && !isOpenToPublic;
 
   console.log({ keystone: config.KEYSTONE_EXCLUDES });
 
   const shouldShowOpenToPublicButton =
-    isPublished &&
+    isFinal &&
     !isOpenToPublic &&
     !config.KEYSTONE_EXCLUDES.has("PUBLIC_SURVEY_COMPLETION");
 
@@ -114,8 +113,8 @@ export const SurveyDetailPage = (): JSX.Element => {
           )}
         />
       ) : null}
-      {isPublished ? (
-        <Typography variant="body1">** PUBLISHED FOR USE **</Typography>
+      {isFinal ? (
+        <Typography variant="body1">** FINALIZED FOR USE **</Typography>
       ) : null}
       {shouldShowOpenAccessButton ? (
         <Stack>
@@ -152,13 +151,14 @@ export const SurveyDetailPage = (): JSX.Element => {
       {accessCode ? (
         <AccessCodeClipboard accessCode={accessCode} attemptId={id || ""} />
       ) : null}
-      {!isPublished ? (
+      {!isFinal ? (
         <CommandExecutor
-          type={"PUBLISH_SURVEY"}
-          label={"Publish Survey"}
+          // why does this appear twice?
+          type={"FINALIZE_SURVEY"}
+          label={"Finalize Survey"}
           description={"Finalize this Survey for use"}
           form={({ onClose }) => (
-            <PublishSurveyCommandForm
+            <FinalizeSurveyCommandForm
               context={{
                 type: "survey",
                 id: id || "",

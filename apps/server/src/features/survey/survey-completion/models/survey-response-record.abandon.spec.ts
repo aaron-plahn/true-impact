@@ -16,7 +16,7 @@ import {
  * 3
  */
 const testSurvey = buildTestInstance<SurveyPersistenceDto>(Survey, {
-  isPublished: true,
+  isFinal: true,
   topLevelQuestionLabels: ['1', '3'],
   questions: {
     '1': {

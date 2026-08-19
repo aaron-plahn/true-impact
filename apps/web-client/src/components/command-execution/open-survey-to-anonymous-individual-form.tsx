@@ -38,7 +38,7 @@ export const OpenSurveyToAnonymousIndividualForm = ({
   };
 
   return (
-    <Tooltip title="publish this survey">
+    <Tooltip title="open this survey for anonymous completion">
       <button
         type="submit"
         onClick={() => {

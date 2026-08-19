@@ -112,7 +112,7 @@ export class SurveyOption extends Entity {
 
   /**
    * Eventually, we will support creating a draft of edits to a live survey. Once the draft
-   * is published, the survey revision number (version) will be incremented. This will allow us
+   * is finalized, the survey revision number (version) will be incremented. This will allow us
    * to keep track of which version of a suvey a client completed over time.
    */
   getRevisionNumber(): number {

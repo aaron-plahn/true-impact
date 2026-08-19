@@ -29,7 +29,7 @@ import { SurveyQuestionViewModel } from './survey-question.view-model';
 @TrueImpactDataExample<SurveyViewModelClientDto>({
   example: {
     id: '1',
-    isPublished: false,
+    isFinal: false,
     isOpenToPublic: false,
     name: 'Food Allergies Survey',
     size: 10,
@@ -165,11 +165,11 @@ export class SurveyViewModelClientDto {
   id: string;
 
   @NonEmptyString({
-    label: 'is published',
+    label: 'is final',
     description:
-      'once published, a survey is available for completion by eligible participants',
+      'once finalized, a survey is available for completion by eligible participants',
   })
-  isPublished: boolean;
+  isFinal: boolean;
 
   @NonEmptyString({
     label: 'is open to public',
@@ -241,7 +241,7 @@ export class SurveyViewModel {
 
   analyzersByName: Map<string, SurveyAnalyzerViewModel>;
 
-  isPublished: boolean;
+  isFinal: boolean;
 
   isOpenToPublic: boolean;
 
@@ -251,7 +251,7 @@ export class SurveyViewModel {
     size,
     analyzersByName,
     questions,
-    isPublished,
+    isFinal,
     isOpenToPublic,
   }: {
     id: string;
@@ -259,7 +259,7 @@ export class SurveyViewModel {
     size: number;
     questions?: SurveyQuestionViewModel[];
     analyzersByName: Map<string, SurveyAnalyzerViewModel>;
-    isPublished: boolean;
+    isFinal: boolean;
     isOpenToPublic: boolean;
   }) {
     this.id = id;
@@ -270,7 +270,7 @@ export class SurveyViewModel {
 
     this.questions = questions || [];
 
-    this.isPublished = typeof isPublished === 'boolean' ? isPublished : false;
+    this.isFinal = typeof isFinal === 'boolean' ? isFinal : false;
 
     this.isOpenToPublic =
       typeof isOpenToPublic === 'boolean' ? isOpenToPublic : false;
@@ -287,7 +287,7 @@ export class SurveyViewModel {
 
     return {
       id: this.id,
-      isPublished: this.isPublished,
+      isFinal: this.isFinal,
       isOpenToPublic: this.isOpenToPublic,
       name: this.name,
       size: this.size,
@@ -431,7 +431,7 @@ export class SurveyViewModel {
       size: survey.size(),
       questions: Array.from(questionViewsByLabel.values()),
       analyzersByName,
-      isPublished: survey.isPublished,
+      isFinal: survey.isFinal,
       isOpenToPublic: survey.isOpenToPublic,
     });
 

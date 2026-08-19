@@ -79,10 +79,10 @@ import {
   AddQuestionToSurveyCommandHandler,
   CreateSurvey,
   CreateSurveyCommandHandler,
+  FinalizeSurvey,
+  FinalizeSurveyCommandHandler,
   FlagSurveyOption,
   FlagSurveyOptionCommandHandler,
-  PublishSurvey,
-  PublishSurveyCommandHandler,
   Survey,
 } from './survey-management';
 import { OpenSurveyToAnonymousIndividual } from './survey-management/commands/open-survey-to-anonymous-individual.command';
@@ -113,7 +113,7 @@ import { SurveyReviewController } from './survey-review.controller';
 import { SurveyController } from './survey.controller';
 
 // Is this necessary?
-const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
+const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, FinalizeSurvey];
 
 @Module({
   imports: [ClientModule, FlagModule, UserModule, AuthModule],
@@ -124,7 +124,7 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
     AddQuestionToSurveyCommandHandler,
     AddOptionToSurveyQuestionCommandHandler,
     AddFollowUpQuestionForSurveyOptionCommandHandler,
-    PublishSurveyCommandHandler,
+    FinalizeSurveyCommandHandler,
     FlagSurveyOptionCommandHandler,
     OpenSurveyToAnonymousIndividualCommandHandler,
     OpenSurveyToClientCommandHandler,
@@ -203,8 +203,8 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
               AddFollowUpQuestionForSurveyOptionCommandHandler,
           })
           .register({
-            CommandPayloadCtor: PublishSurvey,
-            CommandHandlerCtor: PublishSurveyCommandHandler,
+            CommandPayloadCtor: FinalizeSurvey,
+            CommandHandlerCtor: FinalizeSurveyCommandHandler,
           })
           .register({
             CommandHandlerCtor: FlagSurveyOptionCommandHandler,
@@ -398,7 +398,7 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, PublishSurvey];
             }
 
             if (
-              !target?.isPublished ||
+              !target?.isFinal ||
               !hashedAccessCode ||
               !target?.hasAccessCode(hashedAccessCode)
             ) {

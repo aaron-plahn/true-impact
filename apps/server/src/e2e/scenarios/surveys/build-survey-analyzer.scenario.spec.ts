@@ -7,7 +7,7 @@ import {
 import { AddOptionToSurveyQuestion } from '../../../features/survey/survey-management/commands/add-option-to-survey-question.command';
 import { AddQuestionToSurvey } from '../../../features/survey/survey-management/commands/add-question-to-survey.command';
 import { CreateSurvey } from '../../../features/survey/survey-management/commands/create-survey.command';
-import { PublishSurvey } from '../../../features/survey/survey-management/commands/publish-survey.command';
+import { FinalizeSurvey } from '../../../features/survey/survey-management/commands/finalize-survey.command';
 import { TestCommandStream } from '../../../libs/cqrs-es';
 import { assertTextMatchesAll } from '../../../libs/test-utils';
 import {
@@ -65,10 +65,10 @@ const addOptionToSurvey = addQuestionToSurvey
     text: 'text for test option b',
   });
 
-// should we prevent adding an analyzer to a survey that is not yet published?
-const publishSurvey = addOptionToSurvey.andThen(PublishSurvey);
+// should we prevent adding an analyzer to a survey that is not yet finalized?
+const finalizeSurvey = addOptionToSurvey.andThen(FinalizeSurvey);
 
-const createAnalyzer = publishSurvey.andThen(CreateAnalyzerForSurvey, {
+const createAnalyzer = finalizeSurvey.andThen(CreateAnalyzerForSurvey, {
   name: analyzerName,
 });
 
@@ -483,7 +483,7 @@ describe(`Build Survey Analyzer Scenarios`, () => {
                 await assertCommandScenarioError({
                   httpClient,
                   endpoint: surveyCommandsEndpoint,
-                  stream: publishSurvey.andThen(AddValueForSurveyOption, {
+                  stream: finalizeSurvey.andThen(AddValueForSurveyOption, {
                     analyzerName,
                     questionLabel: targetQuestion,
                     optionLabel: targetOption,

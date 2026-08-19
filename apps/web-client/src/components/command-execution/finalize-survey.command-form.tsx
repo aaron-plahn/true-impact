@@ -4,7 +4,7 @@ import { ApiResponseErrorInfo } from "../error-handling";
 import { Loading } from "../loading";
 import { useExecuteCommandMutation } from "../surveys/store";
 
-interface PublishSurveyCommandFormProps {
+interface FinalizeSurveyCommandFormProps {
   context: {
     type: string;
     id: string;
@@ -12,10 +12,10 @@ interface PublishSurveyCommandFormProps {
   onClose: () => void;
 }
 
-export const PublishSurveyCommandForm = ({
+export const FinalizeSurveyCommandForm = ({
   context: { type, id },
   onClose,
-}: PublishSurveyCommandFormProps): JSX.Element => {
+}: FinalizeSurveyCommandFormProps): JSX.Element => {
   const [executeCommand, { isLoading: isRequestInProgress, error }] =
     useExecuteCommandMutation();
 
@@ -28,7 +28,7 @@ export const PublishSurveyCommandForm = ({
   }
 
   const fsa = {
-    type: "PUBLISH_SURVEY",
+    type: "FINALIZE_SURVEY",
     payload: {
       aggregateCompositeIdentifier: {
         type,
@@ -38,7 +38,7 @@ export const PublishSurveyCommandForm = ({
   };
 
   return (
-    <Tooltip title="publish this survey">
+    <Tooltip title="finalize this survey">
       <button
         type="submit"
         onClick={() => {
@@ -47,7 +47,7 @@ export const PublishSurveyCommandForm = ({
           onClose();
         }}
       >
-        Publish
+        Finalize
       </button>
     </Tooltip>
   );

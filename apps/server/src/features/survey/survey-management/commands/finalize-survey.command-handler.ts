@@ -4,9 +4,9 @@ import { CommandResult, ICommandHandler } from '../../../../libs/cqrs-es';
 import { TrueImpactError } from '../../../../libs/data-types';
 import { SURVEY_COMMAND_REPOSITORY_DEPENDENCY_TOKEN } from '../../constants';
 import type { ISurveyCommandRepository } from '../../repositories';
-import { PublishSurvey } from './publish-survey.command';
+import { FinalizeSurvey } from './finalize-survey.command';
 
-export class PublishSurveyCommandHandler implements ICommandHandler {
+export class FinalizeSurveyCommandHandler implements ICommandHandler {
   constructor(
     @Inject(SURVEY_COMMAND_REPOSITORY_DEPENDENCY_TOKEN)
     private readonly surveyRepository: ISurveyCommandRepository,
@@ -17,14 +17,14 @@ export class PublishSurveyCommandHandler implements ICommandHandler {
       aggregateCompositeIdentifier: { id },
     },
   }: {
-    payload: PublishSurvey;
+    payload: FinalizeSurvey;
   }): Promise<CommandResult> {
     const existingInstance = await this.surveyRepository.fetchById(id);
 
     const updatedInstance =
-      existingInstance?.publish() ||
+      existingInstance?.finalize() ||
       new TrueImpactError(
-        `Failed to publish survey [${id}] as there is no such survey.`,
+        `Failed to finalize survey [${id}] as there is no such survey.`,
       );
 
     // TODO wrap this somewhere else
