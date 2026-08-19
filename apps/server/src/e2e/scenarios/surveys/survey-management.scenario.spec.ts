@@ -463,7 +463,7 @@ describe(`Survey Management Scenarios`, () => {
       });
 
       describe(`when removing an option from a survey`, () => {
-        describe(`when the survey is already `, () => {
+        describe(`when the survey has already been finalized`, () => {
           it.todo(`should return the expected error response`);
         });
 
@@ -478,7 +478,7 @@ describe(`Survey Management Scenarios`, () => {
         });
 
         describe(`when the request is invalid`, () => {
-          describe(`when the survey is already `, () => {
+          describe(`when the survey has already been finalized`, () => {
             it.todo(`should return the expected error response`);
           });
 
@@ -538,7 +538,7 @@ describe(`Survey Management Scenarios`, () => {
         });
 
         describe(`when the request is invalid`, () => {
-          describe(`when the survey is already `, () => {
+          describe(`when the survey has already been finalized`, () => {
             it(`should return the expected error response`, async () => {
               await assertCommandScenarioError({
                 httpClient,
@@ -702,7 +702,7 @@ describe(`Survey Management Scenarios`, () => {
         });
 
         describe(`when the request is invalid`, () => {
-          describe(`when the survey is already `, () => {
+          describe(`when the survey has already been finalized`, () => {
             it(`should return the expected error response`, async () => {
               await assertCommandScenarioError({
                 httpClient,
