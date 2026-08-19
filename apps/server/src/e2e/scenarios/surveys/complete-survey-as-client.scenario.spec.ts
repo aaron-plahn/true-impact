@@ -16,8 +16,8 @@ import { AddFollowUpQuestionForSurveyOption } from '../../../features/survey/sur
 import { AddOptionToSurveyQuestion } from '../../../features/survey/survey-management/commands/add-option-to-survey-question.command';
 import { AddQuestionToSurvey } from '../../../features/survey/survey-management/commands/add-question-to-survey.command';
 import { CreateSurvey } from '../../../features/survey/survey-management/commands/create-survey.command';
+import { FinalizeSurvey } from '../../../features/survey/survey-management/commands/finalize-survey.command';
 import { OpenSurveyToClient } from '../../../features/survey/survey-management/commands/open-survey-to-client';
-import { PublishSurvey } from '../../../features/survey/survey-management/commands/publish-survey.command';
 import { TestCommandStream } from '../../../libs/cqrs-es';
 import { assertTextMatchesAll } from '../../../libs/test-utils';
 import {
@@ -65,7 +65,7 @@ const targetQuestionLabel = 'q1';
 
 const targetOptionLabel = 'b';
 
-const buildFullSurveyBeforePublishing = TestCommandStream.first(CreateSurvey, {
+const buildFullSurveyBeforeFinalizing = TestCommandStream.first(CreateSurvey, {
   name: surveyName,
 })
   .andThen(AddQuestionToSurvey, {
@@ -134,7 +134,7 @@ const buildFullSurveyBeforePublishing = TestCommandStream.first(CreateSurvey, {
     text: 'ugly',
   });
 
-const publishSurvey = buildFullSurveyBeforePublishing.andThen(PublishSurvey);
+const finalizeSurvey = buildFullSurveyBeforeFinalizing.andThen(FinalizeSurvey);
 
 const communityName = 'Big Community';
 
@@ -145,7 +145,7 @@ const communityName = 'Big Community';
 describe(`Survey Completion Scenarios`, () => {
   const adminHttpClient = new TestHttpClient('http://localhost:3234');
 
-  const seedPublishedSurvey = async (
+  const seedFinalizedSurvey = async (
     clientId: string,
   ): Promise<{ accessCode: string }> => {
     let accessCode: string = '';
@@ -153,7 +153,7 @@ describe(`Survey Completion Scenarios`, () => {
     await assertCommandScenarioSuccess({
       httpClient: adminHttpClient,
       endpoint: surveyCompletionCommandsEndpoint,
-      stream: publishSurvey.andThen(OpenSurveyToClient, {
+      stream: finalizeSurvey.andThen(OpenSurveyToClient, {
         clientId,
       }),
       assertSuccess: (acks) => {
@@ -224,7 +224,7 @@ describe(`Survey Completion Scenarios`, () => {
             (await adminHttpClient.get(clientBaseEndpoint)).data as Client[]
           )[0];
 
-          const surveySeedResult = await seedPublishedSurvey(clientId);
+          const surveySeedResult = await seedFinalizedSurvey(clientId);
 
           accessCode = surveySeedResult.accessCode;
         });
@@ -278,7 +278,7 @@ describe(`Survey Completion Scenarios`, () => {
               (await adminHttpClient.get(clientBaseEndpoint)).data as Client[]
             )[0];
 
-            const seedResult = await seedPublishedSurvey(clientId);
+            const seedResult = await seedFinalizedSurvey(clientId);
 
             accessCode = seedResult.accessCode;
           });
@@ -351,7 +351,7 @@ describe(`Survey Completion Scenarios`, () => {
               (await adminHttpClient.get(clientBaseEndpoint)).data as Client[]
             )[0];
 
-            const seedResult = await seedPublishedSurvey(clientId);
+            const seedResult = await seedFinalizedSurvey(clientId);
 
             accessCode = seedResult.accessCode;
           });
@@ -457,7 +457,7 @@ describe(`Survey Completion Scenarios`, () => {
               (await adminHttpClient.get(clientBaseEndpoint)).data as Client[]
             )[0];
 
-            const surveySeedResult = await seedPublishedSurvey(clientId);
+            const surveySeedResult = await seedFinalizedSurvey(clientId);
 
             accessCode = surveySeedResult.accessCode;
           });
@@ -514,12 +514,12 @@ describe(`Survey Completion Scenarios`, () => {
           });
         });
 
-        describe(`when the target survey is not published`, () => {
+        describe(`when the target survey is not finalized`, () => {
           it(`should return the expected error response`, async () => {
             await assertCommandScenarioSuccess({
               httpClient: adminHttpClient,
               endpoint: surveyCompletionCommandsEndpoint,
-              stream: buildFullSurveyBeforePublishing,
+              stream: buildFullSurveyBeforeFinalizing,
             });
 
             /**
@@ -561,7 +561,7 @@ describe(`Survey Completion Scenarios`, () => {
               await assertCommandScenarioError({
                 httpClient: adminHttpClient,
                 endpoint: surveyCompletionCommandsEndpoint,
-                stream: publishSurvey.andThen(OpenSurveyToClient, {
+                stream: finalizeSurvey.andThen(OpenSurveyToClient, {
                   clientId: missingClientId,
                 }),
                 assertErrorMessageAsExpected: (message) => {
@@ -607,7 +607,7 @@ describe(`Survey Completion Scenarios`, () => {
               (await adminHttpClient.get(clientBaseEndpoint)).data as Client[]
             )[0];
 
-            const seedResult = await seedPublishedSurvey(clientId);
+            const seedResult = await seedFinalizedSurvey(clientId);
 
             accessCode = seedResult.accessCode;
           });
@@ -646,7 +646,7 @@ describe(`Survey Completion Scenarios`, () => {
               (await adminHttpClient.get(clientBaseEndpoint)).data as Client[]
             )[0];
 
-            const seedResult = await seedPublishedSurvey(clientId);
+            const seedResult = await seedFinalizedSurvey(clientId);
 
             accessCode = seedResult.accessCode;
           });
@@ -692,7 +692,7 @@ describe(`Survey Completion Scenarios`, () => {
               (await adminHttpClient.get(clientBaseEndpoint)).data as Client[]
             )[0];
 
-            const seedResult = await seedPublishedSurvey(clientId);
+            const seedResult = await seedFinalizedSurvey(clientId);
 
             accessCode = seedResult.accessCode;
           });
@@ -725,7 +725,7 @@ describe(`Survey Completion Scenarios`, () => {
               (await adminHttpClient.get(clientBaseEndpoint)).data as Client[]
             )[0];
 
-            const seedResult = await seedPublishedSurvey(clientId);
+            const seedResult = await seedFinalizedSurvey(clientId);
 
             accessCode = seedResult.accessCode;
           });
@@ -765,7 +765,7 @@ describe(`Survey Completion Scenarios`, () => {
               (await adminHttpClient.get(clientBaseEndpoint)).data as Client[]
             )[0];
 
-            const seedResult = await seedPublishedSurvey(clientId);
+            const seedResult = await seedFinalizedSurvey(clientId);
 
             accessCode = seedResult.accessCode;
           });
@@ -819,7 +819,7 @@ describe(`Survey Completion Scenarios`, () => {
               (await adminHttpClient.get(clientBaseEndpoint)).data as Client[]
             )[0];
 
-            const seedResult = await seedPublishedSurvey(clientId);
+            const seedResult = await seedFinalizedSurvey(clientId);
 
             accessCode = seedResult.accessCode;
           });
@@ -892,7 +892,7 @@ describe(`Survey Completion Scenarios`, () => {
               (await adminHttpClient.get(clientBaseEndpoint)).data as Client[]
             )[0];
 
-            const seedResult = await seedPublishedSurvey(clientId);
+            const seedResult = await seedFinalizedSurvey(clientId);
 
             accessCode = seedResult.accessCode;
           });
@@ -931,7 +931,7 @@ describe(`Survey Completion Scenarios`, () => {
               (await adminHttpClient.get(clientBaseEndpoint)).data as Client[]
             )[0];
 
-            const seedResult = await seedPublishedSurvey(clientId);
+            const seedResult = await seedFinalizedSurvey(clientId);
 
             accessCode = seedResult.accessCode;
           });
@@ -1018,7 +1018,7 @@ describe(`Survey Completion Scenarios`, () => {
               (await adminHttpClient.get(clientBaseEndpoint)).data as Client[]
             )[0];
 
-            const seedResult = await seedPublishedSurvey(clientId);
+            const seedResult = await seedFinalizedSurvey(clientId);
 
             accessCode = seedResult.accessCode;
           });

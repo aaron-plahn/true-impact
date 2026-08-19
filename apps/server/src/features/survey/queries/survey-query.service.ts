@@ -101,7 +101,7 @@ export class SurveyQueryService {
      * 1. filter in the DB
      * 2. make this depend upon a participant context
      */
-    return all.filter((survey) => survey.isPublished);
+    return all.filter((survey) => survey.isFinal);
   }
 
   private buildViewModel(

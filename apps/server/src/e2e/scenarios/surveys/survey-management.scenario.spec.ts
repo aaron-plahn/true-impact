@@ -8,8 +8,8 @@ import { AddFollowUpQuestionForSurveyOption } from '../../../features/survey/sur
 import { AddOptionToSurveyQuestion } from '../../../features/survey/survey-management/commands/add-option-to-survey-question.command';
 import { AddQuestionToSurvey } from '../../../features/survey/survey-management/commands/add-question-to-survey.command';
 import { CreateSurvey } from '../../../features/survey/survey-management/commands/create-survey.command';
+import { FinalizeSurvey } from '../../../features/survey/survey-management/commands/finalize-survey.command';
 import { FlagSurveyOption } from '../../../features/survey/survey-management/commands/flag-survey-option.command';
-import { PublishSurvey } from '../../../features/survey/survey-management/commands/publish-survey.command';
 import { TestCommandStream } from '../../../libs/cqrs-es/test-utils';
 import { assertTextMatchesAll } from '../../../libs/test-utils';
 import {
@@ -137,7 +137,7 @@ const addOptionsToEveryQuestion = questionLabels.reduce(
   addAllQuestionsToSurvey,
 );
 
-const publishSurvey = addOptionsToEveryQuestion.andThen(PublishSurvey, {});
+const finalizeSurvey = addOptionsToEveryQuestion.andThen(FinalizeSurvey, {});
 
 const flagLabel = 'socially awkward';
 
@@ -182,7 +182,7 @@ describe(`Survey Management Scenarios`, () => {
       flagId = allFlags.find((f) => f.label === flagLabel)?.id as string;
     });
 
-    describe(`create, complete, and publish a survey`, () => {
+    describe(`create, complete, and finalize a survey`, () => {
       describe(`when creating a survey`, () => {
         describe(`when the request is valid`, () => {
           it(`should return the expected acknowledgement`, async () => {
@@ -249,15 +249,15 @@ describe(`Survey Management Scenarios`, () => {
         });
 
         describe(`when the request is invalid`, () => {
-          describe(`when the survey is already published`, () => {
+          describe(`when the survey is already finalized`, () => {
             it(`should return the expected error response`, async () => {
               await assertCommandScenarioError({
                 httpClient,
                 endpoint: commandEndpoint,
-                stream: publishSurvey.andThen(AddQuestionToSurvey, {}),
+                stream: finalizeSurvey.andThen(AddQuestionToSurvey, {}),
                 assertErrorMessageAsExpected: (message: string) => {
                   expect(message).toContain(surveyName);
-                  expect(message).toContain('has been published');
+                  expect(message).toContain('has been finalized');
                 },
               });
             });
@@ -320,7 +320,7 @@ describe(`Survey Management Scenarios`, () => {
         });
 
         describe(`when the request is invalid`, () => {
-          describe(`when the survey is already published`, () => {
+          describe(`when the survey is already finalized`, () => {
             it.todo(`should return the expected error response`);
           });
 
@@ -361,18 +361,18 @@ describe(`Survey Management Scenarios`, () => {
           });
 
           describe(`when the request is invalid`, () => {
-            describe(`when the survey is already published`, () => {
+            describe(`when the survey is already finalized`, () => {
               it(`should return the expected error response`, async () => {
                 await assertCommandScenarioError({
                   httpClient,
                   endpoint: commandEndpoint,
-                  stream: publishSurvey.andThen(AddOptionToSurveyQuestion, {
+                  stream: finalizeSurvey.andThen(AddOptionToSurveyQuestion, {
                     questionLabel: questionLabels[0],
                     optionLabel: 'new-option-label-X',
                   }),
                   assertErrorMessageAsExpected: (message: string) => {
                     expect(message).toContain(surveyName);
-                    expect(message).toContain('has been published');
+                    expect(message).toContain('has been finalized');
                   },
                 });
               });
@@ -432,7 +432,7 @@ describe(`Survey Management Scenarios`, () => {
         });
 
         describe(`when adding an additional option`, () => {
-          // Note that the happy path is covered in the publish test case
+          // Note that the happy path is covered in the finalize test case
 
           describe(`when the request is invalid`, () => {
             describe(`when there is already a question with the given option`, () => {
@@ -463,7 +463,7 @@ describe(`Survey Management Scenarios`, () => {
       });
 
       describe(`when removing an option from a survey`, () => {
-        describe(`when the survey is already published`, () => {
+        describe(`when the survey is already `, () => {
           it.todo(`should return the expected error response`);
         });
 
@@ -478,7 +478,7 @@ describe(`Survey Management Scenarios`, () => {
         });
 
         describe(`when the request is invalid`, () => {
-          describe(`when the survey is already published`, () => {
+          describe(`when the survey is already `, () => {
             it.todo(`should return the expected error response`);
           });
 
@@ -538,12 +538,12 @@ describe(`Survey Management Scenarios`, () => {
         });
 
         describe(`when the request is invalid`, () => {
-          describe(`when the survey is already published`, () => {
+          describe(`when the survey is already `, () => {
             it(`should return the expected error response`, async () => {
               await assertCommandScenarioError({
                 httpClient,
                 endpoint: commandEndpoint,
-                stream: publishSurvey.andThen(
+                stream: finalizeSurvey.andThen(
                   AddFollowUpQuestionForSurveyOption,
                   {
                     questionLabel: `${questionLabels[0]}.${optionLabels[0]}.FU-1`,
@@ -554,7 +554,7 @@ describe(`Survey Management Scenarios`, () => {
                 ),
                 assertErrorMessageAsExpected: (message: string) => {
                   expect(message).toContain(surveyName);
-                  expect(message).toContain('has been published');
+                  expect(message).toContain('has been ');
                 },
               });
             });
@@ -680,18 +680,18 @@ describe(`Survey Management Scenarios`, () => {
         });
       });
 
-      describe(`when publishing a survey`, () => {
+      describe(`when finalizing a survey`, () => {
         describe(`when the request is valid`, () => {
-          it(`should publish the survey`, async () => {
+          it(`should mark the survey as final`, async () => {
             await assertCommandScenarioSuccess({
               httpClient,
               endpoint: commandEndpoint,
-              stream: publishSurvey,
+              stream: finalizeSurvey,
               assertSuccess: async (acks) => {
                 await assertQueryResponse({
                   endpoint: buildSurveyDetailEndpoint(acks[0].id),
                   assertResponseBody: async (body: SurveyViewModel) => {
-                    expect(body.isPublished).toBe(true);
+                    expect(body.isFinal).toBe(true);
 
                     return Promise.resolve();
                   },
@@ -702,15 +702,15 @@ describe(`Survey Management Scenarios`, () => {
         });
 
         describe(`when the request is invalid`, () => {
-          describe(`when the survey is already published`, () => {
+          describe(`when the survey is already `, () => {
             it(`should return the expected error response`, async () => {
               await assertCommandScenarioError({
                 httpClient,
                 endpoint: commandEndpoint,
-                stream: publishSurvey.andThen(PublishSurvey, {}),
+                stream: finalizeSurvey.andThen(FinalizeSurvey, {}),
                 assertErrorMessageAsExpected: (message: string) => {
                   expect(message).toContain(surveyName);
-                  expect(message).toContain('has been published');
+                  expect(message).toContain('has been ');
                 },
               });
             });
@@ -721,10 +721,10 @@ describe(`Survey Management Scenarios`, () => {
               await assertCommandScenarioError({
                 httpClient,
                 endpoint: commandEndpoint,
-                stream: createSurvey.andThen(PublishSurvey),
+                stream: createSurvey.andThen(FinalizeSurvey),
                 assertErrorMessageAsExpected: (message) => {
                   expect(message).toContain(surveyName);
-                  expect(message).toContain('publish');
+                  expect(message).toContain('final');
                   expect(message).toContain('must have at least one question');
                 },
               });
@@ -736,7 +736,7 @@ describe(`Survey Management Scenarios`, () => {
               await assertCommandScenarioError({
                 httpClient,
                 endpoint: commandEndpoint,
-                stream: addFirstQuestionToSurvey.andThen(PublishSurvey, {}),
+                stream: addFirstQuestionToSurvey.andThen(FinalizeSurvey, {}),
                 assertErrorMessageAsExpected: (message) => {
                   expect(message).toContain(surveyName);
                   expect(message).toContain(questionLabels[0]);
@@ -751,7 +751,7 @@ describe(`Survey Management Scenarios`, () => {
               await assertCommandScenarioError({
                 httpClient,
                 endpoint: commandEndpoint,
-                stream: addFollowUpQuestionForOption.andThen(PublishSurvey),
+                stream: addFollowUpQuestionForOption.andThen(FinalizeSurvey),
                 assertErrorMessageAsExpected: (message) => {
                   expect(message).toContain(surveyName);
                   expect(message).toContain(followUpQuestion.label);
@@ -774,7 +774,7 @@ describe(`Survey Management Scenarios`, () => {
                       await assertCommandScenarioSuccess({
                         httpClient,
                         endpoint: commandEndpoint,
-                        stream: publishSurvey.andThen(FlagSurveyOption, {
+                        stream: finalizeSurvey.andThen(FlagSurveyOption, {
                           flagId,
                           questionLabel: labelOfTopLevelQuestionToFlag,
                           optionLabel: labelOfTopLevelOptionToFlag,
@@ -814,7 +814,7 @@ describe(`Survey Management Scenarios`, () => {
                       await assertCommandScenarioError({
                         httpClient,
                         endpoint: commandEndpoint,
-                        stream: publishSurvey.andThen(FlagSurveyOption, {
+                        stream: finalizeSurvey.andThen(FlagSurveyOption, {
                           flagId: missingFlagId,
                           questionLabel,
                           optionLabel,
@@ -840,7 +840,7 @@ describe(`Survey Management Scenarios`, () => {
                     await assertCommandScenarioError({
                       httpClient,
                       endpoint: commandEndpoint,
-                      stream: publishSurvey
+                      stream: finalizeSurvey
                         .andThen(FlagSurveyOption, {
                           flagId,
                           questionLabel,
@@ -871,7 +871,7 @@ describe(`Survey Management Scenarios`, () => {
                   await assertCommandScenarioError({
                     httpClient,
                     endpoint: commandEndpoint,
-                    stream: publishSurvey.andThen(FlagSurveyOption, {
+                    stream: finalizeSurvey.andThen(FlagSurveyOption, {
                       flagId,
                       questionLabel: labelOfTopLevelQuestionToFlag,
                       optionLabel: missingOptionLabel,
@@ -899,7 +899,7 @@ describe(`Survey Management Scenarios`, () => {
                       await assertCommandScenarioSuccess({
                         httpClient,
                         endpoint: commandEndpoint,
-                        stream: publishSurvey.andThen(FlagSurveyOption, {
+                        stream: finalizeSurvey.andThen(FlagSurveyOption, {
                           flagId,
                           questionLabel: labelOfFollowUpQuestionToFlag,
                           optionLabel: labelOfFollowUpOptionToFlag,
@@ -951,7 +951,7 @@ describe(`Survey Management Scenarios`, () => {
                       await assertCommandScenarioError({
                         httpClient,
                         endpoint: commandEndpoint,
-                        stream: publishSurvey.andThen(FlagSurveyOption, {
+                        stream: finalizeSurvey.andThen(FlagSurveyOption, {
                           flagId: missingFlagId,
                           questionLabel: labelOfFollowUpQuestionToFlag,
                           optionLabel: labelOfFollowUpOptionToFlag,
@@ -974,7 +974,7 @@ describe(`Survey Management Scenarios`, () => {
                     await assertCommandScenarioError({
                       httpClient,
                       endpoint: commandEndpoint,
-                      stream: publishSurvey
+                      stream: finalizeSurvey
                         .andThen(FlagSurveyOption, {
                           flagId,
                           questionLabel: labelOfFollowUpQuestionToFlag,
@@ -1004,7 +1004,7 @@ describe(`Survey Management Scenarios`, () => {
                   await assertCommandScenarioError({
                     httpClient,
                     endpoint: commandEndpoint,
-                    stream: publishSurvey.andThen(FlagSurveyOption, {
+                    stream: finalizeSurvey.andThen(FlagSurveyOption, {
                       flagId,
                       questionLabel: labelOfFollowUpQuestionToFlag,
                       optionLabel: missingOptionLabel,
@@ -1031,7 +1031,7 @@ describe(`Survey Management Scenarios`, () => {
               await assertCommandScenarioError({
                 httpClient,
                 endpoint: commandEndpoint,
-                stream: publishSurvey.andThen(FlagSurveyOption, {
+                stream: finalizeSurvey.andThen(FlagSurveyOption, {
                   flagId,
                   questionLabel: missingQuestionLabel,
                 }),

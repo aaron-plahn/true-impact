@@ -12,7 +12,7 @@ import {
 } from './survey-response-record.aggregate-root';
 
 const surveyWithOneQuestion = buildTestInstance<SurveyPersistenceDto>(Survey, {
-  isPublished: true,
+  isFinal: true,
   // This is a bit painful- can we use a different format?
   topLevelQuestionLabels: ['1', '3'],
   // TODO ensure the prompts are unique amongst all questions in a single survey

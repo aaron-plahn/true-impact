@@ -17,7 +17,7 @@ describe(`SurveyResponseRecord.validateInvariants`, () => {
   const validSurvey = buildTestInstance(
     Survey,
     {
-      isPublished: true,
+      isFinal: true,
       topLevelQuestionLabels: ['1'],
       questions: {
         '1': {

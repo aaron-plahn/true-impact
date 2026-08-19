@@ -142,6 +142,6 @@ export class ImportSurvey {
   analyzers: SurveyAnalyzerImportDto[];
   /**
    * Note that an imported survey is meant to be completely "hands off" aside from opening access.
-   * As such, imported surveys are automatically published (finalized).
+   * As such, imported surveys are automatically finalized.
    */
 }

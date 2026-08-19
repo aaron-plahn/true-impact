@@ -197,7 +197,7 @@ describe(`Survey Import Scenarios`, () => {
         questions: validQuestions,
       });
 
-      it(`should create the published (finalized survey)`, async () => {
+      it(`should create the finalized survey`, async () => {
         await assertCommandScenarioSuccess({
           httpClient,
           endpoint: surveyCommandsEndpoint,

@@ -259,7 +259,7 @@ export class ImportSurveyCommandHandler implements ICommandHandler<ImportSurvey>
     }
 
     // TODO we need to rename this to finalize
-    const finalizedSurvey = surveyWithQuestions.publish();
+    const finalizedSurvey = surveyWithQuestions.finalize();
 
     if (finalizedSurvey instanceof Error) {
       return finalizedSurvey;

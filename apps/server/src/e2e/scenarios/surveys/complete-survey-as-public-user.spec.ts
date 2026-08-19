@@ -5,8 +5,8 @@ import { AddFollowUpQuestionForSurveyOption } from '../../../features/survey/sur
 import { AddOptionToSurveyQuestion } from '../../../features/survey/survey-management/commands/add-option-to-survey-question.command';
 import { AddQuestionToSurvey } from '../../../features/survey/survey-management/commands/add-question-to-survey.command';
 import { CreateSurvey } from '../../../features/survey/survey-management/commands/create-survey.command';
+import { FinalizeSurvey } from '../../../features/survey/survey-management/commands/finalize-survey.command';
 import { OpenSurveyToPublic } from '../../../features/survey/survey-management/commands/open-survey-to-client/open-survey-to-public.command';
-import { PublishSurvey } from '../../../features/survey/survey-management/commands/publish-survey.command';
 import { TestCommandStream } from '../../../libs/cqrs-es';
 import {
   assertCommandScenarioError,
@@ -36,7 +36,7 @@ const targetQuestionLabel = 'q1';
 
 const targetOptionLabel = 'b';
 
-const buildAndPublishSurveyPriorToOpenning = TestCommandStream.first(
+const buildAndFinalizeSurveyPriorToOpenning = TestCommandStream.first(
   CreateSurvey,
   {
     name: surveyName,
@@ -107,7 +107,7 @@ const buildAndPublishSurveyPriorToOpenning = TestCommandStream.first(
     optionLabel: 'c',
     text: 'ugly',
   })
-  .andThen(PublishSurvey);
+  .andThen(FinalizeSurvey);
 
 const clientOrigin = 'http://localhost:4200';
 
@@ -139,7 +139,7 @@ describe(`Survey Completion Scenarios: Public Participant (no access code requir
         httpClient: adminHttpClient,
         endpoint: surveyCompletionCommandsEndpoint,
         stream:
-          buildAndPublishSurveyPriorToOpenning.andThen(OpenSurveyToPublic),
+          buildAndFinalizeSurveyPriorToOpenning.andThen(OpenSurveyToPublic),
       });
 
       const surveys = (await axios.get(surveyIndexEndpoint))
@@ -194,13 +194,13 @@ describe(`Survey Completion Scenarios: Public Participant (no access code requir
       await assertCommandScenarioSuccess({
         httpClient: adminHttpClient,
         endpoint: surveyCompletionCommandsEndpoint,
-        stream: buildAndPublishSurveyPriorToOpenning,
+        stream: buildAndFinalizeSurveyPriorToOpenning,
       });
 
       const surveys = (await axios.get(surveyIndexEndpoint))
         .data as SurveyViewModel[];
 
-      // This survey is published (Finalized) but not yet open for user completion. No access codes are available.
+      // This survey is finalized, but not yet open for user completion. No access codes are available.
       surveyId = surveys[0].id;
     });
 

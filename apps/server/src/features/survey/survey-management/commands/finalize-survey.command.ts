@@ -12,8 +12,8 @@ import {
     },
   },
 })
-export class PublishSurvey {
-  static readonly type = 'PUBLISH_SURVEY';
+export class FinalizeSurvey {
+  static readonly type = 'FINALIZE_SURVEY';
 
   @SurveyCompositeIdentifierValuedProp
   aggregateCompositeIdentifier: SurveyCompositeIdentifier;

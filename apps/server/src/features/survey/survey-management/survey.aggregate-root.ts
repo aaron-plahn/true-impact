@@ -29,7 +29,7 @@ import {
 
 export class SurveyPersistenceDto {
   id: string;
-  isPublished: boolean;
+  isFinal: boolean;
   name: string;
   questions: Record<string, Omit<SurveyQuestionPersistenceDto, 'label'>>;
   topLevelQuestionLabels: string[];
@@ -45,7 +45,7 @@ export class SurveyPersistenceDto {
 @TrueImpactDataExample<SurveyPersistenceDto>({
   example: {
     id: '123',
-    isPublished: false,
+    isFinal: false,
     name: 'test survey',
     questions: {},
     topLevelQuestionLabels: [],
@@ -71,10 +71,10 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
 
   // TODO We need a draft \ publication \ versioning work-flow
   @BooleanDataType({
-    label: 'is published',
+    label: 'is final',
     description: 'should this survey be available for completion?',
   })
-  isPublished: boolean;
+  isFinal: boolean;
 
   @NonEmptyString({
     label: 'Name',
@@ -139,7 +139,7 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
 
   constructor({
     id,
-    isPublished,
+    isFinal,
     name,
     questions,
     questionLabels,
@@ -148,7 +148,7 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
     accessTokensByHash,
   }: {
     id: string;
-    isPublished: boolean;
+    isFinal: boolean;
     name: string;
     revision?: number;
     questions?: Record<string, SurveyQuestion>;
@@ -166,7 +166,7 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
 
     this.id = id;
 
-    this.isPublished = typeof isPublished === 'boolean' ? isPublished : false;
+    this.isFinal = typeof isFinal === 'boolean' ? isFinal : false;
 
     this.name = name;
 
@@ -227,7 +227,7 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
     const result: SurveyPersistenceDto = {
       id: this.id,
       name: this.name,
-      isPublished: this.isPublished,
+      isFinal: this.isFinal,
       // We persist maps as plain objects (lookup tables)
       questions: Array.from(this.questionBank.entries()).reduce(
         (
@@ -282,20 +282,20 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
     return this.get(followUpQuestionLabel);
   }
 
-  validatePublicationStatus(): TrueImpactError[] {
+  validateFinalizationStatus(): TrueImpactError[] {
     const allErrors: TrueImpactError[] = [];
 
     /**
-     * There are no restrictions to validate if the survey is unpublished
+     * There are no restrictions to validate if the survey has yet to be finalized
      */
-    if (!this.isPublished) {
+    if (!this.isFinal) {
       return allErrors;
     }
 
     if (this.size() < 1) {
       allErrors.push(
         new TrueImpactError(
-          `Survey [${this.name}] cannot be published, as a survey must have at least one question in order to be published`,
+          `Survey [${this.name}] cannot be finalized, as a survey must have at least one question in order to be finalized`,
         ),
       );
     }
@@ -309,7 +309,7 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
         return questionSize < MIN_NUMBER_OF_OPTIONS
           ? [
               new TrueImpactError(
-                `Survey [${this.name}] cannot be published as its question [${q.label}] does not have at least ${MIN_NUMBER_OF_OPTIONS} options. It has ${questionSize} options.`,
+                `Survey [${this.name}] cannot be finalized as its question [${q.label}] does not have at least ${MIN_NUMBER_OF_OPTIONS} options. It has ${questionSize} options.`,
               ),
             ]
           : [];
@@ -322,15 +322,15 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
   }
 
   /**
-   * - A Survey can not be published if it has no `firstQuestion`.
+   * - A Survey can not be finalized if it has no `firstQuestion`.
    * - A Survey must constitute an acyclic graph via its questions. That is, no `SurveyOption.next` should point to a previous
    * question in the survey.
-   * - A published survey's questions must offer at least 2 options each
+   * - A finalized survey's questions must offer at least 2 options each
    *
    *
    */
   validateComplexInvariants(): TrueImpactError[] {
-    const allErrors = [...this.validatePublicationStatus()];
+    const allErrors = [...this.validateFinalizationStatus()];
 
     const topLevelFollowUpQuestionErrors = Array.from(
       this.questionBank.values(),
@@ -468,7 +468,7 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
 
     this.topLevelQuestionLabels.push(questionBuildResult.label);
 
-    return this.preventEditIfPublished();
+    return this.preventEditIfFinal();
   }
 
   find(
@@ -777,7 +777,7 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
 
     this.questionBank.set(questionLabel, updatedQuestion);
 
-    return this.preventEditIfPublished();
+    return this.preventEditIfFinal();
   }
 
   @UpdateMethod()
@@ -819,7 +819,7 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
 
     this.questionBank.set(questionLabel, updatedQuestion);
 
-    return this.preventEditIfPublished();
+    return this.preventEditIfFinal();
   }
 
   @UpdateMethod()
@@ -839,7 +839,7 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
      */
     flagId: string;
   }): this | TrueImpactError {
-    // note that you are allowed to add flags after a survey is published as this doesn't affect survey completion. The participant is unaware of the flags.
+    // note that you are allowed to add flags after a survey is finalized as this doesn't affect survey completion. The participant is unaware of the flags.
 
     const updatedQuestion =
       this.get(questionLabel) ||
@@ -875,15 +875,15 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
     this.questionBank.set(questionLabel, updatedQuestion);
 
     /**
-     * Note that there is nothing that prevents you from modifying flags after a survey as published for use.
+     * Note that there is nothing that prevents you from modifying flags after a survey as finalized for use.
      */
     return this;
   }
 
-  private preventEditIfPublished(): this | TrueImpactError {
-    if (this.isPublished) {
+  private preventEditIfFinal(): this | TrueImpactError {
+    if (this.isFinal) {
       return new TrueImpactError(
-        `You cannot edit Survey [${this.name}] as it has been published for public use.`,
+        `You cannot edit Survey [${this.name}] as it has been finalized for public use.`,
       );
     }
 
@@ -891,14 +891,14 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
   }
 
   @UpdateMethod()
-  publish(): this | TrueImpactError {
-    if (this.isPublished) {
+  finalize(): this | TrueImpactError {
+    if (this.isFinal) {
       return new TrueImpactError(
-        `You cannot publish survey [${this.name}], as it has been published already.`,
+        `You cannot finalize survey [${this.name}], as it has been finalized already.`,
       );
     }
 
-    this.isPublished = true;
+    this.isFinal = true;
 
     return this;
   }
@@ -1024,7 +1024,8 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
   openToPublic(): TrueImpactError | Survey {
     // TODO if this survey is already open to the public, return an error
 
-    // TODO error if this survey is not published,
+    // TODO are we actually checking this?
+    // TODO error if this survey is not finalized,
 
     // TODO should we allow opening to the public if there are already access codes?
     // TODO should we allow access codes if the survey is already open to the public?
@@ -1110,7 +1111,7 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
   }): Survey | InvariantValidationError {
     const instance = new Survey({
       id,
-      isPublished: false,
+      isFinal: false,
       name,
       questions: {},
       revision: 0,
@@ -1127,7 +1128,7 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
   static fromPersistenceDto(
     {
       id,
-      isPublished,
+      isFinal,
       name,
       questions,
       topLevelQuestionLabels: questionLabels,
@@ -1204,7 +1205,7 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
     const survey = new Survey({
       id,
       revision,
-      isPublished,
+      isFinal,
       name,
       questionLabels,
       questions: Object.fromEntries(

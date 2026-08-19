@@ -9,8 +9,8 @@ import { AddFollowUpQuestionForSurveyOption } from '../../../features/survey/sur
 import { AddOptionToSurveyQuestion } from '../../../features/survey/survey-management/commands/add-option-to-survey-question.command';
 import { AddQuestionToSurvey } from '../../../features/survey/survey-management/commands/add-question-to-survey.command';
 import { CreateSurvey } from '../../../features/survey/survey-management/commands/create-survey.command';
+import { FinalizeSurvey } from '../../../features/survey/survey-management/commands/finalize-survey.command';
 import { OpenSurveyToAnonymousIndividual } from '../../../features/survey/survey-management/commands/open-survey-to-anonymous-individual.command';
-import { PublishSurvey } from '../../../features/survey/survey-management/commands/publish-survey.command';
 import { TestCommandStream } from '../../../libs/cqrs-es';
 import {
   assertCommandScenarioError,
@@ -40,7 +40,7 @@ const targetQuestionLabel = 'q1';
 
 const targetOptionLabel = 'b';
 
-const buildAndPublishSurveyPriorToOpenning = TestCommandStream.first(
+const buildAndFinalizeSurveyPriorToOpenning = TestCommandStream.first(
   CreateSurvey,
   {
     name: surveyName,
@@ -111,7 +111,7 @@ const buildAndPublishSurveyPriorToOpenning = TestCommandStream.first(
     optionLabel: 'c',
     text: 'ugly',
   })
-  .andThen(PublishSurvey);
+  .andThen(FinalizeSurvey);
 
 const clientOrigin = 'http://localhost:4200';
 
@@ -144,7 +144,7 @@ describe(`Survey Completion Scenarios: Anonymous Individual Participant`, () => 
         // an admin must build the survey before it can be completed by an anonymous user in possession of an access code
         httpClient: adminHttpClient,
         endpoint: surveyCompletionCommandsEndpoint,
-        stream: buildAndPublishSurveyPriorToOpenning.andThen(
+        stream: buildAndFinalizeSurveyPriorToOpenning.andThen(
           OpenSurveyToAnonymousIndividual,
         ),
         assertSuccess: (acks) => {
@@ -307,13 +307,13 @@ describe(`Survey Completion Scenarios: Anonymous Individual Participant`, () => 
       await assertCommandScenarioSuccess({
         httpClient: adminHttpClient,
         endpoint: surveyCompletionCommandsEndpoint,
-        stream: buildAndPublishSurveyPriorToOpenning,
+        stream: buildAndFinalizeSurveyPriorToOpenning,
       });
 
       const surveys = (await axios.get(surveyIndexEndpoint))
         .data as SurveyViewModel[];
 
-      // This survey is published (Finalized) but not yet open for user completion. No access codes are available.
+      // This survey is finalized, but not yet open for user completion. No access codes are available.
       surveyId = surveys[0].id;
     });
 
