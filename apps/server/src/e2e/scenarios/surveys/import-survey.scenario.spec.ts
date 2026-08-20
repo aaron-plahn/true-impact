@@ -51,7 +51,10 @@ const validAnalyzer = buildTestInstance(SurveyAnalyzerImportDto, {
 // TODO support creating new flags via an UPSERT
 // const newFlag = 'brand new flag';
 
-const existingFlagForFollowUpQuestion = 'existing flag in DB';
+const existingFlagForFollowUpQuestion =
+  'existing flag in for follow-up question';
+
+const existingFlagForTopLevelQuestion = 'existing flag for top-level question';
 
 // TODO test new flag generation
 
@@ -98,12 +101,14 @@ const optionA: SurveyOptionImportDto = {
   followUpQuestion,
 };
 
+const labelForTopLevelOptionWithExistingFlag = 'b';
+
 const optionsForQuestionToManuallyVerify = [
   optionA,
   {
-    label: 'b',
+    label: labelForTopLevelOptionWithExistingFlag,
     text: 'no',
-    flags: [],
+    flags: [existingFlagForTopLevelQuestion],
     valuesByAnalyzerName: {
       [validAnalyzer.name.text]: {
         [YELLOW]: 1,
@@ -122,9 +127,11 @@ const optionsForQuestionToManuallyVerify = [
   },
 ];
 
+const labelForQuestionToManuallyVerify = '1';
+
 const question1: SurveyQuestionImportDto = {
   prompt: 'Do you ever want to just leave it all behind?',
-  label: '1',
+  label: labelForQuestionToManuallyVerify,
   options: optionsForQuestionToManuallyVerify,
 };
 
@@ -202,6 +209,24 @@ describe(`Survey Import Scenarios`, () => {
     await httpClient.patch(surveyTestSetupEndpoint);
 
     await httpClient.patch(flagTestSetupEndpoint);
+
+    await assertCommandScenarioSuccess({
+      httpClient,
+      endpoint: flagCommandsEndpoint,
+      stream: TestCommandStream.first(CreateFlag, {
+        label: existingFlagForFollowUpQuestion,
+        description: 'test existing flag for follow-up question',
+      }),
+    });
+
+    await assertCommandScenarioSuccess({
+      httpClient,
+      endpoint: flagCommandsEndpoint,
+      stream: TestCommandStream.first(CreateFlag, {
+        label: existingFlagForTopLevelQuestion,
+        description: 'test existing flag for top-level question',
+      }),
+    });
   });
 
   describe(`when the import is valid`, () => {
@@ -212,16 +237,6 @@ describe(`Survey Import Scenarios`, () => {
         },
         analyzers: [validAnalyzer],
         questions: validQuestions,
-      });
-
-      beforeEach(async () => {
-        await assertCommandScenarioSuccess({
-          httpClient,
-          endpoint: flagCommandsEndpoint,
-          stream: TestCommandStream.first(CreateFlag, {
-            label: existingFlagForFollowUpQuestion,
-          }),
-        });
       });
 
       it(`should create the finalized survey`, async () => {
@@ -294,18 +309,46 @@ describe(`Survey Import Scenarios`, () => {
               followUpQuestion.options.length,
             );
 
-            const targetFlagId = flagIdsByLabel.get(
-              existingFlagForFollowUpQuestion,
-            ) as string;
+            const targetIdForExistingFlagForTopLevelQuestion =
+              flagIdsByLabel.get(existingFlagForTopLevelQuestion) as string;
 
-            expect(targetFlagId).toBeTruthy();
+            expect(targetIdForExistingFlagForTopLevelQuestion).toBeTruthy();
+
+            const targetQuestion = searchResult.questions.find(
+              ({ label }) => label === labelForQuestionToManuallyVerify,
+            );
+
+            if (!targetQuestion) {
+              throw new Error(`test failed unexpectedly`);
+            }
+
+            const targetOption =
+              targetQuestion.options[labelForTopLevelOptionWithExistingFlag];
+
+            const { flags: flagsForTopLevelOptionWithExistingFlag } =
+              targetOption;
+
+            const targetIdForExistingFlagForFollowUpQuestion =
+              flagIdsByLabel.get(existingFlagForFollowUpQuestion) as string;
+
+            expect(targetIdForExistingFlagForFollowUpQuestion).toBeTruthy();
+
+            const searchResultForTopLevelExistingFlag =
+              flagsForTopLevelOptionWithExistingFlag[
+                targetIdForExistingFlagForTopLevelQuestion
+              ];
+
+            expect(searchResultForTopLevelExistingFlag).toBeTruthy();
 
             const { flags: foundFollowUpOptionFlags } =
               foundFollowupQuestion.options[labelForFollowUpOptionWithFlag];
 
             expect(Object.keys(foundFollowUpOptionFlags)).toHaveLength(1);
 
-            const targetFlag = foundFollowUpOptionFlags[targetFlagId];
+            const targetFlag =
+              foundFollowUpOptionFlags[
+                targetIdForExistingFlagForFollowUpQuestion
+              ];
 
             expect(targetFlag).toBeTruthy();
 

@@ -1,4 +1,7 @@
-import { FlagViewModelClientDto } from '../../../features/flags/queries';
+import {
+  FlagViewModel,
+  FlagViewModelClientDto,
+} from '../../../features/flags/queries';
 import {
   NestedDataType,
   NonEmptyString,
@@ -327,7 +330,12 @@ export class SurveyViewModel {
       surveyOptionsAsArray.reduce(
         (
           acc: Map<string, SurveyOptionViewModel>,
-          { label: optionLabel, text, followUpQuestionLabel }: SurveyOption,
+          {
+            label: optionLabel,
+            text,
+            followUpQuestionLabel,
+            flagIds: flagIdsFromDomainModel,
+          }: SurveyOption,
         ): Map<string, SurveyOptionViewModel> => {
           const followUpQuestions: FollowUpQuestionViewModel[] = [];
 
@@ -342,11 +350,14 @@ export class SurveyViewModel {
 
           const flags = new Map<string, SurveyFlagViewModel>();
 
-          context.flags.forEach(({ id, label, description }, flagId) => {
-            flags.set(
-              flagId,
-              new SurveyFlagViewModel({ id, label, description }),
-            );
+          flagIdsFromDomainModel.forEach((flagId) => {
+            if (context.flags.has(flagId)) {
+              const foundFlagViewFromContext = context.flags.get(
+                flagId,
+              ) as FlagViewModel;
+
+              flags.set(flagId, foundFlagViewFromContext);
+            }
           });
 
           const valuesByAnalyzerName =

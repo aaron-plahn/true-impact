@@ -114,9 +114,9 @@ export class SurveyOptionViewModel {
   }
 
   toClientDto(): SurveyOptionViewModelClientDto {
-    const followUpQuestions = this.followUpQuestions.map((fuq) =>
-      fuq.toClientDto(),
-    );
+    const followUpQuestions = this.followUpQuestions.map((fuq) => {
+      return fuq.toClientDto();
+    });
 
     const valuesByAnalyzerName = deepConvertMapToObject(
       this.valuesByAnalyzerName,
