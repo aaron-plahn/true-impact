@@ -51,14 +51,14 @@ export class ImportSurveyCommandHandler implements ICommandHandler<ImportSurvey>
       const uniqueFlagsForThisOption = new Set<string>();
 
       flags.forEach((flag) => {
-        if (uniqueFlagsForThisOption.has(flag)) {
+        if (uniqueFlagsForThisOption.has(flag.label)) {
           duplicateFlagsForThisOption.add({
-            flag,
+            flag: flag.label,
             questionLabel,
             optionLabel,
           });
         } else {
-          uniqueFlagsForThisOption.add(flag);
+          uniqueFlagsForThisOption.add(flag.label);
         }
       });
 
@@ -205,11 +205,11 @@ export class ImportSurveyCommandHandler implements ICommandHandler<ImportSurvey>
                   return acc;
                 }
 
-                const flagId = flagIdsByLabel.get(flag);
+                const flagId = flagIdsByLabel.get(flag.label);
 
                 if (!flagId) {
                   return new TrueImpactError(
-                    `You cannot add the flag [${flag}] for option [${option.label}] of question [${question.label}] in survey: [${acc.name}], as there is no flag with this label`,
+                    `You cannot add the flag [${flag.label}] for option [${option.label}] of question [${question.label}] in survey: [${acc.name}], as there is no flag with this label`,
                   );
                 }
 
@@ -310,7 +310,12 @@ export class ImportSurveyCommandHandler implements ICommandHandler<ImportSurvey>
 
                   // TODO do this for top-level options as well
                   const withFlags = followupOption.flags.reduce(
-                    (acc: Survey, flagLabel: string) => {
+                    (
+                      acc: Survey,
+                      {
+                        label: flagLabel,
+                      }: { label: string; description?: string },
+                    ) => {
                       if (acc instanceof Error) {
                         return acc;
                       }

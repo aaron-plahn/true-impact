@@ -60,6 +60,21 @@ export class SurveyQuestionImportDto {
   options: SurveyOptionImportDto[];
 }
 
+export class SurveyFlagImportDto {
+  @NonEmptyString({
+    label: 'label',
+    description: 'user-facing label for this flag',
+  })
+  label: string;
+
+  @NonEmptyString({
+    label: 'description',
+    description: `description of this flag's purpose (required only if adding a new flag)`,
+    isOptional: true,
+  })
+  description?: string;
+}
+
 export class SurveyOptionImportDto {
   @NonEmptyString({
     label: 'label',
@@ -87,7 +102,7 @@ export class SurveyOptionImportDto {
   // TODO spelling? followupQuestion?
   followUpQuestion?: SurveyQuestionImportDto;
 
-  @NonEmptyString({
+  @NestedDataType(() => SurveyFlagImportDto, {
     label: 'flags',
     description: 'a list of flags to apply to this option',
     isArray: true,
@@ -96,7 +111,7 @@ export class SurveyOptionImportDto {
   /**
    * These will either be created or looked up if existing.
    */
-  flags: string[];
+  flags: SurveyFlagImportDto[];
 
   @LookupTable('number', {
     label: 'values by analyzer name',

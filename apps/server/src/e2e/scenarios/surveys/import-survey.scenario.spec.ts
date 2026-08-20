@@ -48,13 +48,16 @@ const validAnalyzer = buildTestInstance(SurveyAnalyzerImportDto, {
   categories: validCategories,
 });
 
-// TODO support creating new flags via an UPSERT
-// const newFlag = 'brand new flag';
+// const newFlagLabelForTopLevelQuestion = 'brand new flag for top level question';
+// const newTopLevelFlagDescription = `this is the ${newFlagLabelForTopLevelQuestion}`;
 
-const existingFlagForFollowUpQuestion =
-  'existing flag in for follow-up question';
+const existingFlagForFollowUpQuestion = {
+  label: 'existing flag in for follow-up question',
+};
 
-const existingFlagForTopLevelQuestion = 'existing flag for top-level question';
+const existingFlagForTopLevelQuestion = {
+  label: 'existing flag for top-level question',
+};
 
 // TODO test new flag generation
 
@@ -214,7 +217,7 @@ describe(`Survey Import Scenarios`, () => {
       httpClient,
       endpoint: flagCommandsEndpoint,
       stream: TestCommandStream.first(CreateFlag, {
-        label: existingFlagForFollowUpQuestion,
+        label: existingFlagForFollowUpQuestion.label,
         description: 'test existing flag for follow-up question',
       }),
     });
@@ -223,7 +226,7 @@ describe(`Survey Import Scenarios`, () => {
       httpClient,
       endpoint: flagCommandsEndpoint,
       stream: TestCommandStream.first(CreateFlag, {
-        label: existingFlagForTopLevelQuestion,
+        label: existingFlagForTopLevelQuestion.label,
         description: 'test existing flag for top-level question',
       }),
     });
@@ -310,7 +313,9 @@ describe(`Survey Import Scenarios`, () => {
             );
 
             const targetIdForExistingFlagForTopLevelQuestion =
-              flagIdsByLabel.get(existingFlagForTopLevelQuestion) as string;
+              flagIdsByLabel.get(
+                existingFlagForTopLevelQuestion.label,
+              ) as string;
 
             expect(targetIdForExistingFlagForTopLevelQuestion).toBeTruthy();
 
@@ -329,7 +334,9 @@ describe(`Survey Import Scenarios`, () => {
               targetOption;
 
             const targetIdForExistingFlagForFollowUpQuestion =
-              flagIdsByLabel.get(existingFlagForFollowUpQuestion) as string;
+              flagIdsByLabel.get(
+                existingFlagForFollowUpQuestion.label,
+              ) as string;
 
             expect(targetIdForExistingFlagForFollowUpQuestion).toBeTruthy();
 
@@ -893,7 +900,9 @@ describe(`Survey Import Scenarios`, () => {
          * This currently fails because it hits the "importing flags for surveys is unsupported" error.
          */
         describe.skip(`flags`, () => {
-          const repeatedFlag = 'dangerous dog';
+          const repeatedFlag = {
+            label: 'dangerous dog',
+          };
 
           const invalidImport = TestCommandStream.first(ImportSurvey, {
             name: {
@@ -928,7 +937,7 @@ describe(`Survey Import Scenarios`, () => {
                 assertTextMatchesAll(
                   message,
                   surveyName,
-                  repeatedFlag,
+                  repeatedFlag.label,
                   question1.label,
                   optionA.label,
                 );
