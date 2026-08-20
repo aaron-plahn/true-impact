@@ -891,11 +891,7 @@ describe(`Survey Import Scenarios`, () => {
           });
         });
 
-        /**
-         * TODO Opt back in to this test when supporting flags on survey imports
-         * This currently fails because it hits the "importing flags for surveys is unsupported" error.
-         */
-        describe.skip(`flags`, () => {
+        describe(`flags`, () => {
           const repeatedFlag = {
             label: 'dangerous dog',
           };
