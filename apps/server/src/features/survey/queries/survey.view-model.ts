@@ -329,16 +329,16 @@ export class SurveyViewModel {
           acc: Map<string, SurveyOptionViewModel>,
           { label: optionLabel, text, followUpQuestionLabel }: SurveyOption,
         ): Map<string, SurveyOptionViewModel> => {
-          const followUpQuestions: FollowUpQuestionViewModel[] =
-            typeof followUpQuestionLabel === 'string'
-              ? [
-                  SurveyViewModel.buildSurveyQuestionViewModel(
-                    questionBank.get(followUpQuestionLabel) as SurveyQuestion,
-                    questionBank,
-                    context,
-                  ), // We do this to avoid circularities with our type definitions when recursing
-                ]
-              : ([] as FollowUpQuestionViewModel[]);
+          const followUpQuestions: FollowUpQuestionViewModel[] = [];
+
+          if (typeof followUpQuestionLabel === 'string')
+            followUpQuestions.push(
+              SurveyViewModel.buildSurveyQuestionViewModel(
+                questionBank.get(followUpQuestionLabel) as SurveyQuestion,
+                questionBank,
+                context,
+              ), // We do this to avoid circularities with our type definitions when recursing
+            );
 
           const flags = new Map<string, SurveyFlagViewModel>();
 

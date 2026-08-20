@@ -7,6 +7,8 @@ export interface IFlagCommandRepository {
 
   fetchById(id: string): Promise<Flag | null>; // Maybe<T>
 
+  fetchByLabel(label: string): Promise<Flag | null>; // Maybe<T>. Is there also a returned error possiblity?
+
   fetchMany(): Promise<Flag[]>;
 
   // Error || Ack

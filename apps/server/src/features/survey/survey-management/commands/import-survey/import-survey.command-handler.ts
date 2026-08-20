@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { FLAG_VALIDATION_SERVICE_INJECTION_TOKEN } from '../../../../../features/flags/constants';
 import { SURVEY_COMMAND_REPOSITORY_DEPENDENCY_TOKEN } from '../../../../../features/survey/constants';
 import type { ISurveyCommandRepository } from '../../../../../features/survey/repositories';
 import type {
@@ -8,12 +9,20 @@ import type {
 import { TrueImpactError } from '../../../../../libs/data-types';
 import { Inject } from '../../../../../libs/framework';
 import { Survey } from '../../survey.aggregate-root';
-import { ImportSurvey } from './import-survey.command';
+import { ImportSurvey, SurveyOptionImportDto } from './import-survey.command';
+
+export interface IFlagServiceForSurveyImports {
+  upsertMany(
+    labels: { label: string; description?: string }[],
+  ): Promise<(TrueImpactError | { id: string; label: string })[]>;
+}
 
 export class ImportSurveyCommandHandler implements ICommandHandler<ImportSurvey> {
   constructor(
     @Inject(SURVEY_COMMAND_REPOSITORY_DEPENDENCY_TOKEN)
     private readonly repository: ISurveyCommandRepository,
+    @Inject(FLAG_VALIDATION_SERVICE_INJECTION_TOKEN)
+    private readonly flagService: IFlagServiceForSurveyImports,
   ) {}
 
   async handle({
@@ -27,56 +36,91 @@ export class ImportSurveyCommandHandler implements ICommandHandler<ImportSurvey>
   }): Promise<CommandResult> {
     const duplicateFlagErrors: TrueImpactError[] = [];
 
-    questions.forEach(({ options, label: questionLabel }) =>
-      options.forEach(({ flags, label: optionLabel }) => {
-        const duplicateFlags = new Set<{
-          questionLabel: string;
-          optionLabel: string;
-          flag: string;
-        }>();
+    const uniqueFlagsAcrossAllQuestions = new Set<string>();
 
-        const uniqueFlags = new Set<string>();
+    const registerFlagsForOption = (
+      { flags, label: optionLabel, followUpQuestion }: SurveyOptionImportDto,
+      questionLabel: string,
+    ): void => {
+      const duplicateFlagsForThisOption = new Set<{
+        questionLabel: string;
+        optionLabel: string;
+        flag: string;
+      }>();
 
-        flags.forEach((flag) => {
-          if (uniqueFlags.has(flag)) {
-            duplicateFlags.add({
-              flag,
-              questionLabel,
-              optionLabel,
-            });
-          } else {
-            uniqueFlags.add(flag);
-          }
-        });
+      const uniqueFlagsForThisOption = new Set<string>();
 
-        if (duplicateFlags.size > 0) {
-          duplicateFlagErrors.push(
-            ...Array.from(duplicateFlags).map(
-              ({ flag, questionLabel, optionLabel }) =>
-                new TrueImpactError(
-                  `Duplicate flag: ${flag} for question [${questionLabel}], option [${optionLabel}]`,
-                ),
-            ),
-          );
+      flags.forEach((flag) => {
+        if (uniqueFlagsForThisOption.has(flag)) {
+          duplicateFlagsForThisOption.add({
+            flag,
+            questionLabel,
+            optionLabel,
+          });
+        } else {
+          uniqueFlagsForThisOption.add(flag);
         }
+      });
+
+      if (followUpQuestion) {
+        followUpQuestion.options.forEach((followUpOption) =>
+          registerFlagsForOption(followUpOption, followUpQuestion.label),
+        );
+      }
+
+      if (duplicateFlagsForThisOption.size > 0) {
+        duplicateFlagErrors.push(
+          ...Array.from(duplicateFlagsForThisOption).map(
+            ({ flag, questionLabel, optionLabel }) =>
+              new TrueImpactError(
+                `Duplicate flag: ${flag} for question [${questionLabel}], option [${optionLabel}]`,
+              ),
+          ),
+        );
+      } else {
+        uniqueFlagsForThisOption.forEach((f) =>
+          uniqueFlagsAcrossAllQuestions.add(f),
+        );
+      }
+    };
+
+    questions.forEach(({ options, label: questionLabel }) =>
+      options.forEach((option) => {
+        registerFlagsForOption(option, questionLabel);
       }),
     );
 
-    if (
-      questions.some(({ options }) =>
-        options.some(({ flags }) => flags.length > 0),
-      )
-    ) {
-      return new TrueImpactError(
-        `Importing flags to a survey is not yet supported`,
-      );
-    }
+    const flagIdsByLabel = new Map<string, string>();
 
     if (duplicateFlagErrors.length > 0) {
       return new TrueImpactError(
         `Encountered duplicate flags when importing question survey [${name}]`,
         duplicateFlagErrors,
       );
+    } else if (uniqueFlagsAcrossAllQuestions.size > 0) {
+      const flagUpsertResults = await this.flagService.upsertMany(
+        Array.from(uniqueFlagsAcrossAllQuestions).map((label) => ({
+          label,
+          // TODO we need to support the user specifying descriptions for new flags
+        })),
+      );
+
+      const flagUpsertErrors = flagUpsertResults.flatMap((result) =>
+        result instanceof Error ? [result] : [],
+      );
+
+      if (flagUpsertErrors.length > 0) {
+        return new TrueImpactError(
+          `Failed to import survey [${name}]. Flag management failed.`,
+          flagUpsertErrors,
+        );
+      }
+
+      flagUpsertResults.forEach((result) => {
+        const flag = result as { id: string; label: string };
+
+        flagIdsByLabel.set(flag.label, flag.id);
+      });
     }
 
     const newSurvey = Survey.buildEmpty({ name, id: randomUUID() });
@@ -155,6 +199,29 @@ export class ImportSurveyCommandHandler implements ICommandHandler<ImportSurvey>
               return surveyWithThisOption;
             }
 
+            const surveyWithFlagsForThisOption = option.flags.reduce(
+              (acc, flag): Survey | TrueImpactError => {
+                if (acc instanceof Error) {
+                  return acc;
+                }
+
+                const flagId = flagIdsByLabel.get(flag);
+
+                if (!flagId) {
+                  return new TrueImpactError(
+                    `You cannot add the flag [${flag}] for option [${option.label}] of question [${question.label}] in survey: [${acc.name}], as there is no flag with this label`,
+                  );
+                }
+
+                return acc.flagOption({
+                  questionLabel: question.label,
+                  optionLabel: option.label,
+                  flagId,
+                });
+              },
+              surveyWithThisOption,
+            );
+
             const surveyWithAnalysisValuesForThisOption = Object.entries(
               option.valuesByAnalyzerName,
             ).reduce(
@@ -173,7 +240,7 @@ export class ImportSurveyCommandHandler implements ICommandHandler<ImportSurvey>
                   valuesByCategory,
                 });
               },
-              surveyWithThisOption,
+              surveyWithFlagsForThisOption,
             );
 
             if (
@@ -237,7 +304,35 @@ export class ImportSurveyCommandHandler implements ICommandHandler<ImportSurvey>
                     withThisOption,
                   );
 
-                  return withAnalysisValues;
+                  if (withAnalysisValues instanceof TrueImpactError) {
+                    return withAnalysisValues;
+                  }
+
+                  // TODO do this for top-level options as well
+                  const withFlags = followupOption.flags.reduce(
+                    (acc: Survey, flagLabel: string) => {
+                      if (acc instanceof Error) {
+                        return acc;
+                      }
+
+                      const flagId = flagIdsByLabel.get(flagLabel);
+
+                      if (!flagId) {
+                        return new TrueImpactError(
+                          `You cannot add flag [${flagLabel}] to option [${followupOption.label}] of question [${option.followUpQuestion?.label}] of survey ${acc.name}, as there is no existing flag with this label.`,
+                        );
+                      }
+
+                      return acc.flagOption({
+                        questionLabel: option.followUpQuestion?.label as string,
+                        optionLabel: followupOption.label,
+                        flagId,
+                      });
+                    },
+                    withThisOption,
+                  );
+
+                  return withFlags;
                 },
                 surveyWithFollowupQuestionForThisOption,
               );
@@ -258,7 +353,6 @@ export class ImportSurveyCommandHandler implements ICommandHandler<ImportSurvey>
       return surveyWithQuestions;
     }
 
-    // TODO we need to rename this to finalize
     const finalizedSurvey = surveyWithQuestions.finalize();
 
     if (finalizedSurvey instanceof Error) {

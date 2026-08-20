@@ -1,3 +1,5 @@
+import { FlagViewModel } from 'src/features/flags/queries';
+import { CreateFlag } from '../../../features/flags/commands';
 import { SurveyViewModelClientDto } from '../../../features/survey/queries/survey.view-model';
 import {
   ImportSurvey,
@@ -32,8 +34,6 @@ const shouldError = 'should return the expected error';
 
 const httpClient = new TestHttpClient('http://localhost:4200');
 
-const newFlag = 'flight risk';
-
 const RED = 'red';
 const WHITE = 'white';
 const YELLOW = 'yellow';
@@ -48,16 +48,25 @@ const validAnalyzer = buildTestInstance(SurveyAnalyzerImportDto, {
   categories: validCategories,
 });
 
+// TODO support creating new flags via an UPSERT
+// const newFlag = 'brand new flag';
+
+const existingFlagForFollowUpQuestion = 'existing flag in DB';
+
 // TODO test new flag generation
 
+const labelForFollowUpQuestion = '1.1';
+
+const labelForFollowUpOptionWithFlag = 'a';
+
 const followUpQuestion = {
-  label: '1.1',
+  label: labelForFollowUpQuestion,
   prompt: 'Do you often wish you were somewhere else?',
   options: [
     {
-      label: 'a',
+      label: labelForFollowUpOptionWithFlag,
       text: 'yes',
-      flags: [],
+      flags: [existingFlagForFollowUpQuestion],
       valuesByAnalyzerName: {
         [validAnalyzer.name.text]: {
           [RED]: 1,
@@ -150,7 +159,7 @@ const questionWithFollowupQuestion: SurveyQuestionImportDto = {
                 {
                   label: 'a',
                   text: 'yes',
-                  flags: [],
+                  flags: [existingFlagForFollowUpQuestion],
                   valuesByAnalyzerName: {},
                 },
                 {
@@ -176,6 +185,12 @@ const questionWithFollowupQuestion: SurveyQuestionImportDto = {
 
 const validQuestions = [question1, questionWithFollowupQuestion];
 
+const flagIndexEndpoint = `${baseEndpoint}/flags`;
+
+const flagTestSetupEndpoint = `${flagIndexEndpoint}/test-setup`;
+
+const flagCommandsEndpoint = `${flagIndexEndpoint}/commands`;
+
 describe(`Survey Import Scenarios`, () => {
   beforeAll(async () => {
     // TODO test when the user does not have sufficient permissions
@@ -185,6 +200,8 @@ describe(`Survey Import Scenarios`, () => {
 
   beforeEach(async () => {
     await httpClient.patch(surveyTestSetupEndpoint);
+
+    await httpClient.patch(flagTestSetupEndpoint);
   });
 
   describe(`when the import is valid`, () => {
@@ -197,7 +214,27 @@ describe(`Survey Import Scenarios`, () => {
         questions: validQuestions,
       });
 
+      beforeEach(async () => {
+        await assertCommandScenarioSuccess({
+          httpClient,
+          endpoint: flagCommandsEndpoint,
+          stream: TestCommandStream.first(CreateFlag, {
+            label: existingFlagForFollowUpQuestion,
+          }),
+        });
+      });
+
       it(`should create the finalized survey`, async () => {
+        const flagIdsByLabel = new Map<string, string>();
+
+        const flagQueryResponse = await httpClient.get(flagIndexEndpoint);
+
+        const flags = flagQueryResponse.data as FlagViewModel[];
+
+        flags.forEach((f) => {
+          flagIdsByLabel.set(f.label, f.id);
+        });
+
         await assertCommandScenarioSuccess({
           httpClient,
           endpoint: surveyCommandsEndpoint,
@@ -257,46 +294,30 @@ describe(`Survey Import Scenarios`, () => {
               followUpQuestion.options.length,
             );
 
-            // TODO check flags here or elsewhere
+            const targetFlagId = flagIdsByLabel.get(
+              existingFlagForFollowUpQuestion,
+            ) as string;
+
+            expect(targetFlagId).toBeTruthy();
+
+            const { flags: foundFollowUpOptionFlags } =
+              foundFollowupQuestion.options[labelForFollowUpOptionWithFlag];
+
+            expect(Object.keys(foundFollowUpOptionFlags)).toHaveLength(1);
+
+            const targetFlag = foundFollowUpOptionFlags[targetFlagId];
+
+            expect(targetFlag).toBeTruthy();
+
+            // TODO check flag ID etc.
+
+            /**
+             * TODO
+             * - existing flag on top-level question
+             * - new flag on top-level question
+             * - new flag on follow up question
+             */
           },
-        });
-      });
-    });
-
-    describe(`when a flag is provided`, () => {
-      describe(`when there is an existing flag with the given label`, () => {
-        it.todo(`should have a test`);
-      });
-
-      describe(`when a new flag (not yet in DB) is provided`, () => {
-        const invalidImport = TestCommandStream.first(ImportSurvey, {
-          analyzers: [validAnalyzer],
-          questions: [
-            {
-              ...question1,
-              options: [
-                question1.options[0],
-                {
-                  ...question1.options[1],
-                  flags: [newFlag],
-                },
-              ],
-            },
-          ],
-        });
-
-        it(`should throw an unsupported error`, async () => {
-          await assertCommandScenarioError({
-            httpClient,
-            endpoint: surveyCommandsEndpoint,
-            stream: invalidImport,
-            assertErrorMessageAsExpected: (message) => {
-              assertTextMatchesAll(
-                message,
-                `Importing flags to a survey is not yet supported`,
-              );
-            },
-          });
         });
       });
     });
