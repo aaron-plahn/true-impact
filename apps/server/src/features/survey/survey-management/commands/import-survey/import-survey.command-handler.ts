@@ -9,7 +9,122 @@ import type {
 import { TrueImpactError } from '../../../../../libs/data-types';
 import { Inject } from '../../../../../libs/framework';
 import { Survey } from '../../survey.aggregate-root';
-import { ImportSurvey, SurveyOptionImportDto } from './import-survey.command';
+import {
+  ImportSurvey,
+  SurveyOptionImportDto,
+  SurveyQuestionImportDto,
+} from './import-survey.command';
+
+const addFollowUpQuestion = (
+  draftSurvey: Survey,
+  parentQuestionLabel: string,
+  parentOptionLabel: string,
+  followUpQuestion: SurveyQuestionImportDto,
+  flagIdsByLabel: Map<string, string>,
+): Survey | TrueImpactError => {
+  const surveyWithQuestion = draftSurvey.addFollowUpQuestion({
+    questionLabel: parentQuestionLabel,
+    optionLabel: parentOptionLabel,
+    followUpQuestion,
+  });
+
+  if (surveyWithQuestion instanceof Error) {
+    return surveyWithQuestion;
+  }
+
+  const withOptions = followUpQuestion.options.reduce(
+    (acc, followUpOption) =>
+      acc instanceof Error
+        ? acc
+        : deepAddOptionToQuestion(
+            acc,
+            followUpQuestion.label,
+            followUpOption,
+            flagIdsByLabel,
+          ),
+    surveyWithQuestion,
+  );
+
+  return withOptions;
+};
+
+const deepAddOptionToQuestion = (
+  draftSurvey: Survey,
+  parentQuestionLabel: string,
+  option: SurveyOptionImportDto,
+  flagIdsByLabel: Map<string, string>,
+) => {
+  const surveyWithOption = draftSurvey.addOptionToQuestion({
+    questionLabel: parentQuestionLabel,
+    optionLabel: option.label,
+    text: option.text,
+  });
+
+  if (surveyWithOption instanceof Error) {
+    return surveyWithOption;
+  }
+
+  const surveyWithFlagsForThisOption = option.flags.reduce(
+    (acc, flag): Survey | TrueImpactError => {
+      if (acc instanceof Error) {
+        return acc;
+      }
+
+      const flagId = flagIdsByLabel.get(flag.label);
+
+      if (!flagId) {
+        return new TrueImpactError(
+          `You cannot add the flag [${flag.label}] for option [${option.label}] of question [${parentQuestionLabel}] in survey: [${acc.name}], as there is no flag with this label`,
+        );
+      }
+
+      return acc.flagOption({
+        questionLabel: parentQuestionLabel,
+        optionLabel: option.label,
+        flagId,
+      });
+    },
+    surveyWithOption,
+  );
+
+  if (surveyWithFlagsForThisOption instanceof Error) {
+    return surveyWithFlagsForThisOption;
+  }
+
+  const surveyWithAnalysisValuesForThisOption = Object.entries(
+    option.valuesByAnalyzerName,
+  ).reduce(
+    (acc: Survey | TrueImpactError, [analyzerName, valuesByCategory]) => {
+      if (acc instanceof Error) {
+        return acc;
+      }
+
+      return acc.addValueForOption({
+        analyzerName,
+        questionLabel: parentQuestionLabel,
+        optionLabel: option.label,
+        valuesByCategory,
+      });
+    },
+    surveyWithFlagsForThisOption,
+  );
+
+  if (surveyWithAnalysisValuesForThisOption instanceof TrueImpactError) {
+    return surveyWithAnalysisValuesForThisOption;
+  }
+
+  if (!option.followUpQuestion) {
+    return surveyWithAnalysisValuesForThisOption;
+  }
+
+  return addFollowUpQuestion(
+    surveyWithAnalysisValuesForThisOption,
+    parentQuestionLabel,
+    option.label,
+    option.followUpQuestion,
+    flagIdsByLabel,
+  );
+};
 
 export interface IFlagServiceForSurveyImports {
   upsertMany(
@@ -189,162 +304,14 @@ export class ImportSurveyCommandHandler implements ICommandHandler<ImportSurvey>
               return optionAcc;
             }
 
-            const surveyWithThisOption = optionAcc.addOptionToQuestion({
-              questionLabel: question.label,
-              optionLabel: option.label,
-              text: option.text,
-            });
-
-            if (surveyWithThisOption instanceof TrueImpactError) {
-              return surveyWithThisOption;
-            }
-
-            const surveyWithFlagsForThisOption = option.flags.reduce(
-              (acc, flag): Survey | TrueImpactError => {
-                if (acc instanceof Error) {
-                  return acc;
-                }
-
-                const flagId = flagIdsByLabel.get(flag.label);
-
-                if (!flagId) {
-                  return new TrueImpactError(
-                    `You cannot add the flag [${flag.label}] for option [${option.label}] of question [${question.label}] in survey: [${acc.name}], as there is no flag with this label`,
-                  );
-                }
-
-                return acc.flagOption({
-                  questionLabel: question.label,
-                  optionLabel: option.label,
-                  flagId,
-                });
-              },
-              surveyWithThisOption,
+            const result = deepAddOptionToQuestion(
+              optionAcc,
+              question.label,
+              option,
+              flagIdsByLabel,
             );
 
-            const surveyWithAnalysisValuesForThisOption = Object.entries(
-              option.valuesByAnalyzerName,
-            ).reduce(
-              (
-                acc: Survey | TrueImpactError,
-                [analyzerName, valuesByCategory],
-              ) => {
-                if (acc instanceof Error) {
-                  return acc;
-                }
-
-                return acc.addValueForOption({
-                  analyzerName,
-                  questionLabel: question.label,
-                  optionLabel: option.label,
-                  valuesByCategory,
-                });
-              },
-              surveyWithFlagsForThisOption,
-            );
-
-            if (
-              surveyWithAnalysisValuesForThisOption instanceof TrueImpactError
-            ) {
-              return surveyWithAnalysisValuesForThisOption;
-            }
-
-            if (!option.followUpQuestion) {
-              return surveyWithAnalysisValuesForThisOption;
-            }
-
-            // TODO what about analysis values for follow up question options?
-            // TODO naming - I'm assuming `followup` is an adjective and `follow up` is a verb phrase
-            const surveyWithFollowupQuestionForThisOption =
-              surveyWithAnalysisValuesForThisOption.addFollowUpQuestion({
-                questionLabel: question.label,
-                optionLabel: option.label,
-                followUpQuestion: option.followUpQuestion,
-              });
-
-            if (surveyWithFollowupQuestionForThisOption instanceof Error) {
-              return surveyWithFollowupQuestionForThisOption;
-            }
-
-            const surveyWithFollowupOptions =
-              option.followUpQuestion.options.reduce(
-                (acc: Survey | TrueImpactError, followupOption) => {
-                  if (acc instanceof Error) {
-                    return acc;
-                  }
-
-                  const withThisOption = acc.addOptionToQuestion({
-                    questionLabel: option.followUpQuestion?.label as string,
-                    optionLabel: followupOption.label,
-                    text: followupOption.text,
-                  });
-
-                  if (withThisOption instanceof TrueImpactError) {
-                    return withThisOption;
-                  }
-
-                  const withAnalysisValues = Object.entries(
-                    followupOption.valuesByAnalyzerName,
-                  ).reduce(
-                    (
-                      acc: Survey | TrueImpactError,
-                      [analyzerName, valuesByCategory],
-                    ) => {
-                      if (acc instanceof Error) {
-                        return acc;
-                      }
-
-                      return acc.addValueForOption({
-                        analyzerName,
-                        questionLabel: option.followUpQuestion?.label as string,
-                        optionLabel: followupOption.label,
-                        valuesByCategory,
-                      });
-                    },
-                    withThisOption,
-                  );
-
-                  if (withAnalysisValues instanceof TrueImpactError) {
-                    return withAnalysisValues;
-                  }
-
-                  // TODO do this for top-level options as well
-                  const withFlags = followupOption.flags.reduce(
-                    (
-                      acc: Survey,
-                      {
-                        label: flagLabel,
-                      }: { label: string; description?: string },
-                    ) => {
-                      if (acc instanceof Error) {
-                        return acc;
-                      }
-
-                      const flagId = flagIdsByLabel.get(flagLabel);
-
-                      if (!flagId) {
-                        return new TrueImpactError(
-                          `You cannot add flag [${flagLabel}] to option [${followupOption.label}] of question [${option.followUpQuestion?.label}] of survey ${acc.name}, as there is no existing flag with this label.`,
-                        );
-                      }
-
-                      return acc.flagOption({
-                        questionLabel: option.followUpQuestion?.label as string,
-                        optionLabel: followupOption.label,
-                        flagId,
-                      });
-                    },
-                    withThisOption,
-                  );
-
-                  return withFlags;
-                },
-                surveyWithFollowupQuestionForThisOption,
-              );
-
-            return surveyWithFollowupOptions;
-
-            // TODO follow up questions
+            return result;
           },
           surveyWithThisQuestion,
         );

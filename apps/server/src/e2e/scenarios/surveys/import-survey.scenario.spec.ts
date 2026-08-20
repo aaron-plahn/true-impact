@@ -266,12 +266,8 @@ describe(`Survey Import Scenarios`, () => {
 
             expect(searchResult.name).toBe(surveyName);
 
-            const numberOfFollowupQuestionsInValidSurvey =
-              validQuestions.flatMap((q) =>
-                q.options.flatMap((o) =>
-                  o.followUpQuestion ? [o.followUpQuestion] : [],
-                ),
-              ).length;
+            // TODO we hard-wire this to avoid using a recursive helper to make this dynamic
+            const numberOfFollowupQuestionsInValidSurvey = 3;
 
             expect(searchResult.size).toBe(
               validQuestions.length + numberOfFollowupQuestionsInValidSurvey,
