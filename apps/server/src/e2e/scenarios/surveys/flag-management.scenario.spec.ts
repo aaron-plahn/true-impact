@@ -223,7 +223,7 @@ describe(`Flag Management Scenarios`, () => {
             });
 
             describe(`that was relabelled to have this label`, () => {
-              it(`should return the expected error resposne`, async () => {
+              it(`should return the expected error response`, async () => {
                 await assertCommandScenarioSuccess({
                   httpClient,
                   endpoint: flagCommandsEndpoint,
