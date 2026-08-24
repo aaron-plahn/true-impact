@@ -5,10 +5,10 @@ import {
   TIScreen,
 } from 'src/libs/server-driven-ui';
 import { TISduiFormField } from 'src/libs/server-driven-ui/forms';
-import { ActiveSurveyQuestionViewModel } from '../queries/survey-response-record.view-model';
+import { ActiveSurveyQuestionViewModelClientDto } from '../queries/survey-response-record.view-model';
 
 interface SurveyQuestionCompletionPageProps {
-  question: ActiveSurveyQuestionViewModel;
+  question: ActiveSurveyQuestionViewModelClientDto;
   attemptId: string;
 }
 

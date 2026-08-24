@@ -1,4 +1,19 @@
-import { ImportSurvey } from 'src/features/survey/survey-management';
+import { CreateClient } from '../../../features/clients/commands/create-client.command';
+import { CreateCommunity } from '../../../features/communities/commands';
+import {
+  AnswerSurveyQuestion,
+  BeginSurvey,
+  SubmitSurvey,
+} from '../../../features/survey/survey-completion';
+import { SurveyResponseRecordViewModelClientDto } from '../../../features/survey/survey-completion/queries/survey-response-record.view-model';
+import {
+  ImportSurvey,
+  OpenSurveyToClient,
+} from '../../../features/survey/survey-management';
+import { TestCommandStream } from '../../../libs/cqrs-es';
+import { assertCommandScenarioSuccess } from '../utils';
+import { signInAsAdmin } from '../utils/sign-in';
+import { TestHttpClient } from '../utils/test-http-client';
 
 // TODO From env.e2e
 const port = '3234';
@@ -6,6 +21,8 @@ const port = '3234';
 const baseEndpoint = `http://localhost:${port}`;
 
 const surveyIndexEndpoint = `${baseEndpoint}/surveys`;
+
+const surveyManagementCommandsEndpoint = `${baseEndpoint}/surveys/commands`;
 
 const surveyResponseRecordIndexEndpoint = `${surveyIndexEndpoint}/responses`;
 
@@ -27,9 +44,7 @@ const surveyTestSetupEndpoint = `${surveyIndexEndpoint}/test-setup`;
 
 const surveyCompletionTestSetupEndpoint = `${surveyResponseRecordIndexEndpoint}/test-setup`;
 
-let clientId: string;
-
-const surveyName = 'Medicine Wheel Client Evaluation Survey';
+const reportName = 'medicine wheel';
 
 /**
  * Note that you can also convert this to JSON and use Swagger
@@ -54,7 +69,7 @@ const medicineWheelSurvey: ImportSurvey = {
             },
           ],
           valuesByAnalyzerName: {
-            'medicine wheel': {
+            [reportName]: {
               red: 1,
             },
           },
@@ -78,7 +93,11 @@ const medicineWheelSurvey: ImportSurvey = {
                 label: 'c',
                 text: 'a few weeks',
                 flags: [],
-                valuesByAnalyzerName: {},
+                valuesByAnalyzerName: {
+                  [reportName]: {
+                    black: 1,
+                  },
+                },
                 followUpQuestion: {
                   label: '1.1.1',
                   prompt: 'I am currently seeking help for my sadness',
@@ -99,7 +118,11 @@ const medicineWheelSurvey: ImportSurvey = {
                             'client flagged for immediate intervention',
                         },
                       ],
-                      valuesByAnalyzerName: {},
+                      valuesByAnalyzerName: {
+                        [reportName]: {
+                          red: 1,
+                        },
+                      },
                     },
                   ],
                 },
@@ -112,7 +135,7 @@ const medicineWheelSurvey: ImportSurvey = {
           text: 'I never feel sad',
           flags: [],
           valuesByAnalyzerName: {
-            'medicine wheel': {
+            [reportName]: {
               white: 1,
             },
           },
@@ -123,7 +146,7 @@ const medicineWheelSurvey: ImportSurvey = {
   analyzers: [
     {
       name: {
-        text: 'medicine wheel',
+        text: reportName,
       },
       categories: ['red', 'white', 'yellow', 'black'],
     },
@@ -135,5 +158,111 @@ const _assertSurveyReportCorrectness = () => {
 };
 
 describe(`Medicine wheel survey completion`, () => {
-  describe(`Scenario 1`, () => {});
+  const adminHttpClient = new TestHttpClient('localhost:4200');
+
+  let surveyId: string;
+  let communityId: string;
+  let accessCode: string;
+  let clientId: string;
+
+  beforeAll(async () => {
+    await signInAsAdmin(adminHttpClient);
+
+    await adminHttpClient.patch(communityTestSetupEndpoint);
+    await adminHttpClient.patch(clientTestSetupEndpoint);
+    await adminHttpClient.patch(surveyTestSetupEndpoint);
+    await adminHttpClient.patch(surveyCompletionTestSetupEndpoint);
+
+    await assertCommandScenarioSuccess({
+      httpClient: adminHttpClient,
+      endpoint: communityCommandEndpoint,
+      stream: TestCommandStream.first(CreateCommunity),
+      assertSuccess: (acks) => {
+        communityId = acks[0].id;
+      },
+    });
+
+    await assertCommandScenarioSuccess({
+      httpClient: adminHttpClient,
+      endpoint: clientCommandsEndpoint,
+      stream: TestCommandStream.first(CreateClient, {
+        communityId,
+      }),
+      // .andThen(
+      //   AddCommunityAffiliationForClient,
+      //   {
+      //     communityId,
+      //   },
+      // ),
+      assertSuccess: (acks) => {
+        clientId = acks[0].id;
+      },
+    });
+
+    await assertCommandScenarioSuccess({
+      httpClient: adminHttpClient,
+      endpoint: surveyManagementCommandsEndpoint,
+      stream: TestCommandStream.first(
+        ImportSurvey,
+        medicineWheelSurvey,
+      ).andThen(OpenSurveyToClient, {
+        clientId,
+      }),
+      assertSuccess: (acks) => {
+        surveyId = acks[0].id;
+
+        accessCode = acks[1].accessCode as string;
+      },
+    });
+  });
+
+  describe(`Scenario 1`, () => {
+    const participantHttpClient = new TestHttpClient('localhost:4200');
+
+    it(`should return the expected report`, async () => {
+      await assertCommandScenarioSuccess({
+        httpClient: participantHttpClient,
+        endpoint: surveyCompletionCommandsEndpoint,
+        // TODO client ID has to be on the payload for the corresponding event!
+        stream: TestCommandStream.first(BeginSurvey, { surveyId, accessCode })
+          .andThen(AnswerSurveyQuestion, {
+            // red -> 1
+            questionLabel: '1',
+            chosenOptionLabel: 'a',
+          })
+          .andThen(AnswerSurveyQuestion, {
+            // black -> 1
+            questionLabel: '1.1',
+            chosenOptionLabel: 'c',
+          })
+          .andThen(AnswerSurveyQuestion, {
+            // red -> 1
+            questionLabel: '1.1.1',
+            chosenOptionLabel: 'b',
+          })
+          .andThen(SubmitSurvey),
+        assertSuccess: async (acks) => {
+          const expectedValuesByCategory = {
+            red: 2,
+            black: 1,
+          };
+
+          const responseId = acks[0].id;
+
+          const responseViewHttpResponse = await adminHttpClient.get(
+            `${surveyResponseRecordIndexEndpoint}/${responseId}`,
+          );
+
+          const responseView =
+            responseViewHttpResponse.data as SurveyResponseRecordViewModelClientDto;
+
+          expect(reportName in responseView.reportsByName).toBeTruthy();
+
+          const reportView = responseView.reportsByName[reportName];
+
+          expect(reportView.valuesByCategory).toEqual(expectedValuesByCategory);
+        },
+      });
+    });
+  });
 });

@@ -1,5 +1,5 @@
 import { Inject } from '@nestjs/common';
-import { TrueImpactError } from 'src/libs/data-types';
+import { TrueImpactError } from '../../../../libs/data-types';
 import { SurveyQueryService } from '../../queries/survey-query.service';
 import { SurveyViewModelClientDto } from '../../queries/survey.view-model';
 import { SurveyResponseRecord } from '../models/survey-response-record.aggregate-root';

@@ -13,6 +13,10 @@ import { SurveyViewModelClientDto } from '../../queries/survey.view-model';
 import { SurveyQuestion } from '../../survey-management/survey-question.entity';
 import { SurveyResponseRecord } from '../models';
 import { SurveyParticipantCompositeIdentifier } from '../models/survey-participant.composite-identifier';
+import {
+  SurveyReportViewModel,
+  SurveyReportViewModelClientDto,
+} from './survey-report.view-model';
 
 export class ActiveSurveyOptionViewModelClientDto {
   @NonEmptyString({
@@ -146,6 +150,8 @@ export class SurveyQuestionResponseViewModel {
 
   options: Map<string, SurveyResponseOptionViewModel>;
 
+  chosenOptionLabel: string;
+
   constructor({
     questionLabel,
     prompt,
@@ -186,6 +192,7 @@ export class SurveyQuestionResponseViewModel {
       type: CLIENT_AGGREGATE_TYPE,
       id: 'c99',
     },
+    reportsByName: {},
     responses: [
       {
         questionLabel: '1',
@@ -291,6 +298,8 @@ export class SurveyResponseRecordViewModelClientDto {
   })
   size: number;
 
+  reportsByName: Record<string, SurveyReportViewModelClientDto>;
+
   /**
    * TODO Support time stamps \ auditable completion history
    */
@@ -361,6 +370,12 @@ export class SurveyResponseRecordViewModel {
       'the total number of questions in this survey (including optional questions)',
   })
   size: number;
+
+  @LookupTable(() => SurveyReportViewModel, {
+    label: 'reports by name',
+    description: `reports that have been configured to be calculated from a participant's reponses`,
+  })
+  reportsByName = new Map<string, SurveyReportViewModel>();
 
   /**
    * TODO Support time stamps \ auditable completion history
@@ -465,7 +480,20 @@ export class SurveyResponseRecordViewModel {
     this.size = size;
   }
 
+  appendReport(report: SurveyReportViewModel): SurveyResponseRecordViewModel {
+    this.reportsByName.set(report.name, report);
+
+    return this;
+  }
+
   toClientDto(): SurveyResponseRecordViewModelClientDto {
+    const reportsByName = new Map<string, SurveyReportViewModelClientDto>();
+
+    Array.from(this.reportsByName.entries()).forEach(
+      ([reportName, reportView]) =>
+        reportsByName.set(reportName, reportView.toClientDto()),
+    );
+
     return {
       id: this.id,
       name: this.name,
@@ -476,12 +504,13 @@ export class SurveyResponseRecordViewModel {
       responses: this.responses.map((response) => response.toClientDto()),
       nextQuestion: this.nextQuestion,
       size: this.size,
+      reportsByName: deepConvertMapToObject(reportsByName),
     };
   }
 
   static fromDomainModel(
     domainModel: SurveyResponseRecord,
-    _context: { surveysById: Map<string, SurveyViewModelClientDto> },
+    { surveysById }: { surveysById: Map<string, SurveyViewModelClientDto> },
   ): SurveyResponseRecordViewModel {
     let nextQuestionViewModel: ActiveSurveyQuestionViewModel | null = null;
 
@@ -509,7 +538,7 @@ export class SurveyResponseRecordViewModel {
       }
     }
 
-    return new SurveyResponseRecordViewModel({
+    const draft = new SurveyResponseRecordViewModel({
       id: domainModel.id,
       size: domainModel.survey.size(),
       revision: domainModel.revision.toString(),
@@ -543,5 +572,49 @@ export class SurveyResponseRecordViewModel {
         return view;
       }),
     });
+
+    const updatedSurveyFromContext = surveysById.get(domainModel.survey.id);
+
+    if (updatedSurveyFromContext) {
+      Object.entries(updatedSurveyFromContext.analyzersByName).forEach(
+        ([_reportName, analyzer]) => {
+          // TODO inject an analyzer instance, not a DTO here
+          const report = domainModel.responses.reduce(
+            (acc: SurveyReportViewModel, response) => {
+              const {
+                questionLabel: targetQuestionLabel,
+                optionLabel: chosenOptionLabel,
+              } = response;
+
+              const valuesForQuestion =
+                analyzer.valuesByOptionByQuestion[targetQuestionLabel];
+
+              if (valuesForQuestion) {
+                const valuesForOption = valuesForQuestion[chosenOptionLabel];
+
+                if (valuesForOption) {
+                  Object.entries(valuesForOption).forEach(
+                    ([category, value]) => {
+                      // why a side-effect here only? Isn't this confusing?
+                      acc.setValue(category, value);
+                    },
+                  );
+                }
+              }
+
+              return acc;
+            },
+            new SurveyReportViewModel({
+              name: analyzer.name,
+              categories: analyzer.categories,
+            }),
+          );
+
+          draft.appendReport(report);
+        },
+      );
+    }
+
+    return draft;
   }
 }

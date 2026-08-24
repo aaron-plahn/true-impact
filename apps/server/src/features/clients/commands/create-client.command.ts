@@ -73,5 +73,6 @@ export class CreateClient {
     description: `system identifier for this client's community`,
     isOptional: true,
   })
+  // TODO Can't we omit this?
   communityId?: string;
 }
