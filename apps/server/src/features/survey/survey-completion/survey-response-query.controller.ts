@@ -129,6 +129,11 @@ export class SurveyResponseQueryController {
       return `<div>Not Found</div>`;
     }
 
+    if (target instanceof Error) {
+      // TODO `QueryErrorPage`
+      return `<div>Something went wrong.</div>`;
+    }
+
     const { nextQuestion, hasBeenSubmitted } = target;
 
     if (hasBeenSubmitted) {

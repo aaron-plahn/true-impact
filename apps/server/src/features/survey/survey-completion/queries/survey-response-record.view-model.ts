@@ -9,6 +9,7 @@ import {
 } from '../../../../libs/data-types';
 import { LookupTable } from '../../../../libs/data-types/schema-management/decorators/lookup-table.decorator';
 import { DONE } from '../../constants';
+import { SurveyViewModelClientDto } from '../../queries/survey.view-model';
 import { SurveyQuestion } from '../../survey-management/survey-question.entity';
 import { SurveyResponseRecord } from '../models';
 import { SurveyParticipantCompositeIdentifier } from '../models/survey-participant.composite-identifier';
@@ -480,6 +481,7 @@ export class SurveyResponseRecordViewModel {
 
   static fromDomainModel(
     domainModel: SurveyResponseRecord,
+    _context: { surveysById: Map<string, SurveyViewModelClientDto> },
   ): SurveyResponseRecordViewModel {
     let nextQuestionViewModel: ActiveSurveyQuestionViewModel | null = null;
 
