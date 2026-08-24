@@ -64,7 +64,7 @@ export class FlagValidationService implements IFlagServiceForSurveyImports {
       if (!description) {
         results.push(
           new TrueImpactError(
-            `You must provide a [description] when bulk creating new flags.`,
+            `You must provide a [description] when bulk creating the new flag [${label}].`,
           ),
         );
 

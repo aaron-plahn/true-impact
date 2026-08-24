@@ -48,8 +48,13 @@ const validAnalyzer = buildTestInstance(SurveyAnalyzerImportDto, {
   categories: validCategories,
 });
 
-// const newFlagLabelForTopLevelQuestion = 'brand new flag for top level question';
-// const newTopLevelFlagDescription = `this is the ${newFlagLabelForTopLevelQuestion}`;
+const newFlagLabelForTopLevelQuestion = 'brand new flag for top level question';
+const newTopLevelFlagDescription = `this is the ${newFlagLabelForTopLevelQuestion}`;
+
+const newFlagForFollowUpQuestion = {
+  label: 'brand new flag for follow-up question',
+  description: 'this is a brand new flag for a follow-up question',
+};
 
 const existingFlagForFollowUpQuestion = {
   label: 'existing flag in for follow-up question',
@@ -64,6 +69,8 @@ const existingFlagForTopLevelQuestion = {
 const labelForFollowUpQuestion = '1.1';
 
 const labelForFollowUpOptionWithFlag = 'a';
+
+const optionLabelForFollowUpOptionWithNewFlag = 'b';
 
 const followUpQuestion = {
   label: labelForFollowUpQuestion,
@@ -80,9 +87,9 @@ const followUpQuestion = {
       },
     },
     {
-      label: 'b',
+      label: optionLabelForFollowUpOptionWithNewFlag,
       text: 'no',
-      flags: [],
+      flags: [newFlagForFollowUpQuestion],
       valuesByAnalyzerName: {
         [validAnalyzer.name.text]: {
           [WHITE]: 1,
@@ -106,6 +113,8 @@ const optionA: SurveyOptionImportDto = {
 
 const labelForTopLevelOptionWithExistingFlag = 'b';
 
+const labelForTopLevelQuestionWithNewFlag = 'c';
+
 const optionsForQuestionToManuallyVerify = [
   optionA,
   {
@@ -119,9 +128,14 @@ const optionsForQuestionToManuallyVerify = [
     },
   },
   {
-    label: 'c',
+    label: labelForTopLevelQuestionWithNewFlag,
     text: 'maybe',
-    flags: [],
+    flags: [
+      {
+        label: newFlagLabelForTopLevelQuestion,
+        description: newTopLevelFlagDescription,
+      },
+    ],
     valuesByAnalyzerName: {
       [validAnalyzer.name.text]: {
         [WHITE]: 1,
@@ -243,22 +257,26 @@ describe(`Survey Import Scenarios`, () => {
       });
 
       it(`should create the finalized survey`, async () => {
-        const flagIdsByLabel = new Map<string, string>();
-
-        const flagQueryResponse = await httpClient.get(flagIndexEndpoint);
-
-        const flags = flagQueryResponse.data as FlagViewModel[];
-
-        flags.forEach((f) => {
-          flagIdsByLabel.set(f.label, f.id);
-        });
-
         await assertCommandScenarioSuccess({
           httpClient,
           endpoint: surveyCommandsEndpoint,
           stream: validImport,
           assertSuccess: async (acks) => {
             const { id } = acks[0];
+
+            /**
+             * We do this here because new flags are created as a side-effect of
+             * command execution.
+             */
+            const flagIdsByLabel = new Map<string, string>();
+
+            const flagQueryResponse = await httpClient.get(flagIndexEndpoint);
+
+            const flags = flagQueryResponse.data as FlagViewModel[];
+
+            flags.forEach((f) => {
+              flagIdsByLabel.set(f.label, f.id);
+            });
 
             const searchResult = (
               await httpClient.get(`${surveyIndexEndpoint}/${id}`)
@@ -308,61 +326,96 @@ describe(`Survey Import Scenarios`, () => {
               followUpQuestion.options.length,
             );
 
-            const targetIdForExistingFlagForTopLevelQuestion =
-              flagIdsByLabel.get(
-                existingFlagForTopLevelQuestion.label,
-              ) as string;
+            const assertOptionHasFlag = ({
+              questionLabel,
+              optionLabel,
+              flag,
+            }: {
+              questionLabel: string;
+              optionLabel: string;
+              // followUpQuestion #, optionLabel, followUpQuestion #, optionLabel ...
+              followUpOptionPath?: (string | number)[];
+              flag: { label: string; description?: string };
+            }) => {
+              const targetFlagId = flagIdsByLabel.get(flag.label);
 
-            expect(targetIdForExistingFlagForTopLevelQuestion).toBeTruthy();
+              expect(targetFlagId).toBeTruthy();
 
-            const targetQuestion = searchResult.questions.find(
-              ({ label }) => label === labelForQuestionToManuallyVerify,
-            );
+              if (!targetFlagId) {
+                throw new Error(
+                  `Test failed as no flag with the label: ${flag.label} was created during the import.`,
+                );
+              }
 
-            if (!targetQuestion) {
-              throw new Error(`test failed unexpectedly`);
-            }
+              const targetQuestion = searchResult.questionsFlattened.find(
+                ({ label }) => label === questionLabel,
+              );
 
-            const targetOption =
-              targetQuestion.options[labelForTopLevelOptionWithExistingFlag];
+              if (!targetQuestion) {
+                throw new Error(
+                  `Test failed. No question with label: ${questionLabel} was found.`,
+                );
+              }
 
-            const { flags: flagsForTopLevelOptionWithExistingFlag } =
-              targetOption;
+              const targetOption = targetQuestion.options[optionLabel];
 
-            const targetIdForExistingFlagForFollowUpQuestion =
-              flagIdsByLabel.get(
-                existingFlagForFollowUpQuestion.label,
-              ) as string;
+              if (!targetOption) {
+                throw new Error(
+                  `Test failed. No option with label [${optionLabel}] was found in question [${questionLabel}].`,
+                );
+              }
 
-            expect(targetIdForExistingFlagForFollowUpQuestion).toBeTruthy();
+              const { flags: flagsForTargetOption } = targetOption;
 
-            const searchResultForTopLevelExistingFlag =
-              flagsForTopLevelOptionWithExistingFlag[
-                targetIdForExistingFlagForTopLevelQuestion
-              ];
+              const targetFlagForOption = flagsForTargetOption[targetFlagId];
 
-            expect(searchResultForTopLevelExistingFlag).toBeTruthy();
+              expect(targetFlagForOption).toBeTruthy();
 
-            const { flags: foundFollowUpOptionFlags } =
-              foundFollowupQuestion.options[labelForFollowUpOptionWithFlag];
+              if (!targetFlagForOption) {
+                throw new Error(
+                  `Test failed. No flag with label [${flag.label}] and ID [${targetFlagId}] was found.`,
+                );
+              }
 
-            expect(Object.keys(foundFollowUpOptionFlags)).toHaveLength(1);
+              expect(targetFlagForOption.label).toBe(flag.label);
 
-            const targetFlag =
-              foundFollowUpOptionFlags[
-                targetIdForExistingFlagForFollowUpQuestion
-              ];
+              if (flag.description) {
+                expect(targetFlagForOption.description).toBe(flag.description);
+              }
+            };
 
-            expect(targetFlag).toBeTruthy();
+            // top-level question, existing flag
+            assertOptionHasFlag({
+              questionLabel: labelForQuestionToManuallyVerify,
+              optionLabel: labelForTopLevelOptionWithExistingFlag,
+              flag: {
+                label: existingFlagForTopLevelQuestion.label,
+              },
+            });
 
-            // TODO check flag ID etc.
+            // top-level question, new flag
+            assertOptionHasFlag({
+              questionLabel: labelForQuestionToManuallyVerify,
+              optionLabel: labelForTopLevelQuestionWithNewFlag,
+              flag: {
+                label: newFlagLabelForTopLevelQuestion,
+                description: newTopLevelFlagDescription,
+              },
+            });
 
-            /**
-             * TODO
-             * - existing flag on top-level question
-             * - new flag on top-level question
-             * - new flag on follow up question
-             */
+            // follow-up question, existing flag
+            assertOptionHasFlag({
+              questionLabel: labelForFollowUpQuestion,
+              optionLabel: labelForFollowUpOptionWithFlag,
+              flag: existingFlagForFollowUpQuestion,
+            });
+
+            // follow-up question, new flag
+            assertOptionHasFlag({
+              questionLabel: labelForFollowUpQuestion,
+              optionLabel: optionLabelForFollowUpOptionWithNewFlag,
+              flag: newFlagForFollowUpQuestion,
+            });
           },
         });
       });

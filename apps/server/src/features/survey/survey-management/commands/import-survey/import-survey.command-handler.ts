@@ -151,7 +151,10 @@ export class ImportSurveyCommandHandler implements ICommandHandler<ImportSurvey>
   }): Promise<CommandResult> {
     const duplicateFlagErrors: TrueImpactError[] = [];
 
-    const uniqueFlagsAcrossAllQuestions = new Set<string>();
+    const uniqueFlagsAcrossAllQuestions = new Map<
+      string,
+      { label: string; description?: string }
+    >();
 
     const registerFlagsForOption = (
       { flags, label: optionLabel, followUpQuestion }: SurveyOptionImportDto,
@@ -163,7 +166,10 @@ export class ImportSurveyCommandHandler implements ICommandHandler<ImportSurvey>
         flag: string;
       }>();
 
-      const uniqueFlagsForThisOption = new Set<string>();
+      const uniqueFlagsForThisOption = new Map<
+        string,
+        { label: string; description?: string }
+      >();
 
       flags.forEach((flag) => {
         if (uniqueFlagsForThisOption.has(flag.label)) {
@@ -173,7 +179,7 @@ export class ImportSurveyCommandHandler implements ICommandHandler<ImportSurvey>
             optionLabel,
           });
         } else {
-          uniqueFlagsForThisOption.add(flag.label);
+          uniqueFlagsForThisOption.set(flag.label, flag);
         }
       });
 
@@ -194,7 +200,7 @@ export class ImportSurveyCommandHandler implements ICommandHandler<ImportSurvey>
         );
       } else {
         uniqueFlagsForThisOption.forEach((f) =>
-          uniqueFlagsAcrossAllQuestions.add(f),
+          uniqueFlagsAcrossAllQuestions.set(f.label, f),
         );
       }
     };
@@ -214,10 +220,7 @@ export class ImportSurveyCommandHandler implements ICommandHandler<ImportSurvey>
       );
     } else if (uniqueFlagsAcrossAllQuestions.size > 0) {
       const flagUpsertResults = await this.flagService.upsertMany(
-        Array.from(uniqueFlagsAcrossAllQuestions).map((label) => ({
-          label,
-          // TODO we need to support the user specifying descriptions for new flags
-        })),
+        Array.from(uniqueFlagsAcrossAllQuestions.values()),
       );
 
       const flagUpsertErrors = flagUpsertResults.flatMap((result) =>
