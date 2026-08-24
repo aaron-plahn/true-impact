@@ -1,4 +1,7 @@
-import { FlagViewModelClientDto } from '../../../features/flags/queries';
+import {
+  FlagViewModel,
+  FlagViewModelClientDto,
+} from '../../../features/flags/queries';
 import {
   NestedDataType,
   NonEmptyString,
@@ -16,10 +19,14 @@ import {
 import { SurveyFlagViewModel } from './survey-flag.view-model';
 import {
   FollowUpQuestionViewModel,
+  FollowUpQuestionViewModelClientDto,
   SurveyOptionViewModel,
   SurveyOptionViewModelClientDto,
 } from './survey-option.view-model';
-import { SurveyQuestionViewModel } from './survey-question.view-model';
+import {
+  SurveyQuestionViewModel,
+  SurveyQuestionViewModelClientDto,
+} from './survey-question.view-model';
 
 /**
  * We have an intentional mapping layer between the view model and the client. This allows us to
@@ -205,6 +212,17 @@ export class SurveyViewModelClientDto {
 
     options: Record<string, SurveyOptionViewModelClientDto>;
   }[];
+
+  questionsFlattened: {
+    label: string;
+
+    prompt: string;
+
+    options: Record<
+      string,
+      Omit<SurveyOptionViewModelClientDto, 'followUpQuestions'>
+    >;
+  }[];
 }
 
 export class SurveyViewModel {
@@ -285,6 +303,43 @@ export class SurveyViewModel {
       analyzersByName[viewModel.name] = viewModel.toClientDto();
     });
 
+    const flattenedQuestions: (
+      SurveyQuestionViewModelClientDto | FollowUpQuestionViewModelClientDto
+    )[] = [];
+
+    const topLevelQuestions = this.questions.map((q) => {
+      const options: Record<string, SurveyOptionViewModelClientDto> = {};
+
+      q.options.forEach((o, optionLabel) => {
+        options[optionLabel] = o.toClientDto();
+      });
+
+      return {
+        label: q.label,
+        prompt: q.prompt,
+        options,
+      };
+    });
+
+    const pushFollowUpQuestionsForOption = (
+      option: SurveyOptionViewModelClientDto,
+    ) => {
+      // an empty array of `followUpQuestions` for an option is the base case
+      option.followUpQuestions.forEach((fuq) => {
+        flattenedQuestions.push(fuq);
+
+        //recurse
+        Object.values(fuq.options).forEach(pushFollowUpQuestionsForOption);
+      });
+    };
+
+    topLevelQuestions.forEach((tlq) => {
+      flattenedQuestions.push(tlq);
+
+      // Kick off the recursive search
+      Object.values(tlq.options).forEach(pushFollowUpQuestionsForOption);
+    });
+
     return {
       id: this.id,
       isFinal: this.isFinal,
@@ -292,19 +347,9 @@ export class SurveyViewModel {
       name: this.name,
       size: this.size,
       analyzersByName,
-      questions: this.questions.map((q) => {
-        const options: Record<string, SurveyOptionViewModelClientDto> = {};
-
-        q.options.forEach((o, optionLabel) => {
-          options[optionLabel] = o.toClientDto();
-        });
-
-        return {
-          label: q.label,
-          prompt: q.prompt,
-          options,
-        };
-      }),
+      questions: topLevelQuestions,
+      // This can be helpful to avoid recursive search on the client or in test assertions
+      questionsFlattened: flattenedQuestions,
     };
   }
 
@@ -327,26 +372,34 @@ export class SurveyViewModel {
       surveyOptionsAsArray.reduce(
         (
           acc: Map<string, SurveyOptionViewModel>,
-          { label: optionLabel, text, followUpQuestionLabel }: SurveyOption,
+          {
+            label: optionLabel,
+            text,
+            followUpQuestionLabel,
+            flagIds: flagIdsFromDomainModel,
+          }: SurveyOption,
         ): Map<string, SurveyOptionViewModel> => {
-          const followUpQuestions: FollowUpQuestionViewModel[] =
-            typeof followUpQuestionLabel === 'string'
-              ? [
-                  SurveyViewModel.buildSurveyQuestionViewModel(
-                    questionBank.get(followUpQuestionLabel) as SurveyQuestion,
-                    questionBank,
-                    context,
-                  ), // We do this to avoid circularities with our type definitions when recursing
-                ]
-              : ([] as FollowUpQuestionViewModel[]);
+          const followUpQuestions: FollowUpQuestionViewModel[] = [];
+
+          if (typeof followUpQuestionLabel === 'string')
+            followUpQuestions.push(
+              SurveyViewModel.buildSurveyQuestionViewModel(
+                questionBank.get(followUpQuestionLabel) as SurveyQuestion,
+                questionBank,
+                context,
+              ), // We do this to avoid circularities with our type definitions when recursing
+            );
 
           const flags = new Map<string, SurveyFlagViewModel>();
 
-          context.flags.forEach(({ id, label, description }, flagId) => {
-            flags.set(
-              flagId,
-              new SurveyFlagViewModel({ id, label, description }),
-            );
+          flagIdsFromDomainModel.forEach((flagId) => {
+            if (context.flags.has(flagId)) {
+              const foundFlagViewFromContext = context.flags.get(
+                flagId,
+              ) as FlagViewModel;
+
+              flags.set(flagId, foundFlagViewFromContext);
+            }
           });
 
           const valuesByAnalyzerName =

@@ -7,13 +7,17 @@ export interface IFlagCommandRepository {
 
   fetchById(id: string): Promise<Flag | null>; // Maybe<T>
 
+  fetchByLabel(label: string): Promise<Flag | null>; // Maybe<T>. Is there also a returned error possiblity?
+
   fetchMany(): Promise<Flag[]>;
 
   // Error || Ack
   create(instance: Flag): Promise<PersistenceAcknowledgement | TrueImpactError>;
 
   // Error[] ?
-  createMany(instances: Flag[]): Promise<void>;
+  createMany(
+    instances: Flag[],
+  ): Promise<(PersistenceAcknowledgement | TrueImpactError)[]>;
 
   update(instance: Flag): Promise<PersistenceAcknowledgement | TrueImpactError>;
 }

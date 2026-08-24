@@ -1,10 +1,7 @@
 import { AuthModule } from 'src/auth/auth.module';
-import {
-  InMemoryCommandRepository,
-  InMemoryQueryRepository,
-} from '../../common/persistence';
+import { InMemoryQueryRepository } from '../../common/persistence';
 import { CommandHandlerService } from '../../libs/cqrs-es';
-import { Module, ModuleRef } from '../../libs/framework';
+import { ConfigService, Module, ModuleRef } from '../../libs/framework';
 import { UserModule } from '../users/user.module';
 import { CreateFlag, RelabelFlag, RelabelFlagCommandHandler } from './commands';
 import { CreateFlagCommandHandler } from './commands/create-flag.command-handler';
@@ -15,8 +12,8 @@ import {
 } from './constants';
 import { FlagValidationService } from './external-services';
 import { FlagController } from './flag.controller';
-import { Flag } from './models';
 import { FlagQueryService, FlagViewModel } from './queries';
+import { InMemoryFlagCommandRepository } from './repositories';
 
 @Module({
   imports: [UserModule, AuthModule],
@@ -31,7 +28,9 @@ import { FlagQueryService, FlagViewModel } from './queries';
     },
     {
       provide: FLAG_COMMAND_REPOSITORY_DEPENDENCY_TOKEN,
-      useFactory: () => new InMemoryCommandRepository(Flag),
+      useFactory: (configService: ConfigService) =>
+        new InMemoryFlagCommandRepository(new Map(), configService),
+      inject: [ConfigService],
     },
     {
       provide: FLAG_VALIDATION_SERVICE_INJECTION_TOKEN,

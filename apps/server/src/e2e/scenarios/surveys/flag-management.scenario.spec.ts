@@ -126,7 +126,11 @@ describe(`Flag Management Scenarios`, () => {
                 endpoint: flagCommandsEndpoint,
                 stream: createFlag,
                 assertErrorMessageAsExpected: (message) => {
-                  assertTextMatchesAll(message, firstLabel, 'already in use');
+                  assertTextMatchesAll(
+                    message,
+                    firstLabel,
+                    'Uniqueness constraint violated',
+                  );
                 },
               });
             });
@@ -156,7 +160,8 @@ describe(`Flag Management Scenarios`, () => {
                   assertTextMatchesAll(
                     message,
                     repeatedFlagLabel,
-                    'already in use',
+                    'Uniqueness constraint violated',
+                    'label',
                   );
                 },
               });
@@ -209,7 +214,8 @@ describe(`Flag Management Scenarios`, () => {
                     assertTextMatchesAll(
                       message,
                       repeatedFlagLabel,
-                      'already in use',
+                      'Uniqueness constraint violated',
+                      'label',
                     );
                   },
                 });
@@ -217,7 +223,7 @@ describe(`Flag Management Scenarios`, () => {
             });
 
             describe(`that was relabelled to have this label`, () => {
-              it(`should return the expected error resposne`, async () => {
+              it(`should return the expected error response`, async () => {
                 await assertCommandScenarioSuccess({
                   httpClient,
                   endpoint: flagCommandsEndpoint,
@@ -240,7 +246,8 @@ describe(`Flag Management Scenarios`, () => {
                     assertTextMatchesAll(
                       message,
                       repeatedFlagLabel,
-                      'already in use',
+                      'Uniqueness constraint violated',
+                      'label',
                     );
                   },
                 });

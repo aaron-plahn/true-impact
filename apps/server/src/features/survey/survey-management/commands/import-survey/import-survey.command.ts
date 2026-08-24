@@ -60,6 +60,21 @@ export class SurveyQuestionImportDto {
   options: SurveyOptionImportDto[];
 }
 
+export class SurveyFlagImportDto {
+  @NonEmptyString({
+    label: 'label',
+    description: 'user-facing label for this flag',
+  })
+  label: string;
+
+  @NonEmptyString({
+    label: 'description',
+    description: `description of this flag's purpose (required only if adding a new flag)`,
+    isOptional: true,
+  })
+  description?: string;
+}
+
 export class SurveyOptionImportDto {
   @NonEmptyString({
     label: 'label',
@@ -87,7 +102,7 @@ export class SurveyOptionImportDto {
   // TODO spelling? followupQuestion?
   followUpQuestion?: SurveyQuestionImportDto;
 
-  @NonEmptyString({
+  @NestedDataType(() => SurveyFlagImportDto, {
     label: 'flags',
     description: 'a list of flags to apply to this option',
     isArray: true,
@@ -96,7 +111,7 @@ export class SurveyOptionImportDto {
   /**
    * These will either be created or looked up if existing.
    */
-  flags: string[];
+  flags: SurveyFlagImportDto[];
 
   @LookupTable('number', {
     label: 'values by analyzer name',
@@ -106,6 +121,108 @@ export class SurveyOptionImportDto {
   })
   valuesByAnalyzerName: Record<string, Record<string, number>>;
 }
+
+/**
+ * For lack of a better place, we include this here. Convert this to JSON
+ * and use Swagger to see a full test survey.
+ *
+ * TODO Update `buildTestInstance` to deal with non-empty lookup tables and arrays
+ * in the sample data so we can make our `@DataExample`s comprehensive.
+ */
+const _tempExample: ImportSurvey = {
+  name: {
+    text: 'DSS Client Evaluation (Medicine Wheel)',
+  },
+  questions: [
+    {
+      label: '',
+      prompt: '',
+      options: [
+        {
+          label: 'a',
+          text: 'I sometimes feel sad',
+          flags: [
+            {
+              label: 'my flag',
+              description: 'description for test flag',
+            },
+          ],
+          valuesByAnalyzerName: {
+            'medicine wheel': {
+              red: 1,
+            },
+          },
+          followUpQuestion: {
+            label: '1.1',
+            prompt: 'My sadness lasts for',
+            options: [
+              {
+                label: 'a',
+                text: 'a few hours',
+                flags: [],
+                valuesByAnalyzerName: {},
+              },
+              {
+                label: 'b',
+                text: 'a few days',
+                flags: [],
+                valuesByAnalyzerName: {},
+              },
+              {
+                label: 'c',
+                text: 'a few weeks',
+                flags: [],
+                valuesByAnalyzerName: {},
+                followUpQuestion: {
+                  label: '1.1.1',
+                  prompt: 'I am currently seeking help for my sadness',
+                  options: [
+                    {
+                      label: 'a',
+                      text: 'yes',
+                      flags: [],
+                      valuesByAnalyzerName: {},
+                    },
+                    {
+                      label: 'b',
+                      text: 'no',
+                      flags: [
+                        {
+                          label: 'requires immediate help',
+                          description:
+                            'client flagged for immediate intervention',
+                        },
+                      ],
+                      valuesByAnalyzerName: {},
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+        },
+        {
+          label: 'b',
+          text: 'I never feel sad',
+          flags: [],
+          valuesByAnalyzerName: {
+            'medicine wheel': {
+              white: 1,
+            },
+          },
+        },
+      ],
+    },
+  ],
+  analyzers: [
+    {
+      name: {
+        text: 'medicine wheel',
+      },
+      categories: ['red', 'white', 'yellow', 'black'],
+    },
+  ],
+};
 
 @TrueImpactDataExample<ImportSurvey>({
   example: {

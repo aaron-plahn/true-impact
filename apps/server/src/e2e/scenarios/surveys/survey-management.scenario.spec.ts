@@ -788,8 +788,8 @@ describe(`Survey Management Scenarios`, () => {
 
                           const { questions } = result;
 
-                          const targetQuestion =
-                            questions[labelOfTopLevelQuestionToFlag];
+                          // Note that the index (order) not label of questions is what matters
+                          const targetQuestion = questions[0];
 
                           const targetOption =
                             targetQuestion.options[labelOfTopLevelOptionToFlag];
@@ -800,6 +800,7 @@ describe(`Survey Management Scenarios`, () => {
                             id: flagId,
                             label: flagLabel,
                             description: flagDescription,
+                            revision: '1',
                           });
                         },
                       });
@@ -940,6 +941,7 @@ describe(`Survey Management Scenarios`, () => {
                             id: flagId,
                             label: flagLabel,
                             description: flagDescription,
+                            revision: '1',
                           });
                         },
                       });
