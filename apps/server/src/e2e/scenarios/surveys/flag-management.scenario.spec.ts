@@ -126,7 +126,11 @@ describe(`Flag Management Scenarios`, () => {
                 endpoint: flagCommandsEndpoint,
                 stream: createFlag,
                 assertErrorMessageAsExpected: (message) => {
-                  assertTextMatchesAll(message, firstLabel, 'already in use');
+                  assertTextMatchesAll(
+                    message,
+                    firstLabel,
+                    'Uniqueness constraint violated',
+                  );
                 },
               });
             });
@@ -156,7 +160,8 @@ describe(`Flag Management Scenarios`, () => {
                   assertTextMatchesAll(
                     message,
                     repeatedFlagLabel,
-                    'already in use',
+                    'Uniqueness constraint violated',
+                    'label',
                   );
                 },
               });
@@ -209,7 +214,8 @@ describe(`Flag Management Scenarios`, () => {
                     assertTextMatchesAll(
                       message,
                       repeatedFlagLabel,
-                      'already in use',
+                      'Uniqueness constraint violated',
+                      'label',
                     );
                   },
                 });
@@ -240,7 +246,8 @@ describe(`Flag Management Scenarios`, () => {
                     assertTextMatchesAll(
                       message,
                       repeatedFlagLabel,
-                      'already in use',
+                      'Uniqueness constraint violated',
+                      'label',
                     );
                   },
                 });

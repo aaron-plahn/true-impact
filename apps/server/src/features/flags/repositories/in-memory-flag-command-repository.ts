@@ -7,6 +7,7 @@ import {
   TrueImpactError,
   TrueImpactRuntimeException,
 } from 'src/libs/data-types';
+import { isDeepStrictEqual } from 'util';
 import { FLAG_AGGREGATE_TYPE } from '../constants';
 import { Flag } from '../models';
 import { IFlagCommandRepository } from './flag-command-repository.interface';
@@ -111,7 +112,7 @@ export class InMemoryFlagCommandRepository implements IFlagCommandRepository {
     return results;
   }
 
-  update(
+  async update(
     instance: Flag,
   ): Promise<PersistenceAcknowledgement | TrueImpactError> {
     if (!this.entitiesById.has(instance.id || '')) {
@@ -123,6 +124,32 @@ export class InMemoryFlagCommandRepository implements IFlagCommandRepository {
     }
 
     const target = this.entitiesById.get(instance.id || '') as Flag;
+
+    for (const field of this.uniqueFields) {
+      const newValueForField = instance[field] as string | number;
+
+      const oldValueForField = target[field] as string | number;
+
+      if (!isDeepStrictEqual(newValueForField, oldValueForField)) {
+        // we are writing to a field that requires a uniqueness check
+        const collisionErrors = this.fetchWhere({
+          field,
+          value: newValueForField,
+        }).map(
+          (other) =>
+            new TrueImpactError(
+              `Uniqueness constraint violated [${field}]. There is already a flag [${other.id}] with the value [${newValueForField}] for the field [${field}]`,
+            ),
+        );
+
+        if (collisionErrors.length > 0) {
+          return new TrueImpactError(
+            `Failed to updated Flag as one or more uniqueness constraints was violated.`,
+            collisionErrors,
+          );
+        }
+      }
+    }
 
     Object.assign(target, instance);
 
@@ -186,13 +213,15 @@ export class InMemoryFlagCommandRepository implements IFlagCommandRepository {
           // we'll have a better way of doing this in the production DB implementation
         }).filter(({ id }) => id !== instance.id);
 
-        return collisions.length > 0
-          ? [
-              new TrueImpactError(
-                `Uniqueness constraint violated for field [${field}]. The value [${newValue as unknown as string}] is already in use.`,
-              ),
-            ]
-          : [];
+        if (collisions.length > 0) {
+          return [
+            new TrueImpactError(
+              `Uniqueness constraint violated for field [${field}]. The value [${newValue as unknown as string}] is already in use.`,
+            ),
+          ];
+        }
+
+        return [];
       },
     );
 

@@ -7,6 +7,7 @@ import {
   buildTestInstance,
   convertToOpenApiSchema,
   getDataSchemaFromClassCtor,
+  TrueImpactBadUserInputError,
   TrueImpactError,
   TrueImpactRuntimeException,
 } from '../../libs/data-types';
@@ -46,6 +47,14 @@ export class FlagController implements OnModuleInit {
   @Post('commands')
   async executeCommand(@Body() fsa: ICommandFsa): Promise<CommandResult> {
     const result = await this.commandHandlerService.execute(fsa);
+
+    if (!(result instanceof Error)) {
+      return result;
+    }
+
+    if (!(result instanceof TrueImpactBadUserInputError)) {
+      return new TrueImpactBadUserInputError([result]);
+    }
 
     return result;
   }
