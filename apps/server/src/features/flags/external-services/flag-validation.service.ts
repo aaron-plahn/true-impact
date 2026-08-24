@@ -25,6 +25,22 @@ export class FlagValidationService implements IFlagServiceForSurveyImports {
   async upsertMany(
     labelsAndOptionalDescriptions: LabelsAndOptionalDescriptions[],
   ): Promise<(TrueImpactError | { id: string; label: string })[]> {
+    const uniqueLabels = new Set<string>();
+
+    const duplicateLabelErrors: TrueImpactError[] = [];
+
+    for (const { label } of labelsAndOptionalDescriptions) {
+      if (uniqueLabels.has(label)) {
+        duplicateLabelErrors.push(
+          new TrueImpactError(
+            `Repeated label [${label}] in Flag upsert request.`,
+          ),
+        );
+      } else {
+        uniqueLabels.add(label);
+      }
+    }
+
     const results: (TrueImpactError | { id: string; label: string })[] = [];
 
     for (const { label, description } of labelsAndOptionalDescriptions) {
@@ -77,8 +93,12 @@ export class FlagValidationService implements IFlagServiceForSurveyImports {
       if (buildResult instanceof Error) {
         results.push(buildResult);
       } else {
-        // TODO Refactor this logic to use `CreateMany`
-        // TODO Don't create any flags if there is an error.
+        /**
+         * Note that it would be better to only create flags if every flag builds.
+         * But given that some flags already exist and we need to maintain the orginally
+         * indices in our results array, we have opted to eagerly persist successfully
+         * built flags in order to keep the present algorithm simple.
+         */
         const creationResult = await this.commandRepository.create(buildResult);
 
         results.push(

@@ -93,10 +93,22 @@ export class InMemoryFlagCommandRepository implements IFlagCommandRepository {
     return Promise.resolve(result);
   }
 
-  async createMany(instances: Flag[]): Promise<void> {
+  async createMany(
+    instances: Flag[],
+  ): Promise<(TrueImpactError | PersistenceAcknowledgement)[]> {
+    const results: (TrueImpactError | PersistenceAcknowledgement)[] = [];
+
+    /**
+     * This isn't the way we want to do this in the live DB for efficiency reasons. This pattern
+     * is fine for our in-memory implementation.
+     */
     for (const instance of instances) {
-      await this.create(instance);
+      const result = await this.create(instance);
+
+      results.push(result);
     }
+
+    return results;
   }
 
   update(

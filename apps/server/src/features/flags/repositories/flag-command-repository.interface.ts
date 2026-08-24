@@ -15,7 +15,9 @@ export interface IFlagCommandRepository {
   create(instance: Flag): Promise<PersistenceAcknowledgement | TrueImpactError>;
 
   // Error[] ?
-  createMany(instances: Flag[]): Promise<void>;
+  createMany(
+    instances: Flag[],
+  ): Promise<(PersistenceAcknowledgement | TrueImpactError)[]>;
 
   update(instance: Flag): Promise<PersistenceAcknowledgement | TrueImpactError>;
 }
