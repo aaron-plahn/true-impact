@@ -2,6 +2,10 @@
 
 This first release of the True Impact platform introduces a working model for user management, client management, and survey creation and completion.
 
+# 63
+In this PR, we expose reports on survey responses by introducing machinery to accumulate values
+for categories across responses to questions for a single survey attempt. 
+
 # 62
 In this PR, we support flags for survey imports. Existing flags may be specified by label, while flags to be created must include
 a description. 
