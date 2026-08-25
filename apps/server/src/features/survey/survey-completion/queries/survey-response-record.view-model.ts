@@ -626,7 +626,7 @@ export class SurveyResponseRecordViewModel {
             new SurveyReportViewModel({
               name: analyzer.name,
               categories: analyzer.categories,
-              timeSubmitted: domainModel.submissionTimestamp,
+              submissionTime: domainModel.submissionTimestamp,
             }),
           );
 
