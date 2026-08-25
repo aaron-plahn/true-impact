@@ -1,3 +1,5 @@
+import { SurveyResponseQueryService } from 'src/features/survey/survey-completion/queries';
+import { SurveyResponseRecordViewModelClientDto } from 'src/features/survey/survey-completion/queries/survey-response-record.view-model';
 import {
   CommunityQueryService,
   CommunityViewModelClientDto,
@@ -9,6 +11,7 @@ import {
 import { TrueImpactError } from '../../../libs/data-types';
 import { Inject } from '../../../libs/framework';
 import { Client } from '../client.aggregate-root';
+import { CLIENT_AGGREGATE_TYPE } from '../client.composite-identifier';
 import { CLIENT_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../constants';
 import { ClientViewModel, ClientViewModelClientDto } from '../queries';
 import type { IClientCommandRepository } from '../repositories';
@@ -20,6 +23,7 @@ export class ClientQueryService {
     private readonly repository: IClientCommandRepository,
     private readonly communityQueryService: CommunityQueryService,
     private readonly flagQueryService: FlagQueryService,
+    private readonly surveyResponseQueryService: SurveyResponseQueryService,
   ) {}
 
   // TODO We may want to inject the user context for permissions.
@@ -57,9 +61,31 @@ export class ClientQueryService {
       flagsById.set(f.id, f);
     });
 
+    const reportsForClient =
+      await this.surveyResponseQueryService.forParticipant({
+        type: CLIENT_AGGREGATE_TYPE,
+        id,
+      });
+
+    if (reportsForClient instanceof Error) {
+      return new TrueImpactError(
+        `Failed to fetch client [${id}]. Failed to fetch survey responses for this client.`,
+        [reportsForClient],
+      );
+    }
+
+    const reportsByClientId = new Map<
+      string,
+      SurveyResponseRecordViewModelClientDto[]
+    >().set(
+      id,
+      reportsForClient.map((r) => r.toClientDto()),
+    );
+
     const view = this.buildView(domainModelSearchResult, {
       communities: communitiesById,
       flags: flagsById,
+      reportsByClientId,
     });
 
     return view;
@@ -93,6 +119,8 @@ export class ClientQueryService {
       this.buildView(dm, {
         communities: communitiesById,
         flags: flagsById,
+        // We don't currently need reports in client index views.
+        reportsByClientId: new Map(),
       }),
     );
 
@@ -104,6 +132,7 @@ export class ClientQueryService {
     context: {
       communities: Map<string, CommunityViewModelClientDto>;
       flags: Map<string, FlagViewModelClientDto>;
+      reportsByClientId: Map<string, SurveyResponseRecordViewModelClientDto[]>;
     },
   ): ClientViewModelClientDto {
     const result = ClientViewModel.fromDomainModel(domainModel, context);

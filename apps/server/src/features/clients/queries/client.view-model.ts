@@ -1,3 +1,4 @@
+import { SurveyResponseRecordViewModelClientDto } from 'src/features/survey/survey-completion/queries/survey-response-record.view-model';
 import { FullName, FullNameDto } from '../../../common/full-name';
 import { CommunityViewModelClientDto } from '../../../features/communities/queries';
 import { FlagViewModelClientDto } from '../../../features/flags/queries';
@@ -31,6 +32,7 @@ import { Client } from '../client.aggregate-root';
         description: 'is nice to others',
       },
     },
+    surveyResponses: [],
   },
 })
 export class ClientViewModelClientDto {
@@ -83,6 +85,14 @@ export class ClientViewModelClientDto {
       'a lookup table holding all flags that have been applied to this client',
   })
   flagsById: Record<string, FlagViewModelClientDto>;
+
+  @NestedDataType(() => SurveyResponseRecordViewModelClientDto, {
+    label: 'surveys completed',
+    description: 'a list of all survey responses submitted by this client',
+    isArray: true,
+    isOptional: true, // i.e., can be empty
+  })
+  surveyResponses: SurveyResponseRecordViewModelClientDto[];
 }
 
 export class ClientViewModel {
@@ -98,6 +108,9 @@ export class ClientViewModel {
 
   flags: Map<string, FlagViewModelClientDto>;
 
+  // these should be sorted by completion date (most recent first)
+  surveyResponses: SurveyResponseRecordViewModelClientDto[];
+
   dateOfBirth: string;
 
   constructor({
@@ -107,6 +120,7 @@ export class ClientViewModel {
     isIndigenous,
     community,
     flags,
+    surveyResponses,
   }: {
     id: string;
     dateOfBirth: string;
@@ -115,6 +129,7 @@ export class ClientViewModel {
     isIndigenous: YesNoOrUnknown;
     community?: CommunityViewModelClientDto;
     flags: Map<string, FlagViewModelClientDto>;
+    surveyResponses: SurveyResponseRecordViewModelClientDto[];
   }) {
     this.id = id;
 
@@ -127,6 +142,8 @@ export class ClientViewModel {
     this.community = community;
 
     this.flags = flags;
+
+    this.surveyResponses = surveyResponses;
   }
 
   toClientDto(): ClientViewModelClientDto {
@@ -138,17 +155,17 @@ export class ClientViewModel {
       isIndigenous: this.isIndigenous,
       community: this.community,
       flagsById: deepConvertMapToObject(this.flags),
+      surveyResponses: this.surveyResponses,
     };
   }
-
-  //   TODO Support flags on client views
-  //   flags: Map<string, FlagViewModel>;
 
   static fromDomainModel(
     client: Client,
     context: {
       communities: Map<string, CommunityViewModelClientDto>;
       flags: Map<string, FlagViewModelClientDto>;
+      // TODO rename this survey responses by client ID
+      reportsByClientId: Map<string, SurveyResponseRecordViewModelClientDto[]>;
     },
   ) {
     const {
@@ -178,6 +195,8 @@ export class ClientViewModel {
       }
     });
 
+    const surveyResponses = context.reportsByClientId.get(id) || [];
+
     return new ClientViewModel({
       id,
       revision: revision.toString(),
@@ -186,6 +205,7 @@ export class ClientViewModel {
       isIndigenous,
       community,
       flags: flagsById,
+      surveyResponses,
     });
   }
 }
