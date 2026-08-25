@@ -160,6 +160,7 @@ export class SurveyResponseQueryController {
     return tiSduiToHtml(sduiView.render());
   }
 
+  @Get('submitted')
   @UseGuards(AuthenticatedUserGuard, RbacAuthGuard)
   // TODO pagination
   @ApiOkResponse({
@@ -182,7 +183,6 @@ export class SurveyResponseQueryController {
     return sorted;
   }
 
-  @Get('submitted')
   @UseGuards(AuthenticatedUserGuard, RbacAuthGuard)
   @IndexQueryEndpoint()
   @ApiOkResponse({
@@ -205,7 +205,6 @@ export class SurveyResponseQueryController {
     schema,
     example,
   })
-  // TODO route guards
   async fetchCompletionByAttemptId(@IdParam() id: string) {
     const result = await this.surveyCompletionQueryService.fetchById(id);
 
@@ -222,7 +221,7 @@ export class SurveyResponseQueryController {
 
   // TODO support filters to fetch completion attempts for participant of a given type, for a given survey, etc.
 
-  // TODO auth guard
+  @UseGuards(AuthenticatedUserGuard, RbacAuthGuard)
   @TestSetupEndpoint()
   async testSetup(): Promise<'OK'> {
     if (process.env.NODE_ENV !== 'test' && process.env.NODE_ENV !== 'e2e') {
