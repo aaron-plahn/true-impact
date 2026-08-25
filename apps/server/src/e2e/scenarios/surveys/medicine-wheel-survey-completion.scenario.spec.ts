@@ -49,6 +49,8 @@ const reportName = 'medicine wheel';
 /**
  * Note that you can also convert this to JSON and use Swagger
  * to import it into a test env.
+ *
+ * TODO Make this the full evaluation survey, once the clinicians have completed it.
  */
 const medicineWheelSurvey: ImportSurvey = {
   name: {
@@ -188,12 +190,7 @@ describe(`Medicine wheel survey completion`, () => {
       stream: TestCommandStream.first(CreateClient, {
         communityId,
       }),
-      // .andThen(
-      //   AddCommunityAffiliationForClient,
-      //   {
-      //     communityId,
-      //   },
-      // ),
+      // note that the client's community is to be provided on the creation command, if known
       assertSuccess: (acks) => {
         clientId = acks[0].id;
       },
@@ -216,6 +213,7 @@ describe(`Medicine wheel survey completion`, () => {
     });
   });
 
+  // TODO add several completion scenarios to gain confidence in the calculation (once using the full survey as a fixture)
   describe(`Scenario 1`, () => {
     const participantHttpClient = new TestHttpClient('localhost:4200');
 

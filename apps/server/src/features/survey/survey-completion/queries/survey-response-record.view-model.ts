@@ -595,7 +595,7 @@ export class SurveyResponseRecordViewModel {
                 if (valuesForOption) {
                   Object.entries(valuesForOption).forEach(
                     ([category, value]) => {
-                      // why a side-effect here only? Isn't this confusing?
+                      // beware - this depends on `add` applying a mutation to the report instance
                       acc.add(category, value);
                     },
                   );

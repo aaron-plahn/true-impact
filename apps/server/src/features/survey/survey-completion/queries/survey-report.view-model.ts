@@ -1,11 +1,12 @@
 import { deepConvertMapToObject } from '../../../../libs/data-types';
 
-export class SurveyReportCategory {
-  // multilingual text?
-  label: string;
-  // description?
-  color: 'red' | 'white' | 'yellow' | 'black' | 'blue' | 'green';
-}
+// We may want to do something like this in order to generate default report presentation on the client \ as PDFs.
+// export class SurveyReportCategory {
+//   // multilingual text?
+//   label: string;
+//   // description?
+//   color: 'red' | 'white' | 'yellow' | 'black' | 'blue' | 'green';
+// }
 
 export class SurveyReportViewModelClientDto {
   name: string;
@@ -36,6 +37,11 @@ export class SurveyReportViewModel {
     this.categories = categories;
 
     // Note that we currently use a builder pattern to set values. But this might shift when we go to event sourcing our views.
+
+    // We initialize all category values to 0 so that zero-valued categories still appear in reports.
+    categories.forEach((category) => {
+      this.valuesByCategory.set(category, 0);
+    });
   }
 
   toClientDto(): SurveyReportViewModelClientDto {
@@ -49,7 +55,7 @@ export class SurveyReportViewModel {
   add(category: string, value: number): SurveyReportViewModel {
     this.valuesByCategory.set(
       category,
-      // Do we want to initialize all values to zero to start with?
+      // The or is to satisfy TS. We have initialized all values to 0 to start with.
       (this.valuesByCategory.get(category) || 0) + value,
     );
 

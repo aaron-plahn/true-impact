@@ -77,7 +77,12 @@ export class SurveyResponseQueryService {
     domainModel: SurveyResponseRecord,
     context: { surveysById: Map<string, SurveyViewModelClientDto> },
   ) {
-    // TODO inject client state
+    /**
+     * We could consider putting the client info on the response record.
+     *
+     * For now, we traverse Clients -> Reports instead because this is a
+     * more natural way for clinicians to find a specific report.
+     */
     return SurveyResponseRecordViewModel.fromDomainModel(domainModel, context);
   }
 }
