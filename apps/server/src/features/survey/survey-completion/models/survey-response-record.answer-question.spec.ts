@@ -9,6 +9,8 @@ import {
 } from '../../survey-management/survey.aggregate-root';
 import { SurveyResponseRecord } from './survey-response-record.aggregate-root';
 
+const submissionTimestamp = 1787693484530;
+
 const targetQuestionLabel = '2';
 const targetOptionLabel = 'c';
 
@@ -245,7 +247,7 @@ describe(`SurveyResponseRecord.answerQuestion`, () => {
       const submittedSurveyResponse = buildTestInstance(SurveyResponseRecord, {
         survey: survey.toPersistenceDto(),
         hasBeenAbandoned: false,
-        hasBeenSubmitted: true,
+        submissionTimestamp,
         responses: [
           {
             questionLabel: '1',
@@ -277,7 +279,6 @@ describe(`SurveyResponseRecord.answerQuestion`, () => {
     const submittedSurveyResponse = buildTestInstance(SurveyResponseRecord, {
       survey: survey.toPersistenceDto(),
       hasBeenAbandoned: true,
-      hasBeenSubmitted: false,
       responses: [
         {
           questionLabel: '1',

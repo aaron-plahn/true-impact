@@ -186,6 +186,7 @@ export class SurveyQuestionResponseViewModel {
     size: 5,
     name: 'long survey',
     revision: '5',
+    // no submissionTimestamp
     hasBeenSubmitted: false,
     hasBeenCancelled: false,
     participantCompositeIdentifier: {

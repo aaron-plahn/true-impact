@@ -6,6 +6,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
+import { AuthenticatedUserGuard, RbacAuthGuard } from 'src/auth/guards';
 import { SurveyCommandAuthGuard } from 'src/e2e/scenarios/surveys/guards';
 import { tiSduiSectionToHtmlFragment } from 'src/libs/server-driven-ui/html/tisdui-to-html-fragment';
 import { isDeepStrictEqual } from 'util';
@@ -304,7 +305,7 @@ export class SurveyController implements OnModuleInit {
     ]);
   }
 
-  // TODO auth guard
+  @UseGuards(AuthenticatedUserGuard, RbacAuthGuard)
   @TestSetupEndpoint()
   async testSetup(): Promise<'OK'> {
     if (process.env.NODE_ENV !== 'test' && process.env.NODE_ENV !== 'e2e') {

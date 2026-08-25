@@ -6,6 +6,8 @@ import {
 import { assertTextMatchesAll } from '../../../../libs/test-utils';
 import { Survey } from '../../survey-management';
 
+const submissionTimestamp = 1787693484530;
+
 /**
  * TODO Why are there two separate tests for this?
  */
@@ -44,7 +46,7 @@ describe(`SurveyResponseRecord.validateInvariants`, () => {
       it(`should return the expected error`, () => {
         const invalidInstance = buildTestInstance(SurveyResponseRecord, {
           survey: validSurvey.toPersistenceDto(),
-          hasBeenSubmitted: true,
+          submissionTimestamp,
           hasBeenCancelled: true,
           hasBeenAbandoned: false,
           responses: [
@@ -73,7 +75,7 @@ describe(`SurveyResponseRecord.validateInvariants`, () => {
       it(`should return the expected error`, () => {
         const invalidInstance = buildTestInstance(SurveyResponseRecord, {
           survey: validSurvey.toPersistenceDto(),
-          hasBeenSubmitted: true,
+          submissionTimestamp,
           hasBeenCancelled: false,
           hasBeenAbandoned: true,
           responses: [
@@ -102,7 +104,7 @@ describe(`SurveyResponseRecord.validateInvariants`, () => {
       it(`should return the expected error`, () => {
         const invalidInstance = buildTestInstance(SurveyResponseRecord, {
           survey: validSurvey.toPersistenceDto(),
-          hasBeenSubmitted: true,
+          submissionTimestamp,
           hasBeenCancelled: true,
           hasBeenAbandoned: true,
           responses: [

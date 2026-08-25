@@ -314,6 +314,7 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
     revision,
     hasBeenAbandoned,
     hasBeenCancelled,
+    submissionTimestamp,
     survey,
     responses,
     participant,
@@ -323,6 +324,7 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
     revision: number;
     hasBeenAbandoned: boolean;
     hasBeenCancelled: boolean;
+    submissionTimestamp?: number;
     survey: Survey;
     // surveys may be anonymous
     participant?: SurveyParticipantCompositeIdentifier;
@@ -346,6 +348,8 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
 
     this.hasBeenCancelled =
       typeof hasBeenCancelled === 'boolean' ? hasBeenCancelled : false;
+
+    this.submissionTimestamp = submissionTimestamp;
 
     this.eventHistory = eventHistory;
 
@@ -744,6 +748,7 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
       survey: this.survey.toPersistenceDto(),
       hasBeenAbandoned: this.hasBeenAbandoned,
       hasBeenCancelled: this.hasBeenCancelled,
+      submissionTimestamp: this.submissionTimestamp,
       participantCompositeIdentifier: this.participant,
       responses: this.responses,
       eventHistory: this.eventHistory,
@@ -756,6 +761,7 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
       revision,
       hasBeenAbandoned,
       hasBeenCancelled,
+      submissionTimestamp,
       survey,
       responses,
       participantCompositeIdentifier,
@@ -802,6 +808,7 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
       revision: revision,
       hasBeenAbandoned,
       hasBeenCancelled,
+      submissionTimestamp,
       survey: surveyBuildResult,
       responses: questionResponses as SurveyQuestionResponse[],
       participant: participantCompositeIdentifier,
