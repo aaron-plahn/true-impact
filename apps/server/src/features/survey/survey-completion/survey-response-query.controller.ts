@@ -168,7 +168,7 @@ export class SurveyResponseQueryController {
     example: [example],
   })
   async fetchSubmittedResponses() {
-    const result = await this.surveyCompletionQueryService.fetchMany();
+    const result = await this.fetchCompletionAttempts();
 
     if (result instanceof Error) {
       return result;
