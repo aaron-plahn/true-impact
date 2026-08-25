@@ -1,5 +1,7 @@
-import { Session } from '@nestjs/common';
+// TODO framework lib?
+import { Session, UseGuards } from '@nestjs/common';
 import { ApiOkResponse } from '@nestjs/swagger';
+import { AuthenticatedUserGuard, RbacAuthGuard } from '../../../auth/guards';
 import {
   buildTestInstance,
   convertToOpenApiSchema,
@@ -129,6 +131,11 @@ export class SurveyResponseQueryController {
       return `<div>Not Found</div>`;
     }
 
+    if (target instanceof Error) {
+      // TODO `QueryErrorPage`
+      return `<div>Something went wrong.</div>`;
+    }
+
     const { nextQuestion, hasBeenSubmitted } = target;
 
     if (hasBeenSubmitted) {
@@ -158,18 +165,35 @@ export class SurveyResponseQueryController {
     schema,
     example: [example],
   })
-  fetchCompletionAttempts() {
-    return this.surveyCompletionQueryService.fetchMany();
+  async fetchCompletionAttempts() {
+    const result = await this.surveyCompletionQueryService.fetchMany();
+
+    if (result instanceof Error) {
+      return result;
+    }
+
+    return result.map((r) => r.toClientDto());
   }
 
+  @UseGuards(AuthenticatedUserGuard, RbacAuthGuard)
   @DetailQueryEndpoint()
   @ApiOkResponse({
     schema,
     example,
   })
   // TODO route guards
-  fetchCompletionByAttemptId(@IdParam() id: string) {
-    return this.surveyCompletionQueryService.fetchById(id);
+  async fetchCompletionByAttemptId(@IdParam() id: string) {
+    const result = await this.surveyCompletionQueryService.fetchById(id);
+
+    if (!result) {
+      return result;
+    }
+
+    if (result instanceof Error) {
+      return result;
+    }
+
+    return result.toClientDto();
   }
 
   // TODO support filters to fetch completion attempts for participant of a given type, for a given survey, etc.

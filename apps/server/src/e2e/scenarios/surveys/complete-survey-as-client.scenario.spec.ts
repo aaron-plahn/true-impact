@@ -261,6 +261,7 @@ describe(`Survey Completion Scenarios`, () => {
               .andThen(SubmitSurvey, {}),
             assertSuccess: async (acks) => {
               await assertQueryResponse({
+                httpClient: adminHttpClient,
                 endpoint: `${surveyResponseRecordIndexEndpoint}/${acks[0].id}`,
                 assertResponseBody: (body: SurveyResponseRecordViewModel) => {
                   expect(body.hasBeenSubmitted).toBe(true);
@@ -388,6 +389,7 @@ describe(`Survey Completion Scenarios`, () => {
                 .andThen(SubmitSurvey, {}),
               assertSuccess: async (acks) => {
                 await assertQueryResponse({
+                  httpClient: adminHttpClient,
                   endpoint: `${surveyResponseRecordIndexEndpoint}/${acks[0].id}`,
                   assertResponseBody: (body: SurveyResponseRecordViewModel) => {
                     expect(body.hasBeenSubmitted).toBe(true);
@@ -437,6 +439,7 @@ describe(`Survey Completion Scenarios`, () => {
                 .andThen(SubmitSurvey, {}),
               assertSuccess: async (acks) => {
                 await assertQueryResponse({
+                  httpClient: adminHttpClient,
                   endpoint: `${surveyResponseRecordIndexEndpoint}/${acks[0].id}`,
                   assertResponseBody: (body: SurveyResponseRecordViewModel) => {
                     expect(body.hasBeenSubmitted).toBe(true);

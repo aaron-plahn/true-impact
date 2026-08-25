@@ -194,6 +194,7 @@ describe(`Survey Management Scenarios`, () => {
                 const { id } = response;
 
                 await assertQueryResponse({
+                  httpClient,
                   endpoint: buildSurveyDetailEndpoint(id),
                 });
               },
@@ -236,6 +237,7 @@ describe(`Survey Management Scenarios`, () => {
               stream: addFirstQuestionToSurvey,
               assertSuccess: async (acks) => {
                 await assertQueryResponse({
+                  httpClient,
                   endpoint: buildSurveyDetailEndpoint(acks[0].id),
                   assertResponseBody: (body: SurveyViewModel) => {
                     expect(body.name).toBe(surveyName);
@@ -346,6 +348,7 @@ describe(`Survey Management Scenarios`, () => {
                   const { id } = acks[0];
 
                   await assertQueryResponse({
+                    httpClient,
                     endpoint: buildSurveyDetailEndpoint(id),
                     assertResponseBody: ({ questions }: SurveyViewModel) => {
                       const questionSearchResult = questions.find(
@@ -507,6 +510,7 @@ describe(`Survey Management Scenarios`, () => {
                 const { id } = acks[0];
 
                 await assertQueryResponse({
+                  httpClient,
                   endpoint: buildSurveyDetailEndpoint(id),
                   assertResponseBody: async ({
                     size,
@@ -689,6 +693,7 @@ describe(`Survey Management Scenarios`, () => {
               stream: finalizeSurvey,
               assertSuccess: async (acks) => {
                 await assertQueryResponse({
+                  httpClient,
                   endpoint: buildSurveyDetailEndpoint(acks[0].id),
                   assertResponseBody: async (body: SurveyViewModel) => {
                     expect(body.isFinal).toBe(true);

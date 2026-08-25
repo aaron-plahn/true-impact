@@ -73,5 +73,11 @@ export class CreateClient {
     description: `system identifier for this client's community`,
     isOptional: true,
   })
+  /**
+   * Note that we add this optional prop to encourage users to specify a client's
+   * community at creation if known. A subsequent `ADD_COMMUNITY_AFFILIATION_FOR_CLIENT`
+   * command can be used in case the client's community is not added (possibly not known)
+   * when creating the client.
+   */
   communityId?: string;
 }
