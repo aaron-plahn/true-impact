@@ -1,15 +1,18 @@
-import axios, { AxiosResponse } from 'axios';
+import { AxiosResponse } from 'axios';
 import { HttpStatus } from '../../../libs/framework';
 import { CommandErrorResponseBody } from './command-responses';
+import { TestHttpClient } from './test-http-client';
 
 export const assertQueryResponse = async <TBody = Record<string, unknown>>({
+  httpClient,
   endpoint,
   assertResponseBody,
 }: {
+  httpClient: TestHttpClient;
   endpoint: string;
   assertResponseBody?: (body: TBody) => void | Promise<void>;
 }): Promise<void> => {
-  const result = await axios
+  const result = await httpClient
     .get(endpoint)
     .catch(
       (e: {

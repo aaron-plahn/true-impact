@@ -243,6 +243,8 @@ describe(`Medicine wheel survey completion`, () => {
           const expectedValuesByCategory = {
             red: 2,
             black: 1,
+            white: 0,
+            yellow: 0,
           };
 
           const responseId = acks[0].id;
