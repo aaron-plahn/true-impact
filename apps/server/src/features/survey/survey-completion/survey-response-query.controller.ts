@@ -160,6 +160,30 @@ export class SurveyResponseQueryController {
     return tiSduiToHtml(sduiView.render());
   }
 
+  @UseGuards(AuthenticatedUserGuard, RbacAuthGuard)
+  // TODO pagination
+  @ApiOkResponse({
+    schema,
+    example: [example],
+  })
+  async fetchSubmittedResponses() {
+    const result = await this.surveyCompletionQueryService.fetchMany();
+
+    if (result instanceof Error) {
+      return result;
+    }
+
+    const completed = result.filter((r) => r.hasBeenSubmitted);
+
+    const sorted = completed.sort(
+      (a, b) => (a.submissionTime || 0) - (b.submissionTime || 0),
+    );
+
+    return sorted;
+  }
+
+  @Get('submitted')
+  @UseGuards(AuthenticatedUserGuard, RbacAuthGuard)
   @IndexQueryEndpoint()
   @ApiOkResponse({
     schema,

@@ -271,6 +271,16 @@ describe(`Medicine wheel survey completion`, () => {
 
           assertReportOnSurveyResponseView(responseViewFromDetailEndpoint);
 
+          const responseFromSubmittedEndpoint = (
+            await adminHttpClient.get(
+              `${surveyResponseRecordIndexEndpoint}/submitted`,
+            )
+          ).data as SurveyResponseRecordViewModelClientDto[];
+
+          expect(responseFromSubmittedEndpoint).toHaveLength(1);
+
+          assertReportOnSurveyResponseView(responseFromSubmittedEndpoint[0]);
+
           const clientSearchResponse = await adminHttpClient.get(
             `${clientBaseEndpoint}/${clientId}`,
           );

@@ -406,6 +406,14 @@ export class SurveyResponseRecordViewModel {
   })
   hasBeenSubmitted: boolean;
 
+  @NonEmptyString({
+    label: 'time of submission',
+    description:
+      'date and time at which this response was submitted by the survey participant',
+    isOptional: true,
+  })
+  submissionTime?: number;
+
   @BooleanDataType({
     label: 'has been cancelled',
     description:
@@ -445,12 +453,14 @@ export class SurveyResponseRecordViewModel {
     responses,
     nextQuestion,
     size,
+    submissionTime,
   }: {
     id: string;
     name: string;
     revision: string;
     hasBeenSubmitted: boolean;
     hasBeenCancelled: boolean;
+    submissionTime?: number;
     participantCompositeIdentifier: {
       type: string;
       id: string;
@@ -481,6 +491,8 @@ export class SurveyResponseRecordViewModel {
       : null;
 
     this.hasBeenSubmitted = hasBeenSubmitted;
+
+    this.submissionTime = submissionTime;
 
     this.hasBeenCancelled = hasBeenCancelled;
 

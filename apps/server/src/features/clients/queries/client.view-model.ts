@@ -164,7 +164,7 @@ export class ClientViewModel {
     context: {
       communities: Map<string, CommunityViewModelClientDto>;
       flags: Map<string, FlagViewModelClientDto>;
-      suveyResponsesByClientId: Map<
+      surveyResponsesByClientId: Map<
         string,
         SurveyResponseRecordViewModelClientDto[]
       >;
@@ -198,10 +198,10 @@ export class ClientViewModel {
     });
 
     const surveyResponses = (
-      context.suveyResponsesByClientId.get(id) || []
+      context.surveyResponsesByClientId.get(id) || []
     ).sort(
-      (reportA, reportB) =>
-        (reportA.submissionTime || 0) - (reportB.submissionTime || 0),
+      (responseA, responseB) =>
+        (responseA.submissionTime || 0) - (responseB.submissionTime || 0),
     );
 
     return new ClientViewModel({

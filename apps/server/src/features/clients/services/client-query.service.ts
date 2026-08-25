@@ -85,7 +85,7 @@ export class ClientQueryService {
     const view = this.buildView(domainModelSearchResult, {
       communities: communitiesById,
       flags: flagsById,
-      reportsByClientId,
+      surveyResponsesByClientId: reportsByClientId,
     });
 
     return view;
@@ -120,7 +120,7 @@ export class ClientQueryService {
         communities: communitiesById,
         flags: flagsById,
         // We don't currently need reports in client index views.
-        reportsByClientId: new Map(),
+        surveyResponsesByClientId: new Map(),
       }),
     );
 
@@ -132,7 +132,10 @@ export class ClientQueryService {
     context: {
       communities: Map<string, CommunityViewModelClientDto>;
       flags: Map<string, FlagViewModelClientDto>;
-      reportsByClientId: Map<string, SurveyResponseRecordViewModelClientDto[]>;
+      surveyResponsesByClientId: Map<
+        string,
+        SurveyResponseRecordViewModelClientDto[]
+      >;
     },
   ): ClientViewModelClientDto {
     const result = ClientViewModel.fromDomainModel(domainModel, context);
