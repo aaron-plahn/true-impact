@@ -253,14 +253,24 @@ describe(`Medicine wheel survey completion`, () => {
             `${surveyResponseRecordIndexEndpoint}/${responseId}`,
           );
 
-          const responseView =
+          const responseViewFromDetailEndpoint =
             responseViewHttpResponse.data as SurveyResponseRecordViewModelClientDto;
 
-          expect(reportName in responseView.reportsByName).toBeTruthy();
+          const assertReportOnSurveyResponseView = (
+            responseView: SurveyResponseRecordViewModelClientDto,
+          ) => {
+            expect(reportName in responseView.reportsByName).toBeTruthy();
 
-          const reportView = responseView.reportsByName[reportName];
+            const reportView = responseView.reportsByName[reportName];
 
-          expect(reportView.valuesByCategory).toEqual(expectedValuesByCategory);
+            expect(reportView.valuesByCategory).toEqual(
+              expectedValuesByCategory,
+            );
+          };
+
+          assertReportOnSurveyResponseView(responseViewFromDetailEndpoint);
+
+          // TODO Do we want to ensure that this report is on the index views as well?
         },
       });
     });

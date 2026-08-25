@@ -596,7 +596,7 @@ export class SurveyResponseRecordViewModel {
                   Object.entries(valuesForOption).forEach(
                     ([category, value]) => {
                       // why a side-effect here only? Isn't this confusing?
-                      acc.setValue(category, value);
+                      acc.add(category, value);
                     },
                   );
                 }

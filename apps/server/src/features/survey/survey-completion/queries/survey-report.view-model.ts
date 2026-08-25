@@ -34,6 +34,8 @@ export class SurveyReportViewModel {
     this.name = name;
 
     this.categories = categories;
+
+    // Note that we currently use a builder pattern to set values. But this might shift when we go to event sourcing our views.
   }
 
   toClientDto(): SurveyReportViewModelClientDto {
@@ -44,8 +46,12 @@ export class SurveyReportViewModel {
     };
   }
 
-  setValue(category: string, value: number): SurveyReportViewModel {
-    this.valuesByCategory.set(category, value);
+  add(category: string, value: number): SurveyReportViewModel {
+    this.valuesByCategory.set(
+      category,
+      // Do we want to initialize all values to zero to start with?
+      (this.valuesByCategory.get(category) || 0) + value,
+    );
 
     return this;
   }
