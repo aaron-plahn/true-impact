@@ -1,4 +1,9 @@
-import { deepConvertMapToObject } from '../../../../libs/data-types';
+import {
+  deepConvertMapToObject,
+  LookupTable,
+  NonEmptyString,
+  NonNegativeInteger,
+} from '../../../../libs/data-types';
 
 // We may want to do something like this in order to generate default report presentation on the client \ as PDFs.
 // export class SurveyReportCategory {
@@ -9,11 +14,34 @@ import { deepConvertMapToObject } from '../../../../libs/data-types';
 // }
 
 export class SurveyReportViewModelClientDto {
+  @NonEmptyString({
+    label: 'name',
+    description: 'name of the report',
+  })
   name: string;
 
+  @NonEmptyString({
+    label: 'categories',
+    description: 'list of categories for this report',
+    isArray: true,
+    // can this really be empty?
+    isOptional: true, //i.e., may be empty
+  })
   categories: string[];
 
+  @LookupTable('number', {
+    label: 'values by category',
+    description:
+      'cumulative (across responses to all questions) values for each category in this report',
+  })
   valuesByCategory: Record<string, number>;
+
+  @NonNegativeInteger({
+    label: 'submission time',
+    description: 'date and time at which the participant submitted this survey',
+    isOptional: true, // omitted if still in progress
+  })
+  submissionTime?: number;
 }
 
 export class SurveyReportViewModel {
@@ -31,10 +59,23 @@ export class SurveyReportViewModel {
    */
   valuesByCategory = new Map<string, number>();
 
-  constructor({ name, categories }: { name: string; categories: string[] }) {
+  // unix time-stamp
+  submissionTime?: number;
+
+  constructor({
+    name,
+    categories,
+    submissionTime,
+  }: {
+    name: string;
+    categories: string[];
+    submissionTime?: number;
+  }) {
     this.name = name;
 
     this.categories = categories;
+
+    this.submissionTime = submissionTime;
 
     // Note that we currently use a builder pattern to set values. But this might shift when we go to event sourcing our views.
 
@@ -49,6 +90,7 @@ export class SurveyReportViewModel {
       name: this.name,
       categories: this.categories,
       valuesByCategory: deepConvertMapToObject(this.valuesByCategory),
+      submissionTime: this.submissionTime,
     };
   }
 

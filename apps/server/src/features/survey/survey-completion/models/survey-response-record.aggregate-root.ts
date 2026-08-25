@@ -148,7 +148,7 @@ export class SurveyResponseRecordPersistenceDto {
 
   hasBeenCancelled: boolean;
 
-  hasBeenSubmitted: boolean;
+  submissionTimestamp?: number;
 
   /**
    * In the future, participants may be an `Employee`, `CommunityEmployee`, etc. We don't want
@@ -180,7 +180,6 @@ const testSurveyExample = buildTestInstance(Survey, {
      */
     survey: testSurveyExample,
     hasBeenAbandoned: false,
-    hasBeenSubmitted: false,
     hasBeenCancelled: false,
     participantCompositeIdentifier: {
       type: CLIENT_AGGREGATE_TYPE,
@@ -298,18 +297,24 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
   })
   nextQuestionLabel?: string; // possibly `DONE`
 
-  @BooleanDataType({
-    label: 'has been submitted',
-    description: 'has this survey been submitted?',
+  get hasBeenSubmitted(): boolean {
+    return typeof this.submissionTimestamp !== 'undefined';
+  }
+
+  @NonNegativeInteger({
+    label: 'time of submission',
+    description:
+      'records the date and time the client submitted this survey attempt',
+    isOptional: true, // omitted if the client has yet to complete the survey
   })
-  hasBeenSubmitted = false;
+  submissionTimestamp?: number;
 
   constructor({
     id,
     revision,
     hasBeenAbandoned,
     hasBeenCancelled,
-    hasBeenSubmitted,
+    submissionTimestamp,
     survey,
     responses,
     participant,
@@ -319,7 +324,7 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
     revision: number;
     hasBeenAbandoned: boolean;
     hasBeenCancelled: boolean;
-    hasBeenSubmitted?: boolean;
+    submissionTimestamp?: number;
     survey: Survey;
     // surveys may be anonymous
     participant?: SurveyParticipantCompositeIdentifier;
@@ -341,11 +346,10 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
     this.hasBeenAbandoned =
       typeof hasBeenAbandoned === 'boolean' ? hasBeenAbandoned : false;
 
-    this.hasBeenSubmitted =
-      typeof hasBeenSubmitted === 'boolean' ? hasBeenSubmitted : false;
-
     this.hasBeenCancelled =
       typeof hasBeenCancelled === 'boolean' ? hasBeenCancelled : false;
+
+    this.submissionTimestamp = submissionTimestamp;
 
     this.eventHistory = eventHistory;
 
@@ -468,8 +472,8 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
     );
   }
 
-  handleSurveySubmitted(_event: SurveySubmitted) {
-    this.hasBeenSubmitted = true;
+  handleSurveySubmitted(event: SurveySubmitted) {
+    this.submissionTimestamp = event.metadata.dateEffective;
 
     return this;
   }
@@ -496,6 +500,9 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
 
     this.apply(
       new SurveySubmitted({
+        metadata: {
+          dateEffective: Date.now(),
+        },
         payload: {
           aggregateCompositeIdentifier:
             this.getAggregateCompositeIdentifier() as SurveyResponseCompositeIdentifier,
@@ -740,8 +747,8 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
       revision: this.revision,
       survey: this.survey.toPersistenceDto(),
       hasBeenAbandoned: this.hasBeenAbandoned,
-      hasBeenSubmitted: this.hasBeenSubmitted,
       hasBeenCancelled: this.hasBeenCancelled,
+      submissionTimestamp: this.submissionTimestamp,
       participantCompositeIdentifier: this.participant,
       responses: this.responses,
       eventHistory: this.eventHistory,
@@ -753,8 +760,8 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
       id,
       revision,
       hasBeenAbandoned,
-      hasBeenSubmitted,
       hasBeenCancelled,
+      submissionTimestamp,
       survey,
       responses,
       participantCompositeIdentifier,
@@ -800,8 +807,8 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
       id,
       revision: revision,
       hasBeenAbandoned,
-      hasBeenSubmitted,
       hasBeenCancelled,
+      submissionTimestamp,
       survey: surveyBuildResult,
       responses: questionResponses as SurveyQuestionResponse[],
       participant: participantCompositeIdentifier,
@@ -843,7 +850,6 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
       responses: [],
       revision: 0,
       hasBeenAbandoned: false,
-      hasBeenSubmitted: false,
       hasBeenCancelled: false,
       participant: participantCompositeIdentifier,
       eventHistory: [

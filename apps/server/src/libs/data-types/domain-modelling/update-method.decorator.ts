@@ -48,13 +48,12 @@ export function UpdateMethod(): MethodDecorator {
         ]);
       }
 
-      const cloned = ctor.fromPersistenceDto(
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-        this.toPersistenceDto() as unknown,
-        {
-          shouldValidate: true,
-        },
-      );
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+      const persistenceDto = this.toPersistenceDto() as unknown;
+
+      const cloned = ctor.fromPersistenceDto(persistenceDto, {
+        shouldValidate: true,
+      });
 
       // TODO put a clone method on the entities?
       //   const cloned = this.clone();

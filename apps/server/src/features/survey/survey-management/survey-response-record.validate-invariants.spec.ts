@@ -5,6 +5,8 @@ import {
 } from '../survey-completion';
 import { Survey, SurveyPersistenceDto } from './survey.aggregate-root';
 
+const submissionTimestamp = 1787693484530;
+
 const targetSurvey = buildTestInstance<SurveyPersistenceDto>(Survey, {
   isFinal: true,
   topLevelQuestionLabels: ['1'],
@@ -113,7 +115,7 @@ describe(`SurveyCompletionRecord.validateInvariants`, () => {
           {
             survey: targetSurvey.toPersistenceDto(),
             hasBeenAbandoned: true,
-            hasBeenSubmitted: true,
+            submissionTimestamp,
           },
         );
 
@@ -133,7 +135,7 @@ describe(`SurveyCompletionRecord.validateInvariants`, () => {
     describe(`when a survey response record has been marked as submitted but is missing required response to an optional question`, () => {
       it(`should return the expected error`, () => {
         const invalidInstance = buildTestInstance(SurveyResponseRecord, {
-          hasBeenSubmitted: true,
+          submissionTimestamp,
           hasBeenAbandoned: false,
           responses: [
             {
@@ -164,7 +166,7 @@ describe(`SurveyCompletionRecord.validateInvariants`, () => {
       it(`should return the expected error`, () => {
         const invalidInstance = buildTestInstance(SurveyResponseRecord, {
           hasBeenAbandoned: false,
-          hasBeenSubmitted: true,
+          submissionTimestamp,
           survey: complexSurvey.toPersistenceDto(),
           responses: [
             {

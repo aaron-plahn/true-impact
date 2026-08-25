@@ -20,6 +20,7 @@ import {
 class SurveyReviewPersistenceDto {
   id: string;
   revision: number;
+  // TODO change this to submission timestamp
   hasBeenSubmitted: boolean;
   questionsReviewed: SurveyQuestionReviewRecordPersistenceDto[];
   surveyName: string;

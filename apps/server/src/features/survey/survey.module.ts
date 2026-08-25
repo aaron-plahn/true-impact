@@ -1,3 +1,4 @@
+import { forwardRef } from '@nestjs/common';
 import { AuthModule } from '../../auth/auth.module';
 import {
   InMemoryCommandRepository,
@@ -116,7 +117,7 @@ import { SurveyController } from './survey.controller';
 const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, FinalizeSurvey];
 
 @Module({
-  imports: [ClientModule, FlagModule, UserModule, AuthModule],
+  imports: [forwardRef(() => ClientModule), FlagModule, UserModule, AuthModule],
   providers: [
     // core survey commands
     ImportSurveyCommandHandler,
@@ -453,7 +454,7 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, FinalizeSurvey];
     EncryptionService,
   ],
   // Exposing data classes allows us to drive them via repl
-  exports: [...dataClasses],
+  exports: [...dataClasses, SurveyResponseQueryService],
   controllers: [
     SurveyResponseQueryController,
     SurveyReviewController,

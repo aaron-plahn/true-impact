@@ -186,6 +186,7 @@ export class SurveyQuestionResponseViewModel {
     size: 5,
     name: 'long survey',
     revision: '5',
+    // no submissionTimestamp
     hasBeenSubmitted: false,
     hasBeenCancelled: false,
     participantCompositeIdentifier: {
@@ -322,6 +323,13 @@ export class SurveyResponseRecordViewModelClientDto {
   })
   hasBeenSubmitted: boolean;
 
+  @NonNegativeInteger({
+    label: 'submission time',
+    description:
+      'time stamp representing the date and time at which the client submitted this survey attempt',
+  })
+  submissionTime?: number;
+
   @NonEmptyString({
     label: 'participant identifier',
     description:
@@ -399,6 +407,14 @@ export class SurveyResponseRecordViewModel {
   })
   hasBeenSubmitted: boolean;
 
+  @NonEmptyString({
+    label: 'time of submission',
+    description:
+      'date and time at which this response was submitted by the survey participant',
+    isOptional: true,
+  })
+  submissionTime?: number;
+
   @BooleanDataType({
     label: 'has been cancelled',
     description:
@@ -438,12 +454,14 @@ export class SurveyResponseRecordViewModel {
     responses,
     nextQuestion,
     size,
+    submissionTime,
   }: {
     id: string;
     name: string;
     revision: string;
     hasBeenSubmitted: boolean;
     hasBeenCancelled: boolean;
+    submissionTime?: number;
     participantCompositeIdentifier: {
       type: string;
       id: string;
@@ -474,6 +492,8 @@ export class SurveyResponseRecordViewModel {
       : null;
 
     this.hasBeenSubmitted = hasBeenSubmitted;
+
+    this.submissionTime = submissionTime;
 
     this.hasBeenCancelled = hasBeenCancelled;
 
@@ -607,6 +627,7 @@ export class SurveyResponseRecordViewModel {
             new SurveyReportViewModel({
               name: analyzer.name,
               categories: analyzer.categories,
+              submissionTime: domainModel.submissionTimestamp,
             }),
           );
 

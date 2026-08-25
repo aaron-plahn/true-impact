@@ -1,3 +1,4 @@
+import { ClientViewModel } from 'src/features/clients/queries';
 import { CreateClient } from '../../../features/clients/commands/create-client.command';
 import { CreateCommunity } from '../../../features/communities/commands';
 import {
@@ -269,6 +270,28 @@ describe(`Medicine wheel survey completion`, () => {
           };
 
           assertReportOnSurveyResponseView(responseViewFromDetailEndpoint);
+
+          const responseFromSubmittedEndpoint = (
+            await adminHttpClient.get(
+              `${surveyResponseRecordIndexEndpoint}/submitted`,
+            )
+          ).data as SurveyResponseRecordViewModelClientDto[];
+
+          expect(responseFromSubmittedEndpoint).toHaveLength(1);
+
+          assertReportOnSurveyResponseView(responseFromSubmittedEndpoint[0]);
+
+          const clientSearchResponse = await adminHttpClient.get(
+            `${clientBaseEndpoint}/${clientId}`,
+          );
+
+          const clientView = clientSearchResponse.data as ClientViewModel;
+
+          expect(clientView.surveyResponses).toHaveLength(1);
+
+          const surveyResponse = clientView.surveyResponses[0];
+
+          assertReportOnSurveyResponseView(surveyResponse);
 
           // TODO Do we want to ensure that this report is on the index views as well?
         },

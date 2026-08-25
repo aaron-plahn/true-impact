@@ -1,7 +1,9 @@
 import { Inject } from '@nestjs/common';
+import { isDeepStrictEqual } from 'util';
 import { TrueImpactError } from '../../../../libs/data-types';
 import { SurveyQueryService } from '../../queries/survey-query.service';
 import { SurveyViewModelClientDto } from '../../queries/survey.view-model';
+import { SurveyParticipantCompositeIdentifier } from '../models';
 import { SurveyResponseRecord } from '../models/survey-response-record.aggregate-root';
 import type { ISurveyResponseCommandRepository } from '../repositories';
 import { SURVEY_RESPONSE_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../repositories';
@@ -48,6 +50,28 @@ export class SurveyResponseQueryService {
         mostRecentVersionOfSurvey,
       ),
     });
+  }
+
+  async forParticipant(
+    participantCompositeIdentifier: SurveyParticipantCompositeIdentifier,
+  ): Promise<TrueImpactError | SurveyResponseRecordViewModel[]> {
+    /**
+     * TODO Optimize this. We might want to just shift to event sourcing views.
+     */
+    const allResponses = await this.fetchMany();
+
+    if (allResponses instanceof Error) {
+      return allResponses;
+    }
+
+    const responsesForParticipant = allResponses.filter((r) =>
+      isDeepStrictEqual(
+        r.participantCompositeIdentifier,
+        participantCompositeIdentifier,
+      ),
+    );
+
+    return responsesForParticipant;
   }
 
   async fetchMany() {
