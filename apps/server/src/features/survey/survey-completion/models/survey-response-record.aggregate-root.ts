@@ -148,7 +148,10 @@ export class SurveyResponseRecordPersistenceDto {
 
   hasBeenCancelled: boolean;
 
+  // TODO remove this in favor of only the submission date
   hasBeenSubmitted: boolean;
+
+  submissionTimestamp?: number;
 
   /**
    * In the future, participants may be an `Employee`, `CommunityEmployee`, etc. We don't want
@@ -298,11 +301,20 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
   })
   nextQuestionLabel?: string; // possibly `DONE`
 
+  // TODO Remove this in favor of sumission date
   @BooleanDataType({
     label: 'has been submitted',
     description: 'has this survey been submitted?',
   })
   hasBeenSubmitted = false;
+
+  @NonNegativeInteger({
+    label: 'time of submission',
+    description:
+      'records the date and time the client submitted this survey attempt',
+    isOptional: true, // omitted if the client has yet to complete the survey
+  })
+  submissionTimestamp?: number;
 
   constructor({
     id,
@@ -468,8 +480,10 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
     );
   }
 
-  handleSurveySubmitted(_event: SurveySubmitted) {
+  handleSurveySubmitted(event: SurveySubmitted) {
     this.hasBeenSubmitted = true;
+
+    this.submissionTimestamp = event.metadata.dateEffective;
 
     return this;
   }
@@ -496,6 +510,9 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
 
     this.apply(
       new SurveySubmitted({
+        metadata: {
+          dateEffective: Date.now(),
+        },
         payload: {
           aggregateCompositeIdentifier:
             this.getAggregateCompositeIdentifier() as SurveyResponseCompositeIdentifier,

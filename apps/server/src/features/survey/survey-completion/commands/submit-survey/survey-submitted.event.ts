@@ -9,7 +9,20 @@ export class SurveySubmitted {
 
   readonly payload: SurveySubmittedPayload;
 
-  constructor({ payload }: { payload: SurveySubmittedPayload }) {
+  readonly metadata: {
+    // Unix timestamp
+    dateEffective: number;
+  };
+
+  constructor({
+    metadata,
+    payload,
+  }: {
+    metadata: { dateEffective: number };
+    payload: SurveySubmittedPayload;
+  }) {
     this.payload = payload;
+
+    this.metadata = metadata;
   }
 }

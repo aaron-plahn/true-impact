@@ -322,6 +322,13 @@ export class SurveyResponseRecordViewModelClientDto {
   })
   hasBeenSubmitted: boolean;
 
+  @NonNegativeInteger({
+    label: 'submission time',
+    description:
+      'time stamp representing the date and time at which the client submitted this survey attempt',
+  })
+  submissionTime?: number;
+
   @NonEmptyString({
     label: 'participant identifier',
     description:
@@ -607,6 +614,7 @@ export class SurveyResponseRecordViewModel {
             new SurveyReportViewModel({
               name: analyzer.name,
               categories: analyzer.categories,
+              timeSubmitted: domainModel.submissionTimestamp,
             }),
           );
 

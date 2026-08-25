@@ -9,11 +9,14 @@ import { deepConvertMapToObject } from '../../../../libs/data-types';
 // }
 
 export class SurveyReportViewModelClientDto {
+  // TODO decorators
   name: string;
 
   categories: string[];
 
   valuesByCategory: Record<string, number>;
+
+  timeSubmitted?: number;
 }
 
 export class SurveyReportViewModel {
@@ -31,10 +34,23 @@ export class SurveyReportViewModel {
    */
   valuesByCategory = new Map<string, number>();
 
-  constructor({ name, categories }: { name: string; categories: string[] }) {
+  // unix time-stamp
+  timeSubmitted?: number;
+
+  constructor({
+    name,
+    categories,
+    timeSubmitted,
+  }: {
+    name: string;
+    categories: string[];
+    timeSubmitted?: number;
+  }) {
     this.name = name;
 
     this.categories = categories;
+
+    this.timeSubmitted = timeSubmitted;
 
     // Note that we currently use a builder pattern to set values. But this might shift when we go to event sourcing our views.
 
@@ -49,6 +65,7 @@ export class SurveyReportViewModel {
       name: this.name,
       categories: this.categories,
       valuesByCategory: deepConvertMapToObject(this.valuesByCategory),
+      timeSubmitted: this.timeSubmitted,
     };
   }
 

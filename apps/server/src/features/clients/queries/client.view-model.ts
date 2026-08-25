@@ -108,7 +108,7 @@ export class ClientViewModel {
 
   flags: Map<string, FlagViewModelClientDto>;
 
-  // these should be sorted by completion date (most recent first)
+  // these are sorted by completion date (most recent first)
   surveyResponses: SurveyResponseRecordViewModelClientDto[];
 
   dateOfBirth: string;
@@ -195,7 +195,10 @@ export class ClientViewModel {
       }
     });
 
-    const surveyResponses = context.reportsByClientId.get(id) || [];
+    const surveyResponses = (context.reportsByClientId.get(id) || []).sort(
+      (reportA, reportB) =>
+        (reportA.submissionTime || 0) - (reportB.submissionTime || 0),
+    );
 
     return new ClientViewModel({
       id,
