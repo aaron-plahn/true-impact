@@ -73,6 +73,7 @@ export class AuthController {
     try {
       // is this consistent with our internal session type?
       session.userId = userId;
+
       req.session.save();
     } catch {
       throw Error(

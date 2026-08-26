@@ -1,4 +1,3 @@
-import axios from "axios";
 import * as dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -223,31 +222,7 @@ export const config: WebdriverIO.Config = {
    * @param {string} cid worker id (e.g. 0-0)
    */
   beforeSession: async function (_config, _capabilities, _specs, _cid) {
-    const data = { email: "user@digiteched.com", password: "superSECRET1" };
-
-    const apiKey = process.env.SUPERTOKENS_API_KEYS;
-
-    if (apiKey === null || typeof apiKey !== "string" || apiKey.length === 0) {
-      throw new Error(
-        `WDIO failed to obtain Supertokens API Key from process.env in order to seed test user in Supertokens.`,
-      );
-    }
-
-    const headers = {
-      "api-key": process.env.SUPERTOKENS_API_KEYS,
-      "Content-Type": "application/json",
-    };
-
-    // TODO from environment or a config
-    const supertokensDashboardEndpoint = `http://localhost:3567/recipe/signup`;
-
-    try {
-      await axios.post(supertokensDashboardEndpoint, data, { headers });
-    } catch (error) {
-      throw new Error(
-        `E2E pre-session hook failed to seed test user in Supertokens Auth DB.\n${(error as Error)?.message} || 'Unknown error.'`,
-      );
-    }
+    // TODO Create various kinds of user here?
   },
   /**
    * Gets executed before test execution begins. At this point you can access to all global

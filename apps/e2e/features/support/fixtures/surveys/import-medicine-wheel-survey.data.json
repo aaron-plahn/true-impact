@@ -1,0 +1,109 @@
+{
+    "type": "IMPORT_SURVEY",
+    "payload": {
+        "name": {
+            "text": "DSS Client Evaluation (Medicine Wheel)"
+        },
+        "questions": [
+            {
+                "label": "1",
+                "prompt": "How often do you feel sad?",
+                "options": [
+                    {
+                        "label": "a",
+                        "text": "I sometimes feel sad",
+                        "flags": [
+                            {
+                                "label": "my flag",
+                                "description": "description for test flag"
+                            }
+                        ],
+                        "valuesByAnalyzerName": {
+                            "medicine wheel": {
+                                "red": 1
+                            }
+                        },
+                        "followUpQuestion": {
+                            "label": "1.1",
+                            "prompt": "My sadness lasts for",
+                            "options": [
+                                {
+                                    "label": "a",
+                                    "text": "a few hours",
+                                    "flags": [],
+                                    "valuesByAnalyzerName": {}
+                                },
+                                {
+                                    "label": "b",
+                                    "text": "a few days",
+                                    "flags": [],
+                                    "valuesByAnalyzerName": {}
+                                },
+                                {
+                                    "label": "c",
+                                    "text": "a few weeks",
+                                    "flags": [],
+                                    "valuesByAnalyzerName": {
+                                        "medicine wheel": {
+                                            "black": 1
+                                        }
+                                    },
+                                    "followUpQuestion": {
+                                        "label": "1.1.1",
+                                        "prompt": "I am currently seeking help for my sadness",
+                                        "options": [
+                                            {
+                                                "label": "a",
+                                                "text": "yes",
+                                                "flags": [],
+                                                "valuesByAnalyzerName": {}
+                                            },
+                                            {
+                                                "label": "b",
+                                                "text": "no",
+                                                "flags": [
+                                                    {
+                                                        "label": "requires immediate help",
+                                                        "description": "client flagged for immediate intervention"
+                                                    }
+                                                ],
+                                                "valuesByAnalyzerName": {
+                                                    "medicine wheel": {
+                                                        "red": 1
+                                                    }
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "label": "b",
+                        "text": "I never feel sad",
+                        "flags": [],
+                        "valuesByAnalyzerName": {
+                            "medicine wheel": {
+                                "white": 1
+                            }
+                        }
+                    }
+                ]
+            }
+        ],
+        "analyzers": [
+            {
+                "name": {
+                    "text": "medicine wheel"
+                },
+                "categories": [
+                    "red",
+                    "white",
+                    "yellow",
+                    "black"
+                ]
+            }
+        ]
+    }
+}

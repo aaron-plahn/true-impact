@@ -1,7 +1,7 @@
 import { Given, Then, When } from "@wdio/cucumber-framework";
 
 import loginPage from "../../login/login.page";
-import { surveyPage } from "../survey-management/survey-builder.page";
+import { surveyManagementIndexPage } from "../survey-management/survey-builder.page";
 import { surveyCompletionPage } from "./survey-completion.page";
 
 Given("There is a survey named {string}", async (surveyName) => {
@@ -24,34 +24,38 @@ Given("There is a survey named {string}", async (surveyName) => {
   }
 
   // TODO Can we change the step to "Given I am logged in as admin"?
-  await loginPage.login(adminUsername, adminPassword);
+  await loginPage.logIn(adminUsername, adminPassword);
 
-  await surveyPage.open();
+  await surveyManagementIndexPage.open();
 
-  await surveyPage.beginNewSurvey(surveyName);
+  await surveyManagementIndexPage.beginNewSurvey(surveyName);
 });
 
 Given("It has a question {string}: {string}", async (label, prompt) => {
-  await surveyPage.addQuestion({ label, prompt });
+  await surveyManagementIndexPage.addQuestion({ label, prompt });
 });
 
 Given(
   "Question {string} has an option {string}: {string}",
   async (questionLabel, optionLabel, text) => {
-    await surveyPage.addOptionForQuestion({ questionLabel, optionLabel, text });
+    await surveyManagementIndexPage.addOptionForQuestion({
+      questionLabel,
+      optionLabel,
+      text,
+    });
   },
 );
 
 Given("The survey has been finalized", async () => {
-  await surveyPage.finalize();
+  await surveyManagementIndexPage.finalize();
 });
 
 Given("The survey is open with a one-time passcode", async () => {
-  await surveyPage.openToAnonymousParticipant();
+  await surveyManagementIndexPage.openToAnonymousParticipant();
 });
 
 Given("I am on the survey response page", async () => {
-  await surveyPage.goToResponsePage();
+  await surveyManagementIndexPage.goToResponsePage();
 });
 
 When("I begin the survey {string}", async (surveyName: string) => {

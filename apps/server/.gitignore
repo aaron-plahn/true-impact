@@ -3,6 +3,9 @@
 /node_modules
 /build
 
+# generated output
+/src/e2e/scenarios/fixtures/exports
+
 # Logs
 logs
 *.log

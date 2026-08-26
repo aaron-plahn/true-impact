@@ -1,3 +1,5 @@
+import { existsSync, mkdirSync, writeFileSync } from 'fs';
+import path from 'path';
 import { ClientViewModel } from 'src/features/clients/queries';
 import { CreateClient } from '../../../features/clients/commands/create-client.command';
 import { CreateCommunity } from '../../../features/communities/commands';
@@ -211,6 +213,31 @@ describe(`Medicine wheel survey completion`, () => {
 
         accessCode = acks[1].accessCode as string;
       },
+    });
+  });
+
+  afterAll(() => {
+    const parentDir = `src/e2e/scenarios/fixtures/exports/surveys`;
+
+    if (!existsSync(parentDir)) {
+      mkdirSync(parentDir, { recursive: true });
+    }
+
+    const filename = 'import-medicine-wheel-survey.data.json';
+
+    const fullFsa = {
+      type: 'IMPORT_SURVEY',
+      payload: medicineWheelSurvey,
+    };
+
+    const data = JSON.stringify(fullFsa, null, 4);
+
+    const fullPath = path.join(parentDir, filename);
+
+    console.log({ fullPath });
+
+    writeFileSync(fullPath, data, {
+      encoding: 'utf-8',
     });
   });
 

@@ -94,12 +94,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   const logOut = async () => {
-    // const logOutResponse = await fetch(`${config.API_URL}/auth/logOut`, {
-    //   method: "POST",
-    //   credentials: "include",
-    // });
+    await fetch(`${config.API_URL}/auth/logOut`, {
+      method: "POST",
+      credentials: "include",
+    });
 
-    // const _logOutData = await logOutResponse.json();
+    // TODO store the response and check if it is an error and handle this appropriately
 
     setUser(null);
   };

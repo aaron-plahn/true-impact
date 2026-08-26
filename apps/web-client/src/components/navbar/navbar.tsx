@@ -165,7 +165,10 @@ export const NavBar = (): JSX.Element => {
                 data-testid="avatar-button"
               >
                 {session?.doesSessionExist ? (
-                  <Avatar sx={{ bgcolor: "darkgrey" }}>
+                  <Avatar
+                    sx={{ bgcolor: "darkgrey" }}
+                    data-testid="avatar-menu-control"
+                  >
                     <PersonIcon />
                   </Avatar>
                 ) : (
