@@ -1,4 +1,4 @@
-import { Stack, Typography } from "@mui/material";
+import { Typography } from "@mui/material";
 import { JSX } from "react";
 import { Link } from "react-router-dom";
 import { ApiResponseErrorInfo } from "../../error-handling";
@@ -26,17 +26,25 @@ export const SurveyReviewIndexPage = (): JSX.Element => {
 
   return (
     <>
-      <Typography variant="h1">Review a Survey!</Typography>
-      <Stack>
-        {data.map((completedResponse) => (
-          <Typography variant="body1">
-            <Link to={`/surveys/responses/${completedResponse.id}`}>
-              {/* TODO timestamp presenter */}
-              {completedResponse.name} [{completedResponse.submissionTime}]
-            </Link>
-          </Typography>
-        ))}
-      </Stack>
+      <Typography variant="h1">Choose a Survey Response to Review</Typography>
+      <table>
+        <thead>
+          <th>
+            <td>Name</td>
+          </th>
+        </thead>
+        <tbody>
+          {(data || []).map((surveyResponseRecord) => (
+            <tr>
+              <td>
+                <Link to={`/surveys/responses/${surveyResponseRecord.id}`}>
+                  {surveyResponseRecord.name}
+                </Link>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </>
   );
 };

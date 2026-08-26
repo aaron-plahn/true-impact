@@ -2,7 +2,7 @@ import Page from "../../login/page";
 
 class SurveyReviewIndexPage extends Page {
   public async viewMostRecentSurveyResponse() {
-    const firstRow = await $("table tbody tr:nth-child(1)");
+    const firstRow = $("table tbody tr:nth-child(1)");
 
     await firstRow.click();
   }

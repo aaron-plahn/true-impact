@@ -17,16 +17,20 @@ export const DefaultSurveyReportPresenter = ({
     <div>
       <Typography variant="h3">{report.name}</Typography>
       <table>
-        <tr>
-          <th>Category</th>
-          <th>Value</th>
-        </tr>
-        {rows.map((row) => (
-          <tr key={row.category}>
-            <td>{row.category}</td>
-            <td>{row.value}</td>
+        <thead>
+          <tr>
+            <th>Category</th>
+            <th>Value</th>
           </tr>
-        ))}
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={row.category}>
+              <td>{row.category}</td>
+              <td>{row.value}</td>
+            </tr>
+          ))}
+        </tbody>
       </table>
     </div>
   );
