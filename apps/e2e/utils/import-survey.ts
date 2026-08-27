@@ -13,13 +13,13 @@ export const importSurvey = async (
       throw new Error(`Unauthorized path traversal detected`);
     }
 
-    const absolutePath = path.resolve(baseDir, relativePath);
+    const relativePAth = path.relative(baseDir, relativePath);
 
-    if(!absolutePath.startsWith(baseDir)){
+    if(!relativePAth.startsWith(baseDir)){
       throw new Error(`Unauthorized path traversal detected.`)
     }
 
-    const rawData = await fs.readFile(absolutePath, "utf-8");
+    const rawData = await fs.readFile(relativePAth, "utf-8");
 
     const fixtureData = JSON.parse(rawData);
 
