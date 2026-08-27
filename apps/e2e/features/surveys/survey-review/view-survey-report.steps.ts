@@ -28,7 +28,7 @@ When("I log in as admin", async () => {
 
   await browser.deleteAllCookies();
 
-  await loginPage.logInMenu.click();
+  await loginPage.loginMenu.click();
 
   // TODO clean up the logic in this method
   await $("*=Sign In").click();
@@ -37,7 +37,7 @@ When("I log in as admin", async () => {
 });
 
 When(
-  "The survey in the fixture file: {string} has been imported",
+  "The survey in the fixture file {string} has been imported",
   async (fixturePath: string) => {
     await new Page().open("");
 
@@ -61,7 +61,7 @@ When(
 
 // TODO Standardize templates \ use of ":"
 When(
-  "I navigate to the response detail page for: {string}",
+  "I navigate to the response detail page for {string}",
   async (surveyName) => {
     await $(`*=${surveyName}`).click();
   },
@@ -81,7 +81,7 @@ Then(
   },
 );
 
-Then("I should see the report name: {string}", async (reportName: string) => {
+Then("I should see the report name {string}", async (reportName: string) => {
   await expect($(`*=${reportName}`)).toBeExisting();
 });
 

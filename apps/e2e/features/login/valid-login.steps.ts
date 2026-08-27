@@ -11,7 +11,7 @@ Given("I am on the login page", async () => {
   await pages.login.open();
 });
 
-When("I login with valid admin credentials", async () => {
+When("I log in with valid admin credentials", async () => {
   const adminUsername = process.env.SYSTEM_ADMIN_USERNAME as string;
 
   if (!adminUsername) {
@@ -42,12 +42,12 @@ When("I log out", async () => {
   await loginPage.logOut();
 });
 
-Then("I should see the log out icon", async () => {
+Then("I should see the logout icon", async () => {
   await expect(loginPage.logoutIcon).toBeExisting();
 });
 
-Then("I should see the log in menu", async () => {
-  await expect(loginPage.logInMenu).toBeExisting();
+Then("I should see the login menu", async () => {
+  await expect(loginPage.loginMenu).toBeExisting();
 });
 
 Then("There should be no cookies", async () => {

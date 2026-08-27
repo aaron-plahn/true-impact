@@ -217,6 +217,13 @@ describe(`Medicine wheel survey completion`, () => {
   });
 
   afterAll(() => {
+    /**
+     * Note that we write the fixture data from this test to a gitignored directory within the server source code.
+     * These fixtures can be synchronized with the (git controlled) UI e2e (wdio) fixtures. This saves us the work
+     * of building representative test data for UI e2e and server e2e tests. These fixutres could potentailly be
+     * used to seed a staging \ sandbox DB.
+     */
+    // TODO Extract a util
     const parentDir = `src/e2e/scenarios/fixtures/exports/surveys`;
 
     if (!existsSync(parentDir)) {
@@ -233,8 +240,6 @@ describe(`Medicine wheel survey completion`, () => {
     const data = JSON.stringify(fullFsa, null, 4);
 
     const fullPath = path.join(parentDir, filename);
-
-    console.log({ fullPath });
 
     writeFileSync(fullPath, data, {
       encoding: 'utf-8',

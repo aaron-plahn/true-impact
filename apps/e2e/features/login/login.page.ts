@@ -5,7 +5,7 @@ import Page from "./page.js";
  * sub page containing specific selectors and methods for a specific page
  */
 class LoginPage extends Page {
-  public get logInMenu() {
+  public get loginMenu() {
     return $('[data-testid="sign-in-menu-control"]');
   }
 
@@ -38,7 +38,7 @@ class LoginPage extends Page {
 
   /**
    * a method to encapsule automation code to interact with the page
-   * e.g. to login using username and password
+   * e.g. to log in using username and password
    */
   public async logIn(username: string, password: string) {
     await this.inputUsername.setValue(username);

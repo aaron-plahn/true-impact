@@ -32,6 +32,8 @@ export class OptionalUserGuard implements CanActivate {
        * This is a system error. Some how the userId on the cookie
        * did not correspond to a member of the general public.
        * However, we fail gracefully by treating this user as a member of the general public.
+       *
+       * TODO Can we force the client to remove the cookie in this case?
        */
       return true;
     }
