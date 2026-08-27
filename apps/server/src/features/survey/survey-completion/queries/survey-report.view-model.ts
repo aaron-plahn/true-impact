@@ -2,7 +2,6 @@ import {
   deepConvertMapToObject,
   LookupTable,
   NonEmptyString,
-  NonNegativeInteger,
 } from '../../../../libs/data-types';
 
 // We may want to do something like this in order to generate default report presentation on the client \ as PDFs.
@@ -36,15 +35,11 @@ export class SurveyReportViewModelClientDto {
   })
   valuesByCategory: Record<string, number>;
 
-  // TODO Why is this here?
-  // generationTime would be more accurate
-  // or maybe a version \ revision #
-  @NonNegativeInteger({
-    label: 'submission time',
-    description: 'date and time at which the participant submitted this survey',
-    isOptional: true, // omitted if still in progress
-  })
-  submissionTime?: number;
+  /**
+   * TODO
+   * generationTimestamp
+   * revisionNumber
+   */
 }
 
 export class SurveyReportViewModel {
@@ -93,7 +88,6 @@ export class SurveyReportViewModel {
       name: this.name,
       categories: this.categories,
       valuesByCategory: deepConvertMapToObject(this.valuesByCategory),
-      submissionTime: this.submissionTime,
     };
   }
 
