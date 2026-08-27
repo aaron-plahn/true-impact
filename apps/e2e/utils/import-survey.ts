@@ -7,7 +7,13 @@ export const importSurvey = async (
   cookieHeader?: string,
 ): Promise<void> => {
   try {
-    const absolutePath = path.resolve(process.cwd(), relativePath);
+    const baseDir = path.resolve("features/support/fixtures/surveys")
+
+    const absolutePath = path.resolve(baseDir, relativePath);
+
+    if(!absolutePath.startsWith(`${baseDir}${path.sep}`)){
+      throw new Error(`Unauthorized path traversal detected.`)
+    }
 
     const rawData = await fs.readFile(absolutePath, "utf-8");
 
