@@ -20,7 +20,7 @@ export interface SurveyQuestion {
   options: Record<string, SurveyOption>;
 }
 
-interface CommandResponse {
+export interface CommandResponse {
   type: string;
   id: string;
   revision: string;
@@ -37,7 +37,7 @@ export interface SurveyDetailResponse {
   accessCode?: string;
 }
 
-interface CommandFsa {
+export interface CommandFsa {
   type: string;
   payload: unknown;
 }
@@ -45,7 +45,10 @@ interface CommandFsa {
 export const surveyApi = createApi({
   reducerPath: "surveys",
   tagTypes: ["survey"],
-  baseQuery: fetchBaseQuery({ baseUrl: config.API_URL }),
+  baseQuery: fetchBaseQuery({
+    baseUrl: config.API_URL,
+    credentials: "include",
+  }),
   endpoints: (builder) => ({
     fetchSurveyById: builder.query<SurveyDetailResponse, string>({
       query: (id: string) => `surveys/${id}`,

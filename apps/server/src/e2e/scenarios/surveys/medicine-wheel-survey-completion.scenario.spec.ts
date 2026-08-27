@@ -1,3 +1,5 @@
+import { existsSync, mkdirSync, writeFileSync } from 'fs';
+import path from 'path';
 import { ClientViewModel } from 'src/features/clients/queries';
 import { CreateClient } from '../../../features/clients/commands/create-client.command';
 import { CreateCommunity } from '../../../features/communities/commands';
@@ -55,7 +57,7 @@ const reportName = 'medicine wheel';
  */
 const medicineWheelSurvey: ImportSurvey = {
   name: {
-    text: 'DSS Client Evaluation (Medicine Wheel)',
+    text: 'DSS Client Evaluation',
   },
   questions: [
     {
@@ -211,6 +213,36 @@ describe(`Medicine wheel survey completion`, () => {
 
         accessCode = acks[1].accessCode as string;
       },
+    });
+  });
+
+  afterAll(() => {
+    /**
+     * Note that we write the fixture data from this test to a gitignored directory within the server source code.
+     * These fixtures can be synchronized with the (git controlled) UI e2e (wdio) fixtures. This saves us the work
+     * of building representative test data for UI e2e and server e2e tests. These fixutres could potentailly be
+     * used to seed a staging \ sandbox DB.
+     */
+    // TODO Extract a util
+    const parentDir = `src/e2e/scenarios/fixtures/exports/surveys`;
+
+    if (!existsSync(parentDir)) {
+      mkdirSync(parentDir, { recursive: true });
+    }
+
+    const filename = 'import-medicine-wheel-survey.data.json';
+
+    const fullFsa = {
+      type: 'IMPORT_SURVEY',
+      payload: medicineWheelSurvey,
+    };
+
+    const data = JSON.stringify(fullFsa, null, 4);
+
+    const fullPath = path.join(parentDir, filename);
+
+    writeFileSync(fullPath, data, {
+      encoding: 'utf-8',
     });
   });
 

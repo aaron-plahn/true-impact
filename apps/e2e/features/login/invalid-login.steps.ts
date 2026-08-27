@@ -5,7 +5,7 @@ import loginPage from "./login.page.js";
 When(
   "I enter invalid credentials: username {string}, password {string}",
   async (username, password) => {
-    await loginPage.login(username, password);
+    await loginPage.logIn(username, password);
   },
 );
 

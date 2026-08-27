@@ -1,6 +1,10 @@
 import Page from "../../login/page";
 
-class SurveyBuilderPage extends Page {
+class SurveyManagementIndexPage extends Page {
+  public async goToSurveyDetailPage(surveyName: string) {
+    await $(`*=${surveyName}`).click();
+  }
+
   public async beginNewSurvey(surveyName = "Test Survey") {
     await $('[data-testid="new-survey-button"]').click();
 
@@ -84,4 +88,4 @@ class SurveyBuilderPage extends Page {
   }
 }
 
-export const surveyPage = new SurveyBuilderPage();
+export const surveyManagementIndexPage = new SurveyManagementIndexPage();

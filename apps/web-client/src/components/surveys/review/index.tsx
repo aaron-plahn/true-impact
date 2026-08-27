@@ -1,5 +1,2 @@
-import { JSX } from "react";
-
-export const SurveyReviewIndex = (): JSX.Element => {
-  return <div>Survey Review Index Works!</div>;
-};
+export * from "./survey-response-record-detail.page";
+export * from "./survey-review-index.page";

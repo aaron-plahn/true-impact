@@ -18,9 +18,9 @@ export class InMemorySurveyResponseSessionRepository implements ISurveyResponseS
       return Promise.resolve(result);
     }
 
-    return Promise.resolve(
-      this.sessionsById.get(sessionId) as SurveyResponseSession,
-    );
+    const session = this.sessionsById.get(sessionId) as SurveyResponseSession;
+
+    return Promise.resolve(session);
   }
 
   getAll(): Promise<SurveyResponseSession[] | TrueImpactError> {

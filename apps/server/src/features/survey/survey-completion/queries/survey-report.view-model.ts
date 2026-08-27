@@ -36,6 +36,9 @@ export class SurveyReportViewModelClientDto {
   })
   valuesByCategory: Record<string, number>;
 
+  // TODO Why is this here?
+  // generationTime would be more accurate
+  // or maybe a version \ revision #
   @NonNegativeInteger({
     label: 'submission time',
     description: 'date and time at which the participant submitted this survey',

@@ -2,7 +2,8 @@ import { Given, Then, When } from "@wdio/cucumber-framework";
 
 import loginPage from "../../login/login.page";
 
-import { surveyPage } from "./survey-builder.page";
+import Page from "../../login/page";
+import { surveyManagementIndexPage } from "./survey-builder.page";
 
 const testSurveyName = "Weekly Questionnaire";
 
@@ -14,29 +15,17 @@ const option1c = "C++";
 const option1d = "Python";
 
 Given("I am logged in as an admin", async () => {
+  await new Page().open("");
+
+  await browser.deleteCookies();
+
   await loginPage.open();
 
-  const adminUsername = process.env.SYSTEM_ADMIN_USERNAME as string;
-
-  if (!adminUsername) {
-    throw new Error(
-      `Failed to read admin username for e2e test. Did you set $SYSTEM_ADMIN_USERNAME?`,
-    );
-  }
-
-  const adminPassword = process.env.INITIAL_ADMIN_PASSWORD as string;
-
-  if (!adminPassword) {
-    throw new Error(
-      `FAiled to read admin password for e2e test. Did you set $INITIAL_ADMIN_PASSWORD?`,
-    );
-  }
-
-  await loginPage.login(adminUsername, adminPassword);
+  await loginPage.logInAsAdmin();
 });
 
 Given("I am on the survey management index page", async () => {
-  await surveyPage.open();
+  await surveyManagementIndexPage.open();
 });
 
 /**
@@ -48,37 +37,40 @@ Given("I am on the survey management index page", async () => {
  * fixtures in other tests?
  */
 When("I start a new survey", async () => {
-  await surveyPage.beginNewSurvey(testSurveyName);
+  await surveyManagementIndexPage.beginNewSurvey(testSurveyName);
 
-  await surveyPage.addQuestion({ label: "1", prompt: question1 });
+  await surveyManagementIndexPage.addQuestion({
+    label: "1",
+    prompt: question1,
+  });
 
-  await surveyPage.addOptionForQuestion({
+  await surveyManagementIndexPage.addOptionForQuestion({
     questionLabel: "1",
     optionLabel: "a",
     text: option1a,
   });
 
-  await surveyPage.addOptionForQuestion({
+  await surveyManagementIndexPage.addOptionForQuestion({
     questionLabel: "1",
     optionLabel: "b",
     text: option1b,
   });
 
-  await surveyPage.addOptionForQuestion({
+  await surveyManagementIndexPage.addOptionForQuestion({
     questionLabel: "1",
     optionLabel: "c",
     text: option1c,
   });
 
-  await surveyPage.addOptionForQuestion({
+  await surveyManagementIndexPage.addOptionForQuestion({
     questionLabel: "1",
     optionLabel: "d",
     text: option1d,
   });
 
-  await surveyPage.finalize();
+  await surveyManagementIndexPage.finalize();
 
-  await surveyPage.openToAnonymousParticipant();
+  await surveyManagementIndexPage.openToAnonymousParticipant();
 });
 
 Then("It should display the newly created survey", async () => {

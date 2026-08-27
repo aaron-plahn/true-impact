@@ -6,7 +6,11 @@ import { SurveyCompletionIndex } from "../components/surveys/completion";
 import { SurveyManagementIndex } from "../components/surveys/management";
 import { NewSurveyPage } from "../components/surveys/management/new-survey.page";
 import { SurveyDetailPage } from "../components/surveys/management/survey-detail.page";
-import { SurveyReviewIndex } from "../components/surveys/review";
+import {
+  SurveyResponseRecordDetailPage,
+  SurveyReviewIndexPage,
+} from "../components/surveys/review";
+import { SurveyResponseReportDetailPage } from "../components/surveys/review/survey-response-report-detail.page";
 import {
   UserManagementDashboard,
   UserProfile,
@@ -57,7 +61,15 @@ export const AppRoutes = () => {
     },
     {
       path: "/surveys/review",
-      element: <SurveyReviewIndex />,
+      element: <SurveyReviewIndexPage />,
+    },
+    {
+      path: "/surveys/responses/:id",
+      element: <SurveyResponseRecordDetailPage />,
+    },
+    {
+      path: "/surveys/responses/:id/reports/:reportName",
+      element: <SurveyResponseReportDetailPage />,
     },
     {
       path: "/clients",

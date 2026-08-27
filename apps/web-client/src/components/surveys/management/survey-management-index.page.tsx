@@ -9,15 +9,7 @@ export const SurveyManagementIndex = (): JSX.Element => {
   const { data, isLoading, error } = useFetchSurveysQuery();
 
   if (error) {
-    // TODO RTK Query Fetch Error Presenter?
-    return (
-      <ApiResponseErrorInfo
-        // @ts-expect-error Enough with React \ Redux TS madness!
-        status={error?.status || 500}
-        // @ts-expect-error Enough with React \ Redux TS madness!
-        message={error?.data?.message || "unknown error"}
-      />
-    );
+    return <ApiResponseErrorInfo error={error} />;
   }
 
   if (isLoading || !data) {

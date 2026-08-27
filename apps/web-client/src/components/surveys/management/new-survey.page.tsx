@@ -1,6 +1,7 @@
 import { SubmitEventHandler, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { config } from "../../../config";
+import { ApiResponseErrorInfo } from "../../error-handling";
 
 export const NewSurveyPage = () => {
   const [error, setError] = useState<Error | null>(null);
@@ -8,7 +9,7 @@ export const NewSurveyPage = () => {
   const navigate = useNavigate();
 
   if (error) {
-    return <div>Something went wrong!</div>;
+    return <ApiResponseErrorInfo error={error} />;
   }
 
   const onSubmit: SubmitEventHandler = async (event) => {
