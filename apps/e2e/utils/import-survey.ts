@@ -16,6 +16,7 @@ export const importSurvey = async (
       );
     }
 
+    // nosemgrep
     const pathWithBaseDir = path.resolve(baseDir, relativePath);
 
     if (!pathWithBaseDir.startsWith(baseDir)) {
@@ -25,7 +26,6 @@ export const importSurvey = async (
     }
 
     // We input the file from a spec. It doesn't come from a user. This runs in an ephemeral environment. There is no risk here.
-    // nosemgrep
     const rawData = await fs.readFile(pathWithBaseDir, "utf-8");
 
     const fixtureData = JSON.parse(rawData);
@@ -59,8 +59,6 @@ export const importSurvey = async (
     }
 
     const baseApiUrl = `${apiDomain}:${apiServerPort}`;
-
-    console.log({ JHERERERERRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR: baseApiUrl });
 
     /**
      * The commands endpoint uses strict schema-based type validation followed
