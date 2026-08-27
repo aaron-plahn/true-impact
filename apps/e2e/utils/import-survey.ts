@@ -1,3 +1,5 @@
+// nosemgrep
+// See comments below about why there is no risk of unauthorized file system traversal here
 import axios from "axios";
 import * as fs from "fs/promises";
 import * as path from "path";
