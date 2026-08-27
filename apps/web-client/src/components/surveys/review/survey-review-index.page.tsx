@@ -34,7 +34,7 @@ export const SurveyReviewIndexPage = (): JSX.Element => {
           </th>
         </thead>
         <tbody>
-          {(data || []).map((surveyResponseRecord) => (
+          {data.map((surveyResponseRecord) => (
             <tr>
               <td>
                 <Link to={`/surveys/responses/${surveyResponseRecord.id}`}>

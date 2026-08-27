@@ -57,7 +57,7 @@ const reportName = 'medicine wheel';
  */
 const medicineWheelSurvey: ImportSurvey = {
   name: {
-    text: 'DSS Client Evaluation (Medicine Wheel)',
+    text: 'DSS Client Evaluation',
   },
   questions: [
     {
