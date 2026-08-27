@@ -9,6 +9,7 @@ export const AuthPage = (): JSX.Element => {
 
   const navigate = useNavigate();
 
+  // TODO We now need to do this via the RTK API we have introduced
   const { logIn, isLoading, user, error } = auth;
 
   const [username, setUsername] = useState<string>("");
@@ -20,7 +21,6 @@ export const AuthPage = (): JSX.Element => {
   }
 
   if (user) {
-
     navigate("/");
   }
 
