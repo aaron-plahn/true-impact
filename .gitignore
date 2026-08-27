@@ -9,3 +9,7 @@
 overrides.txt
 *.tfstate*
 *.tfvars
+
+# generated
+# from CHANGELOG.md
+ReleaseNotes.md
