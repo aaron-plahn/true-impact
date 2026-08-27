@@ -7,14 +7,25 @@ export const importSurvey = async (
   cookieHeader?: string,
 ): Promise<void> => {
   try {
-    const baseDir = path.resolve("features/support/fixtures/surveys") + path.sep;
+    const baseDir =
+      path.resolve("features/support/fixtures/surveys") + path.sep;
 
-    if(relativePath.includes(path.sep)){
-      throw new Error(`Unauthorized path traversal detected in path ${relativePath}`);
+    if (relativePath.includes(path.sep)) {
+      throw new Error(
+        `Unauthorized path traversal detected in path ${relativePath}`,
+      );
     }
 
-    const pathWithBaseDir = path.relative(baseDir, relativePath);
+    const pathWithBaseDir = path.resolve(baseDir, relativePath);
 
+    if (!pathWithBaseDir.startsWith(baseDir)) {
+      throw new Error(
+        `Unauthorized path traversal detected in path ${relativePath}`,
+      );
+    }
+
+    // We input the file from a spec. It doesn't come from a user. This runs in an ephemeral environment. There is no risk here.
+    // nosemgrep
     const rawData = await fs.readFile(pathWithBaseDir, "utf-8");
 
     const fixtureData = JSON.parse(rawData);
@@ -47,7 +58,9 @@ export const importSurvey = async (
       throw new Error(`You need to set $API_PORT in your test environment.`);
     }
 
-    const baseApiUrl = `http://${apiDomain}:${apiServerPort}`;
+    const baseApiUrl = `${apiDomain}:${apiServerPort}`;
+
+    console.log({ JHERERERERRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR: baseApiUrl });
 
     /**
      * The commands endpoint uses strict schema-based type validation followed
