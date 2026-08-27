@@ -7,7 +7,7 @@ export const importSurvey = async (
   cookieHeader?: string,
 ): Promise<void> => {
   try {
-    const baseDir = path.resolve("features/support/fixtures/surveys")
+    const baseDir = path.resolve("features/support/fixtures/surveys") + path.sep;
 
     if(relativePath.includes(path.sep)){
       throw new Error(`Unauthorized path traversal detected`);
@@ -15,7 +15,7 @@ export const importSurvey = async (
 
     const absolutePath = path.resolve(baseDir, relativePath);
 
-    if(!absolutePath.startsWith(`${baseDir}${path.sep}`)){
+    if(!absolutePath.startsWith(baseDir)){
       throw new Error(`Unauthorized path traversal detected.`)
     }
 
