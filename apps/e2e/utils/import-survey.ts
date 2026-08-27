@@ -1,5 +1,3 @@
-// nosemgrep
-// See comments below about why there is no risk of unauthorized file system traversal here
 import axios from "axios";
 import * as fs from "fs/promises";
 import * as path from "path";
@@ -10,6 +8,10 @@ export const importSurvey = async (
 ): Promise<void> => {
   try {
     const baseDir = path.resolve("features/support/fixtures/surveys")
+
+    if(relativePath.includes(path.sep)){
+      throw new Error(`Unauthorized path traversal detected`);
+    }
 
     const absolutePath = path.resolve(baseDir, relativePath);
 
