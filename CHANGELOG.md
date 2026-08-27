@@ -2,6 +2,9 @@
 
 This first release of the True Impact platform introduces a working model for user management, client management, and survey creation and completion.
 
+# 67
+This minor PR removes some irrelevant data from the server that was never presented to the user.
+
 # 66
 In this PR, we provide a user interface for viewing generated reports about submitted surveys starting with a list of recently submitted surveys. At this point, the report presentation is generic, i.e., it is not aware of which report is being presented. In the future we will introduce customized presentation for important report types.
 
