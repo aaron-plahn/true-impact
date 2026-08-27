@@ -10,6 +10,7 @@ import {
   OpenSurveyToAnonymousIndividualForm,
   OpenSurveyToPublicForm,
 } from "../../command-execution";
+import { ApiResponseErrorInfo } from "../../error-handling";
 import { Loading } from "../../loading";
 import { useFetchSurveyByIdQuery } from "../store/survey.api";
 import { AccessCodeClipboard } from "./access-code-clipboard";
@@ -28,8 +29,7 @@ export const SurveyDetailPage = (): JSX.Element => {
   }
 
   if (error) {
-    // TODO `ErrorInfo` component
-    return <div>Something went wrong.</div>;
+    return <ApiResponseErrorInfo error={error} />;
   }
 
   const { name, questions, isFinal, accessCode, isOpenToPublic } = data;

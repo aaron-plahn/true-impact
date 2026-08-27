@@ -1,6 +1,7 @@
 import { Typography } from "@mui/material";
 import { JSX } from "react";
 import { Link, useParams } from "react-router-dom";
+import { ApiResponseErrorInfo } from "../../error-handling";
 import { Loading } from "../../loading";
 import { useFetchSurveyResponseByIdQuery } from "../store/survey-responses.api";
 
@@ -10,7 +11,7 @@ export const SurveyResponseRecordDetailPage = (): JSX.Element => {
   const { data, error, isLoading } = useFetchSurveyResponseByIdQuery(id || "");
 
   if (error) {
-    return <div>TODO API Error display!</div>;
+    return <ApiResponseErrorInfo error={error} />;
   }
 
   if (isLoading || !data) {

@@ -29,6 +29,7 @@ export const UserProfile = (): JSX.Element => {
     }
 
     try {
+      // TODO We need a User slice
       fetch(new URL(`${config.API_URL}/sessioninfo`).toString()).then(
         async (response) => {
           const body = await response.json();
@@ -59,7 +60,7 @@ export const UserProfile = (): JSX.Element => {
 
   if (errorInfo !== null) {
     // TODO Error info presenter
-    return <div>Error!</div>;
+    return <div>Error when retrieving user.</div>;
   }
 
   if (isLoading) {
