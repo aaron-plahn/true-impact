@@ -3,14 +3,16 @@ import { useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
 import { ApiResponseErrorInfo } from "../../error-handling";
 import { Loading } from "../../loading";
-import { useFetchSurveyByIdQuery } from "../store";
-import { makeSelectReportForSurveyResponseByResponseIdAndName } from "../store/survey-responses.api";
+import {
+  makeSelectReportForSurveyResponseByResponseIdAndName,
+  useFetchSurveyResponseByIdQuery,
+} from "../store/survey-responses.api";
 import { DefaultSurveyReportPresenter } from "./default-survey-report.presenter";
 
 export const SurveyResponseReportDetailPage = (): JSX.Element => {
   const { id: surveyResponseRecordId, reportName } = useParams();
 
-  const { data, error, isLoading } = useFetchSurveyByIdQuery(
+  const { data, error, isLoading } = useFetchSurveyResponseByIdQuery(
     surveyResponseRecordId || "",
   );
 
