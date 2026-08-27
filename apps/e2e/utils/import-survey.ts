@@ -10,16 +10,12 @@ export const importSurvey = async (
     const baseDir = path.resolve("features/support/fixtures/surveys") + path.sep;
 
     if(relativePath.includes(path.sep)){
-      throw new Error(`Unauthorized path traversal detected`);
+      throw new Error(`Unauthorized path traversal detected in path ${relativePath}`);
     }
 
-    const relativePAth = path.relative(baseDir, relativePath);
+    const pathWithBaseDir = path.relative(baseDir, relativePath);
 
-    if(!relativePAth.startsWith(baseDir)){
-      throw new Error(`Unauthorized path traversal detected.`)
-    }
-
-    const rawData = await fs.readFile(relativePAth, "utf-8");
+    const rawData = await fs.readFile(pathWithBaseDir, "utf-8");
 
     const fixtureData = JSON.parse(rawData);
 
