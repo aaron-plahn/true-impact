@@ -2,7 +2,7 @@
     "type": "IMPORT_SURVEY",
     "payload": {
         "name": {
-            "text": "DSS Client Evaluation (Medicine Wheel)"
+            "text": "DSS Client Evaluation"
         },
         "questions": [
             {
