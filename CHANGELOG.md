@@ -2,6 +2,9 @@
 
 This first release of the True Impact platform introduces a working model for user management, client management, and survey creation and completion.
 
+# 64
+In this PR, we return survey responses in client queries. We also support querying only submitted survey responses, which include reports.
+
 # 63
 In this PR, we expose reports on survey responses by introducing machinery to accumulate values
 for categories across responses to questions for a single survey attempt. 
