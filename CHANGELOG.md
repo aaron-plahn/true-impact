@@ -2,37 +2,40 @@
 
 This first release of the True Impact platform introduces a working model for user management, client management, and survey creation and completion.
 
-# 67
+## 68
+In this PR, we add a script that generates a `ReleaseNotes.md` document from `CHANGELOG.md`, linking PRs to GitHub.
+
+## 67
 This minor PR removes some irrelevant data from the server that was never presented to the user.
 
-# 66
+## 66
 In this PR, we provide a user interface for viewing generated reports about submitted surveys starting with a list of recently submitted surveys. At this point, the report presentation is generic, i.e., it is not aware of which report is being presented. In the future we will introduce customized presentation for important report types.
 
-# 64
+## 64
 In this PR, we return survey responses in client queries. We also support querying only submitted survey responses, which include reports.
 
-# 63
+## 63
 In this PR, we expose reports on survey responses by introducing machinery to accumulate values
 for categories across responses to questions for a single survey attempt. 
 
-# 62
+## 62
 In this PR, we support flags for survey imports. Existing flags may be specified by label, while flags to be created must include
 a description. 
 
-# 61 
+## 61 
 In this PR, we add enhanced validation for edge cases when openning a survey to the public. This validation was missed initially.
 
-# 60
+## 60
 In this PR, we change the language to refer to survey finalization instead of survey pubication. Going forward, "publishing" a survey refers to making it available for completion by some target audience (e.g., general public, a known client), while "finalizing" a survey refers to freezing its questions and options
 indicating that it is ready for publication. Note that this step is required to ensure that a survey isn't changed while in the process of being completed by a participant. While we could implicitly finalize the survey when the survey is published to some target participant(s), we opted to make the freezing behaviour explicit with a finalization step.
 
-# 58
+## 58
 UX end-to-end tests were not originally a gate for merging PRs and we only set them to run on push to integration. At some point the configuration became broken and the e2e tests were failing, but because they weren't a gate to integration, we missed this. The UX e2e tests were passing locally, however, so it wasn't a real regression. In this PR, we fix the Docker and GitHub actions (ux-e2e) configurations so that UX e2e tests again pass in the CI.
 
-# 57
+## 57
 In this PR, we tighten up our validation of literal values.
 
-# 56
+## 56
 In this PR, we support importing an entire survey with a single request.
 
 ## 55
@@ -141,56 +144,56 @@ In this commit, we introduce a navbar and login functionality for the web client
 ## 17
 In this commit, we expose command schemas in our API documentation.
 
-## #16
+## 16
 
 In this commit, we introduce a workflow for reviewing a survey submission and provide support for this via the API.
 
-## #15
+## 15
 
 In this commit, we support linking communities to a client. This can be done when creating the client or after the fact, in case
 the client's community affiliation is initially unknown.
 
-## #14
+## 14
 
 In this commit, we support applying flags directly to a client.
 
-## #13
+## 13
 
 In this commit, we provide an API for community management.
 
-## #12
+## 12
 
 In this commit, we introduce a model for communities. This includes the ability to translate a community's
 name into the Indigenous language. This sets the stage for attaching clients to communities.
 
-## #11
+## 11
 
 In this commit, we support flagging survey options. If a participant selects a particular option, the survey response will be marked with the inidcated flag.
 
-## #10
+## 10
 
 In this commit, we introduce a workflow for managing flags. We will support attaching these to clients and surveys in a future commit.
 
-## #9
+## 9
 
 In this commit, we introduce a workflow for survey analysis. This allows admin users to assign values per-category for each
 survey option.
 
-## #8
+## 8
 
 In this commit, we expose a REST API for the survey completion workflow. This allows a future client to drive this workflow
 over the network.
 
-## #7
+## 7
 
 In this commit, we introduce a comprehensive workflow for survey completion.
 
-## #6
+## 6
 
 In this commit, we introduce a helper for finding the next question that should be asked based on
 a user's response to the current question.
 
-## #5
+## 5
 
 In this commit, we introduce a comprehensive work flow for survey management, include commands to
 
@@ -202,13 +205,13 @@ In this commit, we introduce a comprehensive work flow for survey management, in
 
 Deleting surveys, questions, and options is future-scoped.
 
-## #3
+## 3
 
 In this commit, we introduce a domain model and work flow for building a tree-structured survey. Our current model allows for a
 collection of "top-level" questions, each with 2 or more options. These options may point to additional follow-up questions which
 will only be answered if a participant answers the previous question with a given option.
 
-## #2
+## 2
 
 In this commit, we
 
@@ -216,7 +219,7 @@ In this commit, we
 - introduce a dedicated `data-types` libary in which we support schema-based validation of data transfer objects, utility TypeScript types, and standardized error and exception handling for all libs and apps
 - leverage the above in a first draft of a client-management service, including end-to-end and unit tests with Jest
 
-## #1
+## 1
 
 In this commit, we have scaffolded the True Impact platform including
 
