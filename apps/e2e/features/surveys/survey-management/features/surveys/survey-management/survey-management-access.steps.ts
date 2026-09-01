@@ -61,6 +61,8 @@ Then(
   async () => {
     await browser.setWindowSize(1920, 1080);
 
+    await expect($('[data-testid="hamburger-menu"]')).not.toBeDisplayed();
+
     const link = menuPage.getLinkByText("Build a Survey");
 
     await link.scrollIntoView();
