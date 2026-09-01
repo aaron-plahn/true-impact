@@ -30,6 +30,8 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
+// TODO remove this pattern?
+// Another way to do this was to use the auth context to make decisions on route guards
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<UserSessionInfo | null>(null);
 
