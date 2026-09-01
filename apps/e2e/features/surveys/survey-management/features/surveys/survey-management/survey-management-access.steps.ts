@@ -53,22 +53,14 @@ When(
     } catch {
       // todo
     }
-
-    // if (!link) {
-    //   throw new Error(`Failed to find a link to the survey: ${surveyName}`);
-    // }
-
-    // expect(link).toContain("surveys/manage/");
-
-    // await loginPage.logOut();
-
-    // await new Page().open(link);
   },
 );
 
 Then(
   "I should see a menu link to the survey management index page",
   async () => {
+    await browser.setWindowSize(1920, 1080);
+
     const link = menuPage.getLinkByText("Build a Survey");
 
     await link.scrollIntoView();
