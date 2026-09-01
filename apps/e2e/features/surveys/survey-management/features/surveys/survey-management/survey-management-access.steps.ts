@@ -71,6 +71,10 @@ Then(
   async () => {
     const link = menuPage.getLinkByText("Build a Survey");
 
+    await link.scrollIntoView();
+
+    await link.waitForClickable({ timeout: 3000 });
+
     await link.click();
 
     // data-testid?
