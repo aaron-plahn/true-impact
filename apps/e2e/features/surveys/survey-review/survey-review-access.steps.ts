@@ -43,15 +43,19 @@ Then("I should be redirected to the home page", async () => {
   // TODO browser.config.baseUrl
   const expectedFullUrl = `http://localhost:4200/`;
 
+  let url: string = await browser.getUrl();
+
   await browser.waitUntil(
-    async () => (await browser.getUrl()) === expectedFullUrl,
+    async () => {
+      url = await browser.getUrl();
+
+      return url === expectedFullUrl;
+    },
     {
       timeout: 15000,
       timeoutMsg: `Timed out waiting for URL to change in the dashbaord.`,
     },
   );
 
-  const url = await browser.getUrl();
-
-  await expect(url).toBe(expectedFullUrl);
+  expect(url).toBe(expectedFullUrl);
 });
