@@ -1,5 +1,6 @@
 Feature: Access to survey management routes should depend on the user's permissions
-    Background: Given I have cleared all existing surveys
+    Background:
+        Given I have cleared all existing surveys
 
     Scenario: An admin user navigates to survey management via the main menu
         Given I am logged in as an admin

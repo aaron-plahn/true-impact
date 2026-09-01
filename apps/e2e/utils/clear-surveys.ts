@@ -17,13 +17,28 @@ export const clearSurveys = async (cookieHeader?: string) => {
 
     const baseApiUrl = `${apiDomain}:${apiServerPort}`;
 
-    await axios.post(`${baseApiUrl}/surveys/test-setup`, {
+    const result = await axios.patch(`${baseApiUrl}/surveys/test-setup`, {
       withCredentials: true,
       headers: {
         "Content-Type": "application/json",
         ...(cookieHeader && { Cookie: cookieHeader }),
       },
     });
+
+    expect(result.status).toBe(200);
+
+    const responseClearResult = await axios.patch(
+      `${baseApiUrl}/surveys/responses/test-setup`,
+      {
+        withCredentials: true,
+        headers: {
+          "Content-Type": "application/json",
+          ...(cookieHeader && { Cookie: cookieHeader }),
+        },
+      },
+    );
+
+    expect(responseClearResult.status).toBe(200);
   } catch (error) {
     const exception = new Error(
       `Failed to clear test surveys in the database.\n${error}`,

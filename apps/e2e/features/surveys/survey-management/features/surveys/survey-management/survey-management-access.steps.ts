@@ -5,7 +5,7 @@ import loginPage from "../../../../../login/login.page";
 import Page from "../../../../../login/page";
 import { menuPage } from "../../../../common/menu.page";
 
-Given("I have clared all existing surveys", async () => {
+Given("I have cleared all existing surveys", async () => {
   await new Page().open("");
 
   await browser.deleteCookies();
@@ -19,6 +19,8 @@ Given("I have clared all existing surveys", async () => {
   const cookieHeader = browserCookies
     .map((cookie) => `${cookie.name}=${cookie.value}`)
     .join("; ");
+
+  console.log({ cookieHeader });
 
   await clearSurveys(cookieHeader);
 });

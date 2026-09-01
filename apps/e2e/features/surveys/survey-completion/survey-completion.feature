@@ -1,4 +1,6 @@
 Feature: Completing a survey
+    Background:
+        Given I have cleared all existing surveys
 
     Scenario: As an anonymous participant answering all questions in a one-question survey
 

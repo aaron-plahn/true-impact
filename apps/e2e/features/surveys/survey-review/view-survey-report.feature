@@ -1,4 +1,6 @@
 Feature: Viewing a report for a survey response record
+    Background:
+        Given I have cleared all existing surveys
 
     Scenario: As an admin viewing the report generated for a client's submitted survey response
         When The survey in the fixture file "import-medicine-wheel-survey.data.json" has been imported
