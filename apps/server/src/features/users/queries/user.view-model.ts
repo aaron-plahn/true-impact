@@ -70,6 +70,7 @@ export class UserViewModel {
     this.role = role;
   }
 
+  // TODO There is a difference between fetching a user profile for the given user and fetching a list of users for another user to see
   toClientDto(): UserViewModelClientDto {
     return {
       id: this.id,

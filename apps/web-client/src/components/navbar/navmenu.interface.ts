@@ -1,8 +1,10 @@
 import React, { JSX } from "react";
+import { UserSessionInfo } from "../../auth";
 
 interface LabelAndRoute {
   label: string;
   route: string;
+  canUser: (user?: UserSessionInfo | null) => boolean;
 }
 
 export interface NavMenuSection {

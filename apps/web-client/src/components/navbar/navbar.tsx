@@ -14,26 +14,52 @@ import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import { JSX, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../../auth";
+import { useAuth, UserSessionInfo } from "../../auth";
 import { Loading } from "../loading";
 import { NavMenuSection } from "./navmenu.interface";
 import { NavMenuMd } from "./navmenu.md";
 import { NavMenuXs } from "./navmenu.xs";
 
-const surveyMenu: NavMenuSection = {
+const isAdmin = (user?: UserSessionInfo | null) =>
+  user !== null &&
+  typeof user !== "undefined" &&
+  ["admin", "system admin"].includes(user?.role);
+
+/**
+ * The available routes must be rendered in the context of the current user.
+ *
+ * One downside of a thick client is the need to reproduce such logic here. Using a
+ * more server driven or true REST approach, the server would send the initial menu for
+ * the specific user as a means of providing discoverability of the available routes.
+ *
+ */
+const fullSurveyMenu: NavMenuSection = {
   label: "Surveys",
   items: [
     {
       label: "Complete a Survey",
       route: "/surveys/complete",
+      /**
+       * For now, we "keystone" this feature out. We provide a separate (SDUI based) client
+       * for non-system users to complete surveys anonymously or via a 1-time passcode. This
+       * is because it is important to manage a separate auth state for this session for security
+       * reasons. Typically a clinician will open a survey and then hand their device to a client
+       * to complete said survey.
+       *
+       * In the future, authenticated users may be able to complete surveys (e.g., employee surveys)
+       * via the core system.
+       */
+      canUser: () => false,
     },
     {
       label: "Review a Survey",
       route: "/surveys/review",
+      canUser: isAdmin,
     },
     {
       label: "Build a Survey",
       route: "/surveys/manage",
+      canUser: isAdmin,
     },
   ],
 };
@@ -54,6 +80,8 @@ const publicSettings: NavMenuSection = {
     {
       label: "Sign In",
       route: "/auth",
+      // user => !user?
+      canUser: (user) => true,
     },
   ],
 };
@@ -83,6 +111,15 @@ export const NavBar = (): JSX.Element => {
   if (session?.isLoading) {
     return <Loading />;
   }
+
+  const { user } = session;
+
+  console.log({ user });
+
+  const surveyMenu = {
+    label: fullSurveyMenu.label,
+    items: fullSurveyMenu.items.filter((item) => item.canUser(user)),
+  };
 
   const handleOpenNavMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
