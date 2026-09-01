@@ -5,7 +5,7 @@ import * as path from "path";
 export const importSurvey = async (
   relativePath: string,
   cookieHeader?: string,
-): Promise<void> => {
+): Promise<string> => {
   try {
     const baseDir =
       path.resolve("features/support/fixtures/surveys") + path.sep;
@@ -65,13 +65,19 @@ export const importSurvey = async (
      * by full state validation and finally escapes all user input. Further,
      * the DB being written to is an ephemeral e2e DB. There is no risk.
      */
-    await axios.post(`${baseApiUrl}/surveys/commands`, fixtureData, {
-      withCredentials: true,
-      headers: {
-        "Content-Type": "application/json",
-        ...(cookieHeader && { Cookie: cookieHeader }),
+    const response = await axios.post(
+      `${baseApiUrl}/surveys/commands`,
+      fixtureData,
+      {
+        withCredentials: true,
+        headers: {
+          "Content-Type": "application/json",
+          ...(cookieHeader && { Cookie: cookieHeader }),
+        },
       },
-    });
+    );
+
+    return response.data.id;
   } catch (error) {
     const exception = new Error(
       `Failed to import test survey to the database.\n${error}`,

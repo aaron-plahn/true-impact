@@ -62,6 +62,7 @@ export class SurveyController implements OnModuleInit {
     private readonly surveyResponseViewDiffer: SduiViewDiffer,
   ) {}
 
+  @UseGuards(AuthenticatedUserGuard, RbacAuthGuard)
   @DetailQueryEndpoint()
   @ApiOkResponse({
     schema,
@@ -76,6 +77,7 @@ export class SurveyController implements OnModuleInit {
     return result;
   }
 
+  @UseGuards(AuthenticatedUserGuard, RbacAuthGuard)
   @IndexQueryEndpoint()
   @ApiOkResponse({
     schema,
