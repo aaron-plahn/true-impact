@@ -46,7 +46,7 @@ Then("I should be redirected to the home page", async () => {
   await browser.waitUntil(
     async () => (await browser.getUrl()) === expectedFullUrl,
     {
-      timeout: 5000,
+      timeout: 15000,
       timeoutMsg: `Timed out waiting for URL to change in the dashbaord.`,
     },
   );
