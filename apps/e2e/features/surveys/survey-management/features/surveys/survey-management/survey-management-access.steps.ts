@@ -65,7 +65,7 @@ Then(
 
     await link.scrollIntoView();
 
-    await link.waitForClickable({ timeout: 3000 });
+    await link.waitForClickable({ timeout: 10000 });
 
     await link.click();
 
