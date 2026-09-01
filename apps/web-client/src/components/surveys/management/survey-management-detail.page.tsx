@@ -15,7 +15,7 @@ import { Loading } from "../../loading";
 import { useFetchSurveyByIdQuery } from "../store/survey.api";
 import { AccessCodeClipboard } from "./access-code-clipboard";
 
-export const SurveyDetailPage = (): JSX.Element => {
+export const SurveyManagementDetailPage = (): JSX.Element => {
   const { id } = useParams();
 
   /**
@@ -24,12 +24,12 @@ export const SurveyDetailPage = (): JSX.Element => {
    */
   const { data, error, isLoading } = useFetchSurveyByIdQuery(id || "");
 
-  if (isLoading || !data) {
-    return <Loading />;
-  }
-
   if (error) {
     return <ApiResponseErrorInfo error={error} />;
+  }
+
+  if (isLoading || !data) {
+    return <Loading />;
   }
 
   const { name, questions, isFinal, accessCode, isOpenToPublic } = data;
