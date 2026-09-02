@@ -39,12 +39,44 @@ export const clearSurveys = async (cookieHeader?: string) => {
       ...(cookieHeader && { Cookie: cookieHeader }),
     };
 
+    const _sanityCheck = await axios.get(`${baseApiUrl}/surveys`, {
+      withCredentials: true,
+      headers,
+    });
+
+    console.log({ sanity: _sanityCheck.data });
+
+    const api = axios.create({
+      baseURL: baseApiUrl,
+    });
+
+    axios.interceptors.request.use((request: any) => {
+      console.log("Outgoing Request:");
+      console.log(`Method: ${request.method}`);
+      console.log(`URL: ${request.url}`);
+      console.log(`Headers:`);
+      Object.keys(request.headers).forEach((key) => {
+        console.log(`  ${key}: ${request.headers[key]}`);
+      });
+      if (request.data) {
+        console.log("Body:");
+        console.log(JSON.stringify(request.data, null, 2));
+      }
+      return request;
+    });
+
+    const patchHeaders = {
+      "Content-Type": "application/x-www-form-urlencoded",
+      Origin: clientOrigin,
+      ...(cookieHeader && { Cookie: cookieHeader }),
+    };
+
     const surveyClearResult = await axios.patch(
       `${baseApiUrl}/surveys/test-setup`,
       undefined,
       {
         withCredentials: true,
-        headers,
+        headers: patchHeaders,
       },
     );
 

@@ -1,7 +1,7 @@
 import { CanActivate, ExecutionContext, Inject } from '@nestjs/common';
-import { USER_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../../features/users/constants';
-import type { IUserCommandRepository } from '../../features/users/repositories';
-import { User } from '../../features/users/user.aggregate-root';
+import { USER_COMMAND_REPOSITORY_INJECTION_TOKEN } from 'src/features/users/constants';
+import type { IUserCommandRepository } from 'src/features/users/repositories';
+import { User } from 'src/features/users/user.aggregate-root';
 
 export class OptionalUserGuard implements CanActivate {
   constructor(
