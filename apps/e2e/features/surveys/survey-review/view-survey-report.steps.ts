@@ -103,7 +103,7 @@ Then(
 
     expect(initialUrlForReport).toContain("surveys");
     expect(initialUrlForReport).toContain("reports");
-    expect(initialUrlForReport).toContain(reportName.replace(" ", "%20"));
+    expect(initialUrlForReport).toContain(reportName.replaceAll(" ", "%20"));
 
     // This is unfortunate. We need to handle clearing sessions more gracefully in e2e tests.
     try {
