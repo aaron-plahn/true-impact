@@ -2,6 +2,12 @@
 
 This first release of the True Impact platform introduces a working model for user management, client management, and survey creation and completion.
 
+## 71
+In this PR, we tighten up the restrictions on a user's role. The current list of allowed values includes:
+- 'system admin'
+- 'team admin'
+- 'employee'
+
 ## 68
 In this PR, we add a script that generates a `ReleaseNotes.md` document from `CHANGELOG.md`, linking PRs to GitHub.
 
