@@ -88,7 +88,6 @@ export class FlagController implements OnModuleInit {
     return result;
   }
 
-  // TODO auth guard
   @TestSetupEndpoint()
   async testSetup(): Promise<'OK'> {
     if (process.env.NODE_ENV !== 'test' && process.env.NODE_ENV !== 'e2e') {

@@ -1,4 +1,4 @@
-import { NestedDataType, NonEmptyString } from '../../libs/data-types';
+import { Literal, NestedDataType, NonEmptyString } from '../../libs/data-types';
 import { SURVEY_AGGREGATE_TYPE } from './constants';
 
 export const SurveyCompositeIdentifierValuedProp = NestedDataType(
@@ -10,10 +10,9 @@ export const SurveyCompositeIdentifierValuedProp = NestedDataType(
 );
 
 export class SurveyCompositeIdentifier {
-  //   @FixedValue(...)
-  @NonEmptyString({
+  @Literal(SURVEY_AGGREGATE_TYPE, {
     label: 'type',
-    description: SURVEY_AGGREGATE_TYPE,
+    description: `always has the value [${SURVEY_AGGREGATE_TYPE}]`,
   })
   readonly type = SURVEY_AGGREGATE_TYPE;
 

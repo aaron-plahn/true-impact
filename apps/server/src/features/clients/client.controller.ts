@@ -78,7 +78,6 @@ export class ClientController implements OnModuleInit {
     return result;
   }
 
-  // TODO Auth Guards
   @TestSetupEndpoint()
   async testSetup(): Promise<'OK'> {
     if (process.env.NODE_ENV !== 'test' && process.env.NODE_ENV !== 'e2e') {

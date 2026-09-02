@@ -59,7 +59,6 @@ export class CommunityController implements OnModuleInit {
     return result;
   }
 
-  // TODO What auth guard should we use here?
   @TestSetupEndpoint()
   async testSetup(): Promise<'OK'> {
     if (process.env.NODE_ENV !== 'test' && process.env.NODE_ENV !== 'e2e') {

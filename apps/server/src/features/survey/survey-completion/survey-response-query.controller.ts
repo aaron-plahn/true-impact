@@ -221,8 +221,6 @@ export class SurveyResponseQueryController {
 
   // TODO support filters to fetch completion attempts for participant of a given type, for a given survey, etc.
 
-  // @UseGuards(AuthenticatedUserGuard, RbacAuthGuard)
-  // TODO put those back
   @TestSetupEndpoint()
   async testSetup(): Promise<'OK'> {
     if (process.env.NODE_ENV !== 'test' && process.env.NODE_ENV !== 'e2e') {
