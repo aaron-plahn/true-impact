@@ -5,6 +5,7 @@ import { GrantUserRole } from '../../../features/users/commands/grant-user-role.
 import { UserViewModel } from '../../../features/users/queries';
 import { UserRole } from '../../../features/users/types';
 import { TestCommandStream } from '../../../libs/cqrs-es';
+import { assertTextMatchesAll } from '../../../libs/test-utils';
 import {
   assertCommandError,
   assertCommandScenarioError,
@@ -84,53 +85,75 @@ describe('User Management Scenarios', () => {
 
   describe(`When granting a role to a user`, () => {
     describe(`when the user exists`, () => {
-      describe(`when the user currently has a different role`, () => {
-        const newRole: UserRole = 'tenant admin';
+      describe(`when the role is a valid role`, () => {
+        describe(`when the user currently has a different role`, () => {
+          const newRole: UserRole = 'tenant admin';
 
-        it(`should grant the user the new role`, async () => {
-          await assertCommandScenarioSuccess({
-            httpClient,
-            endpoint: userCommandsEndpoint,
-            stream: TestCommandStream.first(CreateUserWithPassword, {}).andThen(
-              GrantUserRole,
-              {
+          it(`should grant the user the new role`, async () => {
+            await assertCommandScenarioSuccess({
+              httpClient,
+              endpoint: userCommandsEndpoint,
+              stream: TestCommandStream.first(
+                CreateUserWithPassword,
+                {},
+              ).andThen(GrantUserRole, {
                 role: newRole,
+              }),
+              assertSuccess: async (acks) => {
+                const { id } = acks[0];
+
+                const updatedUserView = (
+                  await httpClient.get(buildUserDetailEndpoint(id))
+                ).data as UserViewModel;
+
+                expect(updatedUserView.role).toBe(newRole);
               },
-            ),
-            assertSuccess: async (acks) => {
-              const { id } = acks[0];
+            });
+          });
+        });
 
-              const updatedUserView = (
-                await httpClient.get(buildUserDetailEndpoint(id))
-              ).data as UserViewModel;
+        describe(`when the user already has the given role`, () => {
+          it(`should return the expected error response`, async () => {
+            const redundantRole: UserRole = 'tenant admin';
 
-              expect(updatedUserView.role).toBe(newRole);
-            },
+            await assertCommandScenarioError({
+              httpClient,
+              endpoint: userCommandsEndpoint,
+              stream: TestCommandStream.first(CreateUserWithPassword, {
+                username: testUsername,
+              })
+                .andThen(GrantUserRole, {
+                  role: redundantRole,
+                })
+                .andThen(GrantUserRole, {
+                  role: redundantRole,
+                }),
+
+              assertErrorMessageAsExpected: (message) => {
+                expect(message).toContain(redundantRole);
+                expect(message).toContain(testUsername);
+                expect(message).toContain('already has');
+              },
+            });
           });
         });
       });
 
-      describe(`when the user already has the given role`, () => {
-        it(`should return the expected error response`, async () => {
-          const redundantRole: UserRole = 'tenant admin';
+      describe(`when the role is invalid`, () => {
+        const bogusRole = 'not a valid role';
 
+        it(`should return the expected error`, async () => {
           await assertCommandScenarioError({
             httpClient,
             endpoint: userCommandsEndpoint,
-            stream: TestCommandStream.first(CreateUserWithPassword, {
-              username: testUsername,
-            })
-              .andThen(GrantUserRole, {
-                role: redundantRole,
-              })
-              .andThen(GrantUserRole, {
-                role: redundantRole,
-              }),
-
+            stream: TestCommandStream.first(CreateUserWithPassword).andThen(
+              GrantUserRole,
+              {
+                role: bogusRole as UserRole,
+              },
+            ),
             assertErrorMessageAsExpected: (message) => {
-              expect(message).toContain(redundantRole);
-              expect(message).toContain(testUsername);
-              expect(message).toContain('already has');
+              assertTextMatchesAll(message, bogusRole, 'Invalid value', 'role');
             },
           });
         });
