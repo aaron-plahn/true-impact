@@ -2,7 +2,7 @@ import {
   ActionContentNode,
   Section,
   TIScreen,
-} from 'src/libs/server-driven-ui';
+} from '../../../../libs/server-driven-ui';
 
 interface SubmitSurveyPageProps {
   id: string; // survey ID

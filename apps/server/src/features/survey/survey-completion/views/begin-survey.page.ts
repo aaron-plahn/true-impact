@@ -1,10 +1,10 @@
-import { TISduiTextInput } from 'src/libs/server-driven-ui/forms';
 import {
   ActionContentNode,
   Section,
   TextContentNode,
   TIScreen,
 } from '../../../../libs/server-driven-ui';
+import { TISduiTextInput } from '../../../../libs/server-driven-ui/forms';
 
 interface BeginSurveyPageProps {
   id: string;

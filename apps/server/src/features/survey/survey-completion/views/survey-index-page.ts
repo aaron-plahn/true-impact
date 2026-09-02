@@ -1,5 +1,9 @@
-import { LinkContentNode, Section, TIScreen } from 'src/libs/server-driven-ui';
-import { TiSduiLayout } from 'src/libs/server-driven-ui/tisdui-layout';
+import {
+  LinkContentNode,
+  Section,
+  TIScreen,
+} from '../../../../libs/server-driven-ui';
+import { TiSduiLayout } from '../../../../libs/server-driven-ui/tisdui-layout';
 import { SurveyViewModelClientDto } from '../../queries/survey.view-model';
 
 interface SurveyIndexPageProps {

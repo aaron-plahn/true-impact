@@ -1,4 +1,8 @@
-import { Section, TextContentNode, TIScreen } from 'src/libs/server-driven-ui';
+import {
+  Section,
+  TextContentNode,
+  TIScreen,
+} from '../../../../libs/server-driven-ui';
 
 interface SurveyCompletionAcknowledgementPageProps {
   name: string;

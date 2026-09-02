@@ -1,5 +1,5 @@
-import { FlagViewModel } from 'src/features/flags/queries';
 import { CreateFlag } from '../../../features/flags/commands';
+import { FlagViewModel } from '../../../features/flags/queries';
 import { SurveyViewModelClientDto } from '../../../features/survey/queries/survey.view-model';
 import {
   ImportSurvey,

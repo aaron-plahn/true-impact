@@ -7,8 +7,8 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
-import { UserViewModel } from 'src/features/users/queries';
 import { USER_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../features/users/constants';
+import { UserViewModel } from '../features/users/queries';
 import type { IUserCommandRepository } from '../features/users/repositories';
 import { UserAuthenticationService } from '../features/users/user-authentication.service';
 import {

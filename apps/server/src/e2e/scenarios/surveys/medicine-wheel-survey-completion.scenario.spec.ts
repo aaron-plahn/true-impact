@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, writeFileSync } from 'fs';
 import path from 'path';
-import { ClientViewModel } from 'src/features/clients/queries';
 import { CreateClient } from '../../../features/clients/commands/create-client.command';
+import { ClientViewModel } from '../../../features/clients/queries';
 import { CreateCommunity } from '../../../features/communities/commands';
 import {
   AnswerSurveyQuestion,

@@ -1,4 +1,4 @@
-import { AuthenticatedUserGuard, RbacAuthGuard } from 'src/auth/guards';
+import { AuthenticatedUserGuard, RbacAuthGuard } from '../../auth/guards';
 import type { ICommandFsa } from '../../libs/cqrs-es';
 import { CommandHandlerService, CommandResult } from '../../libs/cqrs-es';
 import {
