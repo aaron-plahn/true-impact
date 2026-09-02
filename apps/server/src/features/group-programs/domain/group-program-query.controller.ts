@@ -1,10 +1,10 @@
-import { AuthenticatedUserGuard, RbacAuthGuard } from 'src/auth/guards';
 import {
   Controller,
   DetailQueryEndpoint,
   IdParam,
   UseGuards,
 } from 'src/libs/framework';
+import { AuthenticatedUserGuard, RbacAuthGuard } from '../../../auth/guards';
 import { GroupProgramQueryService } from '../queries';
 
 @Controller('group-programs')

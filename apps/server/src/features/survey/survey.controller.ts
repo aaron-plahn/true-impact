@@ -6,10 +6,9 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
-import { AuthenticatedUserGuard, RbacAuthGuard } from 'src/auth/guards';
-import { SurveyCommandAuthGuard } from 'src/e2e/scenarios/surveys/guards';
-import { tiSduiSectionToHtmlFragment } from 'src/libs/server-driven-ui/html/tisdui-to-html-fragment';
 import { isDeepStrictEqual } from 'util';
+import { AuthenticatedUserGuard, RbacAuthGuard } from '../../auth/guards';
+import { SurveyCommandAuthGuard } from '../../e2e/scenarios/surveys/guards';
 import type { ICommandFsa } from '../../libs/cqrs-es';
 import { CommandHandlerService, CommandResult } from '../../libs/cqrs-es';
 import {
@@ -38,6 +37,7 @@ import {
   UseInterceptors,
 } from '../../libs/framework';
 import { tiSduiToHtml } from '../../libs/server-driven-ui';
+import { tiSduiSectionToHtmlFragment } from '../../libs/server-driven-ui/html/tisdui-to-html-fragment';
 import { SURVEY_RESPONSE_AGGREGATE_TYPE } from './constants';
 import { SurveyQueryService } from './queries/survey-query.service';
 import { SurveyViewModelClientDto } from './queries/survey.view-model';
