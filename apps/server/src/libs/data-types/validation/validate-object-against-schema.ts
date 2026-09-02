@@ -137,7 +137,11 @@ const validateSimpleDataType = (
     const { valuesAndLabels } =
       propertySchema as EnumeratedTypeSchemaPropertyMetadata;
 
-    const allowedValues = Array.from(Object.values(valuesAndLabels));
+    /**
+     * The keys are the values that are persisted. The labels are for user-facing
+     * interactions such as dropdown (select) lists.
+     */
+    const allowedValues = Array.from(Object.keys(valuesAndLabels));
 
     if (!allowedValues.some((v) => value === v)) {
       acc.push(

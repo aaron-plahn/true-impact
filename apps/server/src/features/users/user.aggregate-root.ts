@@ -3,6 +3,7 @@ import {
   AggregateRoot,
   BooleanDataType,
   Entity,
+  EnumeratedType,
   NestedDataType,
   NonEmptyString,
   NonNegativeInteger,
@@ -10,7 +11,7 @@ import {
   UpdateMethod,
 } from '../../libs/data-types';
 import { USER_AGGREGATE_TYPE } from './constants';
-import type { UserRole } from './types';
+import { userRoleValuesAndLabels, type UserRole } from './types';
 
 export class UserPersistenceDto {
   id: string;
@@ -78,8 +79,7 @@ export class User extends AggregateRoot<UserPersistenceDto> {
   })
   fullName: FullName;
 
-  // TODO enum?
-  @NonEmptyString({
+  @EnumeratedType(userRoleValuesAndLabels, {
     label: 'role',
     description: `a user's role gives them course grained access to read or write data`,
   })
