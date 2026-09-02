@@ -20,10 +20,6 @@ class SurveyCompletionPage extends Page {
     await $("button*=Submit").click();
   }
 
-  public async goToNextQuestion() {
-    await $(`*=NEXT`).click();
-  }
-
   public get surveySubmissionButton() {
     return $("button*=Submit");
   }

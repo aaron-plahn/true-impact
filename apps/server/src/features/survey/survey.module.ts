@@ -67,8 +67,8 @@ import {
   SURVEY_RESPONSE_QUERY_REPOSITORY_INJECTION_TOKEN,
   SurveyResponseQueryService,
 } from './survey-completion/queries';
-import { SurveyResponseRecordViewModel } from './survey-completion/queries/survey-response-record.view-model';
 import { SURVEY_RESPONSE_COMMAND_REPOSITORY_INJECTION_TOKEN } from './survey-completion/repositories';
+import { InMemorySurveyResponseQueryRepository } from './survey-completion/repositories/in-memory-survey-response-query.repository';
 import { InMemorySurveyResponseCommandRepository } from './survey-completion/repositories/in-memory-survey-response.command-repository';
 import { SurveyResponseValidationService } from './survey-completion/services';
 import { SurveyResponseQueryController } from './survey-completion/survey-response-query.controller';
@@ -164,9 +164,7 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, FinalizeSurvey];
     },
     {
       provide: SURVEY_RESPONSE_QUERY_REPOSITORY_INJECTION_TOKEN,
-      useValue: new InMemoryQueryRepositoryProvider().forFeature(
-        SurveyResponseRecordViewModel,
-      ),
+      useClass: InMemorySurveyResponseQueryRepository,
     },
     /**
      * TODO Include a separate property for these in the module options

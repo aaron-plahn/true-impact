@@ -80,8 +80,6 @@ When(
       questionLabel,
       chosenOptionLabel,
     });
-
-    await surveyCompletionPage.goToNextQuestion();
   },
 );
 
