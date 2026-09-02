@@ -114,8 +114,6 @@ export const NavBar = (): JSX.Element => {
 
   const { user } = session;
 
-  console.log({ user });
-
   const surveyMenu = {
     label: fullSurveyMenu.label,
     items: fullSurveyMenu.items.filter((item) => item.canUser(user)),

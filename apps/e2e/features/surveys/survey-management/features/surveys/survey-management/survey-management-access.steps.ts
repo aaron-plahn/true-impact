@@ -20,8 +20,6 @@ Given("I have cleared all existing surveys", async () => {
     .map((cookie) => `${cookie.name}=${cookie.value}`)
     .join("; ");
 
-  console.log({ cookieHeader });
-
   await clearSurveys(cookieHeader);
 });
 
@@ -65,14 +63,9 @@ Then(
 
     const link = menuPage.getLinkByText("Build a Survey");
 
-    await link.scrollIntoView();
-
-    await link.waitForClickable({ timeout: 10000 });
-
     await link.click();
 
-    // data-testid?
-    await expect($(`*=NEW`)).toBeExisting();
+    await expect($(`[data-testid="new-survey-button"]`)).toBeExisting();
   },
 );
 

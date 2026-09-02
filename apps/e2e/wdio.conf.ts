@@ -65,6 +65,13 @@ export const config: WebdriverIO.Config = {
   // and 30 processes will get spawned. The property handles how many capabilities
   // from the same test should run tests.
   //
+  /**
+   * We currently set this to 1 to ensure tests are not run in parallel. It might be necessary
+   * to run the tests in parallel if we hit performance issues defined by our own patience with
+   * waiting for the e2e to run in the CI. This would require a new approach such as:
+   * - running each test against a separate backend \ DB
+   * - not clearing the database in a before (background) hook and ensuring that no 2 tests use the same names \ IDs \ identifying info for target entities.
+   */
   maxInstances: 1, //10,
   //
   // If you have trouble getting all important capabilities together, check out the

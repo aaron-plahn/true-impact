@@ -14,13 +14,19 @@ When("I directly load the page {string}", async (path: string) => {
   await new Page().open(path);
 });
 
-// Do we need this, too? Or just the one above?
 When("I load the home page", async () => {
   await new Page().open("");
 });
 
 When("I open the menu", async () => {
-  // currently, the menu is open by default, but this might not always be the case
+  /**
+   * Currently, the menu is open by default at `md` resolution, but not at smaller resolutions.
+   * Further, the e2e (headless) defaults to smaller resolution with most attempts to change this futile.
+   * We avoid this issue currently by forcing the screen resolution in the conf for e2e.
+   * A better way to handle this might be to conditionally click the hamburger menu if it's found.
+   * An even better approach is to test with both screen size. Testing responsive behavioru is currently
+   * out-of-scope, though.
+   */
 });
 
 Then("I should see a menu link to the survey review index page", async () => {
