@@ -1,4 +1,6 @@
 Feature: Viewing a report for a survey response record
+    Background:
+        Given I have cleared all existing surveys
 
     Scenario: As an admin viewing the report generated for a client's submitted survey response
         When The survey in the fixture file "import-medicine-wheel-survey.data.json" has been imported
@@ -22,3 +24,5 @@ Feature: Viewing a report for a survey response record
         And I should see a report item displaying the value 0 for the category "white"
         And I should see a report item displaying the value 0 for the category "yellow"
         And I should see a report item displaying the value 1 for the category "black"
+        # This is a hack. It's really difficult to set up the following test separately, but it's an important test case
+        And A public user shouldn't see the report "medicine wheel"

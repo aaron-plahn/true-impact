@@ -1,5 +1,5 @@
 import { Inject } from '@nestjs/common';
-import { Section, TextContentNode } from 'src/libs/server-driven-ui';
+import { Section, TextContentNode } from '../../../../../libs/server-driven-ui';
 import type { ISurveyResponseCommandRepository } from '../../repositories';
 import { SURVEY_RESPONSE_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../../repositories';
 import { SduiDiffProducer, SDUIViewDiff } from '../sdui-view-differ';

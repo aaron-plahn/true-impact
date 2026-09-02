@@ -1,7 +1,7 @@
 import { ForbiddenException } from '@nestjs/common';
 import { randomUUID } from 'crypto';
-import { Survey } from 'src/features/survey/survey-management';
 import { SURVEY_AGGREGATE_TYPE } from '../../../../../features/survey/constants';
+import { Survey } from '../../../../../features/survey/survey-management';
 import { CommandResult, ICommandHandler } from '../../../../../libs/cqrs-es';
 import {
   ResourceNotFoundError,

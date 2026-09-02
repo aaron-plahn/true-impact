@@ -1,15 +1,17 @@
-import { IconButton, Typography } from "@mui/material";
-import { INavMenu, NavMenuProps } from "./navmenu.interface";
-import MenuItem from "@mui/material/MenuItem";
 import MenuIcon from "@mui/icons-material/Menu";
+import { IconButton, Typography } from "@mui/material";
 import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
 import { Link } from "react-router-dom";
+import { INavMenu, NavMenuProps } from "./navmenu.interface";
 
-
-export const NavMenuXs: INavMenu = ({sections, handleClose, handleOpen, anchorEl}: NavMenuProps) => {
-    const flattenedItems = sections.flatMap(
-        ({items}) => items
-    )
+export const NavMenuXs: INavMenu = ({
+  sections,
+  handleClose,
+  handleOpen,
+  anchorEl,
+}: NavMenuProps) => {
+  const flattenedItems = sections.flatMap(({ items }) => items);
 
   return (
     <>
@@ -20,6 +22,7 @@ export const NavMenuXs: INavMenu = ({sections, handleClose, handleOpen, anchorEl
         aria-haspopup="true"
         onClick={handleOpen}
         color="inherit"
+        data-testid="hamburger-menu"
       >
         <MenuIcon />
       </IconButton>

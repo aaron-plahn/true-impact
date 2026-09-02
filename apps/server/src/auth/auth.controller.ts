@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { USER_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../features/users/constants';
+import { UserViewModel } from '../features/users/queries';
 import type { IUserCommandRepository } from '../features/users/repositories';
 import { UserAuthenticationService } from '../features/users/user-authentication.service';
 import {
@@ -137,8 +138,6 @@ export class AuthController {
       throw new UnauthorizedException();
     }
 
-    return {
-      username: searchResult.username,
-    };
+    return UserViewModel.fromDomainModel(searchResult);
   }
 }

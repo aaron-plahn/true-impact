@@ -1,4 +1,3 @@
-import axios from 'axios';
 import { SurveyViewModel } from '../../../features/survey/queries/survey.view-model';
 import {
   AnswerSurveyQuestion,
@@ -156,7 +155,7 @@ describe(`Survey Completion Scenarios: Anonymous Individual Participant`, () => 
         },
       });
 
-      const surveys = (await axios.get(surveyIndexEndpoint))
+      const surveys = (await adminHttpClient.get(surveyIndexEndpoint))
         .data as SurveyViewModel[];
 
       surveyId = surveys[0].id;
@@ -310,7 +309,7 @@ describe(`Survey Completion Scenarios: Anonymous Individual Participant`, () => 
         stream: buildAndFinalizeSurveyPriorToOpenning,
       });
 
-      const surveys = (await axios.get(surveyIndexEndpoint))
+      const surveys = (await adminHttpClient.get(surveyIndexEndpoint))
         .data as SurveyViewModel[];
 
       // This survey is finalized, but not yet open for user completion. No access codes are available.

@@ -5,7 +5,7 @@ import { Home } from "../components/pages";
 import { SurveyCompletionIndex } from "../components/surveys/completion";
 import { SurveyManagementIndex } from "../components/surveys/management";
 import { NewSurveyPage } from "../components/surveys/management/new-survey.page";
-import { SurveyDetailPage } from "../components/surveys/management/survey-detail.page";
+import { SurveyManagementDetailPage } from "../components/surveys/management/survey-management-detail.page";
 import {
   SurveyResponseRecordDetailPage,
   SurveyReviewIndexPage,
@@ -49,7 +49,7 @@ export const AppRoutes = () => {
     },
     {
       path: "/surveys/manage/:id",
-      element: <SurveyDetailPage />,
+      element: <SurveyManagementDetailPage />,
     },
     {
       path: "/surveys/manage",

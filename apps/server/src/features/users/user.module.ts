@@ -142,6 +142,12 @@ export class UserModule implements OnModuleInit {
           type: USER_AGGREGATE_TYPE,
           id: userCreationResult.id,
         },
+        /**
+         * This should be a constant, although maybe not an enum. The question of whether it is
+         * an enum comes down to whether the set of user roles is closed. In all likelihood,
+         * we will introduce more rich attribute-based access control in the long run that makes
+         * this property irrelevant or supplementary, though.
+         */
         role: 'system admin',
       };
 

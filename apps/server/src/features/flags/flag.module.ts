@@ -1,4 +1,4 @@
-import { AuthModule } from 'src/auth/auth.module';
+import { AuthModule } from '../../auth/auth.module';
 import { InMemoryQueryRepository } from '../../common/persistence';
 import { CommandHandlerService } from '../../libs/cqrs-es';
 import { ConfigService, Module, ModuleRef } from '../../libs/framework';

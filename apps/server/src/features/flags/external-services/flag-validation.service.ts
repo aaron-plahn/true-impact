@@ -1,6 +1,6 @@
 import { Inject } from '@nestjs/common';
-import { IFlagServiceForSurveyImports } from 'src/features/survey/survey-management';
-import { TrueImpactError } from 'src/libs/data-types';
+import { IFlagServiceForSurveyImports } from '../../../features/survey/survey-management';
+import { TrueImpactError } from '../../../libs/data-types';
 import { FLAG_COMMAND_REPOSITORY_DEPENDENCY_TOKEN } from '../constants';
 import { Flag } from '../models';
 import type { IFlagCommandRepository } from '../repositories';

@@ -13,6 +13,8 @@ export const config = {
           "--disable-gpu",
           "--no-sandbox",
           "--disable-dev-shm-usage",
+          "--window-size=1920,1080", // Force resolution here
+          "--force-device-scale-factor=1", // Prevents high-DPI scaling bugs in CI
         ],
       },
     },

@@ -1,8 +1,8 @@
 import { Inject } from '@nestjs/common';
-import { TrueImpactError } from 'src/libs/data-types';
 import { SURVEY_COMMAND_REPOSITORY_DEPENDENCY_TOKEN } from '../../../../../features/survey/constants';
 import type { ISurveyCommandRepository } from '../../../../../features/survey/repositories';
 import { CommandResult, ICommandHandler } from '../../../../../libs/cqrs-es';
+import { TrueImpactError } from '../../../../../libs/data-types';
 import { OpenSurveyToPublic } from './open-survey-to-public.command';
 
 export class OpenSurveyToPublicCommandHandler implements ICommandHandler<OpenSurveyToPublic> {

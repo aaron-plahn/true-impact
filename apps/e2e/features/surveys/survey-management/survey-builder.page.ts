@@ -82,6 +82,14 @@ class SurveyManagementIndexPage extends Page {
     await browser.url(responsePageUrl);
   }
 
+  public async getDetailLinkForSurvey(
+    surveyName: string,
+  ): Promise<string | null> {
+    const link = await $(`*=${surveyName}`).getAttribute("href");
+
+    return link;
+  }
+
   public async open() {
     // an alternative is to drill through the UX to get here
     await super.open("surveys/manage");

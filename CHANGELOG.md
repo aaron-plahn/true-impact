@@ -8,6 +8,9 @@ In this PR, we tighten up the restrictions on a user's role. The current list of
 - 'team admin'
 - 'employee'
 
+## 70
+In this PR, we add user-specific protection to pages and interactions on the web-client. This is not a matter of security, as the server will never send data in a query or process a form if the user lacks the authority to read or write the given data. But it is very annoying to the user to see empty pages or forms that are certain to fail.
+
 ## 68
 In this PR, we add a script that generates a `ReleaseNotes.md` document from `CHANGELOG.md`, linking PRs to GitHub.
 

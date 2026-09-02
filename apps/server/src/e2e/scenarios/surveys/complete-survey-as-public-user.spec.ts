@@ -1,4 +1,3 @@
-import axios from 'axios';
 import { SurveyViewModel } from '../../../features/survey/queries/survey.view-model';
 import { BeginPublicSurvey } from '../../../features/survey/survey-completion/commands/begin-public-survey';
 import { AddFollowUpQuestionForSurveyOption } from '../../../features/survey/survey-management/commands/add-follow-up-question-for-survey-option.command';
@@ -184,7 +183,7 @@ describe(`Survey Completion Scenarios: Public Participant (no access code requir
           buildAndFinalizeSurveyPriorToOpenning.andThen(OpenSurveyToPublic),
       });
 
-      const surveys = (await axios.get(surveyIndexEndpoint))
+      const surveys = (await adminHttpClient.get(surveyIndexEndpoint))
         .data as SurveyViewModel[];
 
       surveyId = surveys[0].id;
@@ -239,7 +238,7 @@ describe(`Survey Completion Scenarios: Public Participant (no access code requir
         stream: buildAndFinalizeSurveyPriorToOpenning,
       });
 
-      const surveys = (await axios.get(surveyIndexEndpoint))
+      const surveys = (await adminHttpClient.get(surveyIndexEndpoint))
         .data as SurveyViewModel[];
 
       // This survey is finalized, but not yet open for user completion. No access codes are available.

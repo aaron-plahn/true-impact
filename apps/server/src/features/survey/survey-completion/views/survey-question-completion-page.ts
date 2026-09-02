@@ -3,8 +3,8 @@ import {
   Section,
   TextContentNode,
   TIScreen,
-} from 'src/libs/server-driven-ui';
-import { TISduiFormField } from 'src/libs/server-driven-ui/forms';
+} from '../../../../libs/server-driven-ui';
+import { TISduiFormField } from '../../../../libs/server-driven-ui/forms';
 import { ActiveSurveyQuestionViewModelClientDto } from '../queries/survey-response-record.view-model';
 
 interface SurveyQuestionCompletionPageProps {

@@ -1,13 +1,13 @@
 import { ConfigService } from '@nestjs/config';
-import { PersistenceAcknowledgement } from 'src/libs/cqrs-es';
+import { isDeepStrictEqual } from 'util';
+import { PersistenceAcknowledgement } from '../../../libs/cqrs-es';
 import {
   getDataSchemaFromClassCtor,
   SimpleSchemaPropertyMetadata,
   TrueImpactBadUserInputError,
   TrueImpactError,
   TrueImpactRuntimeException,
-} from 'src/libs/data-types';
-import { isDeepStrictEqual } from 'util';
+} from '../../../libs/data-types';
 import { FLAG_AGGREGATE_TYPE } from '../constants';
 import { Flag } from '../models';
 import { IFlagCommandRepository } from './flag-command-repository.interface';

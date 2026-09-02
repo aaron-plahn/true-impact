@@ -95,3 +95,43 @@ Then(
     expect(rowText.includes(value.toString()));
   },
 );
+
+Then(
+  "A public user shouldn't see the report {string}",
+  async (reportName: string) => {
+    const initialUrlForReport = await browser.getUrl();
+
+    expect(initialUrlForReport).toContain("surveys");
+    expect(initialUrlForReport).toContain("reports");
+    expect(initialUrlForReport).toContain(reportName.replaceAll(" ", "%20"));
+
+    // This is unfortunate. We need to handle clearing sessions more gracefully in e2e tests.
+    try {
+      await loginPage.logOut();
+    } catch {
+      await browser.deleteAllCookies();
+    }
+
+    await browser.url(initialUrlForReport);
+
+    // TODO share this logic
+    // TODO browser.config.baseUrl
+    const expectedFullUrl = `http://localhost:4200/`;
+
+    let url: string = await browser.getUrl();
+
+    await browser.waitUntil(
+      async () => {
+        url = await browser.getUrl();
+
+        return url === expectedFullUrl;
+      },
+      {
+        timeout: 15000,
+        timeoutMsg: `Timed out waiting for URL to change in the dashbaord.`,
+      },
+    );
+
+    expect(url).toBe(expectedFullUrl);
+  },
+);

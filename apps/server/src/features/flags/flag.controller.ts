@@ -1,6 +1,6 @@
 import { OnModuleInit, UseGuards } from '@nestjs/common';
 import { ApiOkResponse } from '@nestjs/swagger';
-import { AuthenticatedUserGuard, RbacAuthGuard } from 'src/auth/guards';
+import { AuthenticatedUserGuard, RbacAuthGuard } from '../../auth/guards';
 import type { ICommandFsa } from '../../libs/cqrs-es';
 import { CommandHandlerService, CommandResult } from '../../libs/cqrs-es';
 import {
@@ -88,7 +88,6 @@ export class FlagController implements OnModuleInit {
     return result;
   }
 
-  // TODO auth guard
   @TestSetupEndpoint()
   async testSetup(): Promise<'OK'> {
     if (process.env.NODE_ENV !== 'test' && process.env.NODE_ENV !== 'e2e') {

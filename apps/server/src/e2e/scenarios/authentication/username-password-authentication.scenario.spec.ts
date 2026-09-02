@@ -33,6 +33,10 @@ const bogusPassword = 'sorryMARIOcheckANOTHERcastle123';
 const httpClientForTestRuns = new TestHttpClient('http://localhost:4200');
 
 describe(`When loging in with a username and password (without Multi-factor Authentication enabled)`, () => {
+  beforeAll(async () => {
+    await signInAsAdmin(httpClientForTestRuns);
+  });
+
   beforeEach(async () => {
     await httpClientForTestRuns.patch(userSetupEndpoint);
   });

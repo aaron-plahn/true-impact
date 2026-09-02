@@ -6,9 +6,11 @@ interface AppCredentials {
   password: string;
 }
 
-interface UserSessionInfo {
+export interface UserSessionInfo {
   id: string;
   username: string;
+  fullName: { firstName: string; middleNames: string[]; lastName: string };
+  role: string;
 }
 
 interface AuthError {

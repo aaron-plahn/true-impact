@@ -1,5 +1,3 @@
-import { SurveyResponseQueryService } from 'src/features/survey/survey-completion/queries';
-import { SurveyResponseRecordViewModelClientDto } from 'src/features/survey/survey-completion/queries/survey-response-record.view-model';
 import {
   CommunityQueryService,
   CommunityViewModelClientDto,
@@ -8,6 +6,8 @@ import {
   FlagQueryService,
   FlagViewModelClientDto,
 } from '../../../features/flags/queries';
+import { SurveyResponseQueryService } from '../../../features/survey/survey-completion/queries';
+import { SurveyResponseRecordViewModelClientDto } from '../../../features/survey/survey-completion/queries/survey-response-record.view-model';
 import { TrueImpactError } from '../../../libs/data-types';
 import { Inject } from '../../../libs/framework';
 import { Client } from '../client.aggregate-root';

@@ -160,6 +160,9 @@ export class User extends AggregateRoot<UserPersistenceDto> {
       );
     }
 
+    /**
+     * Where do we validate the allowed values of the user role?
+     */
     this.role = newRole;
 
     return this;

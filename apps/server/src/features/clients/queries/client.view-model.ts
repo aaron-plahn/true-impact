@@ -1,7 +1,7 @@
-import { SurveyResponseRecordViewModelClientDto } from 'src/features/survey/survey-completion/queries/survey-response-record.view-model';
 import { FullName, FullNameDto } from '../../../common/full-name';
 import { CommunityViewModelClientDto } from '../../../features/communities/queries';
 import { FlagViewModelClientDto } from '../../../features/flags/queries';
+import { SurveyResponseRecordViewModelClientDto } from '../../../features/survey/survey-completion/queries/survey-response-record.view-model';
 import type { YesNoOrUnknown } from '../../../libs/data-types';
 import {
   deepConvertMapToObject,

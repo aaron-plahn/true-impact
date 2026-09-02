@@ -12,6 +12,14 @@ const patternsToMask = [
 ].filter((val) => typeof val === "string" && val.length > 0);
 
 export const config: WebdriverIO.Config = {
+  // why doesn't this work?
+  // afterTest: async function (_test, _context, result) {
+  //   if (!result.passed) {
+  //     await browser.pause(36000000);
+
+  //     await browser.debug();
+  //   }
+  // },
   maskingPatterns: patternsToMask.join(","),
   //
   // ====================
@@ -57,7 +65,14 @@ export const config: WebdriverIO.Config = {
   // and 30 processes will get spawned. The property handles how many capabilities
   // from the same test should run tests.
   //
-  maxInstances: 10,
+  /**
+   * We currently set this to 1 to ensure tests are not run in parallel. It might be necessary
+   * to run the tests in parallel if we hit performance issues defined by our own patience with
+   * waiting for the e2e to run in the CI. This would require a new approach such as:
+   * - running each test against a separate backend \ DB
+   * - not clearing the database in a before (background) hook and ensuring that no 2 tests use the same names \ IDs \ identifying info for target entities.
+   */
+  maxInstances: 1, //10,
   //
   // If you have trouble getting all important capabilities together, check out the
   // Sauce Labs platform configurator - a great tool to configure your capabilities:

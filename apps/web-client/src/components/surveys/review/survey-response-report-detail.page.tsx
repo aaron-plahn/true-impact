@@ -27,12 +27,12 @@ export const SurveyResponseReportDetailPage = (): JSX.Element => {
 
   const report = useSelector(selectReport);
 
-  if (isLoading || !data) {
-    return <Loading />;
-  }
-
   if (error) {
     return <ApiResponseErrorInfo error={error} />;
+  }
+
+  if (isLoading || !data) {
+    return <Loading />;
   }
 
   if (!report) {

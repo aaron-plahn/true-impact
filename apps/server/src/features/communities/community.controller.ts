@@ -1,4 +1,4 @@
-import { AuthenticatedUserGuard, RbacAuthGuard } from 'src/auth/guards';
+import { AuthenticatedUserGuard, RbacAuthGuard } from '../../auth/guards';
 import type { ICommandFsa } from '../../libs/cqrs-es';
 import { CommandHandlerService, CommandResult } from '../../libs/cqrs-es';
 import {
@@ -59,7 +59,6 @@ export class CommunityController implements OnModuleInit {
     return result;
   }
 
-  // TODO What auth guard should we use here?
   @TestSetupEndpoint()
   async testSetup(): Promise<'OK'> {
     if (process.env.NODE_ENV !== 'test' && process.env.NODE_ENV !== 'e2e') {

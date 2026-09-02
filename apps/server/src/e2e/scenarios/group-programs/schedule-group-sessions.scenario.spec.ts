@@ -1,10 +1,10 @@
 import { HttpStatus } from '@nestjs/common';
-import { GroupSessionLocationDto } from 'src/features/group-programs/domain/group-session-location.value-object';
-import { GroupProgramViewModel } from 'src/features/group-programs/queries';
 import {
   CreateGroupProgram,
   ScheduleGroupProgramSession,
 } from '../../../features/group-programs/domain/commands';
+import { GroupSessionLocationDto } from '../../../features/group-programs/domain/group-session-location.value-object';
+import { GroupProgramViewModel } from '../../../features/group-programs/queries';
 import { CreateUserWithPassword } from '../../../features/users/commands';
 import { TestCommandStream } from '../../../libs/cqrs-es';
 import { assertTextMatchesAll } from '../../../libs/test-utils';

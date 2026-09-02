@@ -1,4 +1,4 @@
-import { AuthenticatedUserGuard, RbacAuthGuard } from 'src/auth/guards';
+import { AuthenticatedUserGuard, RbacAuthGuard } from '../../auth/guards';
 import type { CommandResult, ICommandFsa } from '../../libs/cqrs-es';
 import { CommandHandlerService } from '../../libs/cqrs-es';
 
@@ -78,7 +78,6 @@ export class ClientController implements OnModuleInit {
     return result;
   }
 
-  // TODO Auth Guards
   @TestSetupEndpoint()
   async testSetup(): Promise<'OK'> {
     if (process.env.NODE_ENV !== 'test' && process.env.NODE_ENV !== 'e2e') {

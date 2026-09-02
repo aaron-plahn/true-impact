@@ -1,4 +1,4 @@
-import { PersistenceAcknowledgement } from 'src/libs/cqrs-es';
+import { PersistenceAcknowledgement } from '../../../../libs/cqrs-es';
 import { TrueImpactError } from '../../../../libs/data-types';
 import { GroupProgram } from '../group-program.aggregate-root';
 
