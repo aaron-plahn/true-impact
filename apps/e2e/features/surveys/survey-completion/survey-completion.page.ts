@@ -2,10 +2,6 @@ import { Key } from "webdriverio";
 import Page from "../../login/page";
 
 class SurveyCompletionPage extends Page {
-  public async beginSurvey() {
-    await $("a").click();
-  }
-
   public async answerQuestion({
     questionLabel: _,
     chosenOptionLabel,
@@ -20,10 +16,6 @@ class SurveyCompletionPage extends Page {
     await $("button*=Submit").click();
   }
 
-  public async goToNextQuestion() {
-    await $(`*=NEXT`).click();
-  }
-
   public get surveySubmissionButton() {
     return $("button*=Submit");
   }
@@ -32,6 +24,21 @@ class SurveyCompletionPage extends Page {
     return $("*=Succesfully submitted survey");
   }
 
+  public async beginSurvey() {
+    await $('[name="accessCode"]').click();
+
+    const isMac = process.platform == "darwin";
+
+    await browser.keys([isMac ? Key.Ctrl : Key.Control, "v"]);
+
+    await $("button*=Begin").click();
+
+    const cookies = await browser.getCookies(["survey-response-session"]);
+
+    expect(cookies.length).toBeGreaterThan(0);
+  }
+
+  // TODO do we really need this?
   public async open(_surveyName: string) {
     await $('[name="accessCode"]').click();
 

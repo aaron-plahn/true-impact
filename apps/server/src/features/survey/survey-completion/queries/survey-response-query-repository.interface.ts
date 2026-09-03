@@ -6,7 +6,7 @@ export const SURVEY_RESPONSE_QUERY_REPOSITORY_INJECTION_TOKEN =
   'SURVEY_RESPONSE_QUERY_REPOSITORY_INJECTION_TOKEN';
 
 export interface ISurveyResponseQueryRepository {
-  fetchById(id: string): Promise<SurveyResponseRecordViewModel> | null; // Maybe<T>
+  fetchById(id: string): Promise<SurveyResponseRecordViewModel | null>; // Maybe<T>
 
   fetchMany(): Promise<SurveyResponseRecordViewModel[]>;
 

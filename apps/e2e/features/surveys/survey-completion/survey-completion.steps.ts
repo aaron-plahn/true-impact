@@ -59,9 +59,7 @@ Given("I am on the survey response page", async () => {
 });
 
 When("I begin the survey {string}", async (surveyName: string) => {
-  await surveyCompletionPage.open(surveyName);
-
-  await surveyCompletionPage.beginSurvey();
+  await surveyCompletionPage.beginSurvey(surveyName);
 });
 
 Then(
@@ -80,8 +78,6 @@ When(
       questionLabel,
       chosenOptionLabel,
     });
-
-    await surveyCompletionPage.goToNextQuestion();
   },
 );
 
