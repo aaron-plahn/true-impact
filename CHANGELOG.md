@@ -2,6 +2,9 @@
 
 This first release of the True Impact platform introduces a working model for user management, client management, and survey creation and completion.
 
+## 72
+In this PR, we simplify the user experience for survey completion, removing unnecessary intermediate links.
+
 ## 71
 In this PR, we tighten up the restrictions on a user's role. The current list of allowed values includes:
 - 'system admin'
