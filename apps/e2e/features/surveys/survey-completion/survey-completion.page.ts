@@ -24,7 +24,7 @@ class SurveyCompletionPage extends Page {
     return $("*=Succesfully submitted survey");
   }
 
-  public async beginSurvey(_surveyName: string) {
+  public async beginSurvey() {
     await $('[name="accessCode"]').click();
 
     const isMac = process.platform == "darwin";
