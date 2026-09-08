@@ -74,9 +74,11 @@ const firstWidgetCreated: WidgetCreated = {
 };
 
 const eventFactory: IEventFactory = {
-  build(eventDocument: EventDocument): BaseEvent {
+  build<T extends BaseEvent = BaseEvent>(eventDocument: EventDocument): T {
     if (eventDocument.event_type === 'WIDGET_CREATED') {
-      return new WidgetCreated(eventDocument as unknown as WidgetCreated);
+      return new WidgetCreated(
+        eventDocument as unknown as WidgetCreated,
+      ) as unknown as T;
     }
 
     throw new Error(`Unknown event type: ${eventDocument.event_type}`);

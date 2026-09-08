@@ -1,5 +1,11 @@
+import { OnModuleDestroy } from '@nestjs/common';
 import { Pool } from 'pg';
-import { ConfigService, Global, Module } from '../libs/framework';
+import { ConfigService, Global, Module, OnModuleInit } from '../libs/framework';
+import { EventFactory } from './event-factory';
+import {
+  IEventFactory,
+  PostgresEventRepository,
+} from './postgres-event.repository';
 
 export const PG_POOL_INJECTION_TOKEN = 'PG_POOL';
 
@@ -22,7 +28,45 @@ export const PG_POOL_INJECTION_TOKEN = 'PG_POOL';
         });
       },
     },
+    {
+      provide: 'EVENT_FACTORY',
+      useClass: EventFactory,
+    },
+    {
+      provide: 'EVENT_REPOSITORY',
+      /**
+       * There's a problem here. The domain module requires the persistence module. But the persistence module needs an
+       * event factory from the domain module. We should look at registration \ dependency injection patterns in ORMs in NestJS
+       * to get this right.
+       */
+      // Do we still need an interface here if the event factory is concrete on this side?
+      useFactory: (pool: Pool, eventFactory: IEventFactory) => {
+        const repo = new PostgresEventRepository(pool, eventFactory);
+
+        return repo;
+      },
+      inject: [PG_POOL_INJECTION_TOKEN, 'EVENT_FACTORY'],
+    },
   ],
-  exports: [PG_POOL_INJECTION_TOKEN],
+  /**
+   * Clients must register their event builders in this event factory.
+   * This avoids circular dependencies by which a domain module needs
+   * the postgres module, but the postgres module needs the domain module
+   * to get the event factory.
+   **/
+  exports: [PG_POOL_INJECTION_TOKEN, 'EVENT_FACTORY'],
 })
-export class PostgresModule {}
+export class PostgresModule implements OnModuleInit, OnModuleDestroy {
+  onModuleDestroy() {
+    throw new Error('Method not implemented.');
+  }
+
+  onModuleInit() {
+    /**
+     * TODO
+     * Do we create the database here?
+     * How do we expose an option to create feature tables if they do not exist?
+     */
+    throw new Error('Method not implemented.');
+  }
+}

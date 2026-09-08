@@ -26,7 +26,12 @@ export interface BaseEvent<T extends EventPayload = EventPayload> {
 }
 
 export interface IEventFactory {
-  build(eventDocument: EventDocument): BaseEvent;
+  /**
+   * It is always the case that the client knows which event type will be based according to the
+   * type discriminant. We **do not** want to manage giant lookup tables correlating event type string literals
+   * with TS types of corresponding events. This is tough to maintain and can cause circularities. Cast at the call site.
+   */
+  build<T extends BaseEvent = BaseEvent>(eventDocument: EventDocument): T;
 }
 
 export class PostgresEventRepository {
