@@ -2,17 +2,13 @@ import {
   TrueImpactError,
   TrueImpactRuntimeException,
 } from '../libs/data-types';
-import {
-  BaseEvent,
-  EventDto,
-  IEventFactory,
-} from './postgres-event.repository';
+import { BaseEvent, EventDto } from './postgres-event.repository';
 
 interface EventFactoryFunction<T extends BaseEvent = BaseEvent> {
   (event: EventDto): T;
 }
 
-export class EventFactory implements IEventFactory {
+export class EventFactory {
   private eventTypeToFactoryFunction = new Map<string, EventFactoryFunction>();
 
   build<T extends BaseEvent = BaseEvent>(eventDocument: EventDto): T {

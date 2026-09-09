@@ -24,7 +24,17 @@ export class PostgresTestHelper {
   }
 
   async clear(tableName: string): Promise<void> {
-    // TODO can we check that the databsase name includes `test`?
+    const databaseSearch = await this.pool.query<{ current_database: string }>(
+      'SELECT current_database();',
+    );
+
+    const dbName = databaseSearch.rows[0].current_database;
+
+    if (!dbName.includes('test')) {
+      throw new TrueImpactError(
+        `You cannot clear the table [${tableName}] in database [${dbName || '-'}] as it does not include *test* in its name.`,
+      );
+    }
 
     if (tableName !== 'events') {
       throw new TrueImpactRuntimeException([
@@ -34,19 +44,10 @@ export class PostgresTestHelper {
       ]);
     }
 
-    // TODO should we use truncate instead?
     await this.pool
       .query(`TRUNCATE TABLE ${tableName} RESTART IDENTITY CASCADE;`)
       .catch((e) => {
         throw e;
       });
-    // const dropTableIfExists = `
-    //   DROP TABLE IF EXISTS ${tableName};
-    //   `;
-
-    // look into client vs. pool
-    // await this.pool.query(dropTableIfExists).catch((e) => {
-    //   throw e;
-    // });
   }
 }

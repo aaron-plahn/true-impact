@@ -1,6 +1,8 @@
 import { NotImplementedException } from '@nestjs/common';
 import { Pool } from 'pg';
+import { TrueImpactError } from '../libs/data-types';
 import { Inject } from '../libs/framework';
+import { EventFactory } from './event-factory';
 import { PG_POOL_INJECTION_TOKEN } from './postgres.module';
 
 export interface EventDocument {
@@ -32,15 +34,6 @@ export interface BaseEvent<T extends EventPayload = EventPayload> {
   revision: number;
 }
 
-export interface IEventFactory {
-  /**
-   * It is always the case that the client knows which event type will be based according to the
-   * type discriminant. We **do not** want to manage giant lookup tables correlating event type string literals
-   * with TS types of corresponding events. This is tough to maintain and can cause circularities. Cast at the call site.
-   */
-  build<T extends BaseEvent = BaseEvent>(eventDocument: EventDto): T;
-}
-
 const thinMap = (row: EventDocument): EventDto => {
   const streamId = row.stream_id;
   const type = row.event_type;
@@ -61,24 +54,14 @@ export class PostgresEventRepository {
     @Inject(PG_POOL_INJECTION_TOKEN)
     private readonly pool: Pool,
     @Inject('EVENT_FACTORY_INJECTION_TOKEN')
-    private readonly eventFactory: IEventFactory,
+    private readonly eventFactory: EventFactory,
   ) {}
 
-  // couldn't this potentially return an error?
-  /**
-   * TODO Is it possible to have a constraint that crosess stream boundaries?
-   * The idea would be that we project off n streams and then report the streams we used
-   * when committing and fail an optimistic concurrency check if any of those streams has been edited.
-   */
   async appendEvent(
     event: BaseEvent,
     // necessary for optimistic concurrency
     revision: number,
   ): Promise<{ streamId: string } | Error> {
-    // is this necessary? wouldn't this introduce performance issues? We are running one atomic write.
-    await this.pool.query('BEGIN TRANSACTION;');
-
-    // stream_version?
     const query = `
         INSERT INTO events (stream_id, event_type, payload, meta, revision)
         VALUES ($1, $2, $3, $4, $5 + 1)
@@ -93,18 +76,33 @@ export class PostgresEventRepository {
       revision,
     ];
 
-    const result = await this.pool.query(query, values).catch((_e) => {
-      // do this
-      throw new Error(`TODO MAke this a returned error`);
+    const client = await this.pool.connect().catch((e: Error) => {
+      return new TrueImpactError(`Failed to connect to the database`, [
+        new TrueImpactError(e.message),
+      ]);
     });
+
+    if (client instanceof Error) {
+      return client;
+    }
+
+    const result = await client.query(query, values).catch((e: Error) => {
+      return new TrueImpactError(`Database query failed in Postgres.`, [
+        new TrueImpactError(e.message),
+      ]);
+    });
+
+    if (result instanceof Error) {
+      return result;
+    }
+
+    client.release();
 
     if (result.rowCount === 0) {
       return new Error(
         `Failed to persist update to event stream: [${event.streamId}]. Somone else has written data since revision [${revision}]`,
       );
     }
-
-    await this.pool.query('COMMIT TRANSACTION;');
 
     return {
       streamId: event.streamId,
@@ -132,15 +130,8 @@ export class PostgresEventRepository {
       });
 
     /**
-     * It is the repository's responsibility to hydrate an instance of an event. This means that we need an `EventFactory`.
-     * The event factory can be built by dynamically registering events `@DomainEvent` and using a plugin style architecture.
-     * ```ts
-     * myEventFactory.register("MY_EVENT",()=> MyEvent.fromDocument(eventDoc))
-     *
-     * We should be careful around the design of this. If it's possible to avoid running discovery up front, that might be ideal.
-     * We could consider injecting the factory into the read method instead of the constructor. We could consider injecting a way to lazily lookup the meta for
-     * the factory when needed instead of eagerly building the entire factory. There are lots of things to think about here.
-     * ```
+     * It is the feature module's responsibility to register event factory functions
+     * per event type introduced in said module.
      */
     const eventInstances = rawRows.rows.map((row) =>
       this.eventFactory.build(thinMap(row)),

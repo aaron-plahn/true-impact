@@ -128,14 +128,14 @@ describe(`PostgresEventRepository`, () => {
     const eventFactory = app.get(EventFactory);
 
     eventFactory.register(WIDGET_CREATED, (doc) => {
-      // @ts-expect-error TODO fix the types here
+      // @ts-expect-error We are being a bit loose with types in our toy models
       const instance = new WidgetCreated(doc);
 
       return instance;
     });
 
     eventFactory.register(WIDGET_LABELLED, (doc) => {
-      // @ts-expect-error TODO fix the types here
+      // @ts-expect-error We are being a bit loose with types in our toy models
       return new WidgetLabelled(doc);
     });
 

@@ -7,16 +7,11 @@ import { PostgresTestHelper } from './postgres-test-helper';
 
 export const PG_POOL_INJECTION_TOKEN = 'PG_POOL';
 
-// DATABASE_URL="postgresql://postgres:secret_password@localhost:5432/my_database?schema=public"
-
 @Global()
-// Is this necessary if we expose a factory function?
 @Module({})
-// onModuleDestroy close pool?
 export class PostgresModule implements OnModuleDestroy {
   constructor(private readonly moduleRef: ModuleRef) {}
 
-  // TODO set up and test connection string and pool
   static forRootAsync(): DynamicModule {
     const poolProvider = {
       provide: PG_POOL_INJECTION_TOKEN,
@@ -34,12 +29,11 @@ export class PostgresModule implements OnModuleDestroy {
         const POSTGRES_PASSWORD =
           configService.get<string>('POSTGRES_PASSWORD');
 
-        // TODO commandDB, queryDB
-        const POSTGRES_DB = configService.get<string>('POSTGRES_DB');
+        const POSTGRES_EVENT_STORE_DB = configService.get<string>(
+          'EVENT_STORE_DB_NAME',
+        );
 
-        const POSTGRES_CONNECTION_STRING = `postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}`;
-
-        console.log({ POSTGRES_CONNECTION_STRING });
+        const POSTGRES_CONNECTION_STRING = `postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_EVENT_STORE_DB}`;
 
         const adminClient = new Client({
           host: POSTGRES_HOST,
@@ -50,13 +44,13 @@ export class PostgresModule implements OnModuleDestroy {
           connectionTimeoutMillis: 1500,
         });
 
-        // Create DB if not exists
+        // In the next several lines, we create the database if it doesn't exist
         await adminClient.connect();
 
         const dbsWithNameQuery = `SELECT 1 from pg_catalog.pg_database WHERE datname = $1`;
 
         const res = await adminClient
-          .query(dbsWithNameQuery, [POSTGRES_DB])
+          .query(dbsWithNameQuery, [POSTGRES_EVENT_STORE_DB])
           .catch(async (e) => {
             await adminClient.end();
 
@@ -67,7 +61,9 @@ export class PostgresModule implements OnModuleDestroy {
           // the database does not yet exist
           // Note that CREATE DATABASE cannot be run in a parametrized query. It is important that the user is never able to inject the database name
           // TODO can we sanitize \ validate the name just as an extra safe guard?
-          await adminClient.query(`CREATE DATABASE "${POSTGRES_DB}"`);
+          await adminClient.query(
+            `CREATE DATABASE "${POSTGRES_EVENT_STORE_DB}"`,
+          );
         }
 
         await adminClient.end();
@@ -78,13 +74,8 @@ export class PostgresModule implements OnModuleDestroy {
           port,
           user: POSTGRES_USER,
           password: POSTGRES_PASSWORD,
-          database: POSTGRES_DB,
+          database: POSTGRES_EVENT_STORE_DB,
           connectionTimeoutMillis: 1500,
-        });
-
-        await client.connect().catch((e) => {
-          // TODO supplement this error with internal information ("failed to connect to PostgreSQL check your configuration or netowrk")
-          throw e;
         });
 
         // TODO use a lib to get static analysis \ type safety on SQL queries
@@ -117,27 +108,9 @@ export class PostgresModule implements OnModuleDestroy {
       inject: [ConfigService],
     };
 
-    // const exports: ModuleMetadata['exports'] = [
-    //   EventFactory,
-    //   // TODO double check that circular deps checks are running
-    //   // TODO const
-    //   'EVENT_REPOSITORY_INJECTION_TOKEN',
-    // ];
-
-    // if (['test', 'e2e'].includes(process.env.NODE_ENV || '**NEVER**')) {
-    //   /**
-    //    * This is yet another safeguard against this being used in production.
-    //    */
-    //   exports.push(PostgresTestHelper);
-    // }
-
     const shouldIncludeTestHelper = ['test', 'e2e'].includes(
       process.env.NODE_ENV || '**NEVER**',
     );
-
-    console.log({
-      shouldIncludeTestHelper,
-    });
 
     const postgresTestHelperProvider = {
       provide: PostgresTestHelper,
