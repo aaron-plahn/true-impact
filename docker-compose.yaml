@@ -1,14 +1,8 @@
 services:
-  # Note: If you are assigning a custom name to your db service on the line below, make sure it does not contain underscores
-  # Currently, the `db` is only used for `SuperTokens`
   db:
     image: "postgres:latest"
     env_file:
       - .env.${NODE_ENV}
-    # environment:
-      # POSTGRES_USER: todo
-      # POSTGRES_PASSWORD: todo
-      # POSTGRES_DB: $EVENT_STORE_DB_NAME # why doesn't this work?
     ports:
       - 5432:5432
     networks:
