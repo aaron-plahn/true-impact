@@ -1,6 +1,6 @@
 import { OnModuleDestroy } from '@nestjs/common';
 import { Pool } from 'pg';
-import { ConfigService, Global, Module, OnModuleInit } from '../libs/framework';
+import { ConfigService, Global, Module, ModuleRef } from '../libs/framework';
 import { EventFactory } from './event-factory';
 import {
   IEventFactory,
@@ -54,19 +54,19 @@ export const PG_POOL_INJECTION_TOKEN = 'PG_POOL';
    * the postgres module, but the postgres module needs the domain module
    * to get the event factory.
    **/
-  exports: [PG_POOL_INJECTION_TOKEN, 'EVENT_FACTORY'],
+  exports: ['EVENT_FACTORY'],
 })
-export class PostgresModule implements OnModuleInit, OnModuleDestroy {
-  onModuleDestroy() {
-    throw new Error('Method not implemented.');
-  }
+// onModuleDestroy close pool?
+export class PostgresModule implements OnModuleDestroy {
+  constructor(private readonly moduleRef: ModuleRef) {}
 
-  onModuleInit() {
-    /**
-     * TODO
-     * Do we create the database here?
-     * How do we expose an option to create feature tables if they do not exist?
-     */
-    throw new Error('Method not implemented.');
+  // TODO set up and test connection string and pool
+  // async forRootAsync(): DynamicModule{
+
+  // }
+
+  async onModuleDestroy() {
+    // avoid memory leaks
+    await this.moduleRef.get<Pool>(PG_POOL_INJECTION_TOKEN).end();
   }
 }

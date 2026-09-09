@@ -53,7 +53,7 @@ export class PostgresEventRepository {
     // necessary for optimistic concurrency
     revision: number,
   ): Promise<{ streamId: string } | Error> {
-    await this.pool.query('BEGIN');
+    await this.pool.query('BEGIN TRANSACTION;');
 
     // stream_version?
     const query = `
@@ -79,6 +79,8 @@ export class PostgresEventRepository {
         `Postgres query failed.\n Concurrency conflict: Stream: event.streamId`,
       );
     }
+
+    await this.pool.query('COMMIT TRANSACTION;');
 
     return {
       streamId: '123',

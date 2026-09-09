@@ -1,7 +1,7 @@
 import {
   TrueImpactError,
   TrueImpactRuntimeException,
-} from 'src/libs/data-types';
+} from '../libs/data-types';
 import {
   BaseEvent,
   EventDocument,
