@@ -53,6 +53,7 @@ export class PostgresEventRepository {
     // necessary for optimistic concurrency
     revision: number,
   ): Promise<{ streamId: string } | Error> {
+    // is this necessary? wouldn't this introduce performance issues? We are running one atomic write.
     await this.pool.query('BEGIN TRANSACTION;');
 
     // stream_version?
@@ -83,7 +84,7 @@ export class PostgresEventRepository {
     await this.pool.query('COMMIT TRANSACTION;');
 
     return {
-      streamId: '123',
+      streamId: event.streamId,
     };
   }
 
@@ -118,6 +119,10 @@ export class PostgresEventRepository {
      * the factory when needed instead of eagerly building the entire factory. There are lots of things to think about here.
      * ```
      */
-    return rawRows.rows.map((row) => this.eventFactory.build(row));
+    const eventInstances = rawRows.rows.map((row) =>
+      this.eventFactory.build(row),
+    );
+
+    return eventInstances;
   }
 }
