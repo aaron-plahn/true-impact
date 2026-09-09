@@ -94,12 +94,13 @@ export class PostgresEventRepository {
     ];
 
     const result = await this.pool.query(query, values).catch((_e) => {
+      // do this
       throw new Error(`TODO MAke this a returned error`);
     });
 
     if (result.rowCount === 0) {
       return new Error(
-        `Postgres query failed.\n Concurrency conflict: Stream: event.streamId`,
+        `Failed to persist update to event stream: [${event.streamId}]. Somone else has written data since revision [${revision}]`,
       );
     }
 

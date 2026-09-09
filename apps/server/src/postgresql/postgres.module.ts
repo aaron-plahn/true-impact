@@ -91,7 +91,7 @@ export class PostgresModule implements OnModuleDestroy {
         // not null constraints?
         const createTableQuery = `
       CREATE TABLE IF NOT EXISTS events (
-        stream_id TEXT PRIMARY KEY,
+        stream_id TEXT,
         revision INT NOT NULL,
         event_type VARCHAR(64) NOT NULL,
         payload JSONB DEFAULT '{}'::jsonb,
