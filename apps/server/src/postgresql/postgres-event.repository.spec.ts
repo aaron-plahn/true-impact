@@ -87,8 +87,12 @@ describe(`PostgresEventRepository`, () => {
 
     const eventFactory = app.get(EventFactory);
 
-    // @ts-expect-error TODO fix the types here
-    eventFactory.register(WIDGET_CREATED, (doc) => new WidgetCreated(doc));
+    eventFactory.register(WIDGET_CREATED, (doc) => {
+      // @ts-expect-error TODO fix the types here
+      const instance = new WidgetCreated(doc);
+
+      return instance;
+    });
 
     testRepository = app.get('EVENT_REPOSITORY_INJECTION_TOKEN');
   });
@@ -113,9 +117,15 @@ describe(`PostgresEventRepository`, () => {
 
       expect(foundRecord).toBeInstanceOf(WidgetCreated);
 
-      console.log('foo');
+      expect(foundRecord.type).toBe(WIDGET_CREATED);
 
-      // TODO Check that all props are persisted properly
+      expect(foundRecord.meta).toEqual(firstWidgetCreated.meta);
+
+      expect(foundRecord.payload).toEqual(firstWidgetCreated.payload);
+
+      expect(foundRecord.streamId).toEqual(firstWidgetCreated.streamId);
+
+      expect(foundRecord.revision).toEqual(1);
     });
   });
 });

@@ -95,7 +95,7 @@ export class PostgresModule implements OnModuleDestroy {
         revision INT NOT NULL,
         event_type VARCHAR(64) NOT NULL,
         payload JSONB DEFAULT '{}'::jsonb,
-        metadata JSONB DEFAULT '{}'::jsonb,
+        meta JSONB DEFAULT '{}'::jsonb,
         CONSTRAINT uq_stream_version UNIQUE (stream_id, revision)
         );
       `;

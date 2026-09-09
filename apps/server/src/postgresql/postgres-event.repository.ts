@@ -5,6 +5,13 @@ import { PG_POOL_INJECTION_TOKEN } from './postgres.module';
 
 export interface EventDocument {
   event_type: string;
+  stream_id: string;
+  payload: Record<string, unknown>;
+  meta: Record<string, unknown>;
+}
+
+export interface EventDto {
+  type: string;
   streamId: string;
   payload: Record<string, unknown>;
   meta: Record<string, unknown>;
@@ -31,8 +38,23 @@ export interface IEventFactory {
    * type discriminant. We **do not** want to manage giant lookup tables correlating event type string literals
    * with TS types of corresponding events. This is tough to maintain and can cause circularities. Cast at the call site.
    */
-  build<T extends BaseEvent = BaseEvent>(eventDocument: EventDocument): T;
+  build<T extends BaseEvent = BaseEvent>(eventDocument: EventDto): T;
 }
+
+const thinMap = (row: EventDocument): EventDto => {
+  const streamId = row.stream_id;
+  const type = row.event_type;
+
+  Object.assign(row, { streamId, type });
+
+  // @ts-expect-error We modify this in-place to avoid cloning unnecessarily.
+  delete row.stream_id;
+
+  // @ts-expect-error We modify this in-place to avoid cloning unnecessarily.
+  delete row.event_type;
+
+  return row as unknown as EventDto;
+};
 
 export class PostgresEventRepository {
   constructor(
@@ -58,7 +80,7 @@ export class PostgresEventRepository {
 
     // stream_version?
     const query = `
-        INSERT INTO events (stream_id, event_type, payload, metadata, revision)
+        INSERT INTO events (stream_id, event_type, payload, meta, revision)
         VALUES ($1, $2, $3, $4, $5 + 1)
         ON CONFLICT (stream_id, revision) DO NOTHING;
     `;
@@ -120,7 +142,7 @@ export class PostgresEventRepository {
      * ```
      */
     const eventInstances = rawRows.rows.map((row) =>
-      this.eventFactory.build(row),
+      this.eventFactory.build(thinMap(row)),
     );
 
     return eventInstances;

@@ -4,26 +4,26 @@ import {
 } from '../libs/data-types';
 import {
   BaseEvent,
-  EventDocument,
+  EventDto,
   IEventFactory,
 } from './postgres-event.repository';
 
 interface EventFactoryFunction<T extends BaseEvent = BaseEvent> {
-  (event: EventDocument): T;
+  (event: EventDto): T;
 }
 
 export class EventFactory implements IEventFactory {
   private eventTypeToFactoryFunction = new Map<string, EventFactoryFunction>();
 
-  build<T extends BaseEvent = BaseEvent>(eventDocument: EventDocument): T {
+  build<T extends BaseEvent = BaseEvent>(eventDocument: EventDto): T {
     const factoryFunction = this.eventTypeToFactoryFunction.get(
-      eventDocument.event_type,
+      eventDocument.type,
     );
 
     if (!factoryFunction) {
       throw new TrueImpactRuntimeException([
         new TrueImpactError(
-          `Failed to find a factory for event of unknown type: ${eventDocument.event_type}`,
+          `Failed to find a factory for event of unknown type: ${eventDocument.type}`,
         ),
       ]);
     }
@@ -33,7 +33,7 @@ export class EventFactory implements IEventFactory {
 
   register(
     eventType: string,
-    factoryFunction: (eventDocument: EventDocument) => BaseEvent,
+    factoryFunction: (eventDocument: EventDto) => BaseEvent,
   ) {
     if (this.eventTypeToFactoryFunction.has(eventType)) {
       console.warn(
