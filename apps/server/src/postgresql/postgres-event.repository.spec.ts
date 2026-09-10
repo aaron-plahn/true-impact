@@ -112,7 +112,7 @@ describe(`PostgresEventRepository`, () => {
           const cm = ConfigModule.forRoot({
             isGlobal: true,
             // do we need a separate .env.test?
-            envFilePath: [`../../.env.e2e`],
+            envFilePath: [`../../.env.jest`],
           });
 
           return cm;

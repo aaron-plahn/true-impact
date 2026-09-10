@@ -38,14 +38,16 @@ export class PostgresModule implements OnModuleDestroy {
 
         const POSTGRES_CONNECTION_STRING = `postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_EVENT_STORE_DB}`;
 
-        const adminClient = new Client({
+        const adminClientOptions = {
           host: POSTGRES_HOST,
           port,
           user: POSTGRES_USER,
           password: POSTGRES_PASSWORD,
           database: POSTGRES_DB,
           connectionTimeoutMillis: 6000,
-        });
+        };
+
+        const adminClient = new Client(adminClientOptions);
 
         await adminClient.connect().catch((e: Error) => {
           throw new TrueImpactError(
