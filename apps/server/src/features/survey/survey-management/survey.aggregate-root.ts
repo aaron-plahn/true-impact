@@ -1,3 +1,5 @@
+import { NotImplementedException } from '@nestjs/common';
+import { BaseEvent } from 'src/postgresql/postgres-event.repository';
 import {
   AggregateRoot,
   BooleanDataType,
@@ -1231,5 +1233,12 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
     }
 
     return survey;
+  }
+
+  static fromEventHistory(
+    _eventHistory: BaseEvent[],
+    _id: string,
+  ): Survey | TrueImpactError | null {
+    throw new NotImplementedException();
   }
 }
