@@ -21,6 +21,7 @@ jobs:
     env:
       CLIENT_PORT: ${{ vars.CLIENT_PORT }}
       API_PORT: ${{ vars.API_PORT }}
+      POSTGRES_HOST: ${{ vars.POSTGRES_HOST }}
     steps:
       # TODO use shared actions to share steps with other workflows
       # TODO pin all actions to a specific SHA
