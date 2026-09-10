@@ -42,6 +42,9 @@ EXPOSE $API_PORT
 
 USER appuser
 
+RUN echo "starting the server with NODE_ENV=${NODE_ENV}"
+RUN echo "and POSTGRES_HOST=${POSTGRES_HOST}"
+
 # Start the application
 CMD ["node", "dist/main.js"]
 
