@@ -77,7 +77,9 @@ jobs:
 
       - name: Copy sample.env to .env.test
         # TODO use environment
-        run: cp sample.env .env.test
+        run: |
+          cp sample.env .env.test
+          echo NODE_ENV=test > .env.test
 
       # TODO separate `test` NODE_ENV
       - name: Start containerized app
