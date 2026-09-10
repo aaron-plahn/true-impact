@@ -8,6 +8,7 @@ import { SurveyModule } from './features/survey/survey.module';
 import { UserModule } from './features/users/user.module';
 import { CryptographyModule } from './libs/auth';
 import { ConfigModule, Module } from './libs/framework';
+import { PostgresModule } from './postgresql/postgres.module';
 
 const nodeEnv = process.env.NODE_ENV || 'local';
 
@@ -21,6 +22,7 @@ console.log(`Loading NestJS configuration for environment: ${nodeEnv}`);
       // TODO Support a different env per environment. Use a different NODE_ENV for Docker runs vs. local npm runs.
       envFilePath: [`.env.${nodeEnv}`, `../../.env.${nodeEnv}`],
     }),
+    PostgresModule.forRootAsync(),
     CryptographyModule,
     AuthModule,
     ClientModule,

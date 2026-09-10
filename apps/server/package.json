@@ -28,6 +28,7 @@
     "@nestjs/swagger": "^11.2.5",
     "class-transformer": "^0.5.1",
     "express-session": "^1.19.0",
+    "pg": "^8.22.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1"
   },
@@ -41,6 +42,7 @@
     "@types/express-session": "^1.19.0",
     "@types/jest": "^30.0.0",
     "@types/node": "^22.10.7",
+    "@types/pg": "^8.20.0",
     "@types/supertest": "^6.0.3",
     "axios": "^1.13.5",
     "eslint": "^9.18.0",

@@ -17,6 +17,15 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: test
+    env:
+      NODE_ENV: ${{ vars.NODE_ENV }}
+      CLIENT_PORT: ${{ vars.CLIENT_PORT }}
+      API_PORT: ${{ vars.API_PORT }}
+      POSTGRES_HOST: ${{ vars.POSTGRES_HOST }}
+      POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+      POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+      POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+
     steps:
       - name: Checkout code
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
@@ -66,13 +75,16 @@ jobs:
 
           if-no-files-found: error 
 
-      - name: Copy sample.env to .env.e2e
+      - name: Copy sample.env to .env.test
         # TODO use environment
-        run: cp sample.env .env.e2e
+        run: |
+          cp sample.env .env.test
+          echo NODE_ENV=test > .env.test
 
+      # TODO separate `test` NODE_ENV
       - name: Start containerized app
         run: |
-          docker compose --env-file .env.e2e up -d --build
+          NODE_ENV=test docker compose --env-file .env.test up -d --build
 
       - name: Wait for Server
         run: npx wait-on http://127.0.0.1:3234 --timeout 60000
@@ -89,7 +101,7 @@ jobs:
         working-directory: ./apps/server
       - if: always()
         run: |
-          docker compose --env-file .env.e2e down -v
+          docker compose --env-file .env.test down -v
 
   ci-gate:
     runs-on: ubuntu-latest

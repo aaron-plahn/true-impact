@@ -17,10 +17,15 @@ jobs:
   uie2e:
     runs-on: ubuntu-latest
     environment:
-      name: test
+      name: e2e
     env:
+      NODE_ENV: ${{ vars.NODE_ENV }}
       CLIENT_PORT: ${{ vars.CLIENT_PORT }}
       API_PORT: ${{ vars.API_PORT }}
+      POSTGRES_HOST: ${{ vars.POSTGRES_HOST }}
+      POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+      POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+      POSTGRES_PASSWORD: ${{ secrents.POSTGRES_PASSWORD }}
     steps:
       # TODO use shared actions to share steps with other workflows
       # TODO pin all actions to a specific SHA
@@ -35,7 +40,7 @@ jobs:
 
       - name: Start containerized app
         run: |
-          docker compose --env-file .env.e2e up --build -d
+          NODE_ENV=$NODE_ENV docker compose --env-file .env.e2e up --build -d
 
       - name: Wait for Server
       # TODO remove all hard-wired ports
