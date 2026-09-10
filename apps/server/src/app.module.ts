@@ -21,6 +21,7 @@ console.log(`Loading NestJS configuration for environment: ${nodeEnv}`);
       // TODO Support a different env per environment. Use a different NODE_ENV for Docker runs vs. local npm runs.
       envFilePath: [`.env.${nodeEnv}`, `../../.env.${nodeEnv}`],
     }),
+    // PostgresModule.forRootAsync(),
     CryptographyModule,
     AuthModule,
     ClientModule,

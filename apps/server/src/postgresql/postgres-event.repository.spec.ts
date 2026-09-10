@@ -119,7 +119,11 @@ describe(`PostgresEventRepository`, () => {
         })(),
         PostgresModule.forRootAsync(),
       ],
-    }).compile();
+    })
+      .compile()
+      .catch((e) => {
+        throw e;
+      });
 
     app = testModule.createNestApplication();
 

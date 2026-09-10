@@ -1,5 +1,6 @@
 import { DynamicModule, OnModuleDestroy } from '@nestjs/common';
 import { Client, Pool } from 'pg';
+import { TrueImpactError } from '../libs/data-types';
 import { ConfigService, Global, Module, ModuleRef } from '../libs/framework';
 import { EventFactory } from './event-factory';
 import { PostgresEventRepository } from './postgres-event.repository';
@@ -33,6 +34,8 @@ export class PostgresModule implements OnModuleDestroy {
           'EVENT_STORE_DB_NAME',
         );
 
+        const POSTGRES_DB = configService.get<string>('POSTGRES_DB');
+
         const POSTGRES_CONNECTION_STRING = `postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_EVENT_STORE_DB}`;
 
         const adminClient = new Client({
@@ -40,14 +43,17 @@ export class PostgresModule implements OnModuleDestroy {
           port,
           user: POSTGRES_USER,
           password: POSTGRES_PASSWORD,
-          database: 'postgres',
-          connectionTimeoutMillis: 1500,
+          database: POSTGRES_DB,
+          connectionTimeoutMillis: 6000,
         });
 
-        // In the next several lines, we create the database if it doesn't exist
-        await adminClient.connect();
+        await adminClient.connect().catch((e: Error) => {
+          throw new TrueImpactError(
+            `Failed to connect as an admin to create the required table: ${POSTGRES_EVENT_STORE_DB}\n${e}`,
+          );
+        });
 
-        const dbsWithNameQuery = `SELECT 1 from pg_catalog.pg_database WHERE datname = $1`;
+        const dbsWithNameQuery = `SELECT 1 from pg_catalog.pg_database WHERE datname = $1;`;
 
         const res = await adminClient
           .query(dbsWithNameQuery, [POSTGRES_EVENT_STORE_DB])
@@ -78,8 +84,13 @@ export class PostgresModule implements OnModuleDestroy {
           connectionTimeoutMillis: 1500,
         });
 
+        await client.connect().catch((e) => {
+          throw e;
+        });
+
         // TODO use a lib to get static analysis \ type safety on SQL queries
         // not null constraints?
+
         const createTableQuery = `
       CREATE TABLE IF NOT EXISTS events (
         stream_id TEXT,
