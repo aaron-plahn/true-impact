@@ -28,6 +28,15 @@ services:
     environment:
       - WEB_CONCURRENCY=1
       - PM2_WORKERS=1
+    env:
+      NODE_ENV: ${{ vars.NODE_ENV }}
+      CLIENT_PORT: ${{ vars.CLIENT_PORT }}
+      API_PORT: ${{ vars.API_PORT }}
+      POSTGRES_HOST: ${{ vars.POSTGRES_HOST }}
+      POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+      POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+      POSTGRES_PASSWORD: ${{ secrents.POSTGRES_PASSWORD }}
+      
     ports:
       - $API_PORT:$API_PORT
     networks:
