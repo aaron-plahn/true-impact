@@ -23,6 +23,10 @@ RUN yarn build
 # Production stage
 FROM node:24.13.0-alpine AS production
 
+ARG NODE_ENV
+
+ENV NODE_ENV=$NODE_ENV
+
 # create non-root user
 RUN addgroup -g 10001 appgroup && \
     adduser -u 10001 -G appgroup -s /bin/sh -D appuser
