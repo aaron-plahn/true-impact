@@ -19,7 +19,7 @@ jobs:
     environment:
       name: test
     env:
-      NODE_ENV: "e2e"
+      NODE_ENV: e2e
       CLIENT_PORT: ${{ vars.CLIENT_PORT }}
       API_PORT: ${{ vars.API_PORT }}
       POSTGRES_HOST: ${{ vars.POSTGRES_HOST }}
