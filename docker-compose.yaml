@@ -20,6 +20,8 @@ services:
     build:
       context: .
       dockerfile: apps/server/Dockerfile
+      args:
+        - NODE_ENV=${NODE_ENV}
     init: true # prevent zombie worker deadlocks
     env_file:
       - .env.${NODE_ENV}
