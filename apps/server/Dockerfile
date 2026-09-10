@@ -24,8 +24,10 @@ RUN yarn build
 FROM node:24.13.0-alpine AS production
 
 ARG NODE_ENV
+ARG POSTGRES_HOST
 
 ENV NODE_ENV=$NODE_ENV
+ENV POSTGRES_HOST=$POSTGRES_HOST
 
 # create non-root user
 RUN addgroup -g 10001 appgroup && \
