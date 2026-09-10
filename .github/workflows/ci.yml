@@ -99,7 +99,7 @@ jobs:
         working-directory: ./apps/server
       - if: always()
         run: |
-          docker compose --env-file .env.e2e down -v
+          docker compose --env-file .env.test down -v
 
   ci-gate:
     runs-on: ubuntu-latest
