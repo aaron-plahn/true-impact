@@ -82,7 +82,7 @@ jobs:
       # TODO separate `test` NODE_ENV
       - name: Start containerized app
         run: |
-          NODE_ENV=e2e docker compose --env-file .env.e2e up -d --build
+          NODE_ENV=e2e docker compose --env-file .env.test up -d --build
 
       - name: Wait for Server
         run: npx wait-on http://127.0.0.1:3234 --timeout 60000
