@@ -1,8 +1,6 @@
 services:
   db:
     image: "postgres:latest"
-    environment:
-      name: e2e
     ports:
       - 5432:5432
     networks:
