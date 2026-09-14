@@ -1,8 +1,8 @@
 services:
   db:
     image: "postgres:latest"
-    env_file:
-      - .env.${NODE_ENV}
+    environment:
+      name: e2e
     ports:
       - 5432:5432
     networks:
@@ -23,8 +23,6 @@ services:
       args:
         - NODE_ENV=${NODE_ENV}
     init: true # prevent zombie worker deadlocks
-    env_file:
-      - .env.${NODE_ENV}
     environment:
       - WEB_CONCURRENCY=1
       - PM2_WORKERS=1
