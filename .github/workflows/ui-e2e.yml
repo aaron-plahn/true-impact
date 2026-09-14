@@ -21,26 +21,29 @@ jobs:
     env:
       NODE_ENV: ${{ vars.NODE_ENV }}
       CLIENT_PORT: ${{ vars.CLIENT_PORT }}
-      API_PORT: ${{ vars.API_PORT }}
+      CLIENT_DOMAIN: ${{ vars.CLIENT_DOMAIN }}
       POSTGRES_HOST: ${{ vars.POSTGRES_HOST }}
       POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+      POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
       POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
-      POSTGRES_PASSWORD: ${{ secrents.POSTGRES_PASSWORD }}
+      POSTGRES_PORT: ${{ vars.POSTGRES_PORT }}
+      EVENT_STORE_DB_NAME: ${{ secrets.EVENT_STORE_DB_NAME }}
+      API_DOMAIN: ${{ vars.API_DOMAIN }}
+      API_PORT: ${{ vars.API_PORT }}
+      TI_ENCRYPTION_KEY: ${{ secrets.TI_ENCRYPTION_KEY }}
+      TI_COOKIES_SECRET: ${{ secrets.TI_COOKIES_SECRET }}
+      SYSTEM_ADMIN_USERNAME: ${{ secrets.SYSTEM_ADMIN_USERNAME }}
+      INITIAL_ADMIN_PASSWORD: ${{ secrets.INITIAL_ADMIN_PASSWORD }}
     steps:
       # TODO use shared actions to share steps with other workflows
       # TODO pin all actions to a specific SHA
       - name: Checkout code
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
-      - name: Copy sample.env to .env.e2e
-        # TODO use environment
-        run: |
-          cp sample.env .env.e2e  
-          
-
       - name: Start containerized app
+      # Note that we do not pass a .env file here. All secrets \ configuration comes from the GitHub environment.
         run: |
-          NODE_ENV=$NODE_ENV docker compose --env-file .env.e2e up --build -d
+          NODE_ENV=$NODE_ENV docker compose up --build -d
 
       - name: Wait for Server
       # TODO remove all hard-wired ports
