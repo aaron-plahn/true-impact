@@ -17,7 +17,8 @@ jobs:
   uie2e:
     runs-on: ubuntu-latest
     environment:
-      name: e2e
+      #name: e2e
+      name: debug
     env:
       NODE_ENV: ${{ vars.NODE_ENV }}
       CLIENT_PORT: ${{ vars.CLIENT_PORT }}
@@ -42,8 +43,9 @@ jobs:
 
       - name: Start containerized app
       # Note that we do not pass a .env file here. All secrets \ configuration comes from the GitHub environment.
+      # TODO remove this!
         run: |
-          NODE_ENV=$NODE_ENV docker compose up --build -d
+          NODE_ENV=$NODE_ENV docker compose config
 
       - name: Wait for Server
       # TODO remove all hard-wired ports
@@ -72,7 +74,7 @@ jobs:
 
       - name: e2e test UI
         env:
-          NODE_ENV: e2e
+          NODE_ENV: ${{ vars.NODE_ENV }}
           SYSTEM_ADMIN_USERNAME: ${{ secrets.SYSTEM_ADMIN_USERNAME }}
           INITIAL_ADMIN_PASSWORD: ${{ secrets.INITIAL_ADMIN_PASSWORD }}
         run: |
