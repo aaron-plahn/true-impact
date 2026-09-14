@@ -24,15 +24,29 @@ services:
     build:
       context: .
       dockerfile: apps/server/Dockerfile
+      # TODO Can't we pull this from the github environment now?
       args:
         - NODE_ENV=${NODE_ENV}
     init: true # prevent zombie worker deadlocks
     environment:
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - POSTGRES_PORT=${POSTGRES_PORT}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - CLIENT_PORT=${CLIENT_PORT}
+      - EVENT_STORE_DB_NAME=${EVENT_STORE_DB_NAME}
+      - API_DOMAIN=${API_DOMAIN}
+      - API_PORT=${API_PORT}
+      - TI_ENCRYPTION_KEY=${TI_ENCRYPTION_KEY}
+      - TI_COOKIES_SECRET=${TI_COOKIES_SECRET}
+      - SYSTEM_ADMIN_USERNAME=${SYSTEM_ADMIN_USERNAME}
+      - INITIAL_ADMIN_PASSWORD=${INITIAL_ADMIN_PASSWORD}
+      # These are additional settings only required in the CI
       - WEB_CONCURRENCY=1
       - PM2_WORKERS=1
-
     ports:
-      - $API_PORT:$API_PORT
+      - ${API_PORT}:${API_PORT}
     networks:
       - app_network
     healthcheck:
@@ -48,7 +62,7 @@ services:
       dockerfile: apps/web-client/Dockerfile
     init: true # prevent zombie worker deadlocks
     ports:
-      - "$CLIENT_PORT:8080"
+      - "${CLIENT_PORT}:8080"
     depends_on:
       - api
         # condition: service_healthy # wait for health check
