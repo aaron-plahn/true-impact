@@ -80,4 +80,4 @@ jobs:
         working-directory: ./apps/e2e
       - if: always()
         run: |
-          docker compose --env-file .env.e2e down -v
+          docker compose down -v
