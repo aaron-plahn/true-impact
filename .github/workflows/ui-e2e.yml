@@ -23,11 +23,6 @@ jobs:
       NODE_ENV: ${{ vars.NODE_ENV }}
       CLIENT_PORT: ${{ vars.CLIENT_PORT }}
       CLIENT_DOMAIN: ${{ vars.CLIENT_DOMAIN }}
-      POSTGRES_HOST: ${{ vars.POSTGRES_HOST }}
-      POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
-      POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-      POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
-      POSTGRES_PORT: ${{ vars.POSTGRES_PORT }}
       EVENT_STORE_DB_NAME: ${{ secrets.EVENT_STORE_DB_NAME }}
       API_DOMAIN: ${{ vars.API_DOMAIN }}
       API_PORT: ${{ vars.API_PORT }}
