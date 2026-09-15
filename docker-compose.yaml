@@ -1,25 +1,60 @@
 services:
-  # In the future we will have one or more database nodes and potentially a messaging queue.
-  # During development, we have injected an in-memory implementation of the persistence layer.
-  # This is because choosing a concrete DB and implementing repositories is predictable work
-  # and we want to tackle uncertain \ unknown parts of the system before committing to this work.
+  db:
+    image: "postgres:latest"
+    ports:
+      - ${POSTGRES_PORT}:5432
+    environment:
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - POSTGRES_PORT=${POSTGRES_PORT}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    networks:
+      - app_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL","pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - pgdata:/var/lib/postgresql
 
   api:
     build:
       context: .
       dockerfile: apps/server/Dockerfile
+      # TODO Can't we pull this from the github environment now?
+      args:
+        - NODE_ENV=${NODE_ENV}
     init: true # prevent zombie worker deadlocks
-    env_file:
-      - .env.${NODE_ENV}
     environment:
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - POSTGRES_PORT=${POSTGRES_PORT}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - CLIENT_PORT=${CLIENT_PORT}
+      - CLIENT_DOMAIN=${CLIENT_DOMAIN}
+      - EVENT_STORE_DB_NAME=${EVENT_STORE_DB_NAME}
+      - API_DOMAIN=${API_DOMAIN}
+      - API_PORT=${API_PORT}
+      - TI_ENCRYPTION_KEY=${TI_ENCRYPTION_KEY}
+      - TI_COOKIES_SECRET=${TI_COOKIES_SECRET}
+      - SYSTEM_ADMIN_USERNAME=${SYSTEM_ADMIN_USERNAME}
+      - INITIAL_ADMIN_PASSWORD=${INITIAL_ADMIN_PASSWORD}
+      # These are additional settings only required in the CI
       - WEB_CONCURRENCY=1
       - PM2_WORKERS=1
     ports:
-      - $API_PORT:$API_PORT
+      - ${API_PORT}:${API_PORT}
+    depends_on:
+      db:
+        condition: service_healthy
     networks:
       - app_network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:$API_PORT"]
+      test: ["CMD", "curl", "-f", "$API_DOMAIN:$API_PORT"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -30,8 +65,9 @@ services:
       context: .
       dockerfile: apps/web-client/Dockerfile
     init: true # prevent zombie worker deadlocks
+    # There are no environment variables as the client config can't possibly contain secrets
     ports:
-      - "$CLIENT_PORT:8080"
+      - "${CLIENT_PORT}:8080"
     depends_on:
       - api
         # condition: service_healthy # wait for health check
@@ -40,7 +76,7 @@ services:
 
     healthcheck:
       # TODO use env for port
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:$CLIENT_PORT/"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "$CLIENT_DOMAIN:$CLIENT_PORT/"]
       interval: 15s
       timeout: 5s
       retries: 3
