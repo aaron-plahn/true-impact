@@ -75,6 +75,8 @@ jobs:
         env:
           API_PORT: ${{ vars.API_PORT }}
           API_DOMAIN: ${{ vars.API_DOMAIN }}
+          CLIENT_PORT: ${{ vars.CLIENT_PORT }}
+          CLIENT_DOMAIN: ${{ vars.CLIENT_DOMAIN }}
           NODE_ENV: ${{ vars.NODE_ENV }}
           SYSTEM_ADMIN_USERNAME: ${{ secrets.SYSTEM_ADMIN_USERNAME }}
           INITIAL_ADMIN_PASSWORD: ${{ secrets.INITIAL_ADMIN_PASSWORD }}
