@@ -95,16 +95,13 @@ jobs:
         env:
           SYSTEM_ADMIN_USERNAME: ${{ secrets.SYSTEM_ADMIN_USERNAME }}
           INITIAL_ADMIN_PASSWORD: ${{ secrets.INITIAL_ADMIN_PASSWORD }}
-          # what are the extra steps here for?
         run: |
-          wget http://127.0.0.1:3234
-          cat index.html
-          rm index.html
           yarn run jest --runInBand
         working-directory: ./apps/server
-      - if: always()
-        run: |
-          docker compose down -v
+      # Teardown isn't necessary because this job runs in an ephemeral container
+      # - if: always()
+      #   run: |
+      #     docker compose down -v
 
   ci-gate:
     runs-on: ubuntu-latest
