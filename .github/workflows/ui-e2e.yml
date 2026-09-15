@@ -47,9 +47,15 @@ jobs:
           NODE_ENV=$NODE_ENV docker compose up --build -d
 
       - name: Wait for Server
+        env:
+          API_DOMAIN: ${{ vars.API_DOMAIN }}
+          API_PORT: ${{ vars.API_PORT }}
         run: npx wait-on "$API_DOMAIN:$API_PORT" --timeout 60000
 
       - name: Wait for Client
+        env:
+          CLIENT_PORT: ${{ vars.CLIENT_PORT }}
+          CLIENT_DOMAIN: ${{ vars.CLIENT_DOMAIN }}
         run: npx wait-on $CLIENT_DOMAIN:$CLIENT_PORT --timeout 60000
 
       - name: Set Up Node.js
