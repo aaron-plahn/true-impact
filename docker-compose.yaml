@@ -48,6 +48,8 @@ services:
       - PM2_WORKERS=1
     ports:
       - ${API_PORT}:${API_PORT}
+    depends_on:
+      - db
     networks:
       - app_network
     healthcheck:
