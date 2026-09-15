@@ -17,8 +17,7 @@ jobs:
   uie2e:
     runs-on: ubuntu-latest
     environment:
-      #name: e2e
-      name: debug
+      name: e2e
     
     steps:
       # TODO use shared actions to share steps with other workflows
