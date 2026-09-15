@@ -86,6 +86,7 @@ jobs:
       # TODO separate `test` NODE_ENV
       - name: Start containerized app
         run: |
+          NODE_ENV=test docker compose config
           NODE_ENV=test docker compose up -d --build
 
       - name: Wait for Server
