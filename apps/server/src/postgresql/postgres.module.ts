@@ -51,7 +51,7 @@ export class PostgresModule implements OnModuleDestroy {
 
         await adminClient.connect().catch((e: Error) => {
           throw new TrueImpactError(
-            `Failed to connect as an admin to create the required table: ${POSTGRES_EVENT_STORE_DB}\n${e}`,
+            `Failed to connect as an admin to create the events table in database: ${POSTGRES_EVENT_STORE_DB}\n${e}`,
           );
         });
 
