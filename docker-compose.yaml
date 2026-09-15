@@ -24,7 +24,7 @@ services:
     build:
       context: .
       dockerfile: apps/server/Dockerfile
-      # TODO Can't we pull this from the github environment now?
+      # TODO Can't we pull this from the github environment now? ?
       args:
         - NODE_ENV=${NODE_ENV}
     init: true # prevent zombie worker deadlocks
