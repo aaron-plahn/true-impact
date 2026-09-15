@@ -68,7 +68,20 @@ jobs:
 
       - name: e2e test UI
         env:
+          env:
+          POSTGRES_HOST: ${{ vars.POSTGRES_HOST }}
+          POSTGRES_PORT: ${{ vars.POSTGRES_PORT }}
+          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER}}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
           NODE_ENV: ${{ vars.NODE_ENV }}
+          CLIENT_PORT: ${{ vars.CLIENT_PORT }}
+          CLIENT_DOMAIN: ${{ vars.CLIENT_DOMAIN }}
+          EVENT_STORE_DB_NAME: ${{ secrets.EVENT_STORE_DB_NAME }}
+          API_DOMAIN: ${{ vars.API_DOMAIN }}
+          API_PORT: ${{ vars.API_PORT }}
+          TI_ENCRYPTION_KEY: ${{ secrets.TI_ENCRYPTION_KEY }}
+          TI_COOKIES_SECRET: ${{ secrets.TI_COOKIES_SECRET }}
           SYSTEM_ADMIN_USERNAME: ${{ secrets.SYSTEM_ADMIN_USERNAME }}
           INITIAL_ADMIN_PASSWORD: ${{ secrets.INITIAL_ADMIN_PASSWORD }}
         run: |
