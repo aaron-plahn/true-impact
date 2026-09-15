@@ -35,6 +35,7 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=${POSTGRES_DB}
       - CLIENT_PORT=${CLIENT_PORT}
+      - CLIENT_DOMAIN=${CLIENT_DOMAIN}
       - EVENT_STORE_DB_NAME=${EVENT_STORE_DB_NAME}
       - API_DOMAIN=${API_DOMAIN}
       - API_PORT=${API_PORT}
@@ -61,6 +62,7 @@ services:
       context: .
       dockerfile: apps/web-client/Dockerfile
     init: true # prevent zombie worker deadlocks
+    # There are no environment variables as the client config can't possibly contain secrets
     ports:
       - "${CLIENT_PORT}:8080"
     depends_on:
