@@ -46,8 +46,9 @@ jobs:
       # # TODO do we need to set NODE_ENV like this?
         run: |
           NODE_ENV=$NODE_ENV docker compose config
+          echo "ip config"
+          ip a
           NODE_ENV=$NODE_ENV docker compose up --build
-          NODE_ENV=$NODE_ENV docker network ls
 
       - name: Wait for Server
         run: npx wait-on "$API_DOMAIN:$API_PORT" --timeout 60000
