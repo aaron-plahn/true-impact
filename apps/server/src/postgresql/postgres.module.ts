@@ -38,6 +38,9 @@ export class PostgresModule implements OnModuleDestroy {
 
         const POSTGRES_CONNECTION_STRING = `postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_EVENT_STORE_DB}`;
 
+        // TODO remove this after troubleshooting
+        return;
+
         const adminClientOptions = {
           host: POSTGRES_HOST,
           port,
