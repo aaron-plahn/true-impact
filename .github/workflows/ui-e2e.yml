@@ -46,6 +46,7 @@ jobs:
       # # TODO do we need to set NODE_ENV like this?
         run: |
           NODE_ENV=$NODE_ENV docker compose config
+          NODE_ENV=$NODE_ENV docker network ls
           NODE_ENV=$NODE_ENV docker compose up --build
 
       - name: Wait for Server
