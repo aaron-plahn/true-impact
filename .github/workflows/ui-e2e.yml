@@ -42,9 +42,8 @@ jobs:
           SYSTEM_ADMIN_USERNAME: ${{ secrets.SYSTEM_ADMIN_USERNAME }}
           INITIAL_ADMIN_PASSWORD: ${{ secrets.INITIAL_ADMIN_PASSWORD }}
       # Note that we do not pass a .env file here. All secrets \ configuration comes from the GitHub environment.
-      # # TODO do we need to set NODE_ENV like this?
         run: |
-          NODE_ENV=$NODE_ENV docker compose up --build -d
+          docker compose up --build -d
 
       - name: Wait for Server
         env:
