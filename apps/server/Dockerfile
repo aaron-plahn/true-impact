@@ -1,6 +1,10 @@
 # Use a Node.js base image
 FROM node:24.13.0-alpine AS build
 
+ARG NODE_ENV
+
+ENV NODE_ENV=$NODE_ENV
+
 # Set the working directory
 WORKDIR /usr/src/app
 
@@ -18,6 +22,12 @@ RUN yarn build
 
 # Production stage
 FROM node:24.13.0-alpine AS production
+
+ARG NODE_ENV
+ARG POSTGRES_HOST
+
+ENV NODE_ENV=$NODE_ENV
+ENV POSTGRES_HOST=$POSTGRES_HOST
 
 # create non-root user
 RUN addgroup -g 10001 appgroup && \
@@ -37,6 +47,9 @@ COPY --chown=appuser:appgroup --from=build /usr/src/app/dist ./dist
 EXPOSE $API_PORT
 
 USER appuser
+
+RUN echo "starting the server with NODE_ENV=${NODE_ENV}"
+RUN echo "and POSTGRES_HOST=${POSTGRES_HOST}"
 
 # Start the application
 CMD ["node", "dist/main.js"]

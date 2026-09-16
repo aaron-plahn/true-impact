@@ -2,6 +2,9 @@
 
 This first release of the True Impact platform introduces a working model for user management, client management, and survey creation and completion.
 
+## 54
+In this PR, we implement persistent storage using [PostgreSQL](https://www.postgresql.org/). 
+
 ## 72
 In this PR, we simplify the user experience for survey completion, removing unnecessary intermediate links.
 
