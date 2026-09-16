@@ -1,3 +1,4 @@
+import { BaseEvent } from 'src/postgresql/postgres-event.repository';
 import { IDomainEvent } from '../../../../libs/cqrs-es';
 import {
   AggregateRoot,
@@ -213,13 +214,6 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
   })
   revision: number;
 
-  // TODO we could decorate this with the event union for this aggregate type
-  @RawObject({
-    label: 'event history',
-    description: 'audit log of historical edits to this survey response',
-  })
-  eventHistory: IDomainEvent[];
-
   /**
    * Note that when a participant begins a survey, the target survey is copied here
    * as a value object. Surveys are currently immutable and in the future will be fully
@@ -308,6 +302,13 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
     isOptional: true, // omitted if the client has yet to complete the survey
   })
   submissionTimestamp?: number;
+
+  // TODO move to base class
+  @RawObject({
+    label: 'event history',
+    description: 'audit log of historical edits to this survey response',
+  })
+  eventHistory: IDomainEvent[];
 
   constructor({
     id,
@@ -854,14 +855,86 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
       participant: participantCompositeIdentifier,
       eventHistory: [
         new SurveyBegan({
+          streamId: `${SURVEY_RESPONSE_AGGREGATE_TYPE}/${id}`,
           payload: {
             aggregateCompositeIdentifier: {
               type: SURVEY_RESPONSE_AGGREGATE_TYPE,
               id,
             },
+            survey: survey.toPersistenceDto(),
+          },
+          // This should probably be assigned at a higher level as the current user and environment may be part of the meta
+          // can we just make this `metadata` so there's no chance for confusion?
+          meta: {
+            // TODO populate this
           },
         }),
       ],
     });
+  }
+
+  static fromSurveyBegan(
+    creationEvent: SurveyBegan,
+  ): SurveyResponseRecord | TrueImpactError {
+    const {
+      payload: {
+        aggregateCompositeIdentifier: { id },
+        survey,
+      },
+    } = creationEvent;
+
+    const surveyBuildResult = Survey.fromPersistenceDto({
+      ...survey,
+      analyzers: {},
+      isFinal: true,
+      accessTokensByHash: {},
+    });
+
+    if (surveyBuildResult instanceof Error) {
+      return surveyBuildResult;
+    }
+
+    return new SurveyResponseRecord({
+      id,
+      survey: surveyBuildResult,
+      // should this be 0?
+      revision: 1,
+      responses: [],
+      hasBeenAbandoned: false,
+      hasBeenCancelled: false,
+      eventHistory: [creationEvent],
+    });
+  }
+
+  static fromEventHistory(
+    eventHistory: Omit<BaseEvent, 'streamId' | 'revision' | 'meta'>[],
+    // TODO is this the API we want?
+    // we don't pass the ID here. we assume the first event is the creation event. the events must be filtered externally.
+  ): SurveyResponseRecord | TrueImpactError | null {
+    if (eventHistory.length === 0) {
+      return null;
+    }
+
+    const [creationEvent, ...updateEvents] = eventHistory;
+
+    if (creationEvent.type !== 'SURVEY_BEGAN') {
+      return new TrueImpactError(
+        `Received an invalid creation event for a survey response record. Expected type [SURVEY_BEGAN], received [${creationEvent.type}].`,
+      );
+    }
+
+    const initialSurvey = SurveyResponseRecord.fromSurveyBegan(
+      creationEvent as SurveyBegan,
+    );
+
+    const result = updateEvents.reduce((acc, updateEvent) => {
+      if (acc instanceof Error) {
+        return acc;
+      }
+
+      return acc.apply(updateEvent);
+    }, initialSurvey);
+
+    return result;
   }
 }

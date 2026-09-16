@@ -19,7 +19,7 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "Jest test server",
+      "name": "server tests (e2e)",
       "cwd": "${workspaceFolder}",
       "runtimeExecutable": "yarn",
       "runtimeArgs": [
@@ -31,6 +31,14 @@
       ],
       "console": "internalConsole",
       "internalConsoleOptions": "neverOpen"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "server tests (unit)",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "yarn",
+      "runtimeArgs": ["test", "--inspect-break"]
     }
   ]
 }
