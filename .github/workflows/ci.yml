@@ -67,9 +67,9 @@ jobs:
 
           if-no-files-found: error 
 
-      # TODO separate `test` NODE_ENV
       - name: Start containerized app
         env:
+          NODE_ENV: ${{ vars.NODE_ENV }}
           POSTGRES_HOST: ${{ vars.POSTGRES_HOST }}
           POSTGRES_PORT: ${{ vars.POSTGRES_PORT }}
           POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
@@ -93,6 +93,7 @@ jobs:
 
       - name: test server (these are not the automated browser UI e2e tests, which are wdio- see ui-e2e.yaml for those)
         env:
+          NODE_ENV: ${{ vars.NODE_ENV }}
           SYSTEM_ADMIN_USERNAME: ${{ secrets.SYSTEM_ADMIN_USERNAME }}
           INITIAL_ADMIN_PASSWORD: ${{ secrets.INITIAL_ADMIN_PASSWORD }}
         run: |
