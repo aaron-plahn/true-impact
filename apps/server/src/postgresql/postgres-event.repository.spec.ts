@@ -99,7 +99,20 @@ const widgetLabelled = new WidgetLabelled({
   },
 });
 
-describe(`PostgresEventRepository`, () => {
+/**
+ * This test is unlike other tests in our existing suites
+ * - unit tests are run with node native `test` and assume no IO, testing only pure domain logic
+ * - Jest tests are e2e tests of the build and work at the http request-response cycle
+ * But this test is an integration test in the sense that it is testing an implementation detail, namely
+ * the PostgresEventRepository. It does not mock Postgres, but rather uses a local test instance running
+ * in a Docker container. As such, it requires on the one hand access to the full environment to spin up
+ * a test module, but it communicates with the database over `localhost` and not via the docker compose bridge. So
+ * it cannot use `db` as the connection string or the network will fail.
+ *
+ * We need to sort out where this test fits and where the Postgres module fits. Until then, we skip this test. It was
+ * at least useful in getting the implementation right. We will have extensive e2e tests of this behaviour in our feature tests.
+ */
+describe.skip(`PostgresEventRepository`, () => {
   let app: INestApplication;
 
   let testRepository: PostgresEventRepository;
@@ -111,8 +124,7 @@ describe(`PostgresEventRepository`, () => {
         (() => {
           const cm = ConfigModule.forRoot({
             isGlobal: true,
-            // do we need a separate .env.test?
-            envFilePath: [`../../.env.jest`],
+            envFilePath: [`../../.env.jest-integration`],
           });
 
           return cm;
