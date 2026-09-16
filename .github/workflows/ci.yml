@@ -17,6 +17,22 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: test
+    env:
+          NODE_ENV: ${{ vars.NODE_ENV }}
+          POSTGRES_HOST: ${{ vars.POSTGRES_HOST }}
+          POSTGRES_PORT: ${{ vars.POSTGRES_PORT }}
+          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER}}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          CLIENT_PORT: ${{ vars.CLIENT_PORT }}
+          CLIENT_DOMAIN: ${{ vars.CLIENT_DOMAIN }}
+          EVENT_STORE_DB_NAME: ${{ secrets.EVENT_STORE_DB_NAME }}
+          API_DOMAIN: ${{ vars.API_DOMAIN }}
+          API_PORT: ${{ vars.API_PORT }}
+          TI_ENCRYPTION_KEY: ${{ secrets.TI_ENCRYPTION_KEY }}
+          TI_COOKIES_SECRET: ${{ secrets.TI_COOKIES_SECRET }}
+          SYSTEM_ADMIN_USERNAME: ${{ secrets.SYSTEM_ADMIN_USERNAME }}
+          INITIAL_ADMIN_PASSWORD: ${{ secrets.INITIAL_ADMIN_PASSWORD }}
 
     steps:
       - name: Checkout code
@@ -68,22 +84,6 @@ jobs:
           if-no-files-found: error 
 
       - name: Start containerized app
-        env:
-          NODE_ENV: ${{ vars.NODE_ENV }}
-          POSTGRES_HOST: ${{ vars.POSTGRES_HOST }}
-          POSTGRES_PORT: ${{ vars.POSTGRES_PORT }}
-          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
-          POSTGRES_USER: ${{ secrets.POSTGRES_USER}}
-          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-          CLIENT_PORT: ${{ vars.CLIENT_PORT }}
-          CLIENT_DOMAIN: ${{ vars.CLIENT_DOMAIN }}
-          EVENT_STORE_DB_NAME: ${{ secrets.EVENT_STORE_DB_NAME }}
-          API_DOMAIN: ${{ vars.API_DOMAIN }}
-          API_PORT: ${{ vars.API_PORT }}
-          TI_ENCRYPTION_KEY: ${{ secrets.TI_ENCRYPTION_KEY }}
-          TI_COOKIES_SECRET: ${{ secrets.TI_COOKIES_SECRET }}
-          SYSTEM_ADMIN_USERNAME: ${{ secrets.SYSTEM_ADMIN_USERNAME }}
-          INITIAL_ADMIN_PASSWORD: ${{ secrets.INITIAL_ADMIN_PASSWORD }}
         run: |
           docker compose config
           docker compose up -d --build
@@ -92,10 +92,6 @@ jobs:
         run: npx wait-on http://127.0.0.1:3234 --timeout 60000
 
       - name: test server (these are not the automated browser UI e2e tests, which are wdio- see ui-e2e.yaml for those)
-        env:
-          NODE_ENV: ${{ vars.NODE_ENV }}
-          SYSTEM_ADMIN_USERNAME: ${{ secrets.SYSTEM_ADMIN_USERNAME }}
-          INITIAL_ADMIN_PASSWORD: ${{ secrets.INITIAL_ADMIN_PASSWORD }}
         run: |
           yarn run jest --runInBand
         working-directory: ./apps/server
