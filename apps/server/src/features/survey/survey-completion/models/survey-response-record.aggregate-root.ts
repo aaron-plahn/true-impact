@@ -871,6 +871,7 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
               id,
             },
             survey: survey.toPersistenceDto(),
+            participant: participantCompositeIdentifier,
           },
           // This should probably be assigned at a higher level as the current user and environment may be part of the meta
           // can we just make this `metadata` so there's no chance for confusion?
@@ -889,6 +890,7 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
       payload: {
         aggregateCompositeIdentifier: { id },
         survey,
+        participant,
       },
     } = creationEvent;
 
@@ -912,6 +914,7 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
       hasBeenAbandoned: false,
       hasBeenCancelled: false,
       eventHistory: [creationEvent],
+      participant,
     });
   }
 

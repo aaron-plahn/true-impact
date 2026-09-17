@@ -114,6 +114,8 @@ export class PostgresSurveyResponseCommandRepository implements ISurveyResponseC
         existingEventsForThisAggregate || [];
 
       eventsForThisAggregateRootSoFar.push(e);
+
+      eventHistoriesByAggregateId.set(id, eventsForThisAggregateRootSoFar);
     }
 
     const results: SurveyResponseRecord[] = [];

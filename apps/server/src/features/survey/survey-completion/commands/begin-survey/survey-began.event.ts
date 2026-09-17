@@ -4,7 +4,10 @@ import {
   NonEmptyString,
   TrueImpactDataExample,
 } from '../../../../../libs/data-types';
-import { SurveyResponseCompositeIdentifier } from '../../models';
+import {
+  SurveyParticipantCompositeIdentifier,
+  SurveyResponseCompositeIdentifier,
+} from '../../models';
 
 export class SurveyInfoForResponseRecord {
   id: string;
@@ -18,6 +21,12 @@ export class SurveyInfoForResponseRecord {
 
 export class SurveyBeganPayload {
   aggregateCompositeIdentifier: SurveyResponseCompositeIdentifier;
+
+  @NestedDataType(() => SurveyParticipantCompositeIdentifier, {
+    label: 'participant',
+    description: 'the participant (unless completion is anonymous)',
+  })
+  participant?: SurveyParticipantCompositeIdentifier;
 
   @NestedDataType(() => SurveyInfoForResponseRecord, {
     label: 'survey',
