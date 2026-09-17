@@ -29,16 +29,19 @@ export class EventFactory {
 
   register(
     eventType: string,
+    // is this where we inject metadata?
     factoryFunction: (eventDocument: EventDto) => BaseEvent,
-  ) {
+  ): EventFactory {
     if (this.eventTypeToFactoryFunction.has(eventType)) {
       console.warn(
         `Skipping duplicate registration for factory for event of type: ${eventType}`,
       );
 
-      return;
+      return this;
     }
 
     this.eventTypeToFactoryFunction.set(eventType, factoryFunction);
+
+    return this;
   }
 }

@@ -168,7 +168,7 @@ describe.skip(`PostgresEventRepository`, () => {
 
   describe(`when creating a first event`, () => {
     it(`should persist the event`, async () => {
-      await testRepository.appendEvent(firstWidgetCreated, 0);
+      await testRepository.appendAt(0, firstWidgetCreated);
 
       const searchResult = await testRepository.read();
 
@@ -193,9 +193,9 @@ describe.skip(`PostgresEventRepository`, () => {
   describe(`when appending a second event`, () => {
     describe(`when the revision number is consistent`, () => {
       it(`should succeed`, async () => {
-        await testRepository.appendEvent(firstWidgetCreated, 0);
+        await testRepository.appendAt(0, firstWidgetCreated);
 
-        await testRepository.appendEvent(widgetLabelled, 1);
+        await testRepository.appendAt(1, widgetLabelled);
 
         const searchResult = await testRepository.read();
 
@@ -209,13 +209,13 @@ describe.skip(`PostgresEventRepository`, () => {
 
     describe(`when an event has been written since the previous read`, () => {
       it(`should return an optimistic concurrency error`, async () => {
-        await testRepository.appendEvent(firstWidgetCreated, 0);
+        await testRepository.appendAt(0, firstWidgetCreated);
 
-        await testRepository.appendEvent(widgetLabelled, 1);
+        await testRepository.appendAt(1, widgetLabelled);
 
-        const secondAppendAttempt = await testRepository.appendEvent(
-          widgetLabelled,
+        const secondAppendAttempt = await testRepository.appendAt(
           1,
+          widgetLabelled,
         );
 
         expect(secondAppendAttempt).toBeInstanceOf(Error);

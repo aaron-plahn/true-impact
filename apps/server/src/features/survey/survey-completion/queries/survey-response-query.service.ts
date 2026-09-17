@@ -93,7 +93,11 @@ export class SurveyResponseQueryService {
     const domainModels =
       await this.surveyCompletionCommandRepository.fetchMany();
 
-    return domainModels.map((dm) => this.buildViewModel(dm, { surveysById }));
+    const results = domainModels.map((dm) =>
+      this.buildViewModel(dm, { surveysById }),
+    );
+
+    return results;
   }
 
   // TODO stick to completion record **or** response record in all naming

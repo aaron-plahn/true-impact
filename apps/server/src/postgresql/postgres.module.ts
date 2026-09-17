@@ -155,7 +155,7 @@ export class PostgresModule implements OnModuleDestroy {
       exports: [
         EventFactory,
         // TODO double check that circular deps checks are running
-        // TODO const
+        // TODO const DO THIS
         'EVENT_REPOSITORY_INJECTION_TOKEN',
         ...(shouldIncludeTestHelper ? [postgresTestHelperProvider] : []),
       ],

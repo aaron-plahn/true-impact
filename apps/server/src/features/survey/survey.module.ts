@@ -1,4 +1,6 @@
 import { forwardRef } from '@nestjs/common';
+import { EventFactory } from 'src/postgresql/event-factory';
+import { BaseEvent } from 'src/postgresql/postgres-event.repository';
 import { AuthModule } from '../../auth/auth.module';
 import {
   InMemoryCommandRepository,
@@ -52,8 +54,12 @@ import {
   SubmitSurvey,
   SubmitSurveyCommandHandler,
   SURVEY_PARTICIPANT_VALIDATION_SERVICE_PROVIDER_INJECTION_TOKEN,
+  SurveyBegan,
   SurveyBeganViewDiffer,
+  SurveyCompletionAbandoned,
+  SurveyQuestionAnswered,
   SurveyQuestionAnsweredViewDiffer,
+  SurveySubmitted,
   SurveySubmittedViewDiffer,
 } from './survey-completion';
 import {
@@ -69,7 +75,7 @@ import {
 } from './survey-completion/queries';
 import { SURVEY_RESPONSE_COMMAND_REPOSITORY_INJECTION_TOKEN } from './survey-completion/repositories';
 import { InMemorySurveyResponseQueryRepository } from './survey-completion/repositories/in-memory-survey-response-query.repository';
-import { InMemorySurveyResponseCommandRepository } from './survey-completion/repositories/in-memory-survey-response.command-repository';
+import { PostgresSurveyResponseCommandRepository } from './survey-completion/repositories/postgres-survey-response.command-repository';
 import { SurveyResponseValidationService } from './survey-completion/services';
 import { SurveyResponseQueryController } from './survey-completion/survey-response-query.controller';
 import {
@@ -332,9 +338,43 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, FinalizeSurvey];
     },
     {
       provide: SURVEY_RESPONSE_COMMAND_REPOSITORY_INJECTION_TOKEN,
-      useFactory: () => {
-        return new InMemorySurveyResponseCommandRepository();
+      /**
+       * We might consider injecting the config and deciding
+       * which repository (E.g., In Memory, an alternative implementation)
+       * to use.
+       */
+      useFactory: (eventRepository, eventFactory: EventFactory) => {
+        eventFactory
+          .register('SURVEY_BEGAN', (doc) =>
+            SurveyBegan.fromPersistenceDto(doc as unknown as SurveyBegan),
+          )
+          .register(
+            'SURVEY_QUESTION_ANSWERED',
+            // TODO inject metadata
+            (doc) =>
+              SurveyQuestionAnswered.fromPersistenceDto(
+                doc as unknown as SurveyQuestionAnswered,
+              ) as unknown as BaseEvent,
+          )
+          .register(
+            'SURVEY_COMPLETION_ABANDONED',
+            (doc) =>
+              SurveyCompletionAbandoned.fromPersistenceDto(
+                doc as unknown as SurveyCompletionAbandoned,
+              ) as unknown as BaseEvent,
+          )
+          .register(
+            'SURVEY_SUBMITTED',
+            (doc) =>
+              SurveySubmitted.fromPersistenceDto(
+                doc as unknown as SurveySubmitted,
+              ) as unknown as BaseEvent,
+          );
+
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+        return new PostgresSurveyResponseCommandRepository(eventRepository);
       },
+      inject: ['EVENT_REPOSITORY_INJECTION_TOKEN', EventFactory],
     },
     {
       provide: SURVEY_REVIEW_COMMAND_REPOSITORY_INJECTION_TOKEN,
@@ -409,7 +449,7 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, FinalizeSurvey];
             /**
              * TODO We need to support reuseable codes for group use.
              */
-            const updated = target.revokeAccessdCode(hashedAccessCode);
+            const updated = target.revokeAccessCode(hashedAccessCode);
 
             if (updated instanceof Error) {
               return updated;

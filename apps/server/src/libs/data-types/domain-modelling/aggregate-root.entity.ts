@@ -12,6 +12,8 @@ export abstract class AggregateRoot<
 
   abstract revision: number;
 
+  // TODO event history
+
   /**
    * Nested entities do not typically have a system ID (e.g. sequential ID or UUID) as they are persisted and
    * updated only within the context of the parent aggregate root. Instead, they have local identifiers,
