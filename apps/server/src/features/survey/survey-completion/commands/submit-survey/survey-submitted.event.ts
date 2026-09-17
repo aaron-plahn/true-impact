@@ -1,4 +1,4 @@
-import { TrueImpactDataExample } from 'src/libs/data-types';
+import { TrueImpactDataExample } from '../../../../../libs/data-types';
 import { SurveyResponseCompositeIdentifier } from '../../models';
 
 export class SurveySubmittedPayload {

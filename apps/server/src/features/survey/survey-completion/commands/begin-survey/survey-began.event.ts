@@ -1,9 +1,9 @@
-import { SurveyQuestionPersistenceDto } from 'src/features/survey/survey-management/survey-question.entity';
+import { SurveyQuestionPersistenceDto } from '../../../../../features/survey/survey-management/survey-question.entity';
 import {
   NestedDataType,
   NonEmptyString,
   TrueImpactDataExample,
-} from 'src/libs/data-types';
+} from '../../../../../libs/data-types';
 import { SurveyResponseCompositeIdentifier } from '../../models';
 
 export class SurveyInfoForResponseRecord {
@@ -27,7 +27,7 @@ export class SurveyBeganPayload {
   survey: SurveyInfoForResponseRecord; // SurveyInfoForResponseRecord
 }
 
-// TODO `BaseEvent` class?
+// TODO `BaseEvent` class?`
 @TrueImpactDataExample<SurveyBegan>({
   example: {
     type: 'SURVEY_BEGAN',
