@@ -59,7 +59,7 @@ export class BeginPublicSurveyCommandHandler implements ICommandHandler<BeginPub
       return emptyCompletionRecord;
     }
 
-    const persistenceResult = await this.surveyCompletionRepository.begin(
+    const persistenceResult = await this.surveyCompletionRepository.create(
       emptyCompletionRecord,
     );
 

@@ -1,6 +1,8 @@
-import { NotImplementedException } from '@nestjs/common';
 import { Pool } from 'pg';
-import { TrueImpactError } from '../libs/data-types';
+import {
+  TrueImpactError,
+  TrueImpactRuntimeException,
+} from '../libs/data-types';
 import { Inject } from '../libs/framework';
 import { EventFactory } from './event-factory';
 import { PG_POOL_INJECTION_TOKEN } from './postgres.module';
@@ -53,14 +55,15 @@ export class PostgresEventRepository {
   constructor(
     @Inject(PG_POOL_INJECTION_TOKEN)
     private readonly pool: Pool,
+    // TODO - CONSTANT
     @Inject('EVENT_FACTORY_INJECTION_TOKEN')
     private readonly eventFactory: EventFactory,
   ) {}
 
-  async appendEvent(
+  async appendAt(
+    revision: number,
     event: BaseEvent,
     // necessary for optimistic concurrency
-    revision: number,
   ): Promise<{ streamId: string } | Error> {
     const query = `
         INSERT INTO events (stream_id, event_type, payload, meta, revision)
@@ -76,9 +79,9 @@ export class PostgresEventRepository {
       revision,
     ];
 
-    const client = await this.pool.connect().catch((e: Error) => {
+    const client = await this.pool.connect().catch((postgresError: Error) => {
       return new TrueImpactError(`Failed to connect to the database`, [
-        new TrueImpactError(e.message),
+        new TrueImpactError(postgresError.message),
       ]);
     });
 
@@ -87,6 +90,8 @@ export class PostgresEventRepository {
     }
 
     const result = await client.query(query, values).catch((e: Error) => {
+      console.warn({ invalidEvent: event });
+
       return new TrueImpactError(`Database query failed in Postgres.`, [
         new TrueImpactError(e.message),
       ]);
@@ -110,20 +115,35 @@ export class PostgresEventRepository {
   }
 
   /**
-   * We want our stream IDs to be of form `${type}/${id}`.
+   * We may want our stream IDs to be of form `${type}/${id}`.
+   *
+   * We need to normalize the relationship between streamID and aggregateCompositeIdentifier
    */
-  async read(_aggregateCompositeIdentifier?: {
-    type: string;
-    id: string;
+  async read(aggregateCompositeIdentifier?: {
+    type?: string;
+    id?: string;
   }): Promise<BaseEvent[]> {
-    if (_aggregateCompositeIdentifier) {
-      throw new NotImplementedException(`Event filters are not yet supported`);
-    }
+    const hasSearchFilters =
+      typeof (
+        aggregateCompositeIdentifier?.type || aggregateCompositeIdentifier?.id
+      ) !== 'undefined';
 
-    const selectAllEvents = `SELECT * FROM events`;
+    // The `pg` driver safely serializes the object. Note that users can't choose IDs or types, so there isn't much risk to being with here.
+    const selectAllEvents = `
+    SELECT * FROM events
+    ${hasSearchFilters ? 'WHERE payload @> $1' : ''};
+    `;
+
+    const bindVars = hasSearchFilters
+      ? [
+          {
+            aggregateCompositeIdentifier,
+          },
+        ]
+      : [];
 
     const rawRows = await this.pool
-      .query<EventDocument>(selectAllEvents)
+      .query<EventDocument>(selectAllEvents, bindVars)
       .catch((e) => {
         // TODO return errors
         throw e;
@@ -138,5 +158,25 @@ export class PostgresEventRepository {
     );
 
     return eventInstances;
+  }
+
+  /**
+   * TODO We need to design a way to clear test data that is external to our persistence layer implementation
+   * for better confidence that this could never happen outside of a test environment.
+   */
+  async clear() {
+    if (!['test', 'e2e'].includes(process.env.NODE_ENV || '**never**')) {
+      throw new TrueImpactRuntimeException([
+        new TrueImpactError(
+          `You can't clear an event store outside of a test environment.`,
+        ),
+      ]);
+    }
+
+    const truncateQuery = `
+      TRUNCATE TABLE events RESTART IDENTITY;
+    `;
+
+    await this.pool.query(truncateQuery);
   }
 }

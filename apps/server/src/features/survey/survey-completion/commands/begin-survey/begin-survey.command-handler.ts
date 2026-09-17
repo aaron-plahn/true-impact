@@ -105,46 +105,13 @@ export class BeginSurveyCommandHandler implements ICommandHandler<BeginSurvey> {
         ]);
       }
 
-      const surveyResponsesAlreadyInProgress =
-        await this.surveyCompletionRepository.fetchSurveyForParticipant(
-          participantCompositeIdentifier,
-          surveyId,
-        );
-
-      if (surveyResponsesAlreadyInProgress instanceof Error) {
-        return new TrueImpactBadUserInputError([
-          surveyResponsesAlreadyInProgress,
-        ]);
-      }
-
       /**
-       * Note that this is not atomic. It's possible that we cancel the
-       * existing attempt but the request to begin the new attempt fails.
-       * This is a better state than allowing the user to begin the new survey
-       * but potentially failing to cancel an existing in-progress survey response
-       * session.
+       * There is an edge case where the user is starting a survey for which they already have in
+       * progress. Because preventing this case crosses transactional (aggregate root) boundaries,
+       * we don't want to validate this here. Instead, we delete views for the previous attempts
+       * in the (eventually consistent) view model. By the time a user starts a new attempt, the old
+       * one will disappear from the UX.
        */
-      if (surveyResponsesAlreadyInProgress.length > 0) {
-        const errorsFromCancellingExistingSessions: TrueImpactError[] = [];
-
-        for (const r of surveyResponsesAlreadyInProgress) {
-          const updatedR = r.cancel({
-            replacementAttemptId: newSurveyAttemptId,
-          });
-
-          if (updatedR instanceof Error) {
-            errorsFromCancellingExistingSessions.push(updatedR);
-          } else {
-            await this.surveyCompletionRepository.update(updatedR);
-          }
-        }
-
-        if (errorsFromCancellingExistingSessions.length > 1) {
-          return new TrueImpactBadUserInputError(
-            errorsFromCancellingExistingSessions,
-          );
-        }
-      }
     }
 
     const emptyCompletionRecord = SurveyResponseRecord.begin({
@@ -157,7 +124,7 @@ export class BeginSurveyCommandHandler implements ICommandHandler<BeginSurvey> {
       return emptyCompletionRecord;
     }
 
-    const persistenceResult = await this.surveyCompletionRepository.begin(
+    const persistenceResult = await this.surveyCompletionRepository.create(
       emptyCompletionRecord,
     );
 

@@ -587,6 +587,15 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
     }
 
     if (event.type === 'SURVEY_SUBMITTED') {
+      const eventWithMeta = event as SurveySubmitted;
+
+      // TODO move this. It doesn't belong here.
+      Object.assign(eventWithMeta, {
+        metadata: {
+          dateEffective: Date.now(),
+        },
+      });
+
       this.handleSurveySubmitted(event as SurveySubmitted);
     }
 

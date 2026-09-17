@@ -104,7 +104,7 @@ export class InMemorySurveyCommandRepository implements ISurveyCommandRepository
       );
     }
 
-    target.revokeAccessdCode(hashedAccessCode);
+    target.revokeAccessCode(hashedAccessCode);
 
     target.revision += 1;
 

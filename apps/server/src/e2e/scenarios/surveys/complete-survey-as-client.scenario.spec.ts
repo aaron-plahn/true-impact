@@ -273,7 +273,14 @@ describe(`Survey Completion Scenarios`, () => {
       });
 
       describe(`when completing the survey for an additional time`, () => {
-        describe(`when the participant already has attempt in progress for this survey`, () => {
+        /**
+         * Currently, we do not prevent clients from starting a new attempt of a survey that is already
+         * in progress. We should discover that this has happened and emit compensating events to cancel
+         * the previous attempt.
+         *
+         * We may want to test that this happens eventually.
+         */
+        describe.skip(`when the participant already has attempt in progress for this survey`, () => {
           beforeEach(async () => {
             const { id: clientId } = (
               (await adminHttpClient.get(clientBaseEndpoint)).data as Client[]

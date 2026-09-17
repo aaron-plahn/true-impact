@@ -1099,7 +1099,7 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
   }
 
   @UpdateMethod()
-  revokeAccessdCode(hashedAccessCode: string): Survey | TrueImpactError {
+  revokeAccessCode(hashedAccessCode: string): Survey | TrueImpactError {
     if (!this.accessTokensByHash.has(hashedAccessCode)) {
       return new TrueImpactError('Failed to revoke unknown access code.');
     }
