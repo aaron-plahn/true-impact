@@ -598,6 +598,8 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
 
   /**
    * TODO Is this a view-layer concern?
+   *
+   * We should address this now.
    */
   getNextQuestionLabel(
     questionLabel: string,

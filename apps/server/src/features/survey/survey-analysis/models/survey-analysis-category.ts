@@ -23,8 +23,14 @@ export class SurveyAnalysisCategory extends Entity {
 
   // TODO language code
 
-  constructor({ label }: { label: string }) {
+  constructor(dto: { label: string }) {
     super();
+
+    if (!dto) {
+      return;
+    }
+
+    const { label } = dto;
 
     this.label = label;
   }

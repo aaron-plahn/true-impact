@@ -28,7 +28,7 @@ class WidgetCreated {
     name: string;
   };
 
-  readonly meta: ToyEventMeta;
+  readonly metadata: ToyEventMeta;
 
   revision: number;
 
@@ -39,7 +39,7 @@ class WidgetCreated {
       aggregateCompositeIdentifier: { id: string };
       name: string;
     };
-    meta: ToyEventMeta;
+    metadata: ToyEventMeta;
   }) {
     Object.assign(this, doc);
   }
@@ -56,7 +56,7 @@ const firstWidgetCreated: WidgetCreated = {
     },
     name: 'First Born Widget!',
   },
-  meta: {
+  metadata: {
     userId: '123',
     dateEffective: '1234567',
   },
@@ -72,7 +72,7 @@ class WidgetLabelled {
     label: string;
   };
 
-  readonly meta: ToyEventMeta;
+  readonly metadata: ToyEventMeta;
 
   revision: number;
 
@@ -93,7 +93,7 @@ const widgetLabelled = new WidgetLabelled({
     },
     label: 'Big Widget',
   },
-  meta: {
+  metadata: {
     userId: '555',
     dateEffective: '1234568',
   },
@@ -180,7 +180,7 @@ describe.skip(`PostgresEventRepository`, () => {
 
       expect(foundRecord.type).toBe(WIDGET_CREATED);
 
-      expect(foundRecord.metadata).toEqual(firstWidgetCreated.meta);
+      expect(foundRecord.metadata).toEqual(firstWidgetCreated.metadata);
 
       expect(foundRecord.payload).toEqual(firstWidgetCreated.payload);
 

@@ -1,23 +1,24 @@
 /* eslint-disable @typescript-eslint/no-floating-promises */
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { BaseEvent } from 'src/libs/cqrs-es/event-repository.interface';
-import { buildTestInstance, TrueImpactError } from 'src/libs/data-types';
 import { SurveyResponseRecord } from '.';
+import { BaseEvent } from '../../../../libs/cqrs-es/event-repository.interface';
+import {
+  buildTestInstance,
+  TrueImpactError,
+} from '../../../../libs/data-types';
+import { SurveyPersistenceDto } from '../../survey-management';
 import {
   SurveyCompletionAbandoned,
   SurveyCompletionCancelled,
   SurveySubmitted,
 } from '../commands';
 import { SurveyQuestionAnswered } from '../commands/answer-survey-question/survey-question-answered.event';
-import {
-  SurveyBegan,
-  SurveyInfoForResponseRecord,
-} from '../commands/begin-survey/survey-began.event';
+import { SurveyBegan } from '../commands/begin-survey/survey-began.event';
 
 const surveyResponseRecordId = '54567';
 
-const targetSurvey: SurveyInfoForResponseRecord = {
+const targetSurvey: SurveyPersistenceDto = {
   id: '99',
   name: 'My Survey',
   questions: {
@@ -42,6 +43,9 @@ const targetSurvey: SurveyInfoForResponseRecord = {
   },
   topLevelQuestionLabels: ['1'],
   revision: 0,
+  isFinal: false,
+  analyzers: {},
+  accessTokensByHash: {},
 };
 
 const surveyBegan = buildTestInstance(SurveyBegan, {

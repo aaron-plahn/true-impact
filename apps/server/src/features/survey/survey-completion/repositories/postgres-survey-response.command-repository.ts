@@ -29,6 +29,13 @@ export class PostgresSurveyResponseCommandRepository implements ISurveyResponseC
     private readonly eventRepository: IEventRepository,
   ) {}
 
+  async exists(id: string): Promise<boolean> {
+    const result = await this.fetchById(id);
+
+    // Should `Error` be a possible return type?
+    return result !== null;
+  }
+
   async fetchById(id: string): Promise<SurveyResponseRecord | null> {
     const eventHistory = await this.eventRepository.read({
       type: this.aggregateType,

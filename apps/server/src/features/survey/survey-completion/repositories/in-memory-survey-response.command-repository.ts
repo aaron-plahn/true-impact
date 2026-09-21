@@ -7,6 +7,10 @@ import { ISurveyResponseCommandRepository } from './survey-response-command-repo
 export class InMemorySurveyResponseCommandRepository implements ISurveyResponseCommandRepository {
   private readonly base = new InMemoryCommandRepository(SurveyResponseRecord);
 
+  exists(id: string): Promise<boolean> {
+    return this.base.exists(id);
+  }
+
   fetchById(id: string): Promise<SurveyResponseRecord | null> {
     return this.base.fetchById(id);
   }

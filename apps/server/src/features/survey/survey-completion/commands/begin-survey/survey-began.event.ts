@@ -1,5 +1,5 @@
 import { plainToInstance } from 'class-transformer';
-import { SurveyQuestionPersistenceDto } from '../../../../../features/survey/survey-management/survey-question.entity';
+import { SurveyPersistenceDto } from '../../../../../features/survey/survey-management';
 import {
   NestedDataType,
   NonEmptyString,
@@ -10,16 +10,6 @@ import {
   SurveyResponseCompositeIdentifier,
 } from '../../models';
 
-export class SurveyInfoForResponseRecord {
-  id: string;
-  // validated to be true and survey is frozen before this point
-  // isFinal: boolean;
-  name: string;
-  questions: Record<string, Omit<SurveyQuestionPersistenceDto, 'label'>>;
-  topLevelQuestionLabels: string[];
-  revision: number;
-}
-
 export class SurveyBeganPayload {
   aggregateCompositeIdentifier: SurveyResponseCompositeIdentifier;
 
@@ -29,12 +19,12 @@ export class SurveyBeganPayload {
   })
   participant?: SurveyParticipantCompositeIdentifier;
 
-  @NestedDataType(() => SurveyInfoForResponseRecord, {
+  @NestedDataType(() => SurveyPersistenceDto, {
     label: 'survey',
     description:
       'cached information about this survey relevant to its completion',
   })
-  survey: SurveyInfoForResponseRecord; // SurveyInfoForResponseRecord
+  survey: SurveyPersistenceDto; // SurveyInfoForResponseRecord
 }
 
 // TODO `BaseEvent` class?`
@@ -50,10 +40,14 @@ export class SurveyBeganPayload {
       },
       survey: {
         id: '123',
+        // this should always be true if we've made it to the point of survey completion
+        isFinal: true,
         name: 'My Test Survey',
         questions: {},
         topLevelQuestionLabels: [],
         revision: 0,
+        analyzers: {},
+        accessTokensByHash: {},
       },
     },
     // TODO buildTestInstance(EventMetadata)
@@ -93,6 +87,7 @@ export class SurveyBegan {
     streamId: string;
   }) {
     const { payload, metadata, streamId } = event;
+
     this.payload = plainToInstance(SurveyBeganPayload, payload);
 
     // We should apply metadata at a higher level.
