@@ -921,7 +921,7 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
   }
 
   static fromEventHistory(
-    eventHistory: Omit<BaseEvent, 'streamId' | 'revision' | 'meta'>[],
+    eventHistory: Omit<BaseEvent, 'streamId' | 'revision' | 'metadata'>[],
     // TODO is this the API we want?
     // we don't pass the ID here. we assume the first event is the creation event. the events must be filtered externally.
   ): SurveyResponseRecord | TrueImpactError | null {
