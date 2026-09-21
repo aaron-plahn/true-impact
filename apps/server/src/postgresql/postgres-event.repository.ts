@@ -1,4 +1,5 @@
 import { Pool } from 'pg';
+import { BaseEvent, EventDto, IEventRepository } from '../libs/cqrs-es';
 import {
   TrueImpactError,
   TrueImpactRuntimeException,
@@ -12,28 +13,6 @@ export interface EventDocument {
   stream_id: string;
   payload: Record<string, unknown>;
   meta: Record<string, unknown>;
-}
-
-export interface EventDto {
-  type: string;
-  streamId: string;
-  payload: Record<string, unknown>;
-  meta: Record<string, unknown>;
-}
-
-export interface EventPayload {
-  aggregateCompositeIdentifier: {
-    type: string;
-    id: string;
-  };
-}
-
-export interface BaseEvent<T extends EventPayload = EventPayload> {
-  type: string;
-  streamId: string;
-  payload: T;
-  meta: Record<string, unknown>;
-  revision: number;
 }
 
 const thinMap = (row: EventDocument): EventDto => {
@@ -51,7 +30,7 @@ const thinMap = (row: EventDocument): EventDto => {
   return row as unknown as EventDto;
 };
 
-export class PostgresEventRepository {
+export class PostgresEventRepository implements IEventRepository {
   constructor(
     @Inject(PG_POOL_INJECTION_TOKEN)
     private readonly pool: Pool,

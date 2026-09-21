@@ -6,8 +6,6 @@ export const SURVEY_RESPONSE_COMMAND_REPOSITORY_INJECTION_TOKEN =
   'SURVEY_RESPONSE_COMMAND_REPOSITORY_INJECTION_TOKEN';
 
 export interface ISurveyResponseCommandRepository {
-  exists(id: string): Promise<boolean>;
-
   fetchById(id: string): Promise<SurveyResponseRecord | null>; // Maybe<SurveyResponseRecord>
 
   fetchMany(): Promise<SurveyResponseRecord[]>;

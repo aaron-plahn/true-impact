@@ -1,11 +1,14 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 import { Inject } from '@nestjs/common';
-import { PersistenceAcknowledgement } from 'src/libs/cqrs-es';
+import type {
+  BaseEvent,
+  IEventRepository,
+  PersistenceAcknowledgement,
+} from '../../../../libs/cqrs-es';
 import {
   TrueImpactError,
   TrueImpactRuntimeException,
-} from 'src/libs/data-types';
-import { BaseEvent } from 'src/postgresql/postgres-event.repository';
+} from '../../../../libs/data-types';
 import { SURVEY_RESPONSE_AGGREGATE_TYPE } from '../../constants';
 import {
   SurveyParticipantCompositeIdentifier,
@@ -17,18 +20,6 @@ import { ISurveyResponseCommandRepository } from './survey-response-command-repo
  * TODO export this from CQRS lib
  * TODO constrain the postgres implementation with this interface
  */
-interface IEventRepository {
-  appendAt(
-    revision: number,
-    ...events: BaseEvent[]
-    // necessary for optimistic concurrency
-  ): Promise<{ streamId: string } | Error>;
-
-  read(aggregateCompositeIdentifier?: {
-    type: string;
-    id: string;
-  }): Promise<BaseEvent[]>;
-}
 
 export class PostgresSurveyResponseCommandRepository implements ISurveyResponseCommandRepository {
   private readonly aggregateType = SURVEY_RESPONSE_AGGREGATE_TYPE;
@@ -37,20 +28,6 @@ export class PostgresSurveyResponseCommandRepository implements ISurveyResponseC
     @Inject('EVENT_REPOSITORY_INJECTION_TOKEN')
     private readonly eventRepository: IEventRepository,
   ) {}
-
-  async exists(id: string): Promise<boolean> {
-    const eventHistory = await this.eventRepository.read({
-      type: this.aggregateType,
-      id,
-    });
-
-    if (eventHistory.length === 0) {
-      return false;
-    }
-
-    // We may have to check that no soft-delete event exists.
-    return true;
-  }
 
   async fetchById(id: string): Promise<SurveyResponseRecord | null> {
     const eventHistory = await this.eventRepository.read({

@@ -1,4 +1,4 @@
-import { BaseEvent } from 'src/postgresql/postgres-event.repository';
+import { BaseEvent } from 'src/libs/cqrs-es/event-repository.interface';
 import { IDomainEvent } from '../../../../libs/cqrs-es';
 import {
   AggregateRoot,
@@ -874,7 +874,6 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
             participant: participantCompositeIdentifier,
           },
           // This should probably be assigned at a higher level as the current user and environment may be part of the meta
-          // can we just make this `metadata` so there's no chance for confusion?
           metadata: {
             // TODO populate this
           },

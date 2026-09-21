@@ -1,8 +1,11 @@
 import {
+  BaseEvent,
+  EventDto,
+} from 'src/libs/cqrs-es/event-repository.interface';
+import {
   TrueImpactError,
   TrueImpactRuntimeException,
 } from '../libs/data-types';
-import { BaseEvent, EventDto } from './postgres-event.repository';
 
 interface EventFactoryFunction<T extends BaseEvent = BaseEvent> {
   (event: EventDto): T;

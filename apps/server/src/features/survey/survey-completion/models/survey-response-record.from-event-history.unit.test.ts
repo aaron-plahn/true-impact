@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-floating-promises */
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
+import { BaseEvent } from 'src/libs/cqrs-es/event-repository.interface';
 import { buildTestInstance, TrueImpactError } from 'src/libs/data-types';
-import { BaseEvent } from 'src/postgresql/postgres-event.repository';
 import { SurveyResponseRecord } from '.';
 import {
   SurveyCompletionAbandoned,

@@ -53,10 +53,6 @@ export class InMemoryCommandRepository<
     });
   }
 
-  async exists(id: string): Promise<boolean> {
-    return Promise.resolve(this.entititesById.has(id));
-  }
-
   async fetchById(id: string): Promise<T | null> {
     const result = this.entititesById.get(id) || null;
 
