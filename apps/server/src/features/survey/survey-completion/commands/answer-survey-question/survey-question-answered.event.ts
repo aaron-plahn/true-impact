@@ -1,3 +1,4 @@
+import { plainToInstance } from 'class-transformer';
 import { TrueImpactDataExample } from '../../../../../libs/data-types';
 import { SurveyResponseCompositeIdentifier } from '../../models';
 
@@ -27,7 +28,7 @@ export class SurveyQuestionAnswered {
   readonly payload: SurveyQuestionAnsweredPayload;
 
   constructor({ payload }: { payload: SurveyQuestionAnsweredPayload }) {
-    this.payload = payload;
+    this.payload = plainToInstance(SurveyQuestionAnsweredPayload, payload);
   }
 
   static fromPersistenceDto(dto: SurveyQuestionAnswered) {

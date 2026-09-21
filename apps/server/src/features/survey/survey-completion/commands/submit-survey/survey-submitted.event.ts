@@ -1,3 +1,4 @@
+import { plainToInstance } from 'class-transformer';
 import { TrueImpactDataExample } from '../../../../../libs/data-types';
 import { SurveyResponseCompositeIdentifier } from '../../models';
 
@@ -35,7 +36,7 @@ export class SurveySubmitted {
     metadata: { dateEffective: number };
     payload: SurveySubmittedPayload;
   }) {
-    this.payload = payload;
+    this.payload = plainToInstance(SurveySubmittedPayload, payload);
 
     this.metadata = metadata;
   }

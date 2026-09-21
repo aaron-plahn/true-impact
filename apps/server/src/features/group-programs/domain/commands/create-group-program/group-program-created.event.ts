@@ -1,3 +1,4 @@
+import { plainToInstance } from 'class-transformer';
 import {
   NonEmptyString,
   TrueImpactDataExample,
@@ -33,6 +34,6 @@ export class GroupProgramCreated {
   readonly payload: GroupProgramCreatedPayload;
 
   constructor({ payload }: { payload: GroupProgramCreatedPayload }) {
-    this.payload = payload;
+    this.payload = plainToInstance(GroupProgramCreatedPayload, payload);
   }
 }

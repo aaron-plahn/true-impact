@@ -875,7 +875,7 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
           },
           // This should probably be assigned at a higher level as the current user and environment may be part of the meta
           // can we just make this `metadata` so there's no chance for confusion?
-          meta: {
+          metadata: {
             // TODO populate this
           },
         }),

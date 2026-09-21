@@ -1,3 +1,4 @@
+import { plainToInstance } from 'class-transformer';
 import { SurveyQuestionPersistenceDto } from '../../../../../features/survey/survey-management/survey-question.entity';
 import {
   NestedDataType,
@@ -56,7 +57,7 @@ export class SurveyBeganPayload {
       },
     },
     // TODO buildTestInstance(EventMetadata)
-    meta: {},
+    metadata: {},
   },
 })
 export class SurveyBegan {
@@ -67,7 +68,7 @@ export class SurveyBegan {
   readonly payload: SurveyBeganPayload;
 
   // TODO shared `EventMetadata` class
-  readonly meta: Record<string, unknown>;
+  readonly metadata: Record<string, unknown>;
 
   /**
    * TODO We might want to make this a calculated field using: `${this.payload.aggregateCompositeIdentifier.type}/${this.payload.aggregateCompositeIdentifier.id}`
@@ -88,14 +89,13 @@ export class SurveyBegan {
   // TODO META
   constructor(event: {
     payload: SurveyBeganPayload;
-    meta: Record<string, unknown>;
+    metadata: Record<string, unknown>;
     streamId: string;
   }) {
-    const { payload, meta, streamId } = event;
-    // Should this turn a DTO into an instance of the Survey Began Payload?
-    this.payload = payload;
+    const { payload, metadata, streamId } = event;
+    this.payload = plainToInstance(SurveyBeganPayload, payload);
 
-    this.meta = meta;
+    this.metadata = metadata;
 
     this.streamId = streamId;
   }

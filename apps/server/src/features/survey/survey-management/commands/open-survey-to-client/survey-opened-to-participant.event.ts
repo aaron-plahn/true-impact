@@ -1,3 +1,4 @@
+import { plainToInstance } from 'class-transformer';
 import { SurveyParticipantCompositeIdentifier } from '../../../../../features/survey/survey-completion/models';
 import { SurveyCompositeIdentifier } from '../../../../../features/survey/survey.composite-identifier';
 
@@ -13,6 +14,6 @@ export class SurveyOpenedToParticipant {
   readonly payload: SurveyOpenedToParticipantPayload;
 
   constructor({ payload }: { payload: SurveyOpenedToParticipantPayload }) {
-    this.payload = payload;
+    this.payload = plainToInstance(SurveyOpenedToParticipantPayload, payload);
   }
 }

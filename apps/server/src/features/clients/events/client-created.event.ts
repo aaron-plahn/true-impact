@@ -1,3 +1,4 @@
+import { plainToInstance } from 'class-transformer';
 import { ClientCompositeIdentifier } from '../client.composite-identifier';
 
 interface EventRecordMetadata {
@@ -25,18 +26,18 @@ export class ClientCreated {
 
   readonly payload: ClientCreatedPayload;
 
-  readonly meta: EventRecordMetadata;
+  readonly metadata: EventRecordMetadata;
 
   constructor({
     payload,
-    meta,
+    metadata,
   }: {
     payload: ClientCreatedPayload;
-    meta: EventRecordMetadata;
+    metadata: EventRecordMetadata;
   }) {
-    this.payload = payload;
+    this.payload = plainToInstance(ClientCreatedPayload, payload);
 
-    this.meta = meta;
+    this.metadata = metadata;
 
     // TODO We should validate the schema before persisting.
   }
@@ -46,11 +47,11 @@ export class ClientCreated {
    */
   public static fromPersistenceDto({
     payload,
-    meta,
+    metadata,
   }: {
     payload: ClientCreatedPayload;
-    meta: EventRecordMetadata;
+    metadata: EventRecordMetadata;
   }) {
-    return new ClientCreated({ payload, meta });
+    return new ClientCreated({ payload, metadata });
   }
 }

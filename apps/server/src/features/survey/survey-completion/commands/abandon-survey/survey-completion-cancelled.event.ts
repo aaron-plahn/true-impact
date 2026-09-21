@@ -1,3 +1,4 @@
+import { plainToInstance } from 'class-transformer';
 import {
   NestedDataType,
   NonEmptyString,
@@ -42,7 +43,7 @@ export class SurveyCompletionCancelled {
   readonly payload: SurveyCompletionCancelledPayload;
 
   constructor({ payload }: { payload: SurveyCompletionCancelledPayload }) {
-    this.payload = payload;
+    this.payload = plainToInstance(SurveyCompletionCancelledPayload, payload);
   }
 
   static fromPersistenceDto(dto: SurveyCompletionCancelled) {
