@@ -194,7 +194,7 @@ describe(`SurveyCompletionRecord.validateInvariants`, () => {
       it(`should return the expected error`, () => {
         const surveyId = 's123';
 
-        let invalidInstance = SurveyResponseRecord.fromEventHistory([
+        const invalidInstance = SurveyResponseRecord.fromEventHistory([
           buildTestInstance(SurveyBegan, {
             payload: {
               survey: complexSurvey.toPersistenceDto(),
