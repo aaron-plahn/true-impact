@@ -1,7 +1,10 @@
 import { buildTestInstance, TrueImpactError } from '../../../libs/data-types';
 import {
+  SurveyBegan,
+  SurveyQuestionAnswered,
   SurveyResponseRecord,
   SurveyResponseRecordPersistenceDto,
+  SurveySubmitted,
 } from '../survey-completion';
 import { Survey, SurveyPersistenceDto } from './survey.aggregate-root';
 
@@ -134,21 +137,43 @@ describe(`SurveyCompletionRecord.validateInvariants`, () => {
 
     describe(`when a survey response record has been marked as submitted but is missing required response to an optional question`, () => {
       it(`should return the expected error`, () => {
-        const invalidInstance = buildTestInstance(SurveyResponseRecord, {
-          submissionTimestamp,
-          hasBeenAbandoned: false,
-          responses: [
-            {
+        const surveyId = '123';
+
+        const invalidInstance = SurveyResponseRecord.fromEventHistory([
+          buildTestInstance(SurveyBegan, {
+            payload: {
+              aggregateCompositeIdentifier: {
+                id: surveyId,
+              },
+              survey: complexSurvey.toPersistenceDto(),
+            },
+          }),
+          buildTestInstance(SurveyQuestionAnswered, {
+            payload: {
+              aggregateCompositeIdentifier: {
+                id: surveyId,
+              },
               questionLabel: '1',
-              optionLabel: 'ii',
+              chosenOptionLabel: 'ii',
             },
-            {
+          }),
+          buildTestInstance(SurveyQuestionAnswered, {
+            payload: {
+              aggregateCompositeIdentifier: {
+                id: surveyId,
+              },
               questionLabel: '4',
-              optionLabel: 'iii',
+              chosenOptionLabel: 'iii',
             },
-          ],
-          survey: complexSurvey.toPersistenceDto(),
-        });
+          }),
+          buildTestInstance(SurveySubmitted, {
+            payload: {
+              aggregateCompositeIdentifier: {
+                id: surveyId,
+              },
+            },
+          }),
+        ]) as SurveyResponseRecord;
 
         const result = invalidInstance.validateInvariants();
 
@@ -163,23 +188,38 @@ describe(`SurveyCompletionRecord.validateInvariants`, () => {
     });
 
     describe(`When a survey response record has been marked as submitted but it is missing a required response to the last question (still in progress)`, () => {
+      /**
+       * Note that these cases involve invalid event histories in the database.
+       */
       it(`should return the expected error`, () => {
-        const invalidInstance = buildTestInstance(SurveyResponseRecord, {
-          hasBeenAbandoned: false,
-          submissionTimestamp,
-          survey: complexSurvey.toPersistenceDto(),
-          responses: [
-            {
+        const surveyId = 's123';
+
+        let invalidInstance = SurveyResponseRecord.fromEventHistory([
+          buildTestInstance(SurveyBegan, {
+            payload: {
+              survey: complexSurvey.toPersistenceDto(),
+            },
+          }),
+          buildTestInstance(SurveyQuestionAnswered, {
+            payload: {
+              aggregateCompositeIdentifier: { id: surveyId },
               questionLabel: '1',
-              optionLabel: 'ii',
+              chosenOptionLabel: 'ii',
             },
-            {
+          }),
+          buildTestInstance(SurveyQuestionAnswered, {
+            payload: {
+              aggregateCompositeIdentifier: { id: surveyId },
               questionLabel: '2',
-              optionLabel: 'i',
+              chosenOptionLabel: 'i',
             },
-            // missing an answer for question '4'
-          ],
-        });
+          }),
+          buildTestInstance(SurveySubmitted, {
+            payload: {
+              aggregateCompositeIdentifier: { id: surveyId },
+            },
+          }),
+        ]) as SurveyResponseRecord;
 
         const result = invalidInstance.validateInvariants();
 
