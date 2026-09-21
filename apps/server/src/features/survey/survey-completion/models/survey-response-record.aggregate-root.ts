@@ -907,8 +907,11 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
     return new SurveyResponseRecord({
       id,
       survey: surveyBuildResult,
-      // should this be 0?
-      revision: 1,
+      /**
+       * The initial aggregate root in-memory is at revision 0
+       * until its creation event (revision 1) is persisted.
+       */
+      revision: 0,
       responses: [],
       hasBeenAbandoned: false,
       hasBeenCancelled: false,

@@ -189,7 +189,6 @@ export class PostgresSurveyResponseCommandRepository implements ISurveyResponseC
     );
 
     if (result instanceof Error) {
-      // TODO use a TrueImpactError for the nested error too
       return new TrueImpactError(result.message);
     }
 

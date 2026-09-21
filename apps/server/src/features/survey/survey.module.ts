@@ -1,13 +1,12 @@
 import { forwardRef } from '@nestjs/common';
 import { EventFactory } from 'src/postgresql/event-factory';
-import { BaseEvent } from 'src/postgresql/postgres-event.repository';
 import { AuthModule } from '../../auth/auth.module';
 import {
   InMemoryCommandRepository,
   InMemoryQueryRepositoryProvider,
 } from '../../common/persistence';
 import { EncryptionService } from '../../libs/auth';
-import { CommandHandlerService } from '../../libs/cqrs-es';
+import { BaseEvent, CommandHandlerService } from '../../libs/cqrs-es';
 import {
   ResourceNotFoundError,
   TrueImpactBadUserInputError,

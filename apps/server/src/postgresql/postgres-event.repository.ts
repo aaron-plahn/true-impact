@@ -44,6 +44,9 @@ export class PostgresEventRepository implements IEventRepository {
     event: BaseEvent,
     // necessary for optimistic concurrency
   ): Promise<{ streamId: string } | Error> {
+    /**
+     * There is a possible data anomale in this design. The `stream_id` must be the same for all events with the same `payload.aggergateCompositeIdentifier.type` and `...id`.
+     */
     const query = `
         INSERT INTO events (stream_id, event_type, payload, meta, revision)
         VALUES ($1, $2, $3, $4, $5 + 1)
@@ -54,7 +57,7 @@ export class PostgresEventRepository implements IEventRepository {
       event.streamId,
       event.type,
       event.payload,
-      event.meta,
+      event.metadata,
       revision,
     ];
 

@@ -82,11 +82,11 @@ export class SurveyBegan {
   readonly streamId: string;
 
   /**
-   * This is a creation command.
+   * This is a creation event. The new aggregate root will have revision:0 until this
+   * event is persisted, at which point it will come back as 1 (assuming there are no update events for the target aggregate root).
    */
-  readonly revision: number = 0;
+  readonly revision: number = 1;
 
-  // TODO META
   constructor(event: {
     payload: SurveyBeganPayload;
     metadata: Record<string, unknown>;
@@ -95,6 +95,7 @@ export class SurveyBegan {
     const { payload, metadata, streamId } = event;
     this.payload = plainToInstance(SurveyBeganPayload, payload);
 
+    // We should apply metadata at a higher level.
     this.metadata = metadata;
 
     this.streamId = streamId;

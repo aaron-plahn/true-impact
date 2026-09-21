@@ -180,7 +180,7 @@ describe.skip(`PostgresEventRepository`, () => {
 
       expect(foundRecord.type).toBe(WIDGET_CREATED);
 
-      expect(foundRecord.meta).toEqual(firstWidgetCreated.meta);
+      expect(foundRecord.metadata).toEqual(firstWidgetCreated.meta);
 
       expect(foundRecord.payload).toEqual(firstWidgetCreated.payload);
 

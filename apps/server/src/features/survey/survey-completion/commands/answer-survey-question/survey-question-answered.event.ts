@@ -31,7 +31,9 @@ export class SurveyQuestionAnswered {
     this.payload = plainToInstance(SurveyQuestionAnsweredPayload, payload);
   }
 
-  static fromPersistenceDto(dto: SurveyQuestionAnswered) {
+  static fromPersistenceDto(
+    dto: SurveyQuestionAnswered,
+  ): SurveyQuestionAnswered {
     return new SurveyQuestionAnswered(dto);
   }
 }

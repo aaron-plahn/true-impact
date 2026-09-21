@@ -308,7 +308,7 @@ export class SurveyController implements OnModuleInit {
   }
 
   /**
-   * TODO This pattern won't work anymore. We do not want to introduce methods that have delete permissions on the
+   * TODO Find a different pattern for test cleanup. We do not want to introduce methods that have delete permissions on the
    * event store, even if they are only meant for development use, as these break logical append-only guarantees.
    * Other options:
    * 1. Each test runs in its own isolated database (this has worked in another project). The problem is that this

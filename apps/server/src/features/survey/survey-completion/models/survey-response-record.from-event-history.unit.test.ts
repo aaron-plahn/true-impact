@@ -218,7 +218,7 @@ describe(`SurveyResponseRecord.fromEventHistory`, () => {
         },
         // TODO check meta
         // TODO should the model be aware of the meta?
-        meta: {},
+        metadata: {},
         revision: 5,
       };
 

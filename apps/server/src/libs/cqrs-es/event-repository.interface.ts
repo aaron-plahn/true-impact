@@ -16,8 +16,7 @@ export interface BaseEvent<T extends EventPayload = EventPayload> {
   type: string;
   streamId: string;
   payload: T;
-  // TODO metadata!
-  meta: Record<string, unknown>;
+  metadata: Record<string, unknown>;
   revision: number;
 }
 
