@@ -45,7 +45,6 @@ export const validateLookupTable = (
   if (!value) {
     errors.push(
       new TrueImpactError(
-        // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
         `Invalid value for property [${propertyKey}]. Expected a lookup table (Record<string,T>), received [${value}]`,
       ),
     );
@@ -65,8 +64,6 @@ export const validateLookupTable = (
   ) {
     errors.push(
       new TrueImpactError(
-        // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-
         `Invalid value for property [${propertyKey}]. Expected a lookup table (Record<string,T>), received [${value} <${jsType}>]`,
       ),
     );
