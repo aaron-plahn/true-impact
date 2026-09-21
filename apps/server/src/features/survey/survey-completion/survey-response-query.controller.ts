@@ -196,7 +196,9 @@ export class SurveyResponseQueryController {
       return result;
     }
 
-    return result.map((r) => r.toClientDto());
+    const dtos = result.map((r) => r.toClientDto());
+
+    return dtos;
   }
 
   @UseGuards(AuthenticatedUserGuard, RbacAuthGuard)

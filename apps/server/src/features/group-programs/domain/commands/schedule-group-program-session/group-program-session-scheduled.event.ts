@@ -1,3 +1,4 @@
+import { plainToInstance } from 'class-transformer';
 import { TrueImpactDataExample } from '../../../../../libs/data-types';
 import { GROUP_PROGRAM_AGGREGATE_TYPE } from '../../constants';
 import { GroupProgramCompositeIdentifier } from '../../group-program.composite-identifier';
@@ -31,6 +32,9 @@ export class GroupProgramScheduled {
   readonly payload: GroupProgramSessionScheduledPayload;
 
   constructor({ payload }: { payload: GroupProgramSessionScheduledPayload }) {
-    this.payload = payload;
+    this.payload = plainToInstance(
+      GroupProgramSessionScheduledPayload,
+      payload,
+    );
   }
 }

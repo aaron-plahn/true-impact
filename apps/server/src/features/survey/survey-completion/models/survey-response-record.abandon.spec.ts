@@ -61,25 +61,25 @@ const testSurvey = buildTestInstance<SurveyPersistenceDto>(Survey, {
 
 const testSurveyDto = testSurvey.toPersistenceDto();
 
-const completedSurvey = buildTestInstance<SurveyResponseRecordPersistenceDto>(
+let completedSurvey = buildTestInstance<SurveyResponseRecordPersistenceDto>(
   SurveyResponseRecord,
   {
     survey: testSurveyDto,
-    responses: [
-      {
-        questionLabel: '1',
-        optionLabel: 'b',
-      },
-      {
-        questionLabel: '2',
-        optionLabel: 'c',
-      },
-      {
-        questionLabel: '3',
-        optionLabel: 'a',
-      },
-    ],
+    responses: [],
   },
+) as SurveyResponseRecord;
+
+completedSurvey = completedSurvey.answerQuestion(
+  '1',
+  'b',
+) as SurveyResponseRecord;
+completedSurvey = completedSurvey.answerQuestion(
+  '2',
+  'c',
+) as SurveyResponseRecord;
+completedSurvey = completedSurvey.answerQuestion(
+  '3',
+  'a',
 ) as SurveyResponseRecord;
 
 describe(`SurveyResponseRecord.abandon`, () => {

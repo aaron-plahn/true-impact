@@ -53,7 +53,7 @@ export class InMemoryCommandRepository<
     });
   }
 
-  async exists(id: string): Promise<boolean> {
+  exists(id: string): Promise<boolean> {
     return Promise.resolve(this.entititesById.has(id));
   }
 

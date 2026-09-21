@@ -1,4 +1,6 @@
+import { Optional } from '@nestjs/common';
 import { IDomainEvent } from '../../../../libs/cqrs-es';
+import { BaseEvent } from '../../../../libs/cqrs-es/event-repository.interface';
 import {
   AggregateRoot,
   BooleanDataType,
@@ -141,6 +143,14 @@ export class SurveyResponseRecordPersistenceDto {
 
   eventHistory: IDomainEvent[];
 
+  /**
+   * We should have a different structural model of surveys for response validation.
+   * In part, we should hide irrelevant fields such as `flagIds`, `accessTokens`, and `analyzers`.
+   *
+   * One challenge that arises is the need to reuse logic for getting the next question.
+   *
+   * We reused the survey domain model to make quick work of this.
+   */
   survey: SurveyPersistenceDto;
 
   // TODO the following 3 boolean flags have consistency rules that we should validate in "validateComplexInvariants"
@@ -165,11 +175,13 @@ export class SurveyResponseRecordPersistenceDto {
   participantCompositeIdentifier?: SurveyParticipantCompositeIdentifier;
 
   responses: SurveyQuestionResponse[];
+
+  nextQuestionLabel: string | undefined;
 }
 
 const testSurveyExample = buildTestInstance(Survey, {
   isFinal: false,
-}).toPersistenceDto();
+});
 
 @TrueImpactDataExample<SurveyResponseRecordPersistenceDto>({
   example: {
@@ -178,7 +190,7 @@ const testSurveyExample = buildTestInstance(Survey, {
     /**
      * TODO Can `buildTestInstance` use the schema to recurse on missing nested properties?
      */
-    survey: testSurveyExample,
+    survey: testSurveyExample.toPersistenceDto(),
     hasBeenAbandoned: false,
     hasBeenCancelled: false,
     participantCompositeIdentifier: {
@@ -188,6 +200,7 @@ const testSurveyExample = buildTestInstance(Survey, {
     // empty by default
     responses: [],
     eventHistory: [],
+    nextQuestionLabel: '1',
   },
 })
 export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPersistenceDto> {
@@ -212,13 +225,6 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
       'a version number that tracks the changes to this survey attempt',
   })
   revision: number;
-
-  // TODO we could decorate this with the event union for this aggregate type
-  @RawObject({
-    label: 'event history',
-    description: 'audit log of historical edits to this survey response',
-  })
-  eventHistory: IDomainEvent[];
 
   /**
    * Note that when a participant begins a survey, the target survey is copied here
@@ -309,6 +315,13 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
   })
   submissionTimestamp?: number;
 
+  // TODO move to base class
+  @RawObject({
+    label: 'event history',
+    description: 'audit log of historical edits to this survey response',
+  })
+  eventHistory: IDomainEvent[];
+
   constructor({
     id,
     revision,
@@ -319,6 +332,7 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
     responses,
     participant,
     eventHistory,
+    nextQuestionLabel,
   }: {
     id: string;
     revision: number;
@@ -330,6 +344,7 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
     participant?: SurveyParticipantCompositeIdentifier;
     responses: SurveyQuestionResponse[];
     eventHistory: IDomainEvent[];
+    nextQuestionLabel: string | undefined;
   }) {
     super();
 
@@ -360,26 +375,7 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
       };
     }
 
-    if (responses.length < survey.size()) {
-      if (responses.length > 0) {
-        const { questionLabel, optionLabel } = responses[responses.length - 1];
-
-        /**
-         * This assumes that the incoming DTO is valid.
-         */
-        this.nextQuestionLabel = survey.getNextQuestionLabel(
-          questionLabel,
-          optionLabel,
-        ) as string;
-      } else {
-        // We have no responses, so the next question is the first one in the survey
-        this.nextQuestionLabel = (
-          survey.getFirstQuestion() as SurveyQuestion
-        ).label;
-      }
-    } else {
-      this.nextQuestionLabel = DONE;
-    }
+    this.nextQuestionLabel = nextQuestionLabel;
   }
 
   // TODO base class?
@@ -417,6 +413,8 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
     questionLabel: string,
     chosenOptionLabel: string,
   ): SurveyResponseRecord | TrueImpactError {
+    console.log({ answerQuestion: questionLabel, withOption: Optional });
+
     if (this.hasBeenSubmitted) {
       return new TrueImpactError(
         `You cannot answer question [${questionLabel}] in survey [${this.survey.name}], as the survey has already been submitted.`,
@@ -454,6 +452,10 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
     }
 
     if (questionLabel !== this.nextQuestionLabel) {
+      console.log(
+        `You were supposed to answer question ${this.nextQuestionLabel} next in survey: ${JSON.stringify(this.survey.toPersistenceDto())}`,
+      );
+
       return new TrueImpactError(
         `You cannot answer question [${questionLabel}] in survey [${this.survey.name}], as it is not the next question ([${this.nextQuestionLabel as string}])`,
       );
@@ -586,6 +588,15 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
     }
 
     if (event.type === 'SURVEY_SUBMITTED') {
+      const eventWithMeta = event as SurveySubmitted;
+
+      // TODO move this. It doesn't belong here.
+      Object.assign(eventWithMeta, {
+        metadata: {
+          dateEffective: Date.now(),
+        },
+      });
+
       this.handleSurveySubmitted(event as SurveySubmitted);
     }
 
@@ -721,7 +732,7 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
   }
 
   getName(): string {
-    return this.survey.getName();
+    return this.survey.name;
   }
 
   progress(): { completed: number; count: number } {
@@ -752,6 +763,7 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
       participantCompositeIdentifier: this.participant,
       responses: this.responses,
       eventHistory: this.eventHistory,
+      nextQuestionLabel: this.nextQuestionLabel,
     };
   }
 
@@ -766,6 +778,7 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
       responses,
       participantCompositeIdentifier,
       eventHistory,
+      nextQuestionLabel,
     }: SurveyResponseRecordPersistenceDto,
     buildOptions: { shouldValidate?: boolean } = {},
   ): SurveyResponseRecord | TrueImpactError {
@@ -805,7 +818,7 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
 
     return new SurveyResponseRecord({
       id,
-      revision: revision,
+      revision,
       hasBeenAbandoned,
       hasBeenCancelled,
       submissionTimestamp,
@@ -813,6 +826,7 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
       responses: questionResponses as SurveyQuestionResponse[],
       participant: participantCompositeIdentifier,
       eventHistory,
+      nextQuestionLabel,
     });
   }
 
@@ -852,16 +866,90 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
       hasBeenAbandoned: false,
       hasBeenCancelled: false,
       participant: participantCompositeIdentifier,
+      nextQuestionLabel: survey.getFirstQuestion()?.label,
       eventHistory: [
         new SurveyBegan({
+          streamId: `${SURVEY_RESPONSE_AGGREGATE_TYPE}/${id}`,
           payload: {
             aggregateCompositeIdentifier: {
               type: SURVEY_RESPONSE_AGGREGATE_TYPE,
               id,
             },
+            survey: survey.toPersistenceDto(),
+            participant: participantCompositeIdentifier,
+          },
+          // This should probably be assigned at a higher level as the current user and environment may be part of the meta
+          metadata: {
+            // TODO populate this
           },
         }),
       ],
     });
+  }
+
+  static fromSurveyBegan(
+    creationEvent: SurveyBegan,
+  ): SurveyResponseRecord | TrueImpactError {
+    const {
+      payload: {
+        aggregateCompositeIdentifier: { id },
+        survey,
+        participant,
+      },
+    } = creationEvent;
+
+    const surveyBuildResult = Survey.fromPersistenceDto(survey);
+
+    if (surveyBuildResult instanceof Error) {
+      return surveyBuildResult;
+    }
+
+    return new SurveyResponseRecord({
+      id,
+      survey: surveyBuildResult,
+      /**
+       * The initial aggregate root in-memory is at revision 0
+       * until its creation event (revision 1) is persisted.
+       */
+      revision: 0,
+      responses: [],
+      hasBeenAbandoned: false,
+      hasBeenCancelled: false,
+      eventHistory: [creationEvent],
+      participant,
+      nextQuestionLabel: surveyBuildResult.getFirstQuestion()?.label,
+    });
+  }
+
+  static fromEventHistory(
+    eventHistory: Omit<BaseEvent, 'streamId' | 'revision' | 'metadata'>[],
+    // TODO is this the API we want?
+    // we don't pass the ID here. we assume the first event is the creation event. the events must be filtered externally.
+  ): SurveyResponseRecord | TrueImpactError | null {
+    if (eventHistory.length === 0) {
+      return null;
+    }
+
+    const [creationEvent, ...updateEvents] = eventHistory;
+
+    if (creationEvent.type !== 'SURVEY_BEGAN') {
+      return new TrueImpactError(
+        `Received an invalid creation event for a survey response record. Expected type [SURVEY_BEGAN], received [${creationEvent.type}].`,
+      );
+    }
+
+    const initialSurvey = SurveyResponseRecord.fromSurveyBegan(
+      creationEvent as SurveyBegan,
+    );
+
+    const result = updateEvents.reduce((acc, updateEvent) => {
+      if (acc instanceof Error) {
+        return acc;
+      }
+
+      return acc.apply(updateEvent);
+    }, initialSurvey);
+
+    return result;
   }
 }

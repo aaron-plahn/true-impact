@@ -1,3 +1,4 @@
+import { plainToInstance } from 'class-transformer';
 import {
   NestedDataType,
   NonEmptyString,
@@ -55,6 +56,9 @@ export class GroupProgramObservationRecordedByType {
   }: {
     payload: GroupProgramObservationRecordedByTypePayload;
   }) {
-    this.payload = payload;
+    this.payload = plainToInstance(
+      GroupProgramObservationRecordedByTypePayload,
+      payload,
+    );
   }
 }

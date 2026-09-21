@@ -43,10 +43,8 @@ export class InMemoryCommunityCommandRepository implements ICommunityCommandRepo
     });
   }
 
-  async exists(id: string): Promise<boolean> {
-    const result = this.entititesById.has(id);
-
-    return Promise.resolve(result);
+  exists(id: string): Promise<boolean> {
+    return Promise.resolve(this.entititesById.has(id));
   }
 
   async fetchById(id: string): Promise<Community | null> {

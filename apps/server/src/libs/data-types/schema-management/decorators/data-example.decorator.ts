@@ -72,7 +72,9 @@ export const buildTestInstance = <
 
   if (result instanceof TrueImpactError) {
     throw new TrueImpactRuntimeException([
-      new TrueImpactError(`Failed to build an instance of ${ctor.name}`),
+      new TrueImpactError(`Failed to build an instance of ${ctor.name}`, [
+        result,
+      ]),
     ]);
   }
 

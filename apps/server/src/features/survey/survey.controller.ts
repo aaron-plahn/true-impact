@@ -307,6 +307,20 @@ export class SurveyController implements OnModuleInit {
     ]);
   }
 
+  /**
+   * TODO Find a different pattern for test cleanup. We do not want to introduce methods that have delete permissions on the
+   * event store, even if they are only meant for development use, as these break logical append-only guarantees.
+   * Other options:
+   * 1. Each test runs in its own isolated database (this has worked in another project). The problem is that this
+   * is not sufficient if test cases within the same suite step on each other's toes. And for each test **case**
+   * to have its own DB would require a much larger number of databases.
+   * 2. Each test must make its data unique so there's no chance of an accidental collision. While this
+   * could work for UI e2e tests, any test that relies on `fetchMany` can't depend on this.
+   * 3. Introduce soft deletes immediately. The problem with this is the tests will take a performance hit.
+   * Also, this added complexity may cause tests to be more flakey due to needing to soft delete lots of data before
+   * each run.
+   * 4. Is there a way to "truncate" without data loss at the database level?
+   */
   @TestSetupEndpoint()
   async testSetup(): Promise<'OK'> {
     if (process.env.NODE_ENV !== 'test' && process.env.NODE_ENV !== 'e2e') {

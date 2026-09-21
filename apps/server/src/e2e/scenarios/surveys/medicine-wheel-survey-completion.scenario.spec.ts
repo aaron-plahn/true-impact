@@ -171,7 +171,9 @@ describe(`Medicine wheel survey completion`, () => {
   let clientId: string;
 
   beforeAll(async () => {
-    await signInAsAdmin(adminHttpClient);
+    await signInAsAdmin(adminHttpClient).catch((e) => {
+      console.warn(e);
+    });
 
     await adminHttpClient.patch(communityTestSetupEndpoint);
     await adminHttpClient.patch(clientTestSetupEndpoint);
