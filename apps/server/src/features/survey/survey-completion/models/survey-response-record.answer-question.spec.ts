@@ -73,13 +73,8 @@ const survey = buildTestInstance<SurveyPersistenceDto>(Survey, {
 
 const surveyResponseRecord = buildTestInstance(SurveyResponseRecord, {
   survey: survey.toPersistenceDto(),
-  responses: [
-    {
-      questionLabel: '1',
-      optionLabel: 'd',
-    },
-  ],
-});
+  responses: [],
+}).answerQuestion('1', 'd') as SurveyResponseRecord;
 
 describe(`SurveyResponseRecord.answerQuestion`, () => {
   describe(`when the survey has not yet been submitted`, () => {
