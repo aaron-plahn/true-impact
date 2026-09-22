@@ -6,15 +6,14 @@ import {
   Survey,
   SurveyPersistenceDto,
 } from '../../survey-management/survey.aggregate-root';
-import {
-  SurveyResponseRecord,
-  SurveyResponseRecordPersistenceDto,
-} from './survey-response-record.aggregate-root';
+import { SurveyBegan } from '../commands';
+import { SurveyResponseRecord } from './survey-response-record.aggregate-root';
 
 /**
  * 1 - 2
  * 3
  */
+// TODO use a builder pattern or event history for this
 const testSurvey = buildTestInstance<SurveyPersistenceDto>(Survey, {
   isFinal: true,
   topLevelQuestionLabels: ['1', '3'],
@@ -61,13 +60,15 @@ const testSurvey = buildTestInstance<SurveyPersistenceDto>(Survey, {
 
 const testSurveyDto = testSurvey.toPersistenceDto();
 
-let completedSurvey = buildTestInstance<SurveyResponseRecordPersistenceDto>(
-  SurveyResponseRecord,
-  {
-    survey: testSurveyDto,
-    responses: [],
-  },
+const emptySurveyResponse = SurveyResponseRecord.fromSurveyBegan(
+  buildTestInstance(SurveyBegan, {
+    payload: {
+      survey: testSurveyDto,
+    },
+  }),
 ) as SurveyResponseRecord;
+
+let completedSurvey = emptySurveyResponse;
 
 completedSurvey = completedSurvey.answerQuestion(
   '1',
@@ -84,7 +85,17 @@ completedSurvey = completedSurvey.answerQuestion(
 
 describe(`SurveyResponseRecord.abandon`, () => {
   describe(`when the survey completion is still in progress`, () => {
-    const surveyResponseInProgress = buildTestInstance(SurveyResponseRecord, {
+    let surveyResponseInProgress = emptySurveyResponse.answerQuestion(
+      '1',
+      'b',
+    ) as SurveyResponseRecord;
+
+    surveyResponseInProgress = surveyResponseInProgress.answerQuestion(
+      '2',
+      'c',
+    ) as SurveyResponseRecord;
+
+    buildTestInstance(SurveyResponseRecord, {
       survey: testSurvey.toPersistenceDto(),
       responses: [
         {
@@ -127,12 +138,7 @@ describe(`SurveyResponseRecord.abandon`, () => {
 
   describe(`when this survey attempt has already been abandoned`, () => {
     const abandonedSurvey =
-      buildTestInstance<SurveyResponseRecordPersistenceDto>(
-        SurveyResponseRecord,
-        {
-          hasBeenAbandoned: true,
-        },
-      ) as SurveyResponseRecord;
+      emptySurveyResponse.abandon() as SurveyResponseRecord;
 
     it(`should return the expected error`, () => {
       const result = abandonedSurvey.abandon();
