@@ -158,7 +158,7 @@ export class SurveyResponseRecordPersistenceDto {
 
   hasBeenCancelled: boolean;
 
-  submissionTimestamp?: number;
+  hasBeenSubmitted: boolean;
 
   /**
    * In the future, participants may be an `Employee`, `CommunityEmployee`, etc. We don't want
@@ -193,6 +193,7 @@ const testSurveyExample = buildTestInstance(Survey, {
     survey: testSurveyExample.toPersistenceDto(),
     hasBeenAbandoned: false,
     hasBeenCancelled: false,
+    hasBeenSubmitted: false,
     participantCompositeIdentifier: {
       type: CLIENT_AGGREGATE_TYPE,
       id: '55',
@@ -303,17 +304,11 @@ export class SurveyResponseRecord extends EventSourcedAggregateRoot {
   })
   nextQuestionLabel?: string; // possibly `DONE`
 
-  get hasBeenSubmitted(): boolean {
-    return typeof this.submissionTimestamp !== 'undefined';
-  }
-
-  @NonNegativeInteger({
-    label: 'time of submission',
-    description:
-      'records the date and time the client submitted this survey attempt',
-    isOptional: true, // omitted if the client has yet to complete the survey
+  @BooleanDataType({
+    label: 'has been sumbmitted',
+    description: 'has this survey attempt been submitted?',
   })
-  submissionTimestamp?: number;
+  hasBeenSubmitted: boolean;
 
   // TODO move to base class
   @RawObject({
@@ -328,7 +323,7 @@ export class SurveyResponseRecord extends EventSourcedAggregateRoot {
     revision: number;
     hasBeenAbandoned: boolean;
     hasBeenCancelled: boolean;
-    submissionTimestamp?: number;
+    hasBeenSubmitted: boolean;
     survey: Survey;
     // surveys may be anonymous
     participant?: SurveyParticipantCompositeIdentifier;
@@ -341,7 +336,7 @@ export class SurveyResponseRecord extends EventSourcedAggregateRoot {
       revision,
       hasBeenAbandoned,
       hasBeenCancelled,
-      submissionTimestamp,
+      hasBeenSubmitted,
       survey,
       responses,
       participant,
@@ -367,7 +362,7 @@ export class SurveyResponseRecord extends EventSourcedAggregateRoot {
     this.hasBeenCancelled =
       typeof hasBeenCancelled === 'boolean' ? hasBeenCancelled : false;
 
-    this.submissionTimestamp = submissionTimestamp;
+    this.hasBeenSubmitted = hasBeenSubmitted;
 
     this.eventHistory = eventHistory;
 
@@ -477,8 +472,13 @@ export class SurveyResponseRecord extends EventSourcedAggregateRoot {
     );
   }
 
-  handleSurveySubmitted(event: SurveySubmitted) {
-    this.submissionTimestamp = event.metadata.dateEffective;
+  handleSurveySubmitted(_event: SurveySubmitted) {
+    /**
+     * The event metadata includes a timestamp (dateEffective).
+     * This is a view concern. All we require to enforce the
+     * correct state transitions is a boolean flag.
+     */
+    this.hasBeenSubmitted = true;
 
     return this;
   }
@@ -506,6 +506,7 @@ export class SurveyResponseRecord extends EventSourcedAggregateRoot {
     this.apply(
       new SurveySubmitted({
         metadata: {
+          // TODO move this responsibility
           dateEffective: Date.now(),
         },
         payload: {
@@ -731,8 +732,7 @@ export class SurveyResponseRecord extends EventSourcedAggregateRoot {
       survey: this.survey.toPersistenceDto(),
       hasBeenAbandoned: this.hasBeenAbandoned,
       hasBeenCancelled: this.hasBeenCancelled,
-      // TODO remove timestamps from the domain model. We don't have any invariants associated with these. `hasBeenSubmitted` is sufficient.
-      submissionTimestamp: this.submissionTimestamp,
+      hasBeenSubmitted: this.hasBeenSubmitted,
       participantCompositeIdentifier: this.participant,
       responses: this.responses,
       eventHistory: this.eventHistory,
@@ -747,7 +747,7 @@ export class SurveyResponseRecord extends EventSourcedAggregateRoot {
       revision,
       hasBeenAbandoned,
       hasBeenCancelled,
-      submissionTimestamp,
+      hasBeenSubmitted,
       survey,
       responses,
       participantCompositeIdentifier,
@@ -795,7 +795,7 @@ export class SurveyResponseRecord extends EventSourcedAggregateRoot {
       revision,
       hasBeenAbandoned,
       hasBeenCancelled,
-      submissionTimestamp,
+      hasBeenSubmitted,
       survey: surveyBuildResult,
       responses: questionResponses as SurveyQuestionResponse[],
       participant: participantCompositeIdentifier,
@@ -839,6 +839,7 @@ export class SurveyResponseRecord extends EventSourcedAggregateRoot {
       revision: 0,
       hasBeenAbandoned: false,
       hasBeenCancelled: false,
+      hasBeenSubmitted: false,
       participant: participantCompositeIdentifier,
       nextQuestionLabel: survey.getFirstQuestion()?.label,
       eventHistory: [
@@ -889,6 +890,7 @@ export class SurveyResponseRecord extends EventSourcedAggregateRoot {
       responses: [],
       hasBeenAbandoned: false,
       hasBeenCancelled: false,
+      hasBeenSubmitted: false,
       eventHistory: [creationEvent],
       participant,
       nextQuestionLabel: surveyBuildResult.getFirstQuestion()?.label,

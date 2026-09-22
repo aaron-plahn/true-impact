@@ -53,7 +53,7 @@ export class PostgresEventRepository implements IEventRepository {
      * There is a possible data anomale in this design. The `stream_id` must be the same for all events with the same `payload.aggergateCompositeIdentifier.type` and `...id`.
      */
     const query = `
-        INSERT INTO events (stream_id, event_type, payload, meta, revision)
+        INSERT INTO events (stream_id, event_type, payload, metadata, revision)
         VALUES ($1, $2, $3, $4, $5 + 1)
         ON CONFLICT (stream_id, revision) DO NOTHING;
     `;
