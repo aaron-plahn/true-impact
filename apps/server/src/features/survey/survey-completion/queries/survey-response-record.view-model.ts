@@ -604,7 +604,7 @@ export class SurveyResponseRecordViewModel {
               event.type === 'SURVEY_SUBMITTED',
           ) as SurveySubmitted;
 
-          const submissionTime = submissionEvent.metadata.dateEffective;
+          const submissionTime = submissionEvent?.metadata?.dateEffective;
 
           // TODO inject an analyzer instance, not a DTO here
           const report = domainModel.responses.reduce(
