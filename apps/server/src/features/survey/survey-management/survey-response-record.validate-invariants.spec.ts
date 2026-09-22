@@ -8,8 +8,6 @@ import {
 } from '../survey-completion';
 import { Survey, SurveyPersistenceDto } from './survey.aggregate-root';
 
-const submissionTimestamp = 1787693484530;
-
 const targetSurvey = buildTestInstance<SurveyPersistenceDto>(Survey, {
   isFinal: true,
   topLevelQuestionLabels: ['1'],
