@@ -1,5 +1,10 @@
 import { Pool } from 'pg';
-import { DomainEvent, EventDto, IEventRepository } from '../libs/cqrs-es';
+import {
+  DomainEvent,
+  EventDto,
+  IEventRepository,
+  WithEventMetadata,
+} from '../libs/cqrs-es';
 import {
   TrueImpactError,
   TrueImpactRuntimeException,
@@ -41,7 +46,7 @@ export class PostgresEventRepository implements IEventRepository {
 
   async appendAt(
     revision: number,
-    event: DomainEvent,
+    event: WithEventMetadata<DomainEvent>,
     // necessary for optimistic concurrency
   ): Promise<{ streamId: string } | Error> {
     /**

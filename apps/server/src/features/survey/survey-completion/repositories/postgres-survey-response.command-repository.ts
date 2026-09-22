@@ -148,7 +148,7 @@ export class PostgresSurveyResponseCommandRepository implements ISurveyResponseC
     const result = await this.eventRepository.appendAt(
       0,
       // TODO where do metadata, stream ID , etc. come into the picture?
-      ...(eventHistory as DomainEvent[]),
+      ...eventHistory,
     );
 
     if (result instanceof Error) {
@@ -188,7 +188,7 @@ export class PostgresSurveyResponseCommandRepository implements ISurveyResponseC
       );
     }
 
-    const recentEvents = eventHistory.slice(-1) as DomainEvent[];
+    const recentEvents = eventHistory.slice(-1);
 
     const result = await this.eventRepository.appendAt(
       revision,
