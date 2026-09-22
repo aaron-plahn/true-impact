@@ -731,6 +731,7 @@ export class SurveyResponseRecord extends EventSourcedAggregateRoot {
       survey: this.survey.toPersistenceDto(),
       hasBeenAbandoned: this.hasBeenAbandoned,
       hasBeenCancelled: this.hasBeenCancelled,
+      // TODO remove timestamps from the domain model. We don't have any invariants associated with these. `hasBeenSubmitted` is sufficient.
       submissionTimestamp: this.submissionTimestamp,
       participantCompositeIdentifier: this.participant,
       responses: this.responses,
