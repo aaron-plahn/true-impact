@@ -8,6 +8,10 @@ import {
 import { getDataSchemaFromClassCtor } from '../schema-management/decorators/append-metadata';
 import { validateObjectAgainstSchema } from '../validation/validate-object-against-schema';
 
+/**
+ * TODO Currently nested entities are rehydrated from DTOs, not event histories. The parent
+ * aggregate must manage this state via event sourcing.
+ */
 export abstract class Entity<TEntityPersistenceDto = unknown> {
   validateAgainstSchema(): TrueImpactError[] {
     const schema = getDataSchemaFromClassCtor(

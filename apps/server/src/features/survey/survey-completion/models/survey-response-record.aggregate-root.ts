@@ -1,11 +1,10 @@
 import { Optional } from '@nestjs/common';
-import { IDomainEvent } from '../../../../libs/cqrs-es';
-import { BaseEvent } from '../../../../libs/cqrs-es/event-repository.interface';
+import { DomainEvent } from '../../../../libs/cqrs-es';
 import {
-  AggregateRoot,
   BooleanDataType,
   buildTestInstance,
   Entity,
+  EventSourcedAggregateRoot,
   InvariantValidationError,
   Literal,
   NestedDataType,
@@ -27,6 +26,7 @@ import {
 import {
   SurveyBegan,
   SurveyCompletionAbandoned,
+  SurveyCompletionAbandonedPayload,
   SurveyCompletionCancelled,
   SurveyQuestionAnswered,
   SurveySubmitted,
@@ -64,7 +64,7 @@ class SurveyQuestionResponse extends Entity {
     // TODO rename this `canBeEmpty` for Array valued props?
     isOptional: true, // i.e. can be empty
   })
-  eventHistory: IDomainEvent[] = [];
+  eventHistory: DomainEvent[] = [];
 
   @NonEmptyString({
     label: 'question label',
@@ -141,7 +141,7 @@ export class SurveyResponseRecordPersistenceDto {
 
   revision: number;
 
-  eventHistory: IDomainEvent[];
+  eventHistory: DomainEvent[];
 
   /**
    * We should have a different structural model of surveys for response validation.
@@ -203,7 +203,7 @@ const testSurveyExample = buildTestInstance(Survey, {
     nextQuestionLabel: '1',
   },
 })
-export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPersistenceDto> {
+export class SurveyResponseRecord extends EventSourcedAggregateRoot {
   @NonEmptyString({
     label: 'type',
     description: SURVEY_RESPONSE_AGGREGATE_TYPE,
@@ -320,20 +320,10 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
     label: 'event history',
     description: 'audit log of historical edits to this survey response',
   })
-  eventHistory: IDomainEvent[];
+  // What is the purpose of `IDomainEvent`?
+  eventHistory: DomainEvent[];
 
-  constructor({
-    id,
-    revision,
-    hasBeenAbandoned,
-    hasBeenCancelled,
-    submissionTimestamp,
-    survey,
-    responses,
-    participant,
-    eventHistory,
-    nextQuestionLabel,
-  }: {
+  constructor(dto: {
     id: string;
     revision: number;
     hasBeenAbandoned: boolean;
@@ -343,10 +333,23 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
     // surveys may be anonymous
     participant?: SurveyParticipantCompositeIdentifier;
     responses: SurveyQuestionResponse[];
-    eventHistory: IDomainEvent[];
+    eventHistory: DomainEvent[];
     nextQuestionLabel: string | undefined;
   }) {
-    super();
+    const {
+      id,
+      revision,
+      hasBeenAbandoned,
+      hasBeenCancelled,
+      submissionTimestamp,
+      survey,
+      responses,
+      participant,
+      eventHistory,
+      nextQuestionLabel,
+    } = dto;
+
+    super(dto);
 
     if (typeof id === 'string') {
       this.id = id;
@@ -570,47 +573,16 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
       );
     }
 
-    // Where do invariants get validated?
-    return this.apply(
+    const event: DomainEvent<SurveyCompletionAbandonedPayload> =
       new SurveyCompletionAbandoned({
         payload: {
           aggregateCompositeIdentifier:
             this.getAggregateCompositeIdentifier() as SurveyResponseCompositeIdentifier,
         },
-      }),
-    );
-  }
-
-  apply(event: IDomainEvent) {
-    // TODO use a magic method for this
-    if (event.type === 'SURVEY_QUESTION_ANSWERED') {
-      this.handleSurveyQuestionAnswered(event as SurveyQuestionAnswered);
-    }
-
-    if (event.type === 'SURVEY_SUBMITTED') {
-      const eventWithMeta = event as SurveySubmitted;
-
-      // TODO move this. It doesn't belong here.
-      Object.assign(eventWithMeta, {
-        metadata: {
-          dateEffective: Date.now(),
-        },
       });
 
-      this.handleSurveySubmitted(event as SurveySubmitted);
-    }
-
-    if (event.type === 'SURVEY_COMPLETION_ABANDONED') {
-      this.handleSurveyCompletionAbandoned(event as SurveyCompletionAbandoned);
-    }
-
-    if (event.type === 'SURVEY_COMPLETION_CANCELLED') {
-      this.handleSurveyCompletionCancelled(event as SurveyCompletionCancelled);
-    }
-
-    this.eventHistory.push(event);
-
-    return this;
+    // Where do invariants get validated?
+    return this.apply(event);
   }
 
   hasResponseFor(questionLabel: string) {
@@ -767,6 +739,7 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
     };
   }
 
+  // TODO remove this and use event history or a "builder pattern" to set up all tests
   static fromPersistenceDto(
     {
       id,
@@ -919,37 +892,5 @@ export class SurveyResponseRecord extends AggregateRoot<SurveyResponseRecordPers
       participant,
       nextQuestionLabel: surveyBuildResult.getFirstQuestion()?.label,
     });
-  }
-
-  static fromEventHistory(
-    eventHistory: Omit<BaseEvent, 'streamId' | 'revision' | 'metadata'>[],
-    // TODO is this the API we want?
-    // we don't pass the ID here. we assume the first event is the creation event. the events must be filtered externally.
-  ): SurveyResponseRecord | TrueImpactError | null {
-    if (eventHistory.length === 0) {
-      return null;
-    }
-
-    const [creationEvent, ...updateEvents] = eventHistory;
-
-    if (creationEvent.type !== 'SURVEY_BEGAN') {
-      return new TrueImpactError(
-        `Received an invalid creation event for a survey response record. Expected type [SURVEY_BEGAN], received [${creationEvent.type}].`,
-      );
-    }
-
-    const initialSurvey = SurveyResponseRecord.fromSurveyBegan(
-      creationEvent as SurveyBegan,
-    );
-
-    const result = updateEvents.reduce((acc, updateEvent) => {
-      if (acc instanceof Error) {
-        return acc;
-      }
-
-      return acc.apply(updateEvent);
-    }, initialSurvey);
-
-    return result;
   }
 }

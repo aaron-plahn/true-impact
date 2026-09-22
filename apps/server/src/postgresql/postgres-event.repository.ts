@@ -1,5 +1,5 @@
 import { Pool } from 'pg';
-import { BaseEvent, EventDto, IEventRepository } from '../libs/cqrs-es';
+import { DomainEvent, EventDto, IEventRepository } from '../libs/cqrs-es';
 import {
   TrueImpactError,
   TrueImpactRuntimeException,
@@ -41,7 +41,7 @@ export class PostgresEventRepository implements IEventRepository {
 
   async appendAt(
     revision: number,
-    event: BaseEvent,
+    event: DomainEvent,
     // necessary for optimistic concurrency
   ): Promise<{ streamId: string } | Error> {
     /**
@@ -104,7 +104,7 @@ export class PostgresEventRepository implements IEventRepository {
   async read(aggregateCompositeIdentifier?: {
     type?: string;
     id?: string;
-  }): Promise<BaseEvent[]> {
+  }): Promise<DomainEvent[]> {
     const hasSearchFilters =
       typeof (
         aggregateCompositeIdentifier?.type || aggregateCompositeIdentifier?.id
