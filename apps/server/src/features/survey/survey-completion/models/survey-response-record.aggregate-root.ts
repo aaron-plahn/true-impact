@@ -14,6 +14,7 @@ import {
   TrueImpactBadUserInputError,
   TrueImpactDataExample,
   TrueImpactError,
+  UpdateMethod,
 } from '../../../../libs/data-types';
 import { CLIENT_AGGREGATE_TYPE } from '../../../clients/client.composite-identifier';
 import { DONE, SURVEY_RESPONSE_AGGREGATE_TYPE } from '../../constants';
@@ -410,6 +411,7 @@ export class SurveyResponseRecord extends EventSourcedAggregateRoot {
     return this;
   }
 
+  @UpdateMethod()
   answerQuestion(
     questionLabel: string,
     chosenOptionLabel: string,
@@ -481,6 +483,7 @@ export class SurveyResponseRecord extends EventSourcedAggregateRoot {
     return this;
   }
 
+  @UpdateMethod()
   submit(): SurveyResponseRecord | TrueImpactError {
     if (this.hasBeenAbandoned) {
       return new TrueImpactError(
@@ -521,6 +524,7 @@ export class SurveyResponseRecord extends EventSourcedAggregateRoot {
     return this;
   }
 
+  @UpdateMethod()
   cancel({
     replacementAttemptId,
   }: {
@@ -555,6 +559,7 @@ export class SurveyResponseRecord extends EventSourcedAggregateRoot {
     return this;
   }
 
+  @UpdateMethod()
   abandon(): SurveyResponseRecord | TrueImpactError {
     if (this.hasBeenAbandoned) {
       return new TrueImpactError(
