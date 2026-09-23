@@ -1,12 +1,14 @@
+import { DomainEvent } from 'src/libs/cqrs-es';
 import {
-  AggregateRoot,
   BooleanDataType,
   deepConvertMapToObject,
+  EventSourcedAggregateRoot,
   InvariantValidationError,
   isBoolean,
   isPositiveNumber,
   NonEmptyString,
   NonNegativeInteger,
+  RawObject,
   TrueImpactBadUserInputError,
   TrueImpactDataExample,
   TrueImpactError,
@@ -20,6 +22,13 @@ import {
   SurveyAnalyzerPersistenceDto,
 } from '../survey-analysis';
 import { SurveyParticipantCompositeIdentifier } from '../survey-completion/models';
+import {
+  FollowUpQuestionAddedForSurveyOption,
+  OptionAddedToSurveyQuestion,
+  QuestionAddedToSurvey,
+} from './commands';
+import { SurveyImported } from './commands/import-survey/survey-imported.event';
+import { SurveyCreated } from './events';
 import { SurveyAccessToken } from './survey-access-token.entity';
 import { SurveyOption } from './survey-option.entity';
 import {
@@ -55,7 +64,7 @@ export class SurveyPersistenceDto {
     // firstQuestionLabel:
   },
 })
-export class Survey extends AggregateRoot<SurveyPersistenceDto> {
+export class Survey extends EventSourcedAggregateRoot {
   /**
    * This is useful in case we ever want to iterate through a global collection of
    * entities and build instances.
@@ -89,6 +98,15 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
       'an increasing sequence number that reflects the current version of this survey',
   })
   revision: number;
+
+  @RawObject({
+    label: 'event history',
+    description: 'audit log containing all historical edits of this survey',
+    isArray: true,
+    // TODO rename this `canBeEmpty` for Array valued props?
+    isOptional: true, // i.e. can be empty
+  })
+  eventHistory: DomainEvent[] = [];
 
   /**
    * We may want to store the questions and follow-up questions directly in the graph.
@@ -189,6 +207,14 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
 
   getId(): string {
     return this.id;
+  }
+
+  // TODO rename this to getCompositeIdentifier
+  getAggregateCompositeIdentifier() {
+    return {
+      type: SURVEY_AGGREGATE_TYPE,
+      id: this.id,
+    } as const;
   }
 
   getName(): string {
@@ -468,7 +494,24 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
 
     this.topLevelQuestionLabels.push(questionBuildResult.label);
 
-    return this.preventEditIfFinal();
+    const finalizationResult = this.preventEditIfFinal();
+
+    if (finalizationResult instanceof Error) {
+      return finalizationResult;
+    }
+
+    return this.apply(
+      new QuestionAddedToSurvey({
+        payload: {
+          aggregateCompositeIdentifier: {
+            type: SURVEY_AGGREGATE_TYPE,
+            id: this.id,
+          },
+          label,
+          prompt,
+        },
+      }),
+    );
   }
 
   find(
@@ -756,7 +799,13 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
     optionLabel: string;
     text: string;
   }): Survey | TrueImpactError {
-    const { questionLabel } = userRequest;
+    const finalizationValidationResult = this.preventEditIfFinal();
+
+    if (finalizationValidationResult instanceof Error) {
+      return finalizationValidationResult;
+    }
+
+    const { questionLabel, optionLabel, text } = userRequest;
 
     if (!this.questionBank.has(questionLabel)) {
       return new TrueImpactError(
@@ -768,18 +817,34 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
       questionLabel,
     ) as SurveyQuestion;
 
-    const updatedQuestion = targetQuestion.addOption(userRequest);
+    const validationResult = targetQuestion.canAddOption(userRequest);
 
-    if (updatedQuestion instanceof TrueImpactError) {
+    if (validationResult instanceof TrueImpactError) {
       return new TrueImpactError(
         `Failed to add option [${userRequest.optionLabel}] to survey[${this.name}].`,
-        [updatedQuestion],
+        [validationResult],
       );
     }
 
-    this.questionBank.set(questionLabel, updatedQuestion);
+    targetQuestion.options.set(
+      optionLabel,
+      new SurveyOption({
+        label: optionLabel,
+        text,
+        flagIds: [],
+      }),
+    );
 
-    return this.preventEditIfFinal();
+    return this.apply(
+      new OptionAddedToSurveyQuestion({
+        payload: {
+          aggregateCompositeIdentifier: this.getAggregateCompositeIdentifier(),
+          questionLabel,
+          optionLabel,
+          text,
+        },
+      }),
+    );
   }
 
   @UpdateMethod()
@@ -804,7 +869,7 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
     );
 
     const updatedQuestion =
-      this.get(questionLabel)?.addFollowUpQuestionForOption({
+      this.get(questionLabel)?.canAddFollowUpQuestionForOption({
         optionLabel,
         followUpQuestionLabel: followUpQuestion.label,
       }) ||
@@ -819,9 +884,23 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
       );
     }
 
-    this.questionBank.set(questionLabel, updatedQuestion);
+    const finalizationValidationResult = this.preventEditIfFinal();
 
-    return this.preventEditIfFinal();
+    if (finalizationValidationResult instanceof Error) {
+      return finalizationValidationResult;
+    }
+
+    return this.apply(
+      new FollowUpQuestionAddedForSurveyOption({
+        payload: {
+          aggregateCompositeIdentifier: this.getAggregateCompositeIdentifier(),
+          questionLabel,
+          optionLabel,
+          followUpQuestionLabel: followUpQuestion.label,
+          followUpQuestionPrompt: followUpQuestion.prompt,
+        },
+      }),
+    );
   }
 
   @UpdateMethod()
@@ -1111,6 +1190,34 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
     return this;
   }
 
+  static fromSurveyCreated(event: SurveyCreated): Survey | TrueImpactError {
+    const {
+      payload: {
+        aggregateCompositeIdentifier: { id },
+        name,
+      },
+    } = event;
+
+    const instance = new Survey({
+      id,
+      isFinal: false,
+      name,
+      questions: {},
+      revision: 0,
+      analyzersByName: new Map(),
+      accessTokensByHash: new Map(),
+      isOpenToPublic: false,
+    }).validateInvariants();
+
+    if (instance instanceof Error) {
+      return instance;
+    }
+
+    instance.eventHistory.push(event);
+
+    return instance;
+  }
+
   static buildEmpty({
     name,
     id,
@@ -1129,11 +1236,99 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
       isOpenToPublic: false,
     });
 
+    instance.eventHistory.push(
+      new SurveyCreated({
+        payload: {
+          aggregateCompositeIdentifier: {
+            id,
+            type: SURVEY_AGGREGATE_TYPE,
+          },
+          name,
+        },
+      }),
+    );
+
     const result = instance.validateInvariants();
 
     return result;
   }
 
+  handleQuestionAddedToSurvey(event: QuestionAddedToSurvey) {
+    const {
+      payload: { label, prompt },
+    } = event;
+
+    this.topLevelQuestionLabels.push(label);
+
+    this.questionBank.set(
+      label,
+      new SurveyQuestion({ label, prompt, options: new Map() }),
+    );
+
+    return this;
+  }
+
+  handleOptionAddedToSurvey(event: OptionAddedToSurveyQuestion) {
+    const {
+      payload: { questionLabel, optionLabel, text },
+    } = event;
+
+    this.questionBank.get(questionLabel)?.options.set(
+      optionLabel,
+      new SurveyOption({
+        label: optionLabel,
+        text,
+        flagIds: [],
+      }),
+    );
+  }
+
+  handleFollowUpQuestionAddedForSurveyOption(
+    event: FollowUpQuestionAddedForSurveyOption,
+  ) {
+    const {
+      payload: {
+        questionLabel,
+        optionLabel,
+        followUpQuestionLabel,
+        followUpQuestionPrompt,
+      },
+    } = event;
+
+    const targetOption = this.questionBank
+      .get(questionLabel)
+      ?.options.get(optionLabel);
+
+    if (targetOption) {
+      targetOption.followUpQuestionLabel = followUpQuestionLabel;
+    }
+
+    this.questionBank.set(
+      followUpQuestionLabel,
+      new SurveyQuestion({
+        label: followUpQuestionLabel,
+        prompt: followUpQuestionPrompt,
+        options: new Map(),
+      }),
+    );
+
+    return this;
+  }
+
+  handleSurveyImported(_event: SurveyImported) {
+    throw new Error(`not implemented`);
+  }
+
+  static fromEventHistory(
+    eventHistory: Iterable<DomainEvent>,
+  ): Survey | TrueImpactError | null {
+    return EventSourcedAggregateRoot.fromEventHistory.call(
+      Survey,
+      eventHistory,
+    ) as Survey;
+  }
+
+  // TODO remove this?
   static fromPersistenceDto(
     {
       id,

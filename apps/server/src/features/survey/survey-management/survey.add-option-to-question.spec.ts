@@ -26,7 +26,7 @@ describe(`Survey.addOptionToQuestion`, () => {
     describe(`When the target is the first question in a survey`, () => {
       describe(`when it does not yet have any options`, () => {
         it('should add a first option', () => {
-          const result = surveyWithOneQuestion.addOptionToQuestion({
+          const result = surveyWithOneQuestion.canAddOptionToQuestion({
             questionLabel,
             optionLabel,
             text: optionText,
@@ -47,7 +47,7 @@ describe(`Survey.addOptionToQuestion`, () => {
       describe(`when the survey already has options`, () => {
         // TODO Update methods should return a `ResultOrError` that we can `.map` over.
         const surveyWithQuestionAndOneOption =
-          surveyWithOneQuestion.addOptionToQuestion({
+          surveyWithOneQuestion.canAddOptionToQuestion({
             questionLabel,
             optionLabel: 'existing',
             text: 'text for the existing option',
@@ -55,11 +55,12 @@ describe(`Survey.addOptionToQuestion`, () => {
 
         describe(`when the request is valid`, () => {
           it(`should add the option to the given question`, () => {
-            const result = surveyWithQuestionAndOneOption.addOptionToQuestion({
-              questionLabel,
-              optionLabel,
-              text: optionText,
-            });
+            const result =
+              surveyWithQuestionAndOneOption.canAddOptionToQuestion({
+                questionLabel,
+                optionLabel,
+                text: optionText,
+              });
 
             expect(result).not.toBeInstanceOf(TrueImpactError);
 
@@ -99,7 +100,8 @@ describe(`Survey.addOptionToQuestion`, () => {
               text: 'text for this option',
             };
             it(`should return the expected error`, () => {
-              const result = existingSurvey.addOptionToQuestion(invalidRequest);
+              const result =
+                existingSurvey.canAddOptionToQuestion(invalidRequest);
 
               expect(result).toBeInstanceOf(TrueImpactError);
 
@@ -121,7 +123,7 @@ describe(`Survey.addOptionToQuestion`, () => {
                 text: existingOptionText,
               };
 
-              const result = existingSurvey.addOptionToQuestion(userRequest);
+              const result = existingSurvey.canAddOptionToQuestion(userRequest);
 
               expect(result).toBeInstanceOf(TrueImpactError);
 
@@ -141,7 +143,7 @@ describe(`Survey.addOptionToQuestion`, () => {
 
   describe(`when the question does not exist`, () => {
     it(`should return the expected error`, () => {
-      const result = emptySurvey.addOptionToQuestion({
+      const result = emptySurvey.canAddOptionToQuestion({
         questionLabel,
         optionLabel,
         text: 'There is no question for me to call home :(',

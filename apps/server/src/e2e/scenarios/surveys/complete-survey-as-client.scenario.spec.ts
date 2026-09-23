@@ -12,9 +12,9 @@ import {
   SubmitSurvey,
 } from '../../../features/survey/survey-completion';
 import { SurveyResponseRecordViewModel } from '../../../features/survey/survey-completion/queries/survey-response-record.view-model';
+import { AddQuestionToSurvey } from '../../../features/survey/survey-management';
 import { AddFollowUpQuestionForSurveyOption } from '../../../features/survey/survey-management/commands/add-follow-up-question-for-survey-option.command';
 import { AddOptionToSurveyQuestion } from '../../../features/survey/survey-management/commands/add-option-to-survey-question.command';
-import { AddQuestionToSurvey } from '../../../features/survey/survey-management/commands/add-question-to-survey.command';
 import { CreateSurvey } from '../../../features/survey/survey-management/commands/create-survey.command';
 import { FinalizeSurvey } from '../../../features/survey/survey-management/commands/finalize-survey.command';
 import { OpenSurveyToClient } from '../../../features/survey/survey-management/commands/open-survey-to-client';

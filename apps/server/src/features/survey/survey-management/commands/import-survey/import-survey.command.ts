@@ -6,7 +6,7 @@ import {
   TrueImpactDataExample,
 } from '../../../../../libs/data-types';
 
-class MultilingualTextDto {
+export class MultilingualTextItemDto {
   @NonEmptyString({
     label: 'text',
     description: 'plain text in the given language',
@@ -24,11 +24,11 @@ class MultilingualTextDto {
   },
 })
 export class SurveyAnalyzerImportDto {
-  @NestedDataType(() => MultilingualTextDto, {
+  @NestedDataType(() => MultilingualTextItemDto, {
     label: 'name',
     description: 'name of this analyzer',
   })
-  name: MultilingualTextDto;
+  name: MultilingualTextItemDto;
 
   @NonEmptyString({
     label: 'categories',
@@ -134,11 +134,11 @@ export class SurveyOptionImportDto {
 export class ImportSurvey {
   static readonly type = 'IMPORT_SURVEY';
 
-  @NestedDataType(() => MultilingualTextDto, {
+  @NestedDataType(() => MultilingualTextItemDto, {
     label: 'name',
     description: 'the name of this survey',
   })
-  name: MultilingualTextDto;
+  name: MultilingualTextItemDto;
 
   @NestedDataType(() => SurveyQuestionImportDto, {
     isArray: true,

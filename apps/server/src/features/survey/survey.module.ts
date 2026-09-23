@@ -6,7 +6,7 @@ import {
   InMemoryQueryRepositoryProvider,
 } from '../../common/persistence';
 import { EncryptionService } from '../../libs/auth';
-import { CommandHandlerService } from '../../libs/cqrs-es';
+import { CommandHandlerService, IEventRepository } from '../../libs/cqrs-es';
 import {
   ResourceNotFoundError,
   TrueImpactBadUserInputError,
@@ -19,10 +19,13 @@ import { ClientValidationService } from '../clients/services';
 import { FlagModule } from '../flags/flag.module';
 import {
   AddFollowUpQuestionForSurveyOption,
+  FollowUpQuestionAddedForSurveyOption,
   ImportSurvey,
   ImportSurveyCommandHandler,
   OpenSurveyToClient,
   OpenSurveyToClientCommandHandler,
+  OptionAddedToSurveyQuestion,
+  QuestionAddedToSurvey,
 } from '../survey/survey-management';
 import { UserModule } from '../users/user.module';
 import {
@@ -32,7 +35,7 @@ import {
 import { SURVEY_QUERY_REPOSITORY_PROVIDER_TOKEN } from './queries/survey-query-repository.interface';
 import { SurveyQueryService } from './queries/survey-query.service';
 import { SurveyViewModel } from './queries/survey.view-model';
-import { InMemorySurveyCommandRepository } from './repositories/in-memory-survey-command-repository';
+import { PostgresSurveyCommandRepository } from './repositories';
 import { ISurveyCommandRepository } from './repositories/survey-command-repository.interface';
 import {
   AddCategoryToSurveyAnalyzer,
@@ -95,6 +98,7 @@ import { OpenSurveyToAnonymousIndividual } from './survey-management/commands/op
 import { OpenSurveyToAnonymousIndividualCommandHandler } from './survey-management/commands/open-survey-to-anonymous-individual.command-handler';
 import { OpenSurveyToPublic } from './survey-management/commands/open-survey-to-client/open-survey-to-public.command';
 import { OpenSurveyToPublicCommandHandler } from './survey-management/commands/open-survey-to-client/open-survey-to-public.command-handler';
+import { SurveyCreated } from './survey-management/events';
 import {
   AcknowledgeResponseForSurveyQuestionHasBeenViewed,
   AcknowledgeResponseForSurveyQuestionHasBeenViewedCommandHandler,
@@ -333,7 +337,35 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, FinalizeSurvey];
     },
     {
       provide: SURVEY_COMMAND_REPOSITORY_DEPENDENCY_TOKEN,
-      useClass: InMemorySurveyCommandRepository,
+      useFactory: (
+        eventRepository: IEventRepository,
+        eventFactory: EventFactory,
+      ) => {
+        eventFactory
+          .register('SURVEY_CREATED', (doc) => {
+            return SurveyCreated.fromPersistenceDto(
+              doc as unknown as SurveyCreated,
+            );
+          })
+          .register('QUESTION_ADDED_TO_SURVEY', (doc) => {
+            return QuestionAddedToSurvey.fromPersistenceDto(
+              doc as unknown as QuestionAddedToSurvey,
+            );
+          })
+          .register('FOLLOW-UP_QUESTION_ADDED_FOR_SURVEY', (doc) => {
+            return FollowUpQuestionAddedForSurveyOption.fromPersistenceDto(
+              doc as unknown as FollowUpQuestionAddedForSurveyOption,
+            );
+          })
+          .register('OPTION_ADDED_TO_SURVEY_QUESTION', (doc) => {
+            return OptionAddedToSurveyQuestion.fromPersistenceDto(
+              doc as unknown as OptionAddedToSurveyQuestion,
+            );
+          });
+
+        return new PostgresSurveyCommandRepository(eventRepository);
+      },
+      inject: ['EVENT_REPOSITORY_INJECTION_TOKEN', EventFactory],
     },
     {
       provide: SURVEY_RESPONSE_COMMAND_REPOSITORY_INJECTION_TOKEN,

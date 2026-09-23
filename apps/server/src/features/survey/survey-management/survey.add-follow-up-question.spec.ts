@@ -22,7 +22,7 @@ describe(`Survey.addFollowUpQuestion`, () => {
     }) as Survey;
 
     describe(`when the target option exists`, () => {
-      const surveyWithOption = surveyWithEmptyQuestion.addOptionToQuestion({
+      const surveyWithOption = surveyWithEmptyQuestion.canAddOptionToQuestion({
         questionLabel: targetQuestionLabel,
         optionLabel: targetOptionLabel,
         text: 'First choice- just waiting for a follow up question!',

@@ -13,17 +13,18 @@ const surveyWithEmptyQuestion = emptySurvey.addTopLevelQuestion({
   prompt: 'I exercise',
 }) as Survey;
 
-const surveyWithOneOption = surveyWithEmptyQuestion.addOptionToQuestion({
+const surveyWithOneOption = surveyWithEmptyQuestion.canAddOptionToQuestion({
   questionLabel: targetQuestionLabel,
   optionLabel: 'a',
   text: 'I am your first option',
 }) as Survey;
 
-const surveyThatIsReadyToBeFinalized = surveyWithOneOption.addOptionToQuestion({
-  questionLabel: targetQuestionLabel,
-  optionLabel: 'b',
-  text: 'I give you a second option',
-}) as Survey;
+const surveyThatIsReadyToBeFinalized =
+  surveyWithOneOption.canAddOptionToQuestion({
+    questionLabel: targetQuestionLabel,
+    optionLabel: 'b',
+    text: 'I give you a second option',
+  }) as Survey;
 
 describe(`Survey.finalize`, () => {
   describe(`when the survey is not yet finalization`, () => {

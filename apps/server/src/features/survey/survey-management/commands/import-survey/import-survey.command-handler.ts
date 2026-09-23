@@ -54,7 +54,7 @@ const deepAddOptionToQuestion = (
   option: SurveyOptionImportDto,
   flagIdsByLabel: Map<string, string>,
 ) => {
-  const surveyWithOption = draftSurvey.addOptionToQuestion({
+  const surveyWithOption = draftSurvey.canAddOptionToQuestion({
     questionLabel: parentQuestionLabel,
     optionLabel: option.label,
     text: option.text,

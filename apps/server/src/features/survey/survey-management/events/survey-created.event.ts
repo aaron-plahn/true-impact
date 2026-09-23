@@ -2,6 +2,8 @@ import { SurveyCompositeIdentifier } from '../../survey.composite-identifier';
 
 export class SurveyCreatedPayload {
   aggregateCompositeIdentifier: SurveyCompositeIdentifier;
+  name: string;
+  // languageCode?: string;
 }
 
 export class SurveyCreated {
@@ -9,7 +11,13 @@ export class SurveyCreated {
 
   readonly payload: SurveyCreatedPayload;
 
-  constructor({ payload }: { payload: SurveyCreatedPayload }) {
+  constructor(event: { payload: SurveyCreatedPayload }) {
+    const { payload } = event;
+
     this.payload = payload;
+  }
+
+  static fromPersistenceDto(dto: SurveyCreated) {
+    return new SurveyCreated(dto);
   }
 }

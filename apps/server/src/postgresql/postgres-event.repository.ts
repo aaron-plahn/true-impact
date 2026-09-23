@@ -59,8 +59,10 @@ export class PostgresEventRepository implements IEventRepository {
         ON CONFLICT (stream_id, revision) DO NOTHING;
     `;
 
+    const streamId = `${event.payload.aggregateCompositeIdentifier.type}/${event.payload.aggregateCompositeIdentifier.id}`;
+
     const values = [
-      event.streamId,
+      streamId,
       event.type,
       event.payload,
       event.metadata,
