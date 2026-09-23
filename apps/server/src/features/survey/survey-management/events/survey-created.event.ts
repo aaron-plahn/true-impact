@@ -11,7 +11,5 @@ export class SurveyCreated {
 
   constructor({ payload }: { payload: SurveyCreatedPayload }) {
     this.payload = payload;
-
-    // TODO introduce metadata now
   }
 }

@@ -1,47 +1,19 @@
-import { DomainEvent } from '../../cqrs-es';
 import {
   getDataSchemaFromClassCtor,
   InvariantValidationError,
   TrueImpactError,
   TrueImpactRuntimeException,
   validateObjectAgainstSchema,
-} from '../../data-types';
-import { Entity } from './entity';
+} from '..';
+import { DomainEvent } from '../../cqrs-es';
 
-interface BasePersistenceDto {
-  id: string; // required
-  revision: number;
-}
-
-// TODO rename this and move it to a separate file
-export abstract class AggregateRoot<
-  TPersistenceDto extends BasePersistenceDto = BasePersistenceDto,
-> extends Entity<TPersistenceDto> {
-  abstract id?: string;
-
-  abstract revision: number;
-
-  // TODO event history
-
-  /**
-   * Nested entities do not typically have a system ID (e.g. sequential ID or UUID) as they are persisted and
-   * updated only within the context of the parent aggregate root. Instead, they have local identifiers,
-   * such as a page number within the context of a book or a question label within the context of a survey.
-   */
-  override getId(): string {
-    return this.id || 'NOT YET PERSISTED';
-  }
-}
-
+// should this be part of the cqrs lib?
 export abstract class EventSourcedAggregateRoot {
-  // id: string?
   abstract id?: string;
 
   abstract revision: number;
 
   eventHistory: DomainEvent[];
-
-  constructor(_dto: Record<string, unknown>) {}
 
   validateAgainstSchema(): TrueImpactError[] {
     const schema = getDataSchemaFromClassCtor(
@@ -138,15 +110,12 @@ export abstract class EventSourcedAggregateRoot {
     return this[magicUpdateMethodName](event);
   }
 
-  static fromEventHistory<T extends EventSourcedAggregateRoot>(
-    this: typeof EventSourcedAggregateRoot & {
-      new (...args: unknown[]): T;
-    },
-    // TODO Do we need access to metadata here?
+  static fromEventHistory(
     eventHistory: Iterable<DomainEvent>,
     // aggregateId: string?
-  ): T | TrueImpactError | null {
-    let aggregateRootInstance: T | TrueImpactError | null = null;
+  ): EventSourcedAggregateRoot | TrueImpactError | null {
+    let aggregateRootInstance:
+      EventSourcedAggregateRoot | TrueImpactError | null = null;
 
     /**
      * This is effectively a reducer loop. We have written it more
@@ -158,7 +127,7 @@ export abstract class EventSourcedAggregateRoot {
      */
     for (const event of eventHistory) {
       if (aggregateRootInstance instanceof Error) {
-        // short-circuit
+        // short-circuit if we have encountered an error along the way
         break;
       }
 

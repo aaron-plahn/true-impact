@@ -3,8 +3,8 @@ import {
   TrueImpactError,
   TrueImpactRuntimeException,
 } from '../error-handling';
-import { EventSourcedAggregateRoot } from './aggregate-root.entity';
 import { Entity } from './entity';
+import { EventSourcedAggregateRoot } from './event-sourced-aggregate-root.entity';
 
 interface FromPersistenceDto<TDto = unknown, UInstance = unknown> {
   fromPersistenceDto(
@@ -66,8 +66,6 @@ export function UpdateMethod(): MethodDecorator {
         // @ts-expect-error There's no point of type-safety in this magic helper
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
         cloned = ctor.fromEventHistory(this.eventHistory);
-
-        console.log('done');
       }
 
       // TODO put a clone method on the entities?

@@ -49,7 +49,7 @@ export class SurveyResponseCompositeIdentifier {
     label: 'ID',
     description: `unique system identifier for this survey attempt`,
   })
-  id: string;
+  id!: string;
 }
 
 class SurveyQuestionResponse extends Entity {
@@ -344,7 +344,7 @@ export class SurveyResponseRecord extends EventSourcedAggregateRoot {
       nextQuestionLabel,
     } = dto;
 
-    super(dto);
+    super();
 
     if (typeof id === 'string') {
       this.id = id;
@@ -738,6 +738,14 @@ export class SurveyResponseRecord extends EventSourcedAggregateRoot {
       eventHistory: this.eventHistory,
       nextQuestionLabel: this.nextQuestionLabel,
     };
+  }
+
+  static fromEventHistory(
+    eventHistory: Iterable<DomainEvent>,
+  ): SurveyResponseRecord | TrueImpactError | null {
+    return EventSourcedAggregateRoot.fromEventHistory(
+      eventHistory,
+    ) as SurveyResponseRecord;
   }
 
   // TODO remove this and use event history or a "builder pattern" to set up all tests

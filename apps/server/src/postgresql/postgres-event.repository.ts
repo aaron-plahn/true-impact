@@ -17,7 +17,8 @@ export interface EventDocument {
   event_type: string;
   stream_id: string;
   payload: Record<string, unknown>;
-  meta: Record<string, unknown>;
+  metadata: Record<string, unknown>;
+  revision: number;
 }
 
 const thinMap = (row: EventDocument): EventDto => {
@@ -105,11 +106,13 @@ export class PostgresEventRepository implements IEventRepository {
    * We may want our stream IDs to be of form `${type}/${id}`.
    *
    * We need to normalize the relationship between streamID and aggregateCompositeIdentifier
+   *
+   * We may want to include an offset revision
    */
   async read(aggregateCompositeIdentifier?: {
     type?: string;
     id?: string;
-  }): Promise<DomainEvent[]> {
+  }): Promise<WithEventMetadata<DomainEvent>[]> {
     const hasSearchFilters =
       typeof (
         aggregateCompositeIdentifier?.type || aggregateCompositeIdentifier?.id
@@ -140,9 +143,19 @@ export class PostgresEventRepository implements IEventRepository {
      * It is the feature module's responsibility to register event factory functions
      * per event type introduced in said module.
      */
-    const eventInstances = rawRows.rows.map((row) =>
-      this.eventFactory.build(thinMap(row)),
-    );
+    const eventInstances = rawRows.rows.map((row) => {
+      const plainEvent = this.eventFactory.build(thinMap(row));
+
+      const { metadata } = row;
+
+      const eventWithMetadata = Object.assign(plainEvent, {
+        metadata,
+        revision: row.revision,
+        streamId: row.stream_id,
+      });
+
+      return eventWithMetadata;
+    });
 
     return eventInstances;
   }

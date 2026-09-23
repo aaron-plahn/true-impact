@@ -180,14 +180,13 @@ describe.skip(`PostgresEventRepository`, () => {
 
       expect(foundRecord.type).toBe(WIDGET_CREATED);
 
-      // what's going on with the missing type-safety here?
-      // expect(foundRecord.metadata).toEqual(firstWidgetCreated.metadata);
+      expect(foundRecord.metadata).toEqual(firstWidgetCreated.metadata);
 
       expect(foundRecord.payload).toEqual(firstWidgetCreated.payload);
 
-      // expect(foundRecord.streamId).toEqual(firstWidgetCreated.streamId);
+      expect(foundRecord.streamId).toEqual(firstWidgetCreated.streamId);
 
-      // expect(foundRecord.revision).toEqual(1);
+      expect(foundRecord.revision).toEqual(1);
     });
   });
 
