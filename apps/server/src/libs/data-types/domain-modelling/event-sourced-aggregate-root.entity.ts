@@ -171,10 +171,26 @@ export abstract class EventSourcedAggregateRoot {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
         aggregateRootInstance = this[magicStaticMethodName](event);
 
+        if (
+          aggregateRootInstance &&
+          !(aggregateRootInstance instanceof Error)
+        ) {
+          // TODO ensure that we don't have access to this in the creation event- we don't want any redundancy here.
+          aggregateRootInstance.revision = 1;
+        }
+
         continue;
       }
 
       aggregateRootInstance = aggregateRootInstance.apply(event);
+
+      if (aggregateRootInstance && !(aggregateRootInstance instanceof Error)) {
+        /**
+         * We only want to increment this in case we are rehydrating from persisted events. We don't want to increment
+         * this in apply becuase we need to track which revision is the last one persisted.
+         */
+        aggregateRootInstance.revision++;
+      }
     }
 
     return aggregateRootInstance;

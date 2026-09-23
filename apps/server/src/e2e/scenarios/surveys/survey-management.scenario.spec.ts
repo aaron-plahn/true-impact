@@ -203,6 +203,7 @@ describe(`Survey Management Scenarios`, () => {
         });
 
         describe(`when the request is invalid`, () => {
+          // Do we want this to be a rule?
           describe(`when there is already a survey with the given name`, () => {
             it(`should return the expected error message`, async () => {
               await assertCommandScenarioSuccess({

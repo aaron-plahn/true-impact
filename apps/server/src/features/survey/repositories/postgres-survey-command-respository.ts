@@ -167,6 +167,13 @@ export class PostgresSurveyCommandRepository implements ISurveyCommandRepository
 
     const recentEvents = eventHistory.slice(-1);
 
+    // TODO can we store `uncommittedEvents` separately?
+    recentEvents.forEach((recentEvent) => {
+      Object.assign(recentEvent, {
+        streamId: `${SURVEY_AGGREGATE_TYPE}/${instance.id}`,
+      });
+    });
+
     const result = await this.eventRepository.appendAt(
       revision,
       ...recentEvents,
