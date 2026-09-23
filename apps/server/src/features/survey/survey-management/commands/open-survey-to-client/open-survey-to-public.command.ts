@@ -13,6 +13,7 @@ import { TrueImpactDataExample } from '../../../../../libs/data-types';
     },
   },
 })
+// TODO move this
 export class OpenSurveyToPublic {
   static readonly type = 'OPEN_SURVEY_TO_PUBLIC';
 

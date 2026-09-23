@@ -15,3 +15,4 @@ export * from './open-survey-to-client';
 export * from './option-added-to-survey-question.event';
 export * from './remove-option-from-survey-question.command';
 export * from './remove-question-from-survey.command';
+export * from './survey-finalized.event';

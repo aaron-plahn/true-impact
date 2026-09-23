@@ -4,10 +4,17 @@ import { SurveyCompositeIdentifier } from '../../../../../features/survey/survey
 
 export class SurveyOpenedToParticipantPayload {
   aggregateCompositeIdentifier: SurveyCompositeIdentifier;
-
   participantCompositeIdentifier: SurveyParticipantCompositeIdentifier;
+  dateCreated: string;
+  dateExpires: string;
+  hash: string;
+  algorithm: string;
 }
 
+/**
+ * Note that this is generic over all possible participant types, not specific
+ * to `clients` as participants.
+ */
 export class SurveyOpenedToParticipant {
   readonly type = 'SURVEY_OPENED_TO_PARTICIPANT';
 
@@ -15,5 +22,9 @@ export class SurveyOpenedToParticipant {
 
   constructor({ payload }: { payload: SurveyOpenedToParticipantPayload }) {
     this.payload = plainToInstance(SurveyOpenedToParticipantPayload, payload);
+  }
+
+  static fromPersistenceDto(dto: SurveyOpenedToParticipant) {
+    return new SurveyOpenedToParticipant(dto);
   }
 }

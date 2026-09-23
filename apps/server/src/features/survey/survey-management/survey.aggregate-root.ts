@@ -26,10 +26,15 @@ import {
   FollowUpQuestionAddedForSurveyOption,
   OptionAddedToSurveyQuestion,
   QuestionAddedToSurvey,
+  SurveyFinalized,
+  SurveyOpenedToParticipant,
 } from './commands';
 import { SurveyImported } from './commands/import-survey/survey-imported.event';
+import { SurveyOpenedToPublic } from './commands/open-survey-to-client/survey-opened-to-public.event';
+import { SurveyOptionFlagged } from './commands/survey-option-flagged.event';
 import { SurveyCreated } from './events';
 import { SurveyAccessToken } from './survey-access-token.entity';
+import { SurveyOpenedToAnonymousParticipant } from './survey-opened-to-anonymous-participant.event';
 import { SurveyOption } from './survey-option.entity';
 import {
   SurveyQuestion,
@@ -942,23 +947,33 @@ export class Survey extends EventSourcedAggregateRoot {
       return targetOption;
     }
 
-    const updatedOption = targetOption.addFlag(flagId);
+    const optionValidationResult = targetOption.canAddFlag(flagId);
 
-    if (updatedOption instanceof TrueImpactError) {
+    if (optionValidationResult instanceof TrueImpactError) {
       return new TrueImpactError(
         `Failed to add [${flagId}] to option [${optionLabel}] for question [${questionLabel}] in survey [${this.name}]`,
-        [updatedOption],
+        [optionValidationResult],
       );
     }
 
-    updatedQuestion.options.set(optionLabel, updatedOption);
+    targetOption.flagIds.add(flagId);
+
+    // was this necessary?
+    // updatedQuestion.options.set(optionLabel, optionValidationResult);
 
     this.questionBank.set(questionLabel, updatedQuestion);
 
     /**
      * Note that there is nothing that prevents you from modifying flags after a survey as finalized for use.
      */
-    return this;
+    return this.apply(
+      new SurveyOptionFlagged({
+        payload: {
+          aggregateCompositeIdentifier: this.getAggregateCompositeIdentifier(),
+          flagId,
+        },
+      }),
+    );
   }
 
   private preventEditIfFinal(): this | TrueImpactError {
@@ -979,9 +994,13 @@ export class Survey extends EventSourcedAggregateRoot {
       );
     }
 
-    this.isFinal = true;
-
-    return this;
+    return this.apply(
+      new SurveyFinalized({
+        payload: {
+          aggregateCompositeIdentifier: this.getAggregateCompositeIdentifier(),
+        },
+      }),
+    );
   }
 
   /**
@@ -1118,9 +1137,13 @@ export class Survey extends EventSourcedAggregateRoot {
     // TODO should we allow opening to the public if there are already access codes?
     // TODO should we allow access codes if the survey is already open to the public?
 
-    this.isOpenToPublic = true;
-
-    return this;
+    return this.apply(
+      new SurveyOpenedToPublic({
+        payload: {
+          aggregateCompositeIdentifier: this.getAggregateCompositeIdentifier(),
+        },
+      }),
+    );
   }
 
   openToParticipant({
@@ -1134,6 +1157,7 @@ export class Survey extends EventSourcedAggregateRoot {
     hash: string;
     participantCompositeIdentifier: SurveyParticipantCompositeIdentifier;
   }) {
+    // TODO should we move the validation logic here?
     const buildResult = SurveyAccessToken.openParticipantAccess({
       dateCreated: dateOpened,
       dateExpires: dateOfExpiry,
@@ -1146,12 +1170,26 @@ export class Survey extends EventSourcedAggregateRoot {
       return buildResult;
     }
 
-    this.accessTokensByHash.set(hash, buildResult);
+    // this.accessTokensByHash.set(hash, buildResult);
 
-    return this;
+    // TODO do we validate that the survey is finalized???
+
+    return this.apply(
+      new SurveyOpenedToParticipant({
+        payload: {
+          aggregateCompositeIdentifier: this.getAggregateCompositeIdentifier(),
+          participantCompositeIdentifier,
+          dateCreated: dateOpened,
+          dateExpires: dateOfExpiry,
+          hash,
+          algorithm: 'TODO ADD THIS NOW!',
+        },
+      }),
+    );
   }
 
   // TODO deal with dates consistently
+  // How do these factor into validation and event sourcing?
   @UpdateMethod()
   openToAnonymousIndividual({
     dateOfExpiry,
@@ -1174,9 +1212,20 @@ export class Survey extends EventSourcedAggregateRoot {
     }
 
     // TODO avoid collisions
+    // We should do this now.
     this.accessTokensByHash.set(hash, buildResult);
 
-    return this;
+    return this.apply(
+      new SurveyOpenedToAnonymousParticipant({
+        payload: {
+          aggregateCompositeIdentifier: this.getAggregateCompositeIdentifier(),
+          // TODO pick one wording here
+          dateExpires: dateOfExpiry,
+          dateOpened,
+          hash,
+        },
+      }),
+    );
   }
 
   @UpdateMethod()
@@ -1315,8 +1364,42 @@ export class Survey extends EventSourcedAggregateRoot {
     return this;
   }
 
+  handleSurveyFinalized(_event: SurveyFinalized) {
+    this.isFinal = true;
+
+    return this;
+  }
+
+  handleSurveyOpenedToParticipant({
+    payload: {
+      hash,
+      dateCreated,
+      dateExpires,
+      participantCompositeIdentifier,
+      algorithm,
+    },
+  }: SurveyOpenedToParticipant) {
+    const buildResult = SurveyAccessToken.openParticipantAccess({
+      dateCreated,
+      dateExpires,
+      hash,
+      participantCompositeIdentifier,
+      algorithm,
+    });
+
+    if (buildResult instanceof Error) {
+      return buildResult;
+    }
+
+    this.accessTokensByHash.set(hash, buildResult);
+  }
+
+  handleSurveyOpenedToPublic(_event: SurveyOpenedToPublic) {}
+
   handleSurveyImported(_event: SurveyImported) {
-    throw new Error(`not implemented`);
+    this.isOpenToPublic = true;
+
+    return this;
   }
 
   static fromEventHistory(

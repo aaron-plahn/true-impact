@@ -13,7 +13,7 @@ export class OptionAddedToSurveyQuestion {
   // TODO be consisten with command type formats
   readonly type = 'FOLLOW-UP_QUESTION_ADDED_FOR_SURVEY';
 
-  payload: OpenSurveyToAnonymousIndividualPayload;
+  readonly payload: OpenSurveyToAnonymousIndividualPayload;
 
   constructor({
     payload,

@@ -26,6 +26,8 @@ import {
   OpenSurveyToClientCommandHandler,
   OptionAddedToSurveyQuestion,
   QuestionAddedToSurvey,
+  SurveyFinalized,
+  SurveyOpenedToParticipant,
 } from '../survey/survey-management';
 import { UserModule } from '../users/user.module';
 import {
@@ -98,7 +100,10 @@ import { OpenSurveyToAnonymousIndividual } from './survey-management/commands/op
 import { OpenSurveyToAnonymousIndividualCommandHandler } from './survey-management/commands/open-survey-to-anonymous-individual.command-handler';
 import { OpenSurveyToPublic } from './survey-management/commands/open-survey-to-client/open-survey-to-public.command';
 import { OpenSurveyToPublicCommandHandler } from './survey-management/commands/open-survey-to-client/open-survey-to-public.command-handler';
+import { SurveyOpenedToPublic } from './survey-management/commands/open-survey-to-client/survey-opened-to-public.event';
+import { SurveyOptionFlagged } from './survey-management/commands/survey-option-flagged.event';
 import { SurveyCreated } from './survey-management/events';
+import { SurveyOpenedToAnonymousParticipant } from './survey-management/survey-opened-to-anonymous-participant.event';
 import {
   AcknowledgeResponseForSurveyQuestionHasBeenViewed,
   AcknowledgeResponseForSurveyQuestionHasBeenViewedCommandHandler,
@@ -361,7 +366,37 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, FinalizeSurvey];
             return OptionAddedToSurveyQuestion.fromPersistenceDto(
               doc as unknown as OptionAddedToSurveyQuestion,
             );
+          })
+          .register('SURVEY_OPTION_FLAGGED', (doc) => {
+            return SurveyOptionFlagged.fromPersistenceDto(
+              doc as unknown as SurveyOptionFlagged,
+            );
+          })
+          .register('SURVEY_FINALIZED', (doc) => {
+            return SurveyFinalized.fromPersistenceDto(
+              doc as unknown as SurveyFinalized,
+            );
+          })
+          .register('SURVEY_OPENED_TO_ANONYMOUS_PARTICIPANT', (doc) => {
+            return SurveyOpenedToAnonymousParticipant.fromPersistenceDto(
+              doc as unknown as SurveyOpenedToAnonymousParticipant,
+            );
+          })
+          .register('SURVEY_OPENED_TO_PARTICIPANT', (doc) => {
+            return SurveyOpenedToParticipant.fromPersistenceDto(
+              doc as unknown as SurveyOpenedToParticipant,
+            );
+          })
+          .register('SURVEY_OPENED_TO_PUBLIC', (doc) => {
+            return SurveyOpenedToPublic.fromPersistenceDto(
+              doc as unknown as SurveyOpenedToPublic,
+            );
           });
+        // TODO SurveyImported
+        /**
+         * But do we really need this? We could also persist several events
+         * for one `ImportSurvey` command.
+         */
 
         return new PostgresSurveyCommandRepository(eventRepository);
       },

@@ -153,16 +153,13 @@ export class SurveyOption extends Entity {
     return this;
   }
 
-  @UpdateMethod()
-  addFlag(flagId: string) {
+  canAddFlag(flagId: string) {
     if (this.flagIds.has(flagId)) {
       return new TrueImpactError(
         // TODO Can we inject the flag at some point?
         `You cannot add flag [${flagId}] to option [${this.label}] as it already has this flag.`,
       );
     }
-
-    this.flagIds.add(flagId);
 
     return this;
   }
