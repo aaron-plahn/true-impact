@@ -224,7 +224,6 @@ export class PostgresSurveyResponseCommandRepository implements ISurveyResponseC
   private buildInstance(
     eventStream: DomainEvent[],
   ): SurveyResponseRecord | TrueImpactError | null {
-    // @ts-expect-error This is not working super well. Let's fix the type safety.
     return SurveyResponseRecord.fromEventHistory(eventStream);
   }
 
