@@ -7,9 +7,8 @@ import {
   Survey,
   SurveyPersistenceDto,
 } from '../../survey-management/survey.aggregate-root';
+import { SurveyBegan } from '../commands';
 import { SurveyResponseRecord } from './survey-response-record.aggregate-root';
-
-const submissionTimestamp = 1787693484530;
 
 const targetQuestionLabel = '2';
 const targetOptionLabel = 'c';
@@ -71,24 +70,27 @@ const survey = buildTestInstance<SurveyPersistenceDto>(Survey, {
   },
 }) as Survey;
 
-const surveyResponseRecord = buildTestInstance(SurveyResponseRecord, {
-  survey: survey.toPersistenceDto(),
-  responses: [],
-}).answerQuestion('1', 'd') as SurveyResponseRecord;
+const emptySurveyResponse = SurveyResponseRecord.fromEventHistory([
+  buildTestInstance(SurveyBegan, {
+    payload: {
+      survey: survey.toPersistenceDto(),
+    },
+  }),
+]) as SurveyResponseRecord;
+
+const surveyResponseRecord = emptySurveyResponse.answerQuestion(
+  '1',
+  'd',
+) as SurveyResponseRecord;
 
 describe(`SurveyResponseRecord.answerQuestion`, () => {
   describe(`when the survey has not yet been submitted`, () => {
     describe(`when the target question exists`, () => {
       describe(`when the target option exists`, () => {
         describe(`when there is not yet an answer for this question`, () => {
-          const emptySurvey = buildTestInstance(SurveyResponseRecord, {
-            survey: survey.toPersistenceDto(),
-            responses: [],
-          });
-
           describe(`when answering the first question in a survey`, () => {
             it(`should update the responses`, () => {
-              const result = emptySurvey.answerQuestion('1', 'a');
+              const result = emptySurveyResponse.answerQuestion('1', 'a');
 
               expect(result).not.toBeInstanceOf(TrueImpactError);
 
@@ -239,21 +241,18 @@ describe(`SurveyResponseRecord.answerQuestion`, () => {
     });
 
     describe(`when the survey has already been submitted`, () => {
-      const submittedSurveyResponse = buildTestInstance(SurveyResponseRecord, {
-        survey: survey.toPersistenceDto(),
-        hasBeenAbandoned: false,
-        submissionTimestamp,
-        responses: [
-          {
-            questionLabel: '1',
-            optionLabel: 'a',
-          },
-          {
-            questionLabel: '3',
-            optionLabel: 'b',
-          },
-        ],
-      });
+      let submittedSurveyResponse = emptySurveyResponse.answerQuestion(
+        '1',
+        'a',
+      ) as SurveyResponseRecord;
+
+      submittedSurveyResponse = submittedSurveyResponse.answerQuestion(
+        '3',
+        'b',
+      ) as SurveyResponseRecord;
+
+      submittedSurveyResponse =
+        submittedSurveyResponse.submit() as SurveyResponseRecord;
 
       it(`should fail with the expected error`, () => {
         const result = submittedSurveyResponse.answerQuestion('2', 'a');
@@ -271,25 +270,17 @@ describe(`SurveyResponseRecord.answerQuestion`, () => {
   });
 
   describe(`when the survey has been abandoned`, () => {
-    const submittedSurveyResponse = buildTestInstance(SurveyResponseRecord, {
-      survey: survey.toPersistenceDto(),
-      hasBeenAbandoned: true,
-      responses: [
-        {
-          questionLabel: '1',
-          optionLabel: 'a',
-        },
-      ],
-    });
+    const abandonnedSurveyResponse =
+      emptySurveyResponse.abandon() as SurveyResponseRecord;
 
     it(`should fail with the expected error`, () => {
-      const result = submittedSurveyResponse.answerQuestion('3', 'a');
+      const result = abandonnedSurveyResponse.answerQuestion('3', 'a');
 
       expect(result).toBeInstanceOf(TrueImpactError);
 
       const message = (result as TrueImpactError).toString();
 
-      expect(message).toContain(submittedSurveyResponse.survey.name);
+      expect(message).toContain(abandonnedSurveyResponse.survey.name);
       expect(message).toContain('cannot answer question');
       expect(message).toContain('3');
       expect(message).toContain('been abandoned');

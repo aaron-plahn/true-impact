@@ -6,7 +6,7 @@ import {
   InMemoryQueryRepositoryProvider,
 } from '../../common/persistence';
 import { EncryptionService } from '../../libs/auth';
-import { BaseEvent, CommandHandlerService } from '../../libs/cqrs-es';
+import { CommandHandlerService } from '../../libs/cqrs-es';
 import {
   ResourceNotFoundError,
   TrueImpactBadUserInputError,
@@ -353,21 +353,17 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, FinalizeSurvey];
             (doc) =>
               SurveyQuestionAnswered.fromPersistenceDto(
                 doc as unknown as SurveyQuestionAnswered,
-              ) as unknown as BaseEvent,
+              ),
           )
-          .register(
-            'SURVEY_COMPLETION_ABANDONED',
-            (doc) =>
-              SurveyCompletionAbandoned.fromPersistenceDto(
-                doc as unknown as SurveyCompletionAbandoned,
-              ) as unknown as BaseEvent,
+          .register('SURVEY_COMPLETION_ABANDONED', (doc) =>
+            SurveyCompletionAbandoned.fromPersistenceDto(
+              doc as unknown as SurveyCompletionAbandoned,
+            ),
           )
-          .register(
-            'SURVEY_SUBMITTED',
-            (doc) =>
-              SurveySubmitted.fromPersistenceDto(
-                doc as unknown as SurveySubmitted,
-              ) as unknown as BaseEvent,
+          .register('SURVEY_SUBMITTED', (doc) =>
+            SurveySubmitted.fromPersistenceDto(
+              doc as unknown as SurveySubmitted,
+            ),
           );
 
         // eslint-disable-next-line @typescript-eslint/no-unsafe-argument

@@ -1,5 +1,5 @@
 import {
-  BaseEvent,
+  DomainEvent,
   EventDto,
 } from 'src/libs/cqrs-es/event-repository.interface';
 import {
@@ -7,14 +7,14 @@ import {
   TrueImpactRuntimeException,
 } from '../libs/data-types';
 
-interface EventFactoryFunction<T extends BaseEvent = BaseEvent> {
+interface EventFactoryFunction<T extends DomainEvent = DomainEvent> {
   (event: EventDto): T;
 }
 
 export class EventFactory {
   private eventTypeToFactoryFunction = new Map<string, EventFactoryFunction>();
 
-  build<T extends BaseEvent = BaseEvent>(eventDocument: EventDto): T {
+  build<T extends DomainEvent = DomainEvent>(eventDocument: EventDto): T {
     const factoryFunction = this.eventTypeToFactoryFunction.get(
       eventDocument.type,
     );
@@ -33,7 +33,7 @@ export class EventFactory {
   register(
     eventType: string,
     // is this where we inject metadata?
-    factoryFunction: (eventDocument: EventDto) => BaseEvent,
+    factoryFunction: (eventDocument: EventDto) => DomainEvent,
   ): EventFactory {
     if (this.eventTypeToFactoryFunction.has(eventType)) {
       console.warn(

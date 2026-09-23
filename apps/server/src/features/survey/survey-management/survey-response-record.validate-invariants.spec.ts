@@ -1,14 +1,12 @@
 import { buildTestInstance, TrueImpactError } from '../../../libs/data-types';
 import {
   SurveyBegan,
+  SurveyCompletionAbandoned,
   SurveyQuestionAnswered,
   SurveyResponseRecord,
-  SurveyResponseRecordPersistenceDto,
   SurveySubmitted,
 } from '../survey-completion';
 import { Survey, SurveyPersistenceDto } from './survey.aggregate-root';
-
-const submissionTimestamp = 1787693484530;
 
 const targetSurvey = buildTestInstance<SurveyPersistenceDto>(Survey, {
   isFinal: true,
@@ -91,15 +89,25 @@ const complexSurvey = buildTestInstance(Survey, {
   },
 });
 
+const surveyId = '123';
+
+const surveyBegan = buildTestInstance(SurveyBegan, {
+  payload: {
+    aggregateCompositeIdentifier: {
+      id: surveyId,
+    },
+    survey: targetSurvey.toPersistenceDto(),
+  },
+});
+
 /**
  * Note that our scenario tests will give us good coverage that many different
  * valid instances of a `SurveyResponseRecord` pass invariant validation. The
  * invalid cases are more important here.
  */
-const validIncompleteInstance =
-  buildTestInstance<SurveyResponseRecordPersistenceDto>(SurveyResponseRecord, {
-    survey: targetSurvey.toPersistenceDto(),
-  }) as SurveyResponseRecord;
+const validIncompleteInstance = SurveyResponseRecord.fromEventHistory([
+  surveyBegan,
+]) as SurveyResponseRecord;
 
 describe(`SurveyCompletionRecord.validateInvariants`, () => {
   describe(`When all properties are specified and the instance is valid`, () => {
@@ -113,14 +121,24 @@ describe(`SurveyCompletionRecord.validateInvariants`, () => {
   describe(`when a survey resposne record is invalid`, () => {
     describe(`when a survey response record has been marked as submitted **and** abandoned`, () => {
       it(`should return the expected error`, () => {
-        const invalidInstanceBuildResult = buildTestInstance(
-          SurveyResponseRecord,
-          {
-            survey: targetSurvey.toPersistenceDto(),
-            hasBeenAbandoned: true,
-            submissionTimestamp,
-          },
-        );
+        const invalidInstanceBuildResult =
+          SurveyResponseRecord.fromEventHistory([
+            surveyBegan,
+            buildTestInstance(SurveySubmitted, {
+              payload: {
+                aggregateCompositeIdentifier: {
+                  id: surveyId,
+                },
+              },
+            }),
+            buildTestInstance(SurveyCompletionAbandoned, {
+              payload: {
+                aggregateCompositeIdentifier: {
+                  id: surveyId,
+                },
+              },
+            }),
+          ]) as SurveyResponseRecord;
 
         const result = invalidInstanceBuildResult.validateInvariants();
 

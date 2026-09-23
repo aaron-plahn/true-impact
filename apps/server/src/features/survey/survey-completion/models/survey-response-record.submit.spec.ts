@@ -6,10 +6,8 @@ import {
   Survey,
   SurveyPersistenceDto,
 } from '../../survey-management/survey.aggregate-root';
-import {
-  SurveyResponseRecord,
-  SurveyResponseRecordPersistenceDto,
-} from './survey-response-record.aggregate-root';
+import { SurveyBegan } from '../commands';
+import { SurveyResponseRecord } from './survey-response-record.aggregate-root';
 
 const surveyWithOneQuestion = buildTestInstance<SurveyPersistenceDto>(Survey, {
   isFinal: true,
@@ -54,11 +52,13 @@ const surveyWithOneQuestion = buildTestInstance<SurveyPersistenceDto>(Survey, {
   },
 }) as Survey;
 
-const emptyResponseRecordWithOneQuestion =
-  buildTestInstance<SurveyResponseRecordPersistenceDto>(SurveyResponseRecord, {
-    responses: [],
-    survey: surveyWithOneQuestion.toPersistenceDto(),
-  }) as SurveyResponseRecord;
+const emptyResponseRecordWithOneQuestion = SurveyResponseRecord.fromSurveyBegan(
+  buildTestInstance(SurveyBegan, {
+    payload: {
+      survey: surveyWithOneQuestion.toPersistenceDto(),
+    },
+  }),
+) as SurveyResponseRecord;
 
 const completedSurveyWithEveryOptionalQuestionCompleted = [
   ['1', 'b'],

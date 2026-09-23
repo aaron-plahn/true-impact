@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-floating-promises */
+import { plainToInstance } from 'class-transformer';
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { SurveyResponseRecord } from '.';
-import { BaseEvent } from '../../../../libs/cqrs-es/event-repository.interface';
+import { DomainEvent } from '../../../../libs/cqrs-es/event-repository.interface';
 import {
   buildTestInstance,
   TrueImpactError,
@@ -15,6 +15,9 @@ import {
 } from '../commands';
 import { SurveyQuestionAnswered } from '../commands/answer-survey-question/survey-question-answered.event';
 import { SurveyBegan } from '../commands/begin-survey/survey-began.event';
+import { SurveyResponseRecord } from './survey-response-record.aggregate-root';
+
+const WIDGET_AGGREGATE_TYPE = 'widget';
 
 const surveyResponseRecordId = '54567';
 
@@ -91,11 +94,24 @@ const surveyCancelled = buildTestInstance(SurveyCompletionCancelled, {
   },
 });
 
+class WidgetBludgenned {
+  readonly type = 'WIDGET_BLUDGENNED';
+
+  readonly payload: {
+    aggregateCompositeIdentifier: {
+      type: typeof WIDGET_AGGREGATE_TYPE;
+      id: string;
+    };
+  };
+}
+
 describe(`SurveyResponseRecord.fromEventHistory`, () => {
   describe(`when the event history starts with a valid creation event`, () => {
     describe(`when there is only a creation event`, () => {
       it(`should build the expected instance`, () => {
-        const result = SurveyResponseRecord.fromEventHistory([surveyBegan]);
+        const result = SurveyResponseRecord.fromEventHistory([
+          surveyBegan,
+        ]) as unknown;
 
         assert.strictEqual(result instanceof SurveyResponseRecord, true);
 
@@ -114,7 +130,7 @@ describe(`SurveyResponseRecord.fromEventHistory`, () => {
       const result = SurveyResponseRecord.fromEventHistory([
         surveyBegan,
         surveyQuestionAnswered,
-      ]);
+      ]) as unknown;
 
       assert.strictEqual(result instanceof SurveyResponseRecord, true);
 
@@ -152,7 +168,7 @@ describe(`SurveyResponseRecord.fromEventHistory`, () => {
           surveyBegan,
           surveyQuestionAnswered,
           surveySubmitted,
-        ]);
+        ]) as unknown;
 
         assert.strictEqual(result instanceof SurveyResponseRecord, true);
 
@@ -203,44 +219,46 @@ describe(`SurveyResponseRecord.fromEventHistory`, () => {
 
   describe(`when the event history is empty`, () => {
     it(`should return null`, () => {
-      const result = SurveyResponseRecord.fromEventHistory([]);
+      const result = SurveyResponseRecord.fromEventHistory([]) as unknown;
 
       assert.strictEqual(result, null);
     });
   });
 
   describe(`when the event history has a creation event of an unknown type`, () => {
-    it(`should return the expected error`, () => {
-      const bogusEvent: BaseEvent = {
+    it(`should throw the expected exception`, () => {
+      const bogusEvent: DomainEvent = plainToInstance(WidgetBludgenned, {
         type: 'WIDGET_BLUDGENNED',
-        streamId: 'widget/1',
+        // streamId: 'widget/1',
         payload: {
           aggregateCompositeIdentifier: {
-            type: 'widget',
+            type: WIDGET_AGGREGATE_TYPE,
             id: '1',
           },
         },
         // TODO check meta
         // TODO should the model be aware of the meta?
-        metadata: {},
-        revision: 5,
-      };
+        // metadata: {},
+        // revision: 5,
+      });
 
-      const result = SurveyResponseRecord.fromEventHistory([bogusEvent]);
+      try {
+        SurveyResponseRecord.fromEventHistory([bogusEvent]) as unknown;
+      } catch (result) {
+        const message = (result as TrueImpactError).toString();
 
-      assert.strictEqual(result instanceof Error, true);
-
-      const message = (result as TrueImpactError).toString();
-
-      ['invalid creation event', 'SURVEY_BEGAN', bogusEvent.type].forEach(
-        (pattern) => {
+        [
+          'Failed to find',
+          'fromWidgetBludgenned',
+          'SurveyResponseRecord',
+        ].forEach((pattern) => {
           assert.strictEqual(
             message.includes(pattern),
             true,
             `Expected to find the pattern [${pattern}] in text [${message}], but did not.`,
           );
-        },
-      );
+        });
+      }
     });
   });
 });

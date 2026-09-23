@@ -8,6 +8,13 @@ import {
 import { getDataSchemaFromClassCtor } from '../schema-management/decorators/append-metadata';
 import { validateObjectAgainstSchema } from '../validation/validate-object-against-schema';
 
+/**
+ * Pardon the code duplication between this class and `EventSourcedAggregateRoot`. TypeScript
+ * doesn't have traits and we are intentionally avoiding deep inheritance hierarchies.
+ *
+ * Currently nested entities are rehydrated from DTOs, not event histories. The parent
+ * aggregate must manage this state via event sourcing.
+ */
 export abstract class Entity<TEntityPersistenceDto = unknown> {
   validateAgainstSchema(): TrueImpactError[] {
     const schema = getDataSchemaFromClassCtor(

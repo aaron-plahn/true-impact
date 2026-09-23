@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 import { Inject } from '@nestjs/common';
 import type {
-  BaseEvent,
+  DomainEvent,
   IEventRepository,
   PersistenceAcknowledgement,
 } from '../../../../libs/cqrs-es';
@@ -78,7 +78,7 @@ export class PostgresSurveyResponseCommandRepository implements ISurveyResponseC
   async fetchMany(): Promise<SurveyResponseRecord[]> {
     const events = await this.eventRepository.read();
 
-    const eventHistoriesByAggregateId = new Map<string, BaseEvent[]>();
+    const eventHistoriesByAggregateId = new Map<string, DomainEvent[]>();
 
     for (const e of events) {
       const {
@@ -148,7 +148,7 @@ export class PostgresSurveyResponseCommandRepository implements ISurveyResponseC
     const result = await this.eventRepository.appendAt(
       0,
       // TODO where do metadata, stream ID , etc. come into the picture?
-      ...(eventHistory as BaseEvent[]),
+      ...eventHistory,
     );
 
     if (result instanceof Error) {
@@ -188,7 +188,7 @@ export class PostgresSurveyResponseCommandRepository implements ISurveyResponseC
       );
     }
 
-    const recentEvents = eventHistory.slice(-1) as BaseEvent[];
+    const recentEvents = eventHistory.slice(-1);
 
     const result = await this.eventRepository.appendAt(
       revision,
@@ -222,7 +222,7 @@ export class PostgresSurveyResponseCommandRepository implements ISurveyResponseC
 
   // Iterable<BaseEvent>
   private buildInstance(
-    eventStream: BaseEvent[],
+    eventStream: DomainEvent[],
   ): SurveyResponseRecord | TrueImpactError | null {
     return SurveyResponseRecord.fromEventHistory(eventStream);
   }

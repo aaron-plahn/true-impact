@@ -1,5 +1,10 @@
 import { Pool } from 'pg';
-import { BaseEvent, EventDto, IEventRepository } from '../libs/cqrs-es';
+import {
+  DomainEvent,
+  EventDto,
+  IEventRepository,
+  WithEventMetadata,
+} from '../libs/cqrs-es';
 import {
   TrueImpactError,
   TrueImpactRuntimeException,
@@ -12,7 +17,8 @@ export interface EventDocument {
   event_type: string;
   stream_id: string;
   payload: Record<string, unknown>;
-  meta: Record<string, unknown>;
+  metadata: Record<string, unknown>;
+  revision: number;
 }
 
 const thinMap = (row: EventDocument): EventDto => {
@@ -41,14 +47,14 @@ export class PostgresEventRepository implements IEventRepository {
 
   async appendAt(
     revision: number,
-    event: BaseEvent,
+    event: WithEventMetadata<DomainEvent>,
     // necessary for optimistic concurrency
   ): Promise<{ streamId: string } | Error> {
     /**
      * There is a possible data anomale in this design. The `stream_id` must be the same for all events with the same `payload.aggergateCompositeIdentifier.type` and `...id`.
      */
     const query = `
-        INSERT INTO events (stream_id, event_type, payload, meta, revision)
+        INSERT INTO events (stream_id, event_type, payload, metadata, revision)
         VALUES ($1, $2, $3, $4, $5 + 1)
         ON CONFLICT (stream_id, revision) DO NOTHING;
     `;
@@ -100,11 +106,13 @@ export class PostgresEventRepository implements IEventRepository {
    * We may want our stream IDs to be of form `${type}/${id}`.
    *
    * We need to normalize the relationship between streamID and aggregateCompositeIdentifier
+   *
+   * We may want to include an offset revision
    */
   async read(aggregateCompositeIdentifier?: {
     type?: string;
     id?: string;
-  }): Promise<BaseEvent[]> {
+  }): Promise<WithEventMetadata<DomainEvent>[]> {
     const hasSearchFilters =
       typeof (
         aggregateCompositeIdentifier?.type || aggregateCompositeIdentifier?.id
@@ -135,9 +143,19 @@ export class PostgresEventRepository implements IEventRepository {
      * It is the feature module's responsibility to register event factory functions
      * per event type introduced in said module.
      */
-    const eventInstances = rawRows.rows.map((row) =>
-      this.eventFactory.build(thinMap(row)),
-    );
+    const eventInstances = rawRows.rows.map((row) => {
+      const plainEvent = this.eventFactory.build(thinMap(row));
+
+      const { metadata } = row;
+
+      const eventWithMetadata = Object.assign(plainEvent, {
+        metadata,
+        revision: row.revision,
+        streamId: row.stream_id,
+      });
+
+      return eventWithMetadata;
+    });
 
     return eventInstances;
   }

@@ -4,6 +4,7 @@ import {
   TrueImpactRuntimeException,
 } from '../error-handling';
 import { Entity } from './entity';
+import { EventSourcedAggregateRoot } from './event-sourced-aggregate-root.entity';
 
 interface FromPersistenceDto<TDto = unknown, UInstance = unknown> {
   fromPersistenceDto(
@@ -30,30 +31,42 @@ export function UpdateMethod(): MethodDecorator {
     ) => Entity | TrueImpactError;
 
     descriptor.value = function (...args) {
-      if (!(this instanceof Entity)) {
+      if (
+        !(this instanceof Entity) &&
+        !(this instanceof EventSourcedAggregateRoot)
+      ) {
         throw new TrueImpactRuntimeException([
           new TrueImpactError(
-            `A method must belong to an Entity class in order to be annotated as an update method`,
+            `A method must belong to an Entity or EventSourcedAggregateRoot class in order to be annotated as an update method`,
           ),
         ]);
       }
+
+      let cloned: any;
 
       const ctor = target.constructor;
 
-      if (!isFromPersistenceDto(ctor)) {
-        throw new TrueImpactRuntimeException([
-          new TrueImpactError(
-            `Failed to clone instance of ${ctor.name}. You need to define a static fromPersistenceDto on this class`,
-          ),
-        ]);
+      if (this instanceof Entity) {
+        if (!isFromPersistenceDto(ctor)) {
+          throw new TrueImpactRuntimeException([
+            new TrueImpactError(
+              `Failed to clone instance of ${ctor.name}. You need to define a static fromPersistenceDto on this class`,
+            ),
+          ]);
+        }
+
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+        const persistenceDto = this.toPersistenceDto() as unknown;
+
+        cloned = ctor.fromPersistenceDto(persistenceDto, {
+          shouldValidate: true,
+        });
       }
-
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-      const persistenceDto = this.toPersistenceDto() as unknown;
-
-      const cloned = ctor.fromPersistenceDto(persistenceDto, {
-        shouldValidate: true,
-      });
+      if (this instanceof EventSourcedAggregateRoot) {
+        // @ts-expect-error There's no point of type-safety in this magic helper
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+        cloned = ctor.fromEventHistory(this.eventHistory);
+      }
 
       // TODO put a clone method on the entities?
       //   const cloned = this.clone();

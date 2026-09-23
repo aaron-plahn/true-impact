@@ -2,6 +2,9 @@
 
 This first release of the True Impact platform introduces a working model for user management, client management, and survey creation and completion.
 
+## 74
+In this PR, we clean up existing code to improve velocity when adding upcoming features.
+
 ## 73
 In this PR, we support persistent storage of survey responses.
 

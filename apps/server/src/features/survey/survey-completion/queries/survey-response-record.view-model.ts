@@ -11,6 +11,7 @@ import { LookupTable } from '../../../../libs/data-types/schema-management/decor
 import { DONE } from '../../constants';
 import { SurveyViewModelClientDto } from '../../queries/survey.view-model';
 import { SurveyQuestion } from '../../survey-management/survey-question.entity';
+import { SurveySubmitted } from '../commands';
 import { SurveyResponseRecord } from '../models';
 import { SurveyParticipantCompositeIdentifier } from '../models/survey-participant.composite-identifier';
 import {
@@ -598,6 +599,13 @@ export class SurveyResponseRecordViewModel {
     if (updatedSurveyFromContext) {
       Object.entries(updatedSurveyFromContext.analyzersByName).forEach(
         ([_reportName, analyzer]) => {
+          const submissionEvent = domainModel.eventHistory.find(
+            (event): event is SurveySubmitted =>
+              event.type === 'SURVEY_SUBMITTED',
+          ) as SurveySubmitted;
+
+          const submissionTime = submissionEvent?.metadata?.dateEffective;
+
           // TODO inject an analyzer instance, not a DTO here
           const report = domainModel.responses.reduce(
             (acc: SurveyReportViewModel, response) => {
@@ -627,7 +635,7 @@ export class SurveyResponseRecordViewModel {
             new SurveyReportViewModel({
               name: analyzer.name,
               categories: analyzer.categories,
-              submissionTime: domainModel.submissionTimestamp,
+              submissionTime,
             }),
           );
 
