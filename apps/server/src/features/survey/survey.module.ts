@@ -27,6 +27,7 @@ import {
   OptionAddedToSurveyQuestion,
   QuestionAddedToSurvey,
   SurveyFinalized,
+  SurveyImported,
   SurveyOpenedToParticipant,
 } from '../survey/survey-management';
 import { UserModule } from '../users/user.module';
@@ -391,8 +392,12 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, FinalizeSurvey];
             return SurveyOpenedToPublic.fromPersistenceDto(
               doc as unknown as SurveyOpenedToPublic,
             );
+          })
+          .register('SURVEY_IMPORTED', (doc) => {
+            return SurveyImported.fromPersistenceDto(
+              doc as unknown as SurveyImported,
+            );
           });
-        // TODO SurveyImported
         /**
          * But do we really need this? We could also persist several events
          * for one `ImportSurvey` command.
