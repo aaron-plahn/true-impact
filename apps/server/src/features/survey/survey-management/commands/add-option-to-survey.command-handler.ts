@@ -36,7 +36,7 @@ export class AddOptionToSurveyQuestionCommandHandler implements ICommandHandler<
       return targetSurvey;
     }
 
-    const updateResult = targetSurvey.canAddOptionToQuestion({
+    const updateResult = targetSurvey.addOptionToQuestion({
       questionLabel,
       optionLabel,
       text,
