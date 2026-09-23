@@ -743,7 +743,13 @@ export class SurveyResponseRecord extends EventSourcedAggregateRoot {
   static fromEventHistory(
     eventHistory: Iterable<DomainEvent>,
   ): SurveyResponseRecord | TrueImpactError | null {
-    return EventSourcedAggregateRoot.fromEventHistory(
+    /**
+     * We have to explicitly bind `this` in order for the logic
+     * of the following method to look for the static `fromSurveyBegan` method
+     * on the present class instead of on `EventSourcedAggregateRoot`.
+     */
+    return EventSourcedAggregateRoot.fromEventHistory.call(
+      SurveyResponseRecord,
       eventHistory,
     ) as SurveyResponseRecord;
   }
