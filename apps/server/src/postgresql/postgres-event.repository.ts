@@ -80,8 +80,6 @@ export class PostgresEventRepository implements IEventRepository {
     }
 
     const result = await client.query(query, values).catch((e: Error) => {
-      console.warn({ invalidEvent: event });
-
       return new TrueImpactError(`Database query failed in Postgres.`, [
         new TrueImpactError(e.message),
       ]);
