@@ -141,6 +141,7 @@ export class SurveyOption extends Entity {
   // TODO We may want to allow a top-level flat ordered list of follow-up questions
   // Note that it is the responsibility of the `Survey` to validate the follow-up question's existence before passing the request up the line
   @UpdateMethod()
+  // TODO should this be `canAddFollowUpQuestion`?
   addFollowUpQuestion(label: string): this | TrueImpactError {
     if (this.followUpQuestionLabel) {
       return new TrueImpactError(
@@ -153,16 +154,13 @@ export class SurveyOption extends Entity {
     return this;
   }
 
-  @UpdateMethod()
-  addFlag(flagId: string) {
+  canAddFlag(flagId: string) {
     if (this.flagIds.has(flagId)) {
       return new TrueImpactError(
         // TODO Can we inject the flag at some point?
         `You cannot add flag [${flagId}] to option [${this.label}] as it already has this flag.`,
       );
     }
-
-    this.flagIds.add(flagId);
 
     return this;
   }

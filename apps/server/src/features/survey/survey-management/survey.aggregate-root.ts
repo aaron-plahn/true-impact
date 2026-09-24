@@ -1,12 +1,14 @@
+import { DomainEvent } from 'src/libs/cqrs-es';
 import {
-  AggregateRoot,
   BooleanDataType,
   deepConvertMapToObject,
+  EventSourcedAggregateRoot,
   InvariantValidationError,
   isBoolean,
   isPositiveNumber,
   NonEmptyString,
   NonNegativeInteger,
+  RawObject,
   TrueImpactBadUserInputError,
   TrueImpactDataExample,
   TrueImpactError,
@@ -16,11 +18,30 @@ import {
 import { LookupTable } from '../../../libs/data-types/schema-management/decorators/lookup-table.decorator';
 import { DONE, SURVEY_AGGREGATE_TYPE } from '../constants';
 import {
+  CategoryAddedToSurveyAnalyzer,
   SurveyAnalyzer,
+  SurveyAnalyzerCreated,
   SurveyAnalyzerPersistenceDto,
+  ValueAddedForSurveyOption,
 } from '../survey-analysis';
+import { SurveyAnalysisCategory } from '../survey-analysis/models/survey-analysis-category';
 import { SurveyParticipantCompositeIdentifier } from '../survey-completion/models';
+import {
+  FollowUpQuestionAddedForSurveyOption,
+  OptionAddedToSurveyQuestion,
+  QuestionAddedToSurvey,
+  SurveyFinalized,
+  SurveyOpenedToParticipant,
+} from './commands';
+import { SurveyImported } from './commands/import-survey/survey-imported.event';
+import { SurveyOpenedToPublic } from './commands/open-survey-to-client/survey-opened-to-public.event';
+import { SurveyOptionFlagged } from './commands/survey-option-flagged.event';
+import { SurveyAccessCodeRedeemed, SurveyCreated } from './events';
 import { SurveyAccessToken } from './survey-access-token.entity';
+import {
+  SurveyOpenedToAnonymousParticipant,
+  SurveyOpenedToAnonymousParticipantPayload,
+} from './survey-opened-to-anonymous-participant.event';
 import { SurveyOption } from './survey-option.entity';
 import {
   SurveyQuestion,
@@ -55,7 +76,7 @@ export class SurveyPersistenceDto {
     // firstQuestionLabel:
   },
 })
-export class Survey extends AggregateRoot<SurveyPersistenceDto> {
+export class Survey extends EventSourcedAggregateRoot {
   /**
    * This is useful in case we ever want to iterate through a global collection of
    * entities and build instances.
@@ -89,6 +110,15 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
       'an increasing sequence number that reflects the current version of this survey',
   })
   revision: number;
+
+  @RawObject({
+    label: 'event history',
+    description: 'audit log containing all historical edits of this survey',
+    isArray: true,
+    // TODO rename this `canBeEmpty` for Array valued props?
+    isOptional: true, // i.e. can be empty
+  })
+  eventHistory: DomainEvent[] = [];
 
   /**
    * We may want to store the questions and follow-up questions directly in the graph.
@@ -189,6 +219,14 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
 
   getId(): string {
     return this.id;
+  }
+
+  // TODO rename this to getCompositeIdentifier
+  getAggregateCompositeIdentifier() {
+    return {
+      type: SURVEY_AGGREGATE_TYPE,
+      id: this.id,
+    } as const;
   }
 
   getName(): string {
@@ -468,7 +506,24 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
 
     this.topLevelQuestionLabels.push(questionBuildResult.label);
 
-    return this.preventEditIfFinal();
+    const finalizationResult = this.preventEditIfFinal();
+
+    if (finalizationResult instanceof Error) {
+      return finalizationResult;
+    }
+
+    return this.apply(
+      new QuestionAddedToSurvey({
+        payload: {
+          aggregateCompositeIdentifier: {
+            type: SURVEY_AGGREGATE_TYPE,
+            id: this.id,
+          },
+          label,
+          prompt,
+        },
+      }),
+    );
   }
 
   find(
@@ -756,7 +811,13 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
     optionLabel: string;
     text: string;
   }): Survey | TrueImpactError {
-    const { questionLabel } = userRequest;
+    const finalizationValidationResult = this.preventEditIfFinal();
+
+    if (finalizationValidationResult instanceof Error) {
+      return finalizationValidationResult;
+    }
+
+    const { questionLabel, optionLabel, text } = userRequest;
 
     if (!this.questionBank.has(questionLabel)) {
       return new TrueImpactError(
@@ -768,18 +829,34 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
       questionLabel,
     ) as SurveyQuestion;
 
-    const updatedQuestion = targetQuestion.addOption(userRequest);
+    const validationResult = targetQuestion.canAddOption(userRequest);
 
-    if (updatedQuestion instanceof TrueImpactError) {
+    if (validationResult instanceof TrueImpactError) {
       return new TrueImpactError(
         `Failed to add option [${userRequest.optionLabel}] to survey[${this.name}].`,
-        [updatedQuestion],
+        [validationResult],
       );
     }
 
-    this.questionBank.set(questionLabel, updatedQuestion);
+    targetQuestion.options.set(
+      optionLabel,
+      new SurveyOption({
+        label: optionLabel,
+        text,
+        flagIds: [],
+      }),
+    );
 
-    return this.preventEditIfFinal();
+    return this.apply(
+      new OptionAddedToSurveyQuestion({
+        payload: {
+          aggregateCompositeIdentifier: this.getAggregateCompositeIdentifier(),
+          questionLabel,
+          optionLabel,
+          text,
+        },
+      }),
+    );
   }
 
   @UpdateMethod()
@@ -804,7 +881,7 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
     );
 
     const updatedQuestion =
-      this.get(questionLabel)?.addFollowUpQuestionForOption({
+      this.get(questionLabel)?.canAddFollowUpQuestionForOption({
         optionLabel,
         followUpQuestionLabel: followUpQuestion.label,
       }) ||
@@ -819,9 +896,23 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
       );
     }
 
-    this.questionBank.set(questionLabel, updatedQuestion);
+    const finalizationValidationResult = this.preventEditIfFinal();
 
-    return this.preventEditIfFinal();
+    if (finalizationValidationResult instanceof Error) {
+      return finalizationValidationResult;
+    }
+
+    return this.apply(
+      new FollowUpQuestionAddedForSurveyOption({
+        payload: {
+          aggregateCompositeIdentifier: this.getAggregateCompositeIdentifier(),
+          questionLabel,
+          optionLabel,
+          followUpQuestionLabel: followUpQuestion.label,
+          followUpQuestionPrompt: followUpQuestion.prompt,
+        },
+      }),
+    );
   }
 
   @UpdateMethod()
@@ -843,18 +934,18 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
   }): this | TrueImpactError {
     // note that you are allowed to add flags after a survey is finalized as this doesn't affect survey completion. The participant is unaware of the flags.
 
-    const updatedQuestion =
+    const targetQuestion =
       this.get(questionLabel) ||
       new TrueImpactError(
         `You cannot add flag [${flagId}] to option [${optionLabel}] for question [${questionLabel}] as there is no such question in survey [${this.name}]`,
       );
 
-    if (updatedQuestion instanceof TrueImpactError) {
-      return updatedQuestion;
+    if (targetQuestion instanceof TrueImpactError) {
+      return targetQuestion;
     }
 
     const targetOption =
-      updatedQuestion?.get(optionLabel) ||
+      targetQuestion?.get(optionLabel) ||
       new TrueImpactError(
         `You cannot add flag [${flagId}] to option [${optionLabel}] for question [${questionLabel}] in survey [${this.name}] as there is no such option`,
       );
@@ -863,23 +954,33 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
       return targetOption;
     }
 
-    const updatedOption = targetOption.addFlag(flagId);
+    const optionValidationResult = targetOption.canAddFlag(flagId);
 
-    if (updatedOption instanceof TrueImpactError) {
+    if (optionValidationResult instanceof TrueImpactError) {
       return new TrueImpactError(
         `Failed to add [${flagId}] to option [${optionLabel}] for question [${questionLabel}] in survey [${this.name}]`,
-        [updatedOption],
+        [optionValidationResult],
       );
     }
 
-    updatedQuestion.options.set(optionLabel, updatedOption);
+    // was this necessary?
+    // updatedQuestion.options.set(optionLabel, optionValidationResult);
 
-    this.questionBank.set(questionLabel, updatedQuestion);
+    this.questionBank.set(questionLabel, targetQuestion);
 
     /**
      * Note that there is nothing that prevents you from modifying flags after a survey as finalized for use.
      */
-    return this;
+    return this.apply(
+      new SurveyOptionFlagged({
+        payload: {
+          aggregateCompositeIdentifier: this.getAggregateCompositeIdentifier(),
+          flagId,
+          questionLabel,
+          optionLabel,
+        },
+      }),
+    );
   }
 
   private preventEditIfFinal(): this | TrueImpactError {
@@ -900,9 +1001,13 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
       );
     }
 
-    this.isFinal = true;
-
-    return this;
+    return this.apply(
+      new SurveyFinalized({
+        payload: {
+          aggregateCompositeIdentifier: this.getAggregateCompositeIdentifier(),
+        },
+      }),
+    );
   }
 
   /**
@@ -916,11 +1021,17 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
       );
     }
 
-    this.analyzersByName.set(name, SurveyAnalyzer.buildEmpty({ name }));
-
-    return this;
+    return this.apply(
+      new SurveyAnalyzerCreated({
+        payload: {
+          aggregateCompositeIdentifier: this.getAggregateCompositeIdentifier(),
+          name,
+        },
+      }),
+    );
   }
 
+  // TODO for readability let's put the event handlers next to corresponding commands where possible
   @UpdateMethod()
   addCategoryForAnalyzer({
     analyzerName,
@@ -932,7 +1043,7 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
     const targetAnalyzer = this.analyzersByName.get(analyzerName);
 
     const updatedAnalyzer =
-      targetAnalyzer?.addCategory(category) ||
+      targetAnalyzer?.canAddCategory(category) ||
       new TrueImpactError(
         `You cannot add category [${category}] to analyzer [${analyzerName}] in survey [${this.name}], as there is no such analyzer in the target survey.`,
       );
@@ -944,13 +1055,19 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
       );
     }
 
-    this.analyzersByName.set(analyzerName, updatedAnalyzer);
-
-    return this;
+    return this.apply(
+      new CategoryAddedToSurveyAnalyzer({
+        payload: {
+          aggregateCompositeIdentifier: this.getAggregateCompositeIdentifier(),
+          analyzerName,
+          category,
+        },
+      }),
+    );
   }
 
   @UpdateMethod()
-  addValueForOption({
+  addValuesForOption({
     analyzerName,
     questionLabel,
     optionLabel,
@@ -1003,23 +1120,31 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
       analyzerName,
     ) as SurveyAnalyzer;
 
-    const updatedAnalyzer = targetAnalyzer.addValuesForOption(
+    const analyzerValidationResult = targetAnalyzer.addValuesForOption(
       questionLabel,
       optionLabel,
       valuesByCategory,
     );
 
-    if (updatedAnalyzer instanceof TrueImpactError) {
+    if (analyzerValidationResult instanceof TrueImpactError) {
       return new TrueImpactError(
         // Here we ensure the survey name is available to the user
         `Failed to add values for an option in survey [${this.name}] (analyzer [${analyzerName}])`,
-        [updatedAnalyzer],
+        [analyzerValidationResult],
       );
     }
 
-    this.analyzersByName.set(analyzerName, updatedAnalyzer);
-
-    return this;
+    return this.apply(
+      new ValueAddedForSurveyOption({
+        payload: {
+          aggregateCompositeIdentifier: this.getAggregateCompositeIdentifier(),
+          analyzerName,
+          questionLabel,
+          optionLabel,
+          valuesByCategory,
+        },
+      }),
+    );
   }
 
   // TODO presumably we want a `closeSurvey` as well.
@@ -1039,9 +1164,13 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
     // TODO should we allow opening to the public if there are already access codes?
     // TODO should we allow access codes if the survey is already open to the public?
 
-    this.isOpenToPublic = true;
-
-    return this;
+    return this.apply(
+      new SurveyOpenedToPublic({
+        payload: {
+          aggregateCompositeIdentifier: this.getAggregateCompositeIdentifier(),
+        },
+      }),
+    );
   }
 
   openToParticipant({
@@ -1055,6 +1184,7 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
     hash: string;
     participantCompositeIdentifier: SurveyParticipantCompositeIdentifier;
   }) {
+    // TODO should we move the validation logic here?
     const buildResult = SurveyAccessToken.openParticipantAccess({
       dateCreated: dateOpened,
       dateExpires: dateOfExpiry,
@@ -1067,12 +1197,26 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
       return buildResult;
     }
 
-    this.accessTokensByHash.set(hash, buildResult);
+    // this.accessTokensByHash.set(hash, buildResult);
 
-    return this;
+    // TODO do we validate that the survey is finalized???
+
+    return this.apply(
+      new SurveyOpenedToParticipant({
+        payload: {
+          aggregateCompositeIdentifier: this.getAggregateCompositeIdentifier(),
+          participantCompositeIdentifier,
+          dateCreated: dateOpened,
+          dateExpires: dateOfExpiry,
+          hash,
+          algorithm: 'TODO ADD THIS NOW!',
+        },
+      }),
+    );
   }
 
   // TODO deal with dates consistently
+  // How do these factor into validation and event sourcing?
   @UpdateMethod()
   openToAnonymousIndividual({
     dateOfExpiry,
@@ -1095,20 +1239,74 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
     }
 
     // TODO avoid collisions
-    this.accessTokensByHash.set(hash, buildResult);
+    // We should do this now.
 
-    return this;
+    return this.apply(
+      new SurveyOpenedToAnonymousParticipant({
+        payload: {
+          aggregateCompositeIdentifier: this.getAggregateCompositeIdentifier(),
+          // TODO pick one wording here
+          dateExpires: dateOfExpiry,
+          dateOpened,
+          hash,
+          algorithm: 'TODO = do this now!',
+        },
+      }),
+    );
   }
 
+  /**
+   * This is called automatically internally by the service layer.
+   * Do we really need validation, or can that service simply emit the event?
+   */
   @UpdateMethod()
-  revokeAccessCode(hashedAccessCode: string): Survey | TrueImpactError {
-    if (!this.accessTokensByHash.has(hashedAccessCode)) {
+  redeemAccessCode(hashedAccessCode: string): Survey | TrueImpactError {
+    const accessToken = this.accessTokensByHash.get(hashedAccessCode);
+
+    if (!accessToken) {
       return new TrueImpactError('Failed to revoke unknown access code.');
     }
 
-    this.accessTokensByHash.delete(hashedAccessCode);
+    // we append this on the event for projections' convenience
+    const { participantCompositeIdentifier } = accessToken;
 
-    return this;
+    return this.apply(
+      new SurveyAccessCodeRedeemed({
+        payload: {
+          aggregateCompositeIdentifier: this.getAggregateCompositeIdentifier(),
+          hashedAccessCode,
+          participantCompositeIdentifier,
+        },
+      }),
+    );
+  }
+
+  static fromSurveyCreated(event: SurveyCreated): Survey | TrueImpactError {
+    const {
+      payload: {
+        aggregateCompositeIdentifier: { id },
+        name,
+      },
+    } = event;
+
+    const instance = new Survey({
+      id,
+      isFinal: false,
+      name,
+      questions: {},
+      revision: 0,
+      analyzersByName: new Map(),
+      accessTokensByHash: new Map(),
+      isOpenToPublic: false,
+    }).validateInvariants();
+
+    if (instance instanceof Error) {
+      return instance;
+    }
+
+    instance.eventHistory.push(event);
+
+    return instance;
   }
 
   static buildEmpty({
@@ -1129,11 +1327,296 @@ export class Survey extends AggregateRoot<SurveyPersistenceDto> {
       isOpenToPublic: false,
     });
 
+    instance.eventHistory.push(
+      new SurveyCreated({
+        payload: {
+          aggregateCompositeIdentifier: {
+            id,
+            type: SURVEY_AGGREGATE_TYPE,
+          },
+          name,
+        },
+      }),
+    );
+
     const result = instance.validateInvariants();
 
     return result;
   }
 
+  handleQuestionAddedToSurvey(event: QuestionAddedToSurvey) {
+    const {
+      payload: { label, prompt },
+    } = event;
+
+    this.topLevelQuestionLabels.push(label);
+
+    this.questionBank.set(
+      label,
+      new SurveyQuestion({ label, prompt, options: new Map() }),
+    );
+
+    return this;
+  }
+
+  handleOptionAddedToSurveyQuestion(event: OptionAddedToSurveyQuestion) {
+    const {
+      payload: { questionLabel, optionLabel, text },
+    } = event;
+
+    this.questionBank.get(questionLabel)?.options.set(
+      optionLabel,
+      new SurveyOption({
+        label: optionLabel,
+        text,
+        flagIds: [],
+      }),
+    );
+
+    return this;
+  }
+
+  handleFollowUpQuestionAddedForSurveyOption(
+    event: FollowUpQuestionAddedForSurveyOption,
+  ) {
+    const {
+      payload: {
+        questionLabel,
+        optionLabel,
+        followUpQuestionLabel,
+        followUpQuestionPrompt,
+      },
+    } = event;
+
+    const targetOption = this.questionBank
+      .get(questionLabel)
+      ?.options.get(optionLabel);
+
+    if (targetOption) {
+      targetOption.followUpQuestionLabel = followUpQuestionLabel;
+    }
+
+    this.questionBank.set(
+      followUpQuestionLabel,
+      new SurveyQuestion({
+        label: followUpQuestionLabel,
+        prompt: followUpQuestionPrompt,
+        options: new Map(),
+      }),
+    );
+
+    return this;
+  }
+
+  handleSurveyFinalized(_event: SurveyFinalized) {
+    this.isFinal = true;
+
+    return this;
+  }
+
+  // # Publication
+  handleSurveyOpenedToParticipant({
+    payload: {
+      hash,
+      dateCreated,
+      dateExpires,
+      participantCompositeIdentifier,
+      algorithm,
+    },
+  }: SurveyOpenedToParticipant) {
+    const buildResult = SurveyAccessToken.openParticipantAccess({
+      dateCreated,
+      dateExpires,
+      hash,
+      participantCompositeIdentifier,
+      algorithm,
+    });
+
+    if (buildResult instanceof Error) {
+      return buildResult;
+    }
+
+    this.accessTokensByHash.set(hash, buildResult);
+
+    return this;
+  }
+
+  handleSurveyOpenedToAnonymousParticipant({
+    payload: { dateExpires, dateOpened, hash, algorithm },
+  }: {
+    payload: SurveyOpenedToAnonymousParticipantPayload;
+  }) {
+    const buildResult = SurveyAccessToken.openAnonymousIndividualAccess({
+      dateCreated: dateOpened,
+      hash,
+      algorithm,
+      dateExpires,
+    });
+
+    if (buildResult instanceof TrueImpactError) {
+      return buildResult;
+    }
+
+    // TODO avoid collisions
+    // We should do this now.
+    this.accessTokensByHash.set(hash, buildResult);
+
+    return this;
+  }
+
+  handleSurveyOpenedToPublic(_event: SurveyOpenedToPublic) {
+    this.isOpenToPublic = true;
+
+    return this;
+  }
+
+  handleSurveyAccessCodeRedeemed({
+    payload: { hashedAccessCode },
+  }: SurveyAccessCodeRedeemed) {
+    this.accessTokensByHash.delete(hashedAccessCode);
+
+    return this;
+  }
+
+  // # Flags
+  handleSurveyOptionFlagged({
+    payload: { questionLabel, optionLabel, flagId },
+  }: SurveyOptionFlagged) {
+    this.questionBank
+      .get(questionLabel)
+      ?.options.get(optionLabel)
+      ?.flagIds.add(flagId);
+
+    return this;
+  }
+
+  // # Configurable Dynamic Analysis
+  handleSurveyAnalyzerCreated({ payload: { name } }: SurveyAnalyzerCreated) {
+    this.analyzersByName.set(name, SurveyAnalyzer.buildEmpty({ name }));
+
+    return this;
+  }
+
+  // TODO To or for?
+  handleCategoryAddedToSurveyAnalyzer({
+    payload: { analyzerName, category },
+  }: CategoryAddedToSurveyAnalyzer) {
+    this.analyzersByName.get(analyzerName)?.categoriesByLabel.set(
+      category,
+      new SurveyAnalysisCategory({
+        label: category,
+      }),
+    );
+
+    return this;
+  }
+
+  handleValueAddedForSurveyOption({
+    payload: { questionLabel, optionLabel, analyzerName, valuesByCategory },
+  }: ValueAddedForSurveyOption) {
+    const targetAnalyzer = this.analyzersByName.get(analyzerName);
+
+    const validationResult = targetAnalyzer?.addValuesForOption(
+      questionLabel,
+      optionLabel,
+      valuesByCategory,
+    );
+
+    if (validationResult instanceof Error) {
+      return validationResult;
+    }
+
+    if (!targetAnalyzer?.valuesByQuestion.has(questionLabel)) {
+      targetAnalyzer?.valuesByQuestion.set(questionLabel, new Map());
+    }
+
+    const targetQuestionValues =
+      targetAnalyzer?.valuesByQuestion.get(questionLabel);
+
+    if (!targetQuestionValues?.has(optionLabel)) {
+      targetQuestionValues?.set(optionLabel, new Map());
+    }
+
+    const targetOptionValues = targetQuestionValues?.get(optionLabel);
+
+    Object.entries(valuesByCategory).forEach(([category, value]) => {
+      targetOptionValues?.set(category, value);
+    });
+
+    return this;
+  }
+
+  // # factories
+  // this is an alternative creation event for a Survey
+  static fromSurveyImported(event: SurveyImported) {
+    const {
+      payload: {
+        aggregateCompositeIdentifier: { id },
+        name,
+        questions,
+        // analyzers,
+      },
+    } = event;
+
+    const questionsAsMap = {};
+
+    questions.forEach((question) => {
+      const optionsForThisQuestion = new Map<string, SurveyOption>();
+
+      question.options.forEach((option) => {
+        optionsForThisQuestion.set(
+          option.label,
+          new SurveyOption({
+            label: option.label,
+            text: option.text,
+            nextQuestionLabel: option.followUpQuestion?.label,
+            // TODO fix this! We need to decouple the event from the import command payload
+            flagIds: [], // option.flags.map((f): string => f.id),
+          }),
+        );
+      });
+
+      questionsAsMap[question.label] = new SurveyQuestion({
+        label: question.label,
+        prompt: question.prompt,
+        options: new Map(),
+      });
+    });
+
+    const dto: SurveyPersistenceDto = {
+      id,
+      isFinal: false,
+      name: name.text,
+      // why do we have maps in a DTO? Shouldn't this be a record?
+      questions: questionsAsMap,
+      topLevelQuestionLabels: [],
+      revision: 0,
+      // TODO support these
+      analyzers: {},
+      accessTokensByHash: {},
+    };
+
+    const instance = Survey.fromPersistenceDto(dto);
+
+    if (instance instanceof Error) {
+      return instance;
+    }
+
+    instance.eventHistory.push(event);
+
+    return instance;
+  }
+
+  static fromEventHistory(
+    eventHistory: Iterable<DomainEvent>,
+  ): Survey | TrueImpactError | null {
+    return EventSourcedAggregateRoot.fromEventHistory.call(
+      Survey,
+      eventHistory,
+    ) as Survey;
+  }
+
+  // TODO remove this?
   static fromPersistenceDto(
     {
       id,

@@ -1,28 +1,20 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-import { Inject } from '@nestjs/common';
 import type {
   DomainEvent,
   IEventRepository,
   PersistenceAcknowledgement,
-} from '../../../../libs/cqrs-es';
+} from 'src/libs/cqrs-es';
 import {
   TrueImpactError,
   TrueImpactRuntimeException,
-} from '../../../../libs/data-types';
-import { SURVEY_RESPONSE_AGGREGATE_TYPE } from '../../constants';
-import {
-  SurveyParticipantCompositeIdentifier,
-  SurveyResponseRecord,
-} from '../models';
-import { ISurveyResponseCommandRepository } from './survey-response-command-repository.interface';
+} from 'src/libs/data-types';
+import { Inject } from '../../../libs/framework';
+import { SURVEY_AGGREGATE_TYPE } from '../constants';
+import { Survey } from '../survey-management';
+import { ISurveyCommandRepository } from './survey-command-repository.interface';
 
-/**
- * TODO export this from CQRS lib
- * TODO constrain the postgres implementation with this interface
- */
-
-export class PostgresSurveyResponseCommandRepository implements ISurveyResponseCommandRepository {
-  private readonly aggregateType = SURVEY_RESPONSE_AGGREGATE_TYPE;
+// TODO Share code between command repositories for different aggregate roots
+export class PostgresSurveyCommandRepository implements ISurveyCommandRepository {
+  private readonly aggregateType = SURVEY_AGGREGATE_TYPE;
 
   constructor(
     @Inject('EVENT_REPOSITORY_INJECTION_TOKEN')
@@ -36,7 +28,7 @@ export class PostgresSurveyResponseCommandRepository implements ISurveyResponseC
     return result !== null;
   }
 
-  async fetchById(id: string): Promise<SurveyResponseRecord | null> {
+  async fetchById(id: string): Promise<Survey | null> {
     const eventHistory = await this.eventRepository.read({
       type: this.aggregateType,
       id,
@@ -46,7 +38,7 @@ export class PostgresSurveyResponseCommandRepository implements ISurveyResponseC
 
     if (buildResult instanceof Error) {
       throw new TrueImpactError(
-        `Failed to fetch survey response record/${id}, as invalid data was encountered in the database.`,
+        `Failed to fetch survey/${id}, as invalid data was encountered in the database.`,
         [buildResult],
       );
     }
@@ -54,28 +46,7 @@ export class PostgresSurveyResponseCommandRepository implements ISurveyResponseC
     return buildResult;
   }
 
-  /**
-   * This supports a validation service that ensures that one participant can't
-   * start a second instance of the same survey.
-   *
-   * Instead of doing things this way, what we might want to do is to emit `SurveyAttemptCancelled`
-   * or execute `CancelSurvey` automatically when the read models become inconsistent.
-   *
-   * Even better, we can soft delete the other attempts so that the user cannot see them in the UX.
-   */
-  fetchSurveyForParticipant(
-    _participant: SurveyParticipantCompositeIdentifier,
-    _surveyId: string,
-  ): Promise<SurveyResponseRecord[] | TrueImpactError> {
-    throw new Error('Method not implemented.');
-  }
-
-  /**
-   * We should remove this as soon as we move to synchronizing materialized
-   * views by streaming the events to a query DB. It is a really inefficient way
-   * of doing things.
-   */
-  async fetchMany(): Promise<SurveyResponseRecord[]> {
+  async fetchMany(): Promise<Survey[]> {
     const events = await this.eventRepository.read();
 
     const eventHistoriesByAggregateId = new Map<string, DomainEvent[]>();
@@ -102,7 +73,7 @@ export class PostgresSurveyResponseCommandRepository implements ISurveyResponseC
       eventHistoriesByAggregateId.set(id, eventsForThisAggregateRootSoFar);
     }
 
-    const results: SurveyResponseRecord[] = [];
+    const results: Survey[] = [];
 
     const errors: TrueImpactError[] = [];
 
@@ -130,7 +101,7 @@ export class PostgresSurveyResponseCommandRepository implements ISurveyResponseC
     if (errors.length > 0) {
       throw new TrueImpactRuntimeException([
         new TrueImpactError(
-          `Failed to fetch many survey responses due to invalid existing data in the database.`,
+          `Failed to fetch many surveys due to invalid existing data in the database.`,
           errors,
         ),
       ]);
@@ -141,9 +112,15 @@ export class PostgresSurveyResponseCommandRepository implements ISurveyResponseC
 
   // Do we really need this, or just a `persist` \ `upsert`? Address this.
   async create(
-    instance: SurveyResponseRecord,
+    instance: Survey,
   ): Promise<PersistenceAcknowledgement | TrueImpactError> {
     const { eventHistory } = instance;
+
+    if (eventHistory.length === 0) {
+      throw new Error(
+        `Missing event history for survey: [${instance.getName()}]`,
+      );
+    }
 
     const result = await this.eventRepository.appendAt(
       0,
@@ -168,7 +145,7 @@ export class PostgresSurveyResponseCommandRepository implements ISurveyResponseC
   }
 
   // Note that this is only used as a test helper
-  async createMany(instances: SurveyResponseRecord[]): Promise<void> {
+  async createMany(instances: Survey[]): Promise<void> {
     for (const instance of instances) {
       await this.create(instance);
     }
@@ -178,17 +155,24 @@ export class PostgresSurveyResponseCommandRepository implements ISurveyResponseC
    * We should call this `persist` or `upsert`.
    */
   async update(
-    instance: SurveyResponseRecord,
+    instance: Survey,
   ): Promise<PersistenceAcknowledgement | TrueImpactError> {
     const { revision, eventHistory } = instance;
 
     if (eventHistory.length === 0) {
       throw new TrueImpactError(
-        `Failed to persist update due to missing event history for survey response record/${instance.id}`,
+        `Failed to persist update due to missing event history for survey/${instance.id}`,
       );
     }
 
     const recentEvents = eventHistory.slice(-1);
+
+    // TODO can we store `uncommittedEvents` separately?
+    recentEvents.forEach((recentEvent) => {
+      Object.assign(recentEvent, {
+        streamId: `${SURVEY_AGGREGATE_TYPE}/${instance.id}`,
+      });
+    });
 
     const result = await this.eventRepository.appendAt(
       revision,
@@ -206,24 +190,16 @@ export class PostgresSurveyResponseCommandRepository implements ISurveyResponseC
        *
        * Can `EventRepository.appendAt(...)` return the updated `revision` number? We need to take great
        * care with this, as it is the basis of optimistic concurrency in our system.
+       * TODO deal with this!
        */
       revision: (instance.revision + recentEvents.length).toString(),
     };
   }
 
-  /**
-   * We don't need specific update methods since we are using event-sourcing.
-   */
-  begin(
-    _emptyCompletionRecord: SurveyResponseRecord,
-  ): Promise<PersistenceAcknowledgement | TrueImpactError> {
-    throw new Error('Method not implemented.');
-  }
-
   private buildInstance(
     eventStream: DomainEvent[],
-  ): SurveyResponseRecord | TrueImpactError | null {
-    return SurveyResponseRecord.fromEventHistory(eventStream);
+  ): Survey | TrueImpactError | null {
+    return Survey.fromEventHistory(eventStream);
   }
 
   // TODO remove this?
@@ -237,6 +213,7 @@ export class PostgresSurveyResponseCommandRepository implements ISurveyResponseC
     }
 
     // @ts-expect-error This is not part of the interface but it is on all concrete implementations.
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     await this.eventRepository.clear();
   }
 }

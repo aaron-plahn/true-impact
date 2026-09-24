@@ -1,20 +1,33 @@
 import { buildTestInstance, TrueImpactError } from '../../../libs/data-types';
 import { assertTextMatchesAll } from '../../../libs/test-utils';
-import { SurveyAnalyzer } from '../survey-analysis';
+import { SurveyAnalyzerCreated } from '../survey-analysis';
+import { SurveyCreated } from './events';
 import { Survey } from './survey.aggregate-root';
 
 const surveyName = 'Employee Survey';
 
 const analyzerName = '3 Factor Analysis';
 
-const surveyWithTargetAnalyzer = buildTestInstance(Survey, {
-  name: surveyName,
-  analyzers: {
-    [analyzerName]: SurveyAnalyzer.buildEmpty({
+const surveyId = '123';
+
+const surveyWithTargetAnalyzer = Survey.fromEventHistory([
+  buildTestInstance(SurveyCreated, {
+    payload: {
+      aggregateCompositeIdentifier: {
+        id: surveyId,
+      },
+      name: surveyName,
+    },
+  }),
+  buildTestInstance(SurveyAnalyzerCreated, {
+    payload: {
+      aggregateCompositeIdentifier: {
+        id: surveyId,
+      },
       name: analyzerName,
-    }).toPersistenceDto(),
-  },
-});
+    },
+  }),
+]) as Survey;
 
 const newCategory = 'Integrity';
 

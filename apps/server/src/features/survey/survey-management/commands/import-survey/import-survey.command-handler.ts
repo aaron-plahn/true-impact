@@ -99,7 +99,7 @@ const deepAddOptionToQuestion = (
         return acc;
       }
 
-      return acc.addValueForOption({
+      return acc.addValuesForOption({
         analyzerName,
         questionLabel: parentQuestionLabel,
         optionLabel: option.label,
@@ -149,6 +149,7 @@ export class ImportSurveyCommandHandler implements ICommandHandler<ImportSurvey>
   }: {
     payload: ImportSurvey;
   }): Promise<CommandResult> {
+    // TODO move all logic to the domain model in a static `import` method.
     const duplicateFlagErrors: TrueImpactError[] = [];
 
     const uniqueFlagsAcrossAllQuestions = new Map<

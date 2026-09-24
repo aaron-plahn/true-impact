@@ -89,7 +89,7 @@ export class SurveyQuestion extends Entity {
   }
 
   @UpdateMethod()
-  addOption(userRequest: {
+  canAddOption(userRequest: {
     optionLabel: string;
     questionLabel: string;
     text: string;
@@ -99,8 +99,6 @@ export class SurveyQuestion extends Entity {
         `You cannot add option [${userRequest.optionLabel}] to question [${userRequest.questionLabel}] as there is already an option with this label.`,
       );
     }
-
-    const { optionLabel: label } = userRequest;
 
     const optionsWithTheSameText = Array.from(this.options.values()).filter(
       // TODO trim and remove punctuation?
@@ -123,13 +121,10 @@ export class SurveyQuestion extends Entity {
       return optionBuildResult;
     }
 
-    this.options.set(label, optionBuildResult);
-
     return this;
   }
 
-  @UpdateMethod()
-  addFollowUpQuestionForOption({
+  canAddFollowUpQuestionForOption({
     optionLabel,
     followUpQuestionLabel,
   }: {
@@ -145,8 +140,6 @@ export class SurveyQuestion extends Entity {
     if (updatedOption instanceof TrueImpactError) {
       return updatedOption;
     }
-
-    this.options.set(optionLabel, updatedOption);
 
     return this;
   }

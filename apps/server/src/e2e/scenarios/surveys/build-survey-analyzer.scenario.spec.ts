@@ -4,8 +4,8 @@ import {
   AddValueForSurveyOption,
   CreateAnalyzerForSurvey,
 } from '../../../features/survey/survey-analysis';
+import { AddQuestionToSurvey } from '../../../features/survey/survey-management';
 import { AddOptionToSurveyQuestion } from '../../../features/survey/survey-management/commands/add-option-to-survey-question.command';
-import { AddQuestionToSurvey } from '../../../features/survey/survey-management/commands/add-question-to-survey.command';
 import { CreateSurvey } from '../../../features/survey/survey-management/commands/create-survey.command';
 import { FinalizeSurvey } from '../../../features/survey/survey-management/commands/finalize-survey.command';
 import { TestCommandStream } from '../../../libs/cqrs-es';

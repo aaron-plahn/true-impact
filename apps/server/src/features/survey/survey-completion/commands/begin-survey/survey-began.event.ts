@@ -68,6 +68,8 @@ export class SurveyBegan {
    * TODO We might want to make this a calculated field using: `${this.payload.aggregateCompositeIdentifier.type}/${this.payload.aggregateCompositeIdentifier.id}`
    * as each stream targets a single aggregate root. But this approach prevents using the stream ID to store a system-wide unique filed (such as  
    * streamId = `survey/{surveyName}`) in the future.
+   *
+   * TODO revisit this
    */
   @NonEmptyString({
     label: 'stream ID',
