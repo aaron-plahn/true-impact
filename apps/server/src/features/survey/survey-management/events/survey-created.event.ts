@@ -1,3 +1,4 @@
+import { TrueImpactDataExample } from '../../../../libs/data-types';
 import { SurveyCompositeIdentifier } from '../../survey.composite-identifier';
 
 export class SurveyCreatedPayload {
@@ -6,6 +7,18 @@ export class SurveyCreatedPayload {
   // languageCode?: string;
 }
 
+@TrueImpactDataExample<SurveyCreated>({
+  example: {
+    type: 'SURVEY_CREATED',
+    payload: {
+      aggregateCompositeIdentifier: {
+        type: 'survey',
+        id: '345',
+      },
+      name: 'A Test Survey',
+    },
+  },
+})
 export class SurveyCreated {
   readonly type = 'SURVEY_CREATED';
 

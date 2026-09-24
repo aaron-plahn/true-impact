@@ -1,8 +1,22 @@
-import { TrueImpactError } from '../../../libs/data-types';
+import { buildTestInstance, TrueImpactError } from '../../../libs/data-types';
+import { QuestionAddedToSurvey } from './commands';
+import { SurveyCreated } from './events';
 import { Survey } from './survey.aggregate-root';
 
+const surveyId = '123';
+
+const surveyCreated = buildTestInstance(SurveyCreated, {
+  payload: {
+    aggregateCompositeIdentifier: {
+      id: surveyId,
+    },
+  },
+});
+
 describe(`Survey.addFollowUpQuestion`, () => {
-  const emptySurvey = Survey.buildEmpty({
+  const emptySurvey = Survey.fromEventHistory([surveyCreated]) as Survey;
+
+  Survey.buildEmpty({
     name: 'test survey',
     id: '123',
   }) as Survey;
@@ -16,10 +30,20 @@ describe(`Survey.addFollowUpQuestion`, () => {
   const followUpQuestionPrompt = "I don't go outside ever because:";
 
   describe(`when the target question exists`, () => {
-    const surveyWithEmptyQuestion = emptySurvey.addTopLevelQuestion({
-      label: targetQuestionLabel,
-      prompt: 'I am the first test question and I have no options',
-    }) as Survey;
+    const topLevelQuestionAdded = buildTestInstance(QuestionAddedToSurvey, {
+      payload: {
+        aggregateCompositeIdentifier: {
+          id: surveyId,
+        },
+        label: targetQuestionLabel,
+        prompt: 'I am the top-level test question',
+      },
+    });
+
+    const surveyWithEmptyQuestion = Survey.fromEventHistory([
+      surveyCreated,
+      topLevelQuestionAdded,
+    ]) as Survey;
 
     describe(`when the target option exists`, () => {
       const surveyWithOption = surveyWithEmptyQuestion.addOptionToQuestion({

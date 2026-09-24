@@ -1,11 +1,19 @@
-import { TrueImpactError } from '../../../libs/data-types';
+import { buildTestInstance, TrueImpactError } from '../../../libs/data-types';
 import { SurveyQuestion } from '../survey-management/survey-question.entity';
+import { SurveyCreated } from './events';
 import { Survey } from './survey.aggregate-root';
 
-const validEmptySurvey = Survey.buildEmpty({
-  name: 'test survey',
-  id: '123',
-}) as Survey;
+const surveyId = '123';
+
+const surveyCreated = buildTestInstance(SurveyCreated, {
+  payload: {
+    aggregateCompositeIdentifier: {
+      id: surveyId,
+    },
+  },
+});
+
+const validEmptySurvey = Survey.fromEventHistory([surveyCreated]) as Survey;
 
 const firstQuestionLabel = 'i';
 

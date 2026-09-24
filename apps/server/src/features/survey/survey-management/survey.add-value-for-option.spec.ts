@@ -1,6 +1,16 @@
 import { buildTestInstance, TrueImpactError } from '../../../libs/data-types';
 import { assertTextMatchesAll } from '../../../libs/test-utils';
-import { SurveyAnalysisCategory } from '../survey-analysis/models/survey-analysis-category';
+import {
+  CategoryAddedToSurveyAnalyzer,
+  SurveyAnalyzerCreated,
+  ValueAddedForSurveyOption,
+} from '../survey-analysis';
+import {
+  FollowUpQuestionAddedForSurveyOption,
+  OptionAddedToSurveyQuestion,
+  QuestionAddedToSurvey,
+} from './commands';
+import { SurveyCreated } from './events';
 import { Survey } from './survey.aggregate-root';
 
 const surveyName = 'Staff Evaluation';
@@ -9,110 +19,201 @@ const analyzerName = 'medicine wheel';
 
 const existingValue = 7;
 
-const targetSurvey = buildTestInstance(
-  Survey,
-  {
-    name: surveyName,
-    topLevelQuestionLabels: ['1', '3'],
-    questions: {
-      1: {
-        prompt: 'Would you like to see question 2?',
-        options: {
-          a: {
-            text: 'yes',
-            nextQuestionLabel: '2',
-          },
-          b: {
-            text: 'no',
-          },
-        },
-      },
-      2: {
-        prompt: 'Do you like question 2?',
-        options: {
-          a: {
-            text: 'yes',
-          },
-          b: {
-            text: 'no',
-          },
-          c: {
-            text: 'maybe so',
-          },
-        },
-      },
-      3: {
-        prompt: 'Will you take my survey again some day?',
-        options: {
-          a: {
-            text: 'yes',
-          },
-          b: {
-            text: 'no',
-          },
-          c: {
-            text: 'maybe so',
-          },
-        },
+// TODO introduce `TestEventStream`
+const aggregateCompositeIdentifier = {
+  id: '123',
+};
+
+const targetSurvey = Survey.fromEventHistory([
+  buildTestInstance(SurveyCreated, {
+    payload: {
+      aggregateCompositeIdentifier,
+      name: surveyName,
+    },
+  }),
+  buildTestInstance(QuestionAddedToSurvey, {
+    payload: {
+      aggregateCompositeIdentifier,
+      label: '1',
+      prompt: 'Would you like to see question 2?',
+    },
+  }),
+  buildTestInstance(OptionAddedToSurveyQuestion, {
+    payload: {
+      aggregateCompositeIdentifier,
+      questionLabel: '1',
+      optionLabel: 'b',
+      text: 'no',
+    },
+  }),
+  buildTestInstance(OptionAddedToSurveyQuestion, {
+    payload: {
+      aggregateCompositeIdentifier,
+      questionLabel: '1',
+      optionLabel: 'a',
+      text: 'yes',
+    },
+  }),
+  buildTestInstance(FollowUpQuestionAddedForSurveyOption, {
+    payload: {
+      aggregateCompositeIdentifier,
+      questionLabel: '1',
+      optionLabel: 'a',
+      followUpQuestionLabel: '2',
+      followUpQuestionPrompt: 'Do you like question 2?',
+    },
+  }),
+  buildTestInstance(OptionAddedToSurveyQuestion, {
+    payload: {
+      aggregateCompositeIdentifier,
+      questionLabel: '2',
+      optionLabel: 'a',
+      text: 'yes',
+    },
+  }),
+  buildTestInstance(OptionAddedToSurveyQuestion, {
+    payload: {
+      aggregateCompositeIdentifier,
+      questionLabel: '2',
+      optionLabel: 'b',
+      text: 'no',
+    },
+  }),
+  buildTestInstance(OptionAddedToSurveyQuestion, {
+    payload: {
+      aggregateCompositeIdentifier,
+      questionLabel: '2',
+      optionLabel: 'c',
+      text: 'maybe so',
+    },
+  }),
+  buildTestInstance(QuestionAddedToSurvey, {
+    payload: {
+      aggregateCompositeIdentifier,
+      label: '3',
+      prompt: 'Will you take my survey again some day?',
+    },
+  }),
+  buildTestInstance(OptionAddedToSurveyQuestion, {
+    payload: {
+      aggregateCompositeIdentifier,
+      questionLabel: '3',
+      optionLabel: 'a',
+      text: 'yes',
+    },
+  }),
+  buildTestInstance(OptionAddedToSurveyQuestion, {
+    payload: {
+      aggregateCompositeIdentifier,
+      questionLabel: '3',
+      optionLabel: 'b',
+      text: 'no',
+    },
+  }),
+  buildTestInstance(OptionAddedToSurveyQuestion, {
+    payload: {
+      aggregateCompositeIdentifier,
+      questionLabel: '3',
+      optionLabel: 'c',
+      text: 'maybe so',
+    },
+  }),
+  buildTestInstance(SurveyAnalyzerCreated, {
+    payload: {
+      aggregateCompositeIdentifier,
+      name: analyzerName,
+    },
+  }),
+  buildTestInstance(CategoryAddedToSurveyAnalyzer, {
+    payload: {
+      aggregateCompositeIdentifier,
+      analyzerName,
+      category: 'red',
+    },
+  }),
+  buildTestInstance(CategoryAddedToSurveyAnalyzer, {
+    payload: {
+      aggregateCompositeIdentifier,
+      analyzerName,
+      category: 'white',
+    },
+  }),
+  buildTestInstance(CategoryAddedToSurveyAnalyzer, {
+    payload: {
+      aggregateCompositeIdentifier,
+      analyzerName,
+      category: 'yellow',
+    },
+  }),
+  buildTestInstance(CategoryAddedToSurveyAnalyzer, {
+    payload: {
+      aggregateCompositeIdentifier,
+      analyzerName,
+      category: 'black',
+    },
+  }),
+  buildTestInstance(ValueAddedForSurveyOption, {
+    payload: {
+      aggregateCompositeIdentifier,
+      analyzerName,
+      questionLabel: '1',
+      optionLabel: 'a',
+      valuesByCategory: {
+        white: existingValue,
       },
     },
-    analyzers: {
-      [analyzerName]: {
-        name: 'Balance Checker',
-        categories: {
-          red: SurveyAnalysisCategory.fromPersistenceDto({
-            label: 'red',
-          }) as SurveyAnalysisCategory,
-          white: SurveyAnalysisCategory.fromPersistenceDto({
-            label: 'white',
-          }) as SurveyAnalysisCategory,
-          yellow: SurveyAnalysisCategory.fromPersistenceDto({
-            label: 'yellow',
-          }) as SurveyAnalysisCategory,
-          black: SurveyAnalysisCategory.fromPersistenceDto({
-            label: 'black',
-          }) as SurveyAnalysisCategory,
-        },
-        valuesByQuestion: {
-          // can we have type-safety here?
-          1: {
-            a: {
-              white: existingValue,
-            },
-            b: {
-              yellow: 1,
-            },
-          },
-          2: {
-            a: {
-              white: 1,
-            },
-            b: {
-              yellow: 1,
-            },
-            // 2(c) has no values to start
-            // c: {
-            //   red: 1,
-            // },
-          },
-          // 3 has no values to start
-          //   3: {
-          //     a: {
-          //       white: 1,
-          //     },
-          //     b: {
-          //       yellow: 1,
-          //     },
-          //     c: {
-          //       red: 1,
-          //     },
-          //   },
-        },
+  }),
+  buildTestInstance(ValueAddedForSurveyOption, {
+    payload: {
+      aggregateCompositeIdentifier,
+      analyzerName,
+      questionLabel: '1',
+      optionLabel: 'b',
+      valuesByCategory: {
+        yellow: 1,
       },
     },
-  },
-  { shouldValidate: true },
-);
+  }),
+  buildTestInstance(ValueAddedForSurveyOption, {
+    payload: {
+      aggregateCompositeIdentifier,
+      analyzerName,
+      questionLabel: '2',
+      optionLabel: 'a',
+      valuesByCategory: {
+        white: 1,
+      },
+    },
+  }),
+  buildTestInstance(ValueAddedForSurveyOption, {
+    payload: {
+      aggregateCompositeIdentifier,
+      analyzerName,
+      questionLabel: '2',
+      optionLabel: 'b',
+      valuesByCategory: {
+        yellow: 1,
+      },
+    },
+  }),
+  // 2(c) has no values to start
+  // c: {
+  //   red: 1,
+  // },
+  // },
+  // 3 has no values to start
+  //   3: {
+  //     a: {
+  //       white: 1,
+  //     },
+  //     b: {
+  //       yellow: 1,
+  //     },
+  //     c: {
+  //       red: 1,
+  //     },
+  //   },
+]) as Survey;
 
 const targetQuestionLabel = '2';
 const targetOptionLabel = 'c';
