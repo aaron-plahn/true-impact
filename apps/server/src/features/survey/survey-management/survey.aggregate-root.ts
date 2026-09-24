@@ -927,18 +927,18 @@ export class Survey extends EventSourcedAggregateRoot {
   }): this | TrueImpactError {
     // note that you are allowed to add flags after a survey is finalized as this doesn't affect survey completion. The participant is unaware of the flags.
 
-    const updatedQuestion =
+    const targetQuestion =
       this.get(questionLabel) ||
       new TrueImpactError(
         `You cannot add flag [${flagId}] to option [${optionLabel}] for question [${questionLabel}] as there is no such question in survey [${this.name}]`,
       );
 
-    if (updatedQuestion instanceof TrueImpactError) {
-      return updatedQuestion;
+    if (targetQuestion instanceof TrueImpactError) {
+      return targetQuestion;
     }
 
     const targetOption =
-      updatedQuestion?.get(optionLabel) ||
+      targetQuestion?.get(optionLabel) ||
       new TrueImpactError(
         `You cannot add flag [${flagId}] to option [${optionLabel}] for question [${questionLabel}] in survey [${this.name}] as there is no such option`,
       );
@@ -956,12 +956,10 @@ export class Survey extends EventSourcedAggregateRoot {
       );
     }
 
-    targetOption.flagIds.add(flagId);
-
     // was this necessary?
     // updatedQuestion.options.set(optionLabel, optionValidationResult);
 
-    this.questionBank.set(questionLabel, updatedQuestion);
+    this.questionBank.set(questionLabel, targetQuestion);
 
     /**
      * Note that there is nothing that prevents you from modifying flags after a survey as finalized for use.
@@ -971,6 +969,8 @@ export class Survey extends EventSourcedAggregateRoot {
         payload: {
           aggregateCompositeIdentifier: this.getAggregateCompositeIdentifier(),
           flagId,
+          questionLabel,
+          optionLabel,
         },
       }),
     );
@@ -1317,7 +1317,7 @@ export class Survey extends EventSourcedAggregateRoot {
     return this;
   }
 
-  handleOptionAddedToSurvey(event: OptionAddedToSurveyQuestion) {
+  handleOptionAddedToSurveyQuestion(event: OptionAddedToSurveyQuestion) {
     const {
       payload: { questionLabel, optionLabel, text },
     } = event;
@@ -1330,6 +1330,8 @@ export class Survey extends EventSourcedAggregateRoot {
         flagIds: [],
       }),
     );
+
+    return this;
   }
 
   handleFollowUpQuestionAddedForSurveyOption(
@@ -1396,6 +1398,17 @@ export class Survey extends EventSourcedAggregateRoot {
 
   handleSurveyOpenedToPublic(_event: SurveyOpenedToPublic) {
     this.isOpenToPublic = true;
+
+    return this;
+  }
+
+  handleSurveyOptionFlagged({
+    payload: { questionLabel, optionLabel, flagId },
+  }: SurveyOptionFlagged) {
+    this.questionBank
+      .get(questionLabel)
+      ?.options.get(optionLabel)
+      ?.flagIds.add(flagId);
 
     return this;
   }

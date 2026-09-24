@@ -4,6 +4,8 @@ import { SurveyCompositeIdentifier } from '../../survey.composite-identifier';
 export class SurveyOptionFlaggedPayload {
   aggregateCompositeIdentifier: SurveyCompositeIdentifier;
   flagId: string;
+  questionLabel: string;
+  optionLabel: string;
 }
 
 // TODO data examples

@@ -11,7 +11,7 @@ export class OpenSurveyToAnonymousIndividualPayload {
 
 export class OptionAddedToSurveyQuestion {
   // TODO be consisten with command type formats
-  readonly type = 'FOLLOW-UP_QUESTION_ADDED_FOR_SURVEY';
+  readonly type = 'OPTION_ADDED_TO_SURVEY_QUESTION';
 
   readonly payload: OpenSurveyToAnonymousIndividualPayload;
 
