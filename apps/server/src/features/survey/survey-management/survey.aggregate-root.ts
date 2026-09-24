@@ -1419,6 +1419,8 @@ export class Survey extends EventSourcedAggregateRoot {
     }
 
     this.accessTokensByHash.set(hash, buildResult);
+
+    return this;
   }
 
   handleSurveyOpenedToPublic(_event: SurveyOpenedToPublic) {
