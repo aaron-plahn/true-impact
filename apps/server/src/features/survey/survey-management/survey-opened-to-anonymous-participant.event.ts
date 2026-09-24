@@ -7,6 +7,7 @@ export class SurveyOpenedToAnonymousParticipantPayload {
   dateOpened: string;
   dateExpires: string;
   hash: string;
+  algorithm: string;
 }
 
 export class SurveyOpenedToAnonymousParticipant {

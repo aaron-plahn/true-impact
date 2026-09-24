@@ -36,9 +36,12 @@ import {
 import { SurveyImported } from './commands/import-survey/survey-imported.event';
 import { SurveyOpenedToPublic } from './commands/open-survey-to-client/survey-opened-to-public.event';
 import { SurveyOptionFlagged } from './commands/survey-option-flagged.event';
-import { SurveyCreated } from './events';
+import { SurveyAccessCodeRedeemed, SurveyCreated } from './events';
 import { SurveyAccessToken } from './survey-access-token.entity';
-import { SurveyOpenedToAnonymousParticipant } from './survey-opened-to-anonymous-participant.event';
+import {
+  SurveyOpenedToAnonymousParticipant,
+  SurveyOpenedToAnonymousParticipantPayload,
+} from './survey-opened-to-anonymous-participant.event';
 import { SurveyOption } from './survey-option.entity';
 import {
   SurveyQuestion,
@@ -1237,7 +1240,6 @@ export class Survey extends EventSourcedAggregateRoot {
 
     // TODO avoid collisions
     // We should do this now.
-    this.accessTokensByHash.set(hash, buildResult);
 
     return this.apply(
       new SurveyOpenedToAnonymousParticipant({
@@ -1247,20 +1249,36 @@ export class Survey extends EventSourcedAggregateRoot {
           dateExpires: dateOfExpiry,
           dateOpened,
           hash,
+          algorithm: 'TODO = do this now!',
         },
       }),
     );
   }
 
+  /**
+   * This is called automatically internally by the service layer.
+   * Do we really need validation, or can that service simply emit the event?
+   */
   @UpdateMethod()
-  revokeAccessCode(hashedAccessCode: string): Survey | TrueImpactError {
-    if (!this.accessTokensByHash.has(hashedAccessCode)) {
+  redeemAccessCode(hashedAccessCode: string): Survey | TrueImpactError {
+    const accessToken = this.accessTokensByHash.get(hashedAccessCode);
+
+    if (!accessToken) {
       return new TrueImpactError('Failed to revoke unknown access code.');
     }
 
-    this.accessTokensByHash.delete(hashedAccessCode);
+    // we append this on the event for projections' convenience
+    const { participantCompositeIdentifier } = accessToken;
 
-    return this;
+    return this.apply(
+      new SurveyAccessCodeRedeemed({
+        payload: {
+          aggregateCompositeIdentifier: this.getAggregateCompositeIdentifier(),
+          hashedAccessCode,
+          participantCompositeIdentifier,
+        },
+      }),
+    );
   }
 
   static fromSurveyCreated(event: SurveyCreated): Survey | TrueImpactError {
@@ -1423,8 +1441,39 @@ export class Survey extends EventSourcedAggregateRoot {
     return this;
   }
 
+  handleSurveyOpenedToAnonymousParticipant({
+    payload: { dateExpires, dateOpened, hash, algorithm },
+  }: {
+    payload: SurveyOpenedToAnonymousParticipantPayload;
+  }) {
+    const buildResult = SurveyAccessToken.openAnonymousIndividualAccess({
+      dateCreated: dateOpened,
+      hash,
+      algorithm,
+      dateExpires,
+    });
+
+    if (buildResult instanceof TrueImpactError) {
+      return buildResult;
+    }
+
+    // TODO avoid collisions
+    // We should do this now.
+    this.accessTokensByHash.set(hash, buildResult);
+
+    return this;
+  }
+
   handleSurveyOpenedToPublic(_event: SurveyOpenedToPublic) {
     this.isOpenToPublic = true;
+
+    return this;
+  }
+
+  handleSurveyAccessCodeRedeemed({
+    payload: { hashedAccessCode },
+  }: SurveyAccessCodeRedeemed) {
+    this.accessTokensByHash.delete(hashedAccessCode);
 
     return this;
   }

@@ -106,7 +106,10 @@ import { OpenSurveyToPublic } from './survey-management/commands/open-survey-to-
 import { OpenSurveyToPublicCommandHandler } from './survey-management/commands/open-survey-to-client/open-survey-to-public.command-handler';
 import { SurveyOpenedToPublic } from './survey-management/commands/open-survey-to-client/survey-opened-to-public.event';
 import { SurveyOptionFlagged } from './survey-management/commands/survey-option-flagged.event';
-import { SurveyCreated } from './survey-management/events';
+import {
+  SurveyAccessCodeRedeemed,
+  SurveyCreated,
+} from './survey-management/events';
 import { SurveyOpenedToAnonymousParticipant } from './survey-management/survey-opened-to-anonymous-participant.event';
 import {
   AcknowledgeResponseForSurveyQuestionHasBeenViewed,
@@ -396,6 +399,11 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, FinalizeSurvey];
               doc as unknown as SurveyOpenedToPublic,
             );
           })
+          .register('SURVEY_ACCESS_CODE_REDEEMED', (doc) => {
+            return SurveyAccessCodeRedeemed.fromPersistenceDto(
+              doc as unknown as SurveyAccessCodeRedeemed,
+            );
+          })
           .register('SURVEY_ANALYZER_CREATED', (doc) => {
             return SurveyAnalyzerCreated.fromPersistenceDto(
               doc as unknown as SurveyAnalyzerCreated,
@@ -534,7 +542,7 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, FinalizeSurvey];
             /**
              * TODO We need to support reuseable codes for group use.
              */
-            const updated = target.revokeAccessCode(hashedAccessCode);
+            const updated = target.redeemAccessCode(hashedAccessCode);
 
             if (updated instanceof Error) {
               return updated;
