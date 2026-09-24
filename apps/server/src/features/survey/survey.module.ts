@@ -45,8 +45,11 @@ import {
   AddCategoryToSurveyAnalyzerCommandHandler,
   AddValueForSurveyOption,
   AddValueForSurveyOptionCommandHandler,
+  CategoryAddedToSurveyAnalyzer,
   CreateAnalyzerForSurvey,
   CreateAnalyzerForSurveyCommandHandler,
+  SurveyAnalyzerCreated,
+  ValueAddedForSurveyOption,
 } from './survey-analysis';
 import {
   AbandonSurveyCompletion,
@@ -391,6 +394,21 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, FinalizeSurvey];
           .register('SURVEY_OPENED_TO_PUBLIC', (doc) => {
             return SurveyOpenedToPublic.fromPersistenceDto(
               doc as unknown as SurveyOpenedToPublic,
+            );
+          })
+          .register('SURVEY_ANALYZER_CREATED', (doc) => {
+            return SurveyAnalyzerCreated.fromPersistenceDto(
+              doc as unknown as SurveyAnalyzerCreated,
+            );
+          })
+          .register('CATEGORY_ADDED_TO_SURVEY_ANALYZER', (doc) => {
+            return CategoryAddedToSurveyAnalyzer.fromPersistenceDto(
+              doc as unknown as CategoryAddedToSurveyAnalyzer,
+            );
+          })
+          .register('VALUE_ADDED_FOR_SURVEY_OPTION', (doc) => {
+            return ValueAddedForSurveyOption.fromPersistenceDto(
+              doc as unknown as ValueAddedForSurveyOption,
             );
           })
           .register('SURVEY_IMPORTED', (doc) => {

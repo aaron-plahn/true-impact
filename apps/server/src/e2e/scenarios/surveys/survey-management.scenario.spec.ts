@@ -206,12 +206,12 @@ describe(`Survey Management Scenarios`, () => {
           /**
            * We need to talk to the business folks and see if surveys with a duplicate name are
            * a problem in practice. My concern is that a participant might respond to the wrong version
-           * of a survey. 
-           * 
+           * of a survey.
+           *
            * If we want to enforce uniqueness, we have a few options, including
            * a. Use a reservations system (e.g., a reserverations table that is written to transactionally with the event)
            * b. Allow collisions but emit compensating events from a reactor on the read model side (this is good if collisions are rare)
-ere i      * c. Warn the user creating a survey with a duplicate name in the UX if ths already a survey with the given name (could be in conjunction with b) but have no explicit command validation around this
+           * c. Warn the user creating a survey with a duplicate name in the UX if ths already a survey with the given name (could be in conjunction with b) but have no explicit command validation around this
            */
           describe.skip(`when there is already a survey with the given name`, () => {
             it(`should return the expected error message`, async () => {

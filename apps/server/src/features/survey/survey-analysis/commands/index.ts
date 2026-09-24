@@ -2,5 +2,8 @@ export * from './add-category-to-survey-analyzer.command-handler';
 export * from './add-category-to-survey-anaylzer.command';
 export * from './add-value-for-survey-option.command';
 export * from './add-value-for-survey-option.command-handler';
+export * from './category-added-to-survey-analyzer.event';
 export * from './create-analyzer-for-survey.command';
 export * from './create-analyzer-for-survey.command-handler';
+export * from './survey-analyzer-created.event';
+export * from './value-added-for-survey-option.event';

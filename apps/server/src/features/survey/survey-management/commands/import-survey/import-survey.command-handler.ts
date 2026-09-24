@@ -99,7 +99,7 @@ const deepAddOptionToQuestion = (
         return acc;
       }
 
-      return acc.addValueForOption({
+      return acc.addValuesForOption({
         analyzerName,
         questionLabel: parentQuestionLabel,
         optionLabel: option.label,

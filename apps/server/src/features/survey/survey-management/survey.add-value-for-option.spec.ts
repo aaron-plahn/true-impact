@@ -130,7 +130,7 @@ describe(`Survey.addValueForOption`, () => {
                 const newValue = 1;
 
                 it(`should add the new value`, () => {
-                  const result = targetSurvey.addValueForOption({
+                  const result = targetSurvey.addValuesForOption({
                     analyzerName,
                     questionLabel: targetQuestionLabel,
                     optionLabel: targetOptionLabel,
@@ -162,7 +162,7 @@ describe(`Survey.addValueForOption`, () => {
                 it(`should return the expected error`, () => {
                   const invalidValue = -15;
 
-                  const result = targetSurvey.addValueForOption({
+                  const result = targetSurvey.addValuesForOption({
                     analyzerName,
                     questionLabel: targetQuestionLabel,
                     optionLabel: targetOptionLabel,
@@ -195,7 +195,7 @@ describe(`Survey.addValueForOption`, () => {
               const newValue = 12;
 
               it(`should return the expected error`, () => {
-                const result = targetSurvey.addValueForOption({
+                const result = targetSurvey.addValuesForOption({
                   analyzerName,
                   questionLabel: existingQuestionLabel,
                   optionLabel: existingOptionLabel,
@@ -232,7 +232,7 @@ describe(`Survey.addValueForOption`, () => {
                 };
 
                 it(`should add all values for the given option`, () => {
-                  const result = targetSurvey.addValueForOption({
+                  const result = targetSurvey.addValuesForOption({
                     analyzerName,
                     questionLabel: targetQuestionLabel,
                     optionLabel: targetOptionLabel,
@@ -284,7 +284,7 @@ describe(`Survey.addValueForOption`, () => {
                   const categoryWithExistingValue = 'white';
                   const newValue = 5;
 
-                  const result = targetSurvey.addValueForOption({
+                  const result = targetSurvey.addValuesForOption({
                     analyzerName,
                     questionLabel: questionWithExistingValue,
                     optionLabel: optionWithExistingValue,
@@ -313,7 +313,7 @@ describe(`Survey.addValueForOption`, () => {
               const valueForMissingCategory = 12;
 
               it(`should return the expected error`, () => {
-                const result = targetSurvey.addValueForOption({
+                const result = targetSurvey.addValuesForOption({
                   analyzerName,
                   questionLabel: targetQuestionLabel,
                   optionLabel: targetOptionLabel,
@@ -346,7 +346,7 @@ describe(`Survey.addValueForOption`, () => {
 
           const failedNewValue = 1;
 
-          const result = targetSurvey.addValueForOption({
+          const result = targetSurvey.addValuesForOption({
             analyzerName,
             questionLabel: targetQuestionLabel,
             optionLabel: missingOptionLabel,
@@ -376,7 +376,7 @@ describe(`Survey.addValueForOption`, () => {
 
         const failedNewValue = 2;
 
-        const result = targetSurvey.addValueForOption({
+        const result = targetSurvey.addValuesForOption({
           analyzerName,
           questionLabel: missingQuestionLabel,
           optionLabel: 'a',
@@ -401,7 +401,7 @@ describe(`Survey.addValueForOption`, () => {
     const bogusAnalyzerName = 'Richter Scale';
 
     it(`should return the expected error`, () => {
-      const result = targetSurvey.addValueForOption({
+      const result = targetSurvey.addValuesForOption({
         analyzerName: bogusAnalyzerName,
         questionLabel: targetQuestionLabel,
         optionLabel: targetOptionLabel,

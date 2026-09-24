@@ -141,6 +141,7 @@ export class SurveyOption extends Entity {
   // TODO We may want to allow a top-level flat ordered list of follow-up questions
   // Note that it is the responsibility of the `Survey` to validate the follow-up question's existence before passing the request up the line
   @UpdateMethod()
+  // TODO should this be `canAddFollowUpQuestion`?
   addFollowUpQuestion(label: string): this | TrueImpactError {
     if (this.followUpQuestionLabel) {
       return new TrueImpactError(

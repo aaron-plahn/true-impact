@@ -18,9 +18,13 @@ import {
 import { LookupTable } from '../../../libs/data-types/schema-management/decorators/lookup-table.decorator';
 import { DONE, SURVEY_AGGREGATE_TYPE } from '../constants';
 import {
+  CategoryAddedToSurveyAnalyzer,
   SurveyAnalyzer,
+  SurveyAnalyzerCreated,
   SurveyAnalyzerPersistenceDto,
+  ValueAddedForSurveyOption,
 } from '../survey-analysis';
+import { SurveyAnalysisCategory } from '../survey-analysis/models/survey-analysis-category';
 import { SurveyParticipantCompositeIdentifier } from '../survey-completion/models';
 import {
   FollowUpQuestionAddedForSurveyOption,
@@ -1014,11 +1018,17 @@ export class Survey extends EventSourcedAggregateRoot {
       );
     }
 
-    this.analyzersByName.set(name, SurveyAnalyzer.buildEmpty({ name }));
-
-    return this;
+    return this.apply(
+      new SurveyAnalyzerCreated({
+        payload: {
+          aggregateCompositeIdentifier: this.getAggregateCompositeIdentifier(),
+          name,
+        },
+      }),
+    );
   }
 
+  // TODO for readability let's put the event handlers next to corresponding commands where possible
   @UpdateMethod()
   addCategoryForAnalyzer({
     analyzerName,
@@ -1030,7 +1040,7 @@ export class Survey extends EventSourcedAggregateRoot {
     const targetAnalyzer = this.analyzersByName.get(analyzerName);
 
     const updatedAnalyzer =
-      targetAnalyzer?.addCategory(category) ||
+      targetAnalyzer?.canAddCategory(category) ||
       new TrueImpactError(
         `You cannot add category [${category}] to analyzer [${analyzerName}] in survey [${this.name}], as there is no such analyzer in the target survey.`,
       );
@@ -1042,13 +1052,19 @@ export class Survey extends EventSourcedAggregateRoot {
       );
     }
 
-    this.analyzersByName.set(analyzerName, updatedAnalyzer);
-
-    return this;
+    return this.apply(
+      new CategoryAddedToSurveyAnalyzer({
+        payload: {
+          aggregateCompositeIdentifier: this.getAggregateCompositeIdentifier(),
+          analyzerName,
+          category,
+        },
+      }),
+    );
   }
 
   @UpdateMethod()
-  addValueForOption({
+  addValuesForOption({
     analyzerName,
     questionLabel,
     optionLabel,
@@ -1101,23 +1117,31 @@ export class Survey extends EventSourcedAggregateRoot {
       analyzerName,
     ) as SurveyAnalyzer;
 
-    const updatedAnalyzer = targetAnalyzer.addValuesForOption(
+    const analyzerValidationResult = targetAnalyzer.addValuesForOption(
       questionLabel,
       optionLabel,
       valuesByCategory,
     );
 
-    if (updatedAnalyzer instanceof TrueImpactError) {
+    if (analyzerValidationResult instanceof TrueImpactError) {
       return new TrueImpactError(
         // Here we ensure the survey name is available to the user
         `Failed to add values for an option in survey [${this.name}] (analyzer [${analyzerName}])`,
-        [updatedAnalyzer],
+        [analyzerValidationResult],
       );
     }
 
-    this.analyzersByName.set(analyzerName, updatedAnalyzer);
-
-    return this;
+    return this.apply(
+      new ValueAddedForSurveyOption({
+        payload: {
+          aggregateCompositeIdentifier: this.getAggregateCompositeIdentifier(),
+          analyzerName,
+          questionLabel,
+          optionLabel,
+          valuesByCategory,
+        },
+      }),
+    );
   }
 
   // TODO presumably we want a `closeSurvey` as well.
@@ -1372,6 +1396,7 @@ export class Survey extends EventSourcedAggregateRoot {
     return this;
   }
 
+  // # Publication
   handleSurveyOpenedToParticipant({
     payload: {
       hash,
@@ -1402,6 +1427,7 @@ export class Survey extends EventSourcedAggregateRoot {
     return this;
   }
 
+  // # Flags
   handleSurveyOptionFlagged({
     payload: { questionLabel, optionLabel, flagId },
   }: SurveyOptionFlagged) {
@@ -1413,6 +1439,63 @@ export class Survey extends EventSourcedAggregateRoot {
     return this;
   }
 
+  // # Configurable Dynamic Analysis
+  handleSurveyAnalyzerCreated({ payload: { name } }: SurveyAnalyzerCreated) {
+    this.analyzersByName.set(name, SurveyAnalyzer.buildEmpty({ name }));
+
+    return this;
+  }
+
+  // TODO To or for?
+  handleCategoryAddedToSurveyAnalyzer({
+    payload: { analyzerName, category },
+  }: CategoryAddedToSurveyAnalyzer) {
+    this.analyzersByName.get(analyzerName)?.categoriesByLabel.set(
+      category,
+      new SurveyAnalysisCategory({
+        label: category,
+      }),
+    );
+
+    return this;
+  }
+
+  handleValueAddedForSurveyOption({
+    payload: { questionLabel, optionLabel, analyzerName, valuesByCategory },
+  }: ValueAddedForSurveyOption) {
+    const targetAnalyzer = this.analyzersByName.get(analyzerName);
+
+    const validationResult = targetAnalyzer?.addValuesForOption(
+      questionLabel,
+      optionLabel,
+      valuesByCategory,
+    );
+
+    if (validationResult instanceof Error) {
+      return validationResult;
+    }
+
+    if (!targetAnalyzer?.valuesByQuestion.has(questionLabel)) {
+      targetAnalyzer?.valuesByQuestion.set(questionLabel, new Map());
+    }
+
+    const targetQuestionValues =
+      targetAnalyzer?.valuesByQuestion.get(questionLabel);
+
+    if (!targetQuestionValues?.has(optionLabel)) {
+      targetQuestionValues?.set(optionLabel, new Map());
+    }
+
+    const targetOptionValues = targetQuestionValues?.get(optionLabel);
+
+    Object.entries(valuesByCategory).forEach(([category, value]) => {
+      targetOptionValues?.set(category, value);
+    });
+
+    return this;
+  }
+
+  // # factories
   // this is an alternative creation event for a Survey
   static fromSurveyImported(event: SurveyImported) {
     const {
