@@ -31,6 +31,7 @@ import {
   OptionAddedToSurveyQuestion,
   QuestionAddedToSurvey,
   SurveyFinalized,
+  SurveyImported,
   SurveyOpenedToParticipant,
 } from './commands';
 import { SurveyOpenedToPublic } from './commands/open-survey-to-public/survey-opened-to-public.event';
@@ -1550,6 +1551,15 @@ export class Survey extends EventSourcedAggregateRoot {
       targetOptionValues?.set(category, value);
     });
 
+    return this;
+  }
+
+  handleSurveyImported(_event: SurveyImported) {
+    /**
+     * We don't currently have any validation that requires knowing whether the survey
+     * was imported. We persist the event because we need this info for upstream
+     * projections (views).
+     */
     return this;
   }
 
