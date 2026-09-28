@@ -10,7 +10,7 @@ import {
   UpdateMethod,
 } from '../../../libs/data-types';
 import { SurveyResponseRecord } from '../survey-completion';
-import { SurveyParticipantCompositeIdentifier } from '../survey-completion/models';
+import { SurveyParticipantCompositeIdentifier } from '../survey-completion/models/survey-participant.composite-identifier';
 import { SURVEY_REVIEW_AGGREGATE_TYPE } from './constants';
 import {
   SurveyQuestionReviewRecord,

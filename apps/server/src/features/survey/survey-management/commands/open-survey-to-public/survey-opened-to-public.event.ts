@@ -1,5 +1,5 @@
 import { plainToInstance } from 'class-transformer';
-import { SurveyCompositeIdentifier } from 'src/features/survey/survey.composite-identifier';
+import { SurveyCompositeIdentifier } from '../../../../../features/survey/survey.composite-identifier';
 
 export class SurveyOpenedToPublicPayload {
   aggregateCompositeIdentifier: SurveyCompositeIdentifier;

@@ -25,7 +25,7 @@ import {
   ValueAddedForSurveyOption,
 } from '../survey-analysis';
 import { SurveyAnalysisCategory } from '../survey-analysis/models/survey-analysis-category';
-import { SurveyParticipantCompositeIdentifier } from '../survey-completion/models';
+import { SurveyParticipantCompositeIdentifier } from '../survey-completion/models/survey-participant.composite-identifier';
 import {
   FollowUpQuestionAddedForSurveyOption,
   OptionAddedToSurveyQuestion,
@@ -33,7 +33,6 @@ import {
   SurveyFinalized,
   SurveyOpenedToParticipant,
 } from './commands';
-import { SurveyImported } from './commands/import-survey/survey-imported.event';
 import { SurveyOpenedToPublic } from './commands/open-survey-to-public/survey-opened-to-public.event';
 import { SurveyOptionFlagged } from './commands/survey-option-flagged.event';
 import { SurveyAccessCodeRedeemed, SurveyCreated } from './events';
@@ -1554,66 +1553,11 @@ export class Survey extends EventSourcedAggregateRoot {
     return this;
   }
 
-  // # factories
-  // this is an alternative creation event for a Survey
-  static fromSurveyImported(event: SurveyImported) {
-    const {
-      payload: {
-        aggregateCompositeIdentifier: { id },
-        name,
-        questions,
-        // analyzers,
-      },
-    } = event;
-
-    const questionsAsMap = {};
-
-    questions.forEach((question) => {
-      const optionsForThisQuestion = new Map<string, SurveyOption>();
-
-      question.options.forEach((option) => {
-        optionsForThisQuestion.set(
-          option.label,
-          new SurveyOption({
-            label: option.label,
-            text: option.text,
-            nextQuestionLabel: option.followUpQuestion?.label,
-            // TODO fix this! We need to decouple the event from the import command payload
-            flagIds: [], // option.flags.map((f): string => f.id),
-          }),
-        );
-      });
-
-      questionsAsMap[question.label] = new SurveyQuestion({
-        label: question.label,
-        prompt: question.prompt,
-        options: new Map(),
-      });
-    });
-
-    const dto: SurveyPersistenceDto = {
-      id,
-      isFinal: false,
-      name: name.text,
-      // why do we have maps in a DTO? Shouldn't this be a record?
-      questions: questionsAsMap,
-      topLevelQuestionLabels: [],
-      revision: 0,
-      // TODO support these
-      analyzers: {},
-      accessTokensByHash: {},
-    };
-
-    const instance = Survey.fromPersistenceDto(dto);
-
-    if (instance instanceof Error) {
-      return instance;
-    }
-
-    instance.eventHistory.push(event);
-
-    return instance;
-  }
+  /**
+   * TODO We should move the service layer (command handler) to a static method here.
+   */
+  // static import(dto: ImportSurvey){
+  // }
 
   static fromEventHistory(
     eventHistory: Iterable<DomainEvent>,

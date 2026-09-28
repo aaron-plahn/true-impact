@@ -1,4 +1,8 @@
-import { Literal, NestedDataType, NonEmptyString } from 'src/libs/data-types';
+import {
+  Literal,
+  NestedDataType,
+  NonEmptyString,
+} from '../../../../libs/data-types';
 import { SURVEY_RESPONSE_AGGREGATE_TYPE } from '../../constants';
 
 export const SurveyResponseCompositeIdentifierValuedProp = NestedDataType(

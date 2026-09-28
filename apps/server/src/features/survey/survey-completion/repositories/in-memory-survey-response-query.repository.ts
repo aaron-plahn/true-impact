@@ -1,6 +1,6 @@
 import { Inject } from '@nestjs/common';
 import { PersistenceAcknowledgement } from 'src/libs/cqrs-es';
-import { TrueImpactError } from 'src/libs/data-types';
+import { TrueImpactError } from '../../../../libs/data-types';
 import {
   SurveyViewModel,
   SurveyViewModelClientDto,

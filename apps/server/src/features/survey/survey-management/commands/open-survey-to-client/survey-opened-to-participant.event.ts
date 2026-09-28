@@ -1,10 +1,10 @@
 import { plainToInstance } from 'class-transformer';
-import { NestedDataType, NonEmptyString } from 'src/libs/data-types';
-import { SurveyParticipantCompositeIdentifier } from '../../../../../features/survey/survey-completion/models';
+import { SurveyParticipantCompositeIdentifier } from '../../../../../features/survey/survey-completion/models/survey-participant.composite-identifier';
 import {
   SurveyCompositeIdentifier,
   SurveyCompositeIdentifierValuedProp,
 } from '../../../../../features/survey/survey.composite-identifier';
+import { NestedDataType, NonEmptyString } from '../../../../../libs/data-types';
 
 export class SurveyOpenedToParticipantPayload {
   @SurveyCompositeIdentifierValuedProp

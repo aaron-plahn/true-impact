@@ -77,7 +77,7 @@ import {
   ISurveyValidationServiceForBeginPublicSurvey,
 } from './survey-completion/commands/begin-public-survey';
 import { SduiViewDiffer } from './survey-completion/commands/sdui-view-differ';
-import { SurveyParticipantCompositeIdentifier } from './survey-completion/models';
+import { SurveyParticipantCompositeIdentifier } from './survey-completion/models/survey-participant.composite-identifier';
 import {
   SURVEY_RESPONSE_QUERY_REPOSITORY_INJECTION_TOKEN,
   SurveyResponseQueryService,

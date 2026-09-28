@@ -1,5 +1,5 @@
 import { plainToInstance } from 'class-transformer';
-import { NonEmptyString } from 'src/libs/data-types';
+import { NonEmptyString } from '../../../libs/data-types';
 import {
   SurveyCompositeIdentifier,
   SurveyCompositeIdentifierValuedProp,

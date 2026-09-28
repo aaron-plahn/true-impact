@@ -1,4 +1,3 @@
-import { Optional } from '@nestjs/common';
 import { DomainEvent } from '../../../../libs/cqrs-es';
 import {
   BooleanDataType,
@@ -397,8 +396,6 @@ export class SurveyResponseRecord extends EventSourcedAggregateRoot {
     questionLabel: string,
     chosenOptionLabel: string,
   ): SurveyResponseRecord | TrueImpactError {
-    console.log({ answerQuestion: questionLabel, withOption: Optional });
-
     if (this.hasBeenSubmitted) {
       return new TrueImpactError(
         `You cannot answer question [${questionLabel}] in survey [${this.survey.name}], as the survey has already been submitted.`,

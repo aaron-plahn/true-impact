@@ -6,7 +6,7 @@ import type {
 import {
   TrueImpactError,
   TrueImpactRuntimeException,
-} from 'src/libs/data-types';
+} from '../../../libs/data-types';
 import { Inject } from '../../../libs/framework';
 import { SURVEY_AGGREGATE_TYPE } from '../constants';
 import { Survey } from '../survey-management';
