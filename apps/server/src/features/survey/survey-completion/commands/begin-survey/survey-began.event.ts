@@ -4,10 +4,8 @@ import {
   NestedDataType,
   TrueImpactDataExample,
 } from '../../../../../libs/data-types';
-import {
-  SurveyParticipantCompositeIdentifier,
-  SurveyResponseCompositeIdentifier,
-} from '../../models';
+import { SurveyParticipantCompositeIdentifier } from '../../models';
+import { SurveyResponseCompositeIdentifier } from '../../models/survey-response-record.composite-identifier';
 
 export class SurveyBeganPayload {
   aggregateCompositeIdentifier: SurveyResponseCompositeIdentifier;

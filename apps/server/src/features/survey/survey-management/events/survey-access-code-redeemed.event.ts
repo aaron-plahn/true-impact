@@ -1,6 +1,6 @@
 import { plainToInstance } from 'class-transformer';
 import { NestedDataType, NonEmptyString } from 'src/libs/data-types';
-import { SurveyParticipantCompositeIdentifier } from '../../survey-completion/models';
+import { SurveyParticipantCompositeIdentifier } from '../../survey-completion/models/survey-participant.composite-identifier';
 import {
   SurveyCompositeIdentifier,
   SurveyCompositeIdentifierValuedProp,

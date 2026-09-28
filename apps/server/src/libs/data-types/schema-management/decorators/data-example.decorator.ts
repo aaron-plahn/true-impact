@@ -44,6 +44,10 @@ export const buildTestInstance = <
   overrides?: DeepPartial<TPersistenceDto>,
   buildOptions: { shouldValidate: boolean } = { shouldValidate: true },
 ): UInstance => {
+  if (!ctor) {
+    throw new Error(`Troubleshoot here!`);
+  }
+
   const dataExampleMetadata = Reflect.get(
     ctor,
     TRUE_IMPACT_DATA_EXAMPLE_METADATA,

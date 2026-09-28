@@ -2,7 +2,7 @@ import {
   NestedDataType,
   TrueImpactDataExample,
 } from '../../../../libs/data-types';
-import { SurveyResponseCompositeIdentifier } from '../../survey-completion';
+import { SurveyResponseCompositeIdentifier } from '../../survey-completion/models';
 
 @TrueImpactDataExample<SubmitPartialSurveyReview>({
   example: {

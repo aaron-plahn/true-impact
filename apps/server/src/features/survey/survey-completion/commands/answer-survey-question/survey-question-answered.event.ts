@@ -6,7 +6,7 @@ import {
 import {
   SurveyResponseCompositeIdentifier,
   SurveyResponseCompositeIdentifierValuedProp,
-} from '../../models';
+} from '../../models/survey-response-record.composite-identifier';
 
 export class SurveyQuestionAnsweredPayload {
   @SurveyResponseCompositeIdentifierValuedProp
