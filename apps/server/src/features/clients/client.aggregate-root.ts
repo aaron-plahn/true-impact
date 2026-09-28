@@ -2,7 +2,7 @@ import { CreateClient } from './commands/create-client.command';
 // TODO Barrel export?
 import { FullName, FullNameDto } from '../../common/full-name';
 import {
-  AggregateRoot,
+  EventSourcedAggregateRoot,
   isNonEmptyString,
   NestedDataType,
   NonEmptyString,
@@ -13,8 +13,14 @@ import {
   UpdateMethod,
 } from '../../libs/data-types';
 
+import { DomainEvent } from 'src/libs/cqrs-es';
 import type { YesNoOrUnknown } from '../../libs/data-types';
-import { CLIENT_AGGREGATE_TYPE } from './client.composite-identifier';
+import {
+  CLIENT_AGGREGATE_TYPE,
+  ClientCompositeIdentifier,
+} from './client.composite-identifier';
+import { ClientCreated, CommunityAffiliationAddedForClient } from './commands';
+import { ClientFlagged } from './commands/client-flagged.event';
 
 interface ValidateInvariants<T> {
   // Should we make this an either?
@@ -52,7 +58,7 @@ export class ClientPersistenceDto {
   },
 })
 export class Client
-  extends AggregateRoot
+  extends EventSourcedAggregateRoot
   implements ValidateInvariants<Client>
 {
   static readonly type = CLIENT_AGGREGATE_TYPE;
@@ -173,6 +179,19 @@ export class Client
       );
     }
 
+    return this.apply(
+      new CommunityAffiliationAddedForClient({
+        payload: {
+          aggregateCompositeIdentifier: this.getCompositeIdentifier(),
+          communityId,
+        },
+      }),
+    );
+  }
+
+  handleCommunityAffiliationAddedForClient({
+    payload: { communityId },
+  }: CommunityAffiliationAddedForClient) {
     this.communityId = communityId;
 
     this.isIndigenous = 'Yes';
@@ -188,6 +207,17 @@ export class Client
       );
     }
 
+    return this.apply(
+      new ClientFlagged({
+        payload: {
+          aggregateCompositeIdentifier: this.getCompositeIdentifier(),
+          flagId,
+        },
+      }),
+    );
+  }
+
+  handleClientFlagged({ payload: { flagId } }: ClientFlagged) {
     this.flagIds.push(flagId);
 
     return this;
@@ -219,8 +249,24 @@ export class Client
     return allErrors;
   }
 
+  getCompositeIdentifier(): ClientCompositeIdentifier {
+    return {
+      type: CLIENT_AGGREGATE_TYPE,
+      id: this.id,
+    };
+  }
+
   toPersistenceDto(): ClientPersistenceDto {
     return JSON.parse(JSON.stringify(this)) as ClientPersistenceDto;
+  }
+
+  public static fromEventHistory(
+    eventHistory: Iterable<DomainEvent>,
+  ): Client | TrueImpactError | null {
+    return EventSourcedAggregateRoot.fromEventHistory.call(
+      Client,
+      eventHistory,
+    ) as Client;
   }
 
   public static fromPersistenceDto(
@@ -235,21 +281,15 @@ export class Client
   public static fromCreateClientCommand(
     command: CreateClient & { id: string },
   ): Client | TrueImpactBadUserInputError {
-    const {
-      id,
-      firstName,
-      lastName,
-      dateOfBirth,
-      isIndigenous,
-      communityId: community,
-    } = command;
+    const { id, firstName, lastName, dateOfBirth, isIndigenous, communityId } =
+      command;
 
     const unverifiedInstance = new Client({
       id,
       fullName: { firstName, lastName, middleNames: [] },
       dateOfBirth,
       isIndigenous,
-      communityId: community,
+      communityId,
       revision: 1,
       flagIds: [], // none to start with
     });
@@ -259,6 +299,21 @@ export class Client
     if (result instanceof TrueImpactError) {
       return new TrueImpactBadUserInputError([result]);
     }
+
+    result.eventHistory.push(
+      new ClientCreated({
+        payload: {
+          aggregateCompositeIdentifier: result.getCompositeIdentifier(),
+          // TODO this has to be an object!
+          fullName: '', // todo fix this
+          dateOfBirth: parseInt(result.dateOfBirth),
+          isIndigenous: isNonEmptyString(isIndigenous)
+            ? isIndigenous
+            : 'Unknown',
+          communityId,
+        },
+      }),
+    );
 
     return result;
   }

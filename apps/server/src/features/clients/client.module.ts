@@ -1,13 +1,13 @@
 import { forwardRef } from '@nestjs/common';
-import { InMemoryCommandRepository } from '../../common/persistence';
-import { CommandHandlerService } from '../../libs/cqrs-es';
+import { EventFactory } from 'src/postgresql/event-factory';
+import { CommandHandlerService, IEventRepository } from '../../libs/cqrs-es';
 import { Module, ModuleRef } from '../../libs/framework';
 import { CommunityModule } from '../communities/community.module';
 import { FlagModule } from '../flags/flag.module';
 import { SurveyModule } from '../survey/survey.module';
 import { UserModule } from '../users/user.module';
-import { Client } from './client.aggregate-root';
 import { ClientController } from './client.controller';
+import { ClientCreated } from './commands';
 import { AddCommunityAffiliationForClient } from './commands/add-community-affiliation-for-client';
 import { AddCommunityAffiliationForClientCommandHandler } from './commands/add-community-affiliation-for-client.command-handler';
 import { CreateClient } from './commands/create-client.command';
@@ -33,7 +33,19 @@ import { ClientQueryService } from './services/client-query.service';
     AddCommunityAffiliationForClientCommandHandler,
     {
       provide: CLIENT_COMMAND_REPOSITORY_INJECTION_TOKEN,
-      useFactory: () => new InMemoryCommandRepository(Client),
+      useFactory: (
+        eventRepository: IEventRepository,
+        eventFactory: EventFactory,
+      ) => {
+        eventFactory.register('CLIENT_CREATED', (doc) => {
+          return ClientCreated.fromPersistenceDto(
+            doc as unknown as ClientCreated,
+          );
+        });
+
+        // we need one of these
+        return new PostgresClientCommandRepository(eventRepository);
+      },
     },
     {
       provide: CommandHandlerService,
