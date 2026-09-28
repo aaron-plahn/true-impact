@@ -128,7 +128,6 @@ export class SurveyAnalyzer extends Entity {
       );
     }
 
-    // Who should be responsible for validating the category schema?
     const newCategory = SurveyAnalysisCategory.fromPersistenceDto(
       {
         label: category,

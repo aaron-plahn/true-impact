@@ -2,7 +2,7 @@ import { SurveyViewModelClientDto } from '../../../features/survey/queries/surve
 import {
   AddCategoryToSurveyAnalyzer,
   AddValueForSurveyOption,
-  CreateAnalyzerForSurvey,
+  CreateSurveyAnalyzer,
 } from '../../../features/survey/survey-analysis';
 import { AddQuestionToSurvey } from '../../../features/survey/survey-management';
 import { AddOptionToSurveyQuestion } from '../../../features/survey/survey-management/commands/add-option-to-survey-question.command';
@@ -68,7 +68,7 @@ const addOptionToSurvey = addQuestionToSurvey
 // should we prevent adding an analyzer to a survey that is not yet finalized?
 const finalizeSurvey = addOptionToSurvey.andThen(FinalizeSurvey);
 
-const createAnalyzer = finalizeSurvey.andThen(CreateAnalyzerForSurvey, {
+const createAnalyzer = finalizeSurvey.andThen(CreateSurveyAnalyzer, {
   name: analyzerName,
 });
 
@@ -112,7 +112,7 @@ describe(`Build Survey Analyzer Scenarios`, () => {
               await assertCommandScenarioError({
                 httpClient,
                 endpoint: surveyCommandsEndpoint,
-                stream: createAnalyzer.andThen(CreateAnalyzerForSurvey, {
+                stream: createAnalyzer.andThen(CreateSurveyAnalyzer, {
                   name: analyzerName,
                 }),
                 assertErrorMessageAsExpected: (message) => {
@@ -134,7 +134,7 @@ describe(`Build Survey Analyzer Scenarios`, () => {
               await assertCommandScenarioSuccess({
                 httpClient,
                 endpoint: surveyCommandsEndpoint,
-                stream: createAnalyzer.andThen(CreateAnalyzerForSurvey, {
+                stream: createAnalyzer.andThen(CreateSurveyAnalyzer, {
                   name: uniqueName,
                 }),
                 assertSuccess: async (acks) => {
@@ -176,7 +176,7 @@ describe(`Build Survey Analyzer Scenarios`, () => {
           await assertCommandError({
             httpClient,
             endpoint: surveyCommandsEndpoint,
-            commandFsa: TestCommandStream.buildOne(CreateAnalyzerForSurvey, {
+            commandFsa: TestCommandStream.buildOne(CreateSurveyAnalyzer, {
               aggregateCompositeIdentifier: {
                 id: missingSurveyId,
               },

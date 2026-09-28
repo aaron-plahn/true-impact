@@ -1,9 +1,9 @@
-import { SURVEY_AGGREGATE_TYPE } from '../../../../../features/survey/constants';
+import { TrueImpactDataExample } from '../../../../../libs/data-types';
+import { SURVEY_AGGREGATE_TYPE } from '../../../constants';
 import {
   SurveyCompositeIdentifier,
   SurveyCompositeIdentifierValuedProp,
-} from '../../../../../features/survey/survey.composite-identifier';
-import { TrueImpactDataExample } from '../../../../../libs/data-types';
+} from '../../../survey.composite-identifier';
 
 @TrueImpactDataExample<OpenSurveyToPublic>({
   example: {
@@ -13,7 +13,6 @@ import { TrueImpactDataExample } from '../../../../../libs/data-types';
     },
   },
 })
-// TODO move this
 export class OpenSurveyToPublic {
   static readonly type = 'OPEN_SURVEY_TO_PUBLIC';
 

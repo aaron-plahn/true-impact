@@ -3,9 +3,20 @@ import { SurveyCompositeIdentifier } from '../survey.composite-identifier';
 
 export class SurveyOpenedToAnonymousParticipantPayload {
   aggregateCompositeIdentifier: SurveyCompositeIdentifier;
-  // TODO is this not on the event metadata?
+  /**
+   * We need to pull this from the event metadata. As long as it is
+   * on the payload, it must be taken as the source of truth for
+   * `dateEffective` for this event.
+   *
+   * The tricky thing is that in order to apply the event to
+   * an aggregate root, the metadata must already be on the event.
+   *
+   * One way to solve this is to append the metadata in the domain
+   * model and to avoid overwriting existing timestamps on metadata
+   * at the higher level.
+   */
   dateOpened: string;
-  dateExpires: string;
+  dateOfExpiry: string;
   hash: string;
   algorithm: string;
 }

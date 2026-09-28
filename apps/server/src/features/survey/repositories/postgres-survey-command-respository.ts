@@ -134,7 +134,7 @@ export class PostgresSurveyCommandRepository implements ISurveyCommandRepository
     }
 
     const ack: PersistenceAcknowledgement = {
-      type: instance.getAggregateCompositeIdentifier().type,
+      type: instance.getCompositeIdentifier().type,
       id: instance.getId(),
       // make sure the `fromEventHistory` logic counts the revisions properly - can we have some structural tests around this?
       revision: eventHistory.length.toString(),
@@ -184,7 +184,7 @@ export class PostgresSurveyCommandRepository implements ISurveyCommandRepository
     }
 
     return {
-      ...instance.getAggregateCompositeIdentifier(),
+      ...instance.getCompositeIdentifier(),
       /**
        * This is not the right way to do this.
        *

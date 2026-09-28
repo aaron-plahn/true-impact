@@ -2,7 +2,6 @@ import { plainToInstance } from 'class-transformer';
 import { SurveyPersistenceDto } from '../../../../../features/survey/survey-management';
 import {
   NestedDataType,
-  NonEmptyString,
   TrueImpactDataExample,
 } from '../../../../../libs/data-types';
 import {
@@ -32,7 +31,6 @@ export class SurveyBeganPayload {
   example: {
     type: 'SURVEY_BEGAN',
     revision: 1,
-    streamId: 'survey response record/55',
     payload: {
       aggregateCompositeIdentifier: {
         type: 'survey response record',
@@ -65,19 +63,6 @@ export class SurveyBegan {
   readonly metadata: Record<string, unknown>;
 
   /**
-   * TODO We might want to make this a calculated field using: `${this.payload.aggregateCompositeIdentifier.type}/${this.payload.aggregateCompositeIdentifier.id}`
-   * as each stream targets a single aggregate root. But this approach prevents using the stream ID to store a system-wide unique filed (such as  
-   * streamId = `survey/{surveyName}`) in the future.
-   *
-   * TODO revisit this
-   */
-  @NonEmptyString({
-    label: 'stream ID',
-    description: `groups all events for this event's target aggregate`,
-  })
-  readonly streamId: string;
-
-  /**
    * This is a creation event. The new aggregate root will have revision:0 until this
    * event is persisted, at which point it will come back as 1 (assuming there are no update events for the target aggregate root).
    */
@@ -86,16 +71,13 @@ export class SurveyBegan {
   constructor(event: {
     payload: SurveyBeganPayload;
     metadata: Record<string, unknown>;
-    streamId: string;
   }) {
-    const { payload, metadata, streamId } = event;
+    const { payload, metadata } = event;
 
     this.payload = plainToInstance(SurveyBeganPayload, payload);
 
     // We should apply metadata at a higher level.
     this.metadata = metadata;
-
-    this.streamId = streamId;
   }
 
   // TODO is this really what we want here?

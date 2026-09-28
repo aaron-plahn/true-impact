@@ -31,9 +31,11 @@ export class ValueAddedForSurveyOptionPayload {
     },
   },
 })
-// TODO Why isn't the word `analyzer` in this name?
+/**
+ * We could have called this `AnalysisValueAddedForSurveyOption`. But there is no
+ * other kind of value that could apply to a survey option.
+ */
 export class ValueAddedForSurveyOption {
-  // TODO check that type and payload are always readonly
   readonly type = 'VALUE_ADDED_FOR_SURVEY_OPTION';
 
   readonly payload: ValueAddedForSurveyOptionPayload;

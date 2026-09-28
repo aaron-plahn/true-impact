@@ -377,7 +377,7 @@ export class SurveyResponseRecord extends EventSourcedAggregateRoot {
   }
 
   // TODO base class?
-  getAggregateCompositeIdentifier() {
+  getCompositeIdentifier() {
     return {
       type: SURVEY_RESPONSE_AGGREGATE_TYPE,
       id: this.id,
@@ -464,7 +464,7 @@ export class SurveyResponseRecord extends EventSourcedAggregateRoot {
         payload: {
           aggregateCompositeIdentifier:
             // TODO deal with the chicken-and-egg problem of IDs
-            this.getAggregateCompositeIdentifier() as SurveyResponseCompositeIdentifier,
+            this.getCompositeIdentifier() as SurveyResponseCompositeIdentifier,
           questionLabel,
           chosenOptionLabel,
         },
@@ -511,7 +511,7 @@ export class SurveyResponseRecord extends EventSourcedAggregateRoot {
         },
         payload: {
           aggregateCompositeIdentifier:
-            this.getAggregateCompositeIdentifier() as SurveyResponseCompositeIdentifier,
+            this.getCompositeIdentifier() as SurveyResponseCompositeIdentifier,
         },
       }),
     );
@@ -547,7 +547,7 @@ export class SurveyResponseRecord extends EventSourcedAggregateRoot {
       new SurveyCompletionCancelled({
         payload: {
           aggregateCompositeIdentifier:
-            this.getAggregateCompositeIdentifier() as SurveyResponseCompositeIdentifier,
+            this.getCompositeIdentifier() as SurveyResponseCompositeIdentifier,
           nextAttemptId: replacementAttemptId,
         },
       }),
@@ -578,7 +578,7 @@ export class SurveyResponseRecord extends EventSourcedAggregateRoot {
       new SurveyCompletionAbandoned({
         payload: {
           aggregateCompositeIdentifier:
-            this.getAggregateCompositeIdentifier() as SurveyResponseCompositeIdentifier,
+            this.getCompositeIdentifier() as SurveyResponseCompositeIdentifier,
         },
       });
 
@@ -858,7 +858,6 @@ export class SurveyResponseRecord extends EventSourcedAggregateRoot {
       nextQuestionLabel: survey.getFirstQuestion()?.label,
       eventHistory: [
         new SurveyBegan({
-          streamId: `${SURVEY_RESPONSE_AGGREGATE_TYPE}/${id}`,
           payload: {
             aggregateCompositeIdentifier: {
               type: SURVEY_RESPONSE_AGGREGATE_TYPE,

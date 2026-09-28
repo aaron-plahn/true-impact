@@ -12,6 +12,7 @@ export * from './flag-survey-option.command-handler';
 export * from './follow-up-question-added-for-survey-option.event';
 export * from './import-survey';
 export * from './open-survey-to-client';
+export * from './open-survey-to-public';
 export * from './option-added-to-survey-question.event';
 export * from './remove-option-from-survey-question.command';
 export * from './remove-question-from-survey.command';

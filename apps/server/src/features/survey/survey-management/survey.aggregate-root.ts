@@ -34,7 +34,7 @@ import {
   SurveyOpenedToParticipant,
 } from './commands';
 import { SurveyImported } from './commands/import-survey/survey-imported.event';
-import { SurveyOpenedToPublic } from './commands/open-survey-to-client/survey-opened-to-public.event';
+import { SurveyOpenedToPublic } from './commands/open-survey-to-public/survey-opened-to-public.event';
 import { SurveyOptionFlagged } from './commands/survey-option-flagged.event';
 import { SurveyAccessCodeRedeemed, SurveyCreated } from './events';
 import { SurveyAccessToken } from './survey-access-token.entity';
@@ -222,7 +222,7 @@ export class Survey extends EventSourcedAggregateRoot {
   }
 
   // TODO rename this to getCompositeIdentifier
-  getAggregateCompositeIdentifier() {
+  getCompositeIdentifier() {
     return {
       type: SURVEY_AGGREGATE_TYPE,
       id: this.id,
@@ -850,7 +850,7 @@ export class Survey extends EventSourcedAggregateRoot {
     return this.apply(
       new OptionAddedToSurveyQuestion({
         payload: {
-          aggregateCompositeIdentifier: this.getAggregateCompositeIdentifier(),
+          aggregateCompositeIdentifier: this.getCompositeIdentifier(),
           questionLabel,
           optionLabel,
           text,
@@ -905,7 +905,7 @@ export class Survey extends EventSourcedAggregateRoot {
     return this.apply(
       new FollowUpQuestionAddedForSurveyOption({
         payload: {
-          aggregateCompositeIdentifier: this.getAggregateCompositeIdentifier(),
+          aggregateCompositeIdentifier: this.getCompositeIdentifier(),
           questionLabel,
           optionLabel,
           followUpQuestionLabel: followUpQuestion.label,
@@ -974,7 +974,7 @@ export class Survey extends EventSourcedAggregateRoot {
     return this.apply(
       new SurveyOptionFlagged({
         payload: {
-          aggregateCompositeIdentifier: this.getAggregateCompositeIdentifier(),
+          aggregateCompositeIdentifier: this.getCompositeIdentifier(),
           flagId,
           questionLabel,
           optionLabel,
@@ -1004,7 +1004,7 @@ export class Survey extends EventSourcedAggregateRoot {
     return this.apply(
       new SurveyFinalized({
         payload: {
-          aggregateCompositeIdentifier: this.getAggregateCompositeIdentifier(),
+          aggregateCompositeIdentifier: this.getCompositeIdentifier(),
         },
       }),
     );
@@ -1024,7 +1024,7 @@ export class Survey extends EventSourcedAggregateRoot {
     return this.apply(
       new SurveyAnalyzerCreated({
         payload: {
-          aggregateCompositeIdentifier: this.getAggregateCompositeIdentifier(),
+          aggregateCompositeIdentifier: this.getCompositeIdentifier(),
           name,
         },
       }),
@@ -1058,7 +1058,7 @@ export class Survey extends EventSourcedAggregateRoot {
     return this.apply(
       new CategoryAddedToSurveyAnalyzer({
         payload: {
-          aggregateCompositeIdentifier: this.getAggregateCompositeIdentifier(),
+          aggregateCompositeIdentifier: this.getCompositeIdentifier(),
           analyzerName,
           category,
         },
@@ -1137,7 +1137,7 @@ export class Survey extends EventSourcedAggregateRoot {
     return this.apply(
       new ValueAddedForSurveyOption({
         payload: {
-          aggregateCompositeIdentifier: this.getAggregateCompositeIdentifier(),
+          aggregateCompositeIdentifier: this.getCompositeIdentifier(),
           analyzerName,
           questionLabel,
           optionLabel,
@@ -1167,7 +1167,7 @@ export class Survey extends EventSourcedAggregateRoot {
     return this.apply(
       new SurveyOpenedToPublic({
         payload: {
-          aggregateCompositeIdentifier: this.getAggregateCompositeIdentifier(),
+          aggregateCompositeIdentifier: this.getCompositeIdentifier(),
         },
       }),
     );
@@ -1197,14 +1197,16 @@ export class Survey extends EventSourcedAggregateRoot {
       return buildResult;
     }
 
-    // this.accessTokensByHash.set(hash, buildResult);
-
-    // TODO do we validate that the survey is finalized???
+    if (!this.isFinal) {
+      return new TrueImpactError(
+        `You cannot open survey [${this.name}] to a client, as the survey has not been finalized.`,
+      );
+    }
 
     return this.apply(
       new SurveyOpenedToParticipant({
         payload: {
-          aggregateCompositeIdentifier: this.getAggregateCompositeIdentifier(),
+          aggregateCompositeIdentifier: this.getCompositeIdentifier(),
           participantCompositeIdentifier,
           dateCreated: dateOpened,
           dateExpires: dateOfExpiry,
@@ -1216,7 +1218,6 @@ export class Survey extends EventSourcedAggregateRoot {
   }
 
   // TODO deal with dates consistently
-  // How do these factor into validation and event sourcing?
   @UpdateMethod()
   openToAnonymousIndividual({
     dateOfExpiry,
@@ -1231,22 +1232,25 @@ export class Survey extends EventSourcedAggregateRoot {
       dateCreated: dateOpened,
       hash,
       algorithm: 'TODO add me',
-      dateExpires: dateOfExpiry,
+      dateOfExpiry: dateOfExpiry,
     });
 
     if (buildResult instanceof TrueImpactError) {
       return buildResult;
     }
 
-    // TODO avoid collisions
-    // We should do this now.
+    if (this.accessTokensByHash.has(hash)) {
+      return new TrueImpactError(
+        `Encountered a hash collion for a survey access token.`,
+      );
+    }
 
     return this.apply(
       new SurveyOpenedToAnonymousParticipant({
         payload: {
-          aggregateCompositeIdentifier: this.getAggregateCompositeIdentifier(),
+          aggregateCompositeIdentifier: this.getCompositeIdentifier(),
           // TODO pick one wording here
-          dateExpires: dateOfExpiry,
+          dateOfExpiry: dateOfExpiry,
           dateOpened,
           hash,
           algorithm: 'TODO = do this now!',
@@ -1273,7 +1277,7 @@ export class Survey extends EventSourcedAggregateRoot {
     return this.apply(
       new SurveyAccessCodeRedeemed({
         payload: {
-          aggregateCompositeIdentifier: this.getAggregateCompositeIdentifier(),
+          aggregateCompositeIdentifier: this.getCompositeIdentifier(),
           hashedAccessCode,
           participantCompositeIdentifier,
         },
@@ -1442,7 +1446,7 @@ export class Survey extends EventSourcedAggregateRoot {
   }
 
   handleSurveyOpenedToAnonymousParticipant({
-    payload: { dateExpires, dateOpened, hash, algorithm },
+    payload: { dateOfExpiry: dateExpires, dateOpened, hash, algorithm },
   }: {
     payload: SurveyOpenedToAnonymousParticipantPayload;
   }) {
@@ -1450,15 +1454,19 @@ export class Survey extends EventSourcedAggregateRoot {
       dateCreated: dateOpened,
       hash,
       algorithm,
-      dateExpires,
+      dateOfExpiry: dateExpires,
     });
 
     if (buildResult instanceof TrueImpactError) {
       return buildResult;
     }
 
-    // TODO avoid collisions
-    // We should do this now.
+    if (this.accessTokensByHash.has(hash)) {
+      return new TrueImpactError(
+        `Encountered a hash collion for a survey access token.`,
+      );
+    }
+
     this.accessTokensByHash.set(hash, buildResult);
 
     return this;

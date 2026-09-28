@@ -11,7 +11,7 @@ export class SurveyAccessTokenPersistenceDto {
   // we use a salt as part of the secrets
   hash: string;
   dateCreated: string;
-  dateExpires: string;
+  dateOfExpiry: string;
   participantCompositeIdentifier?: SurveyParticipantCompositeIdentifier;
 }
 
@@ -20,7 +20,7 @@ export class SurveyAccessTokenPersistenceDto {
     algorithm: 'sha-123',
     hash: 'abc1234fake-hashed-access-token',
     dateCreated: '12345',
-    dateExpires: '34567',
+    dateOfExpiry: '34567',
   },
 })
 export class SurveyAccessToken {
@@ -50,7 +50,7 @@ export class SurveyAccessToken {
     label: 'expiry date',
     description: 'the token will no longer be valid after this timestamp',
   })
-  dateExpires: string;
+  dateOfExpiry: string;
   /**
    * Possession of the un-hashed one-time passcode allows a user to authenticate as the participant within the context of completing just this one survey.
    * The one-time passcode is redeemed for a session and the passcode is atomically invalidated. It's not possible to retrieve the same passcode to begin the
@@ -64,20 +64,20 @@ export class SurveyAccessToken {
     algorithm,
     hash,
     dateCreated,
-    dateExpires,
+    dateOfExpiry,
     participantCompositeIdentifier,
   }: {
     algorithm: string;
-    // we use a salt as part of the secrets
+    // note that we also use a salt as part of the secrets
     hash: string;
     dateCreated: string;
-    dateExpires: string;
+    dateOfExpiry: string;
     participantCompositeIdentifier?: SurveyParticipantCompositeIdentifier;
   }) {
     this.algorithm = algorithm;
     this.hash = hash;
     this.dateCreated = dateCreated;
-    this.dateExpires = dateExpires;
+    this.dateOfExpiry = dateOfExpiry;
 
     if (participantCompositeIdentifier) {
       this.participantCompositeIdentifier = participantCompositeIdentifier;
@@ -95,12 +95,12 @@ export class SurveyAccessToken {
 
   static openAnonymousIndividualAccess({
     dateCreated,
-    dateExpires,
+    dateOfExpiry,
     hash,
     algorithm,
   }: {
     dateCreated: string;
-    dateExpires: string;
+    dateOfExpiry: string;
     hash: string;
     algorithm: string;
   }): SurveyAccessToken | TrueImpactBadUserInputError {
@@ -108,7 +108,7 @@ export class SurveyAccessToken {
       algorithm,
       hash,
       dateCreated,
-      dateExpires,
+      dateOfExpiry: dateOfExpiry,
     });
 
     const invariantValidationErrors = instance.validateInvariants();
@@ -136,7 +136,7 @@ export class SurveyAccessToken {
     const instance = new SurveyAccessToken({
       algorithm,
       dateCreated,
-      dateExpires,
+      dateOfExpiry: dateExpires,
       hash,
       participantCompositeIdentifier,
     });

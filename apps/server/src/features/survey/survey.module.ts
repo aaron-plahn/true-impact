@@ -24,6 +24,7 @@ import {
   ImportSurveyCommandHandler,
   OpenSurveyToClient,
   OpenSurveyToClientCommandHandler,
+  OpenSurveyToPublicCommandHandler,
   OptionAddedToSurveyQuestion,
   QuestionAddedToSurvey,
   SurveyFinalized,
@@ -46,8 +47,8 @@ import {
   AddValueForSurveyOption,
   AddValueForSurveyOptionCommandHandler,
   CategoryAddedToSurveyAnalyzer,
-  CreateAnalyzerForSurvey,
   CreateAnalyzerForSurveyCommandHandler,
+  CreateSurveyAnalyzer,
   SurveyAnalyzerCreated,
   ValueAddedForSurveyOption,
 } from './survey-analysis';
@@ -102,9 +103,8 @@ import {
 } from './survey-management';
 import { OpenSurveyToAnonymousIndividual } from './survey-management/commands/open-survey-to-anonymous-individual.command';
 import { OpenSurveyToAnonymousIndividualCommandHandler } from './survey-management/commands/open-survey-to-anonymous-individual.command-handler';
-import { OpenSurveyToPublic } from './survey-management/commands/open-survey-to-client/open-survey-to-public.command';
-import { OpenSurveyToPublicCommandHandler } from './survey-management/commands/open-survey-to-client/open-survey-to-public.command-handler';
-import { SurveyOpenedToPublic } from './survey-management/commands/open-survey-to-client/survey-opened-to-public.event';
+import { OpenSurveyToPublic } from './survey-management/commands/open-survey-to-public/open-survey-to-public.command';
+import { SurveyOpenedToPublic } from './survey-management/commands/open-survey-to-public/survey-opened-to-public.event';
 import { SurveyOptionFlagged } from './survey-management/commands/survey-option-flagged.event';
 import {
   SurveyAccessCodeRedeemed,
@@ -262,7 +262,7 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, FinalizeSurvey];
           // Survey Analysis
           .register({
             CommandHandlerCtor: CreateAnalyzerForSurveyCommandHandler,
-            CommandPayloadCtor: CreateAnalyzerForSurvey,
+            CommandPayloadCtor: CreateSurveyAnalyzer,
           })
           .register({
             CommandHandlerCtor: AddCategoryToSurveyAnalyzerCommandHandler,
