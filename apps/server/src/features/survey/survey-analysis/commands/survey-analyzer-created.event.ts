@@ -1,9 +1,22 @@
 import { plainToInstance } from 'class-transformer';
-import { TrueImpactDataExample } from '../../../../libs/data-types';
-import { SurveyCompositeIdentifier } from '../../survey.composite-identifier';
+import {
+  NonEmptyString,
+  TrueImpactDataExample,
+} from '../../../../libs/data-types';
+import {
+  SurveyCompositeIdentifier,
+  SurveyCompositeIdentifierValuedProp,
+} from '../../survey.composite-identifier';
 
 export class SurveyAnalyzerCreatedPayload {
+  @SurveyCompositeIdentifierValuedProp
   aggregateCompositeIdentifier: SurveyCompositeIdentifier;
+
+  @NonEmptyString({
+    label: 'name',
+    description:
+      'name (currently assumed to be in English) of the survey analyzer', // reporter?
+  })
   name: string; // multilingual text item?
   // language code?
 }

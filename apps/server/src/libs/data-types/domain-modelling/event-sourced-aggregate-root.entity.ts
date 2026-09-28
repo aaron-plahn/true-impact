@@ -175,7 +175,8 @@ export abstract class EventSourcedAggregateRoot {
           aggregateRootInstance &&
           !(aggregateRootInstance instanceof Error)
         ) {
-          // TODO ensure that we don't have access to this in the creation event- we don't want any redundancy here.
+          // TODO Should we also write the `revision` to the event metadata here?
+          // The event meta is really more of a writeable context
           aggregateRootInstance.revision = 1;
         }
 

@@ -8,6 +8,9 @@ import {
     surveyId: '1',
   },
 })
+/**
+ * Note that this emits the same `SurveyBegan` event as `BeginSurvey` (Begin private survey).
+ */
 export class BeginPublicSurvey {
   static readonly type = 'BEGIN_PUBLIC_SURVEY';
 

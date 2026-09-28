@@ -1,8 +1,14 @@
 import { plainToInstance } from 'class-transformer';
-import { SurveyCompositeIdentifier } from '../survey.composite-identifier';
+import { NonEmptyString } from 'src/libs/data-types';
+import {
+  SurveyCompositeIdentifier,
+  SurveyCompositeIdentifierValuedProp,
+} from '../survey.composite-identifier';
 
 export class SurveyOpenedToAnonymousParticipantPayload {
+  @SurveyCompositeIdentifierValuedProp
   aggregateCompositeIdentifier: SurveyCompositeIdentifier;
+
   /**
    * We need to pull this from the event metadata. As long as it is
    * on the payload, it must be taken as the source of truth for
@@ -15,9 +21,32 @@ export class SurveyOpenedToAnonymousParticipantPayload {
    * model and to avoid overwriting existing timestamps on metadata
    * at the higher level.
    */
+  // @Unix timestamp?
+  @NonEmptyString({
+    label: 'date opened',
+    description:
+      'the date and time the survey was opened to an anonymous participant',
+  })
   dateOpened: string;
+
+  @NonEmptyString({
+    label: 'expiration date',
+    description: 'deadline for the participant to begin the survey',
+  })
   dateOfExpiry: string;
+
+  @NonEmptyString({
+    label: 'hashed access code',
+    description:
+      // This is sent to the user in the clear
+      'hashed (encrypted) copy of the access code redeemable for a survey attempt session',
+  })
   hash: string;
+
+  @NonEmptyString({
+    label: 'hashing algorithm',
+    description: 'which algorithm was used to hash the access token?',
+  })
   algorithm: string;
 }
 

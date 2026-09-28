@@ -1,8 +1,19 @@
 import { plainToInstance } from 'class-transformer';
-import { SurveyCompositeIdentifier } from 'src/features/survey/survey.composite-identifier';
+import {
+  SurveyCompositeIdentifier,
+  SurveyCompositeIdentifierValuedProp,
+} from 'src/features/survey/survey.composite-identifier';
 import { ImportSurvey } from './import-survey.command';
 
+/**
+ * We leverage the various update commands on a survey
+ * when importing a survey. This leads to several "ordinary"
+ * survey events in the event history. We add an additional
+ * "SURVEY_IMPORTED" so that we can identify this as a survey
+ * that was imported in a list view, for example.
+ */
 export class SurveyImportedPayload extends ImportSurvey {
+  @SurveyCompositeIdentifierValuedProp
   aggregateCompositeIdentifier: SurveyCompositeIdentifier;
 }
 

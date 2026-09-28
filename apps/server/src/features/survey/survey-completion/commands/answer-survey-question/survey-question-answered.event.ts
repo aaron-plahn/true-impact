@@ -1,10 +1,27 @@
 import { plainToInstance } from 'class-transformer';
-import { TrueImpactDataExample } from '../../../../../libs/data-types';
-import { SurveyResponseCompositeIdentifier } from '../../models';
+import {
+  NonEmptyString,
+  TrueImpactDataExample,
+} from '../../../../../libs/data-types';
+import {
+  SurveyResponseCompositeIdentifier,
+  SurveyResponseCompositeIdentifierValuedProp,
+} from '../../models';
 
 export class SurveyQuestionAnsweredPayload {
+  @SurveyResponseCompositeIdentifierValuedProp
   aggregateCompositeIdentifier: SurveyResponseCompositeIdentifier;
+
+  @NonEmptyString({
+    label: 'question label',
+    description: 'identifies the question that was answered',
+  })
   questionLabel: string;
+
+  @NonEmptyString({
+    label: 'chosen option label',
+    description: 'identifies the option that the participant chose',
+  })
   chosenOptionLabel: string;
 }
 

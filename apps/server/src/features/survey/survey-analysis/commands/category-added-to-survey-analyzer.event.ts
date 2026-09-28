@@ -1,10 +1,28 @@
 import { plainToInstance } from 'class-transformer';
-import { TrueImpactDataExample } from '../../../../libs/data-types';
-import { SurveyCompositeIdentifier } from '../../survey.composite-identifier';
+import {
+  NonEmptyString,
+  TrueImpactDataExample,
+} from '../../../../libs/data-types';
+import {
+  SurveyCompositeIdentifier,
+  SurveyCompositeIdentifierValuedProp,
+} from '../../survey.composite-identifier';
 
 export class CategoryAddedToSurveyAnalyzerPayload {
+  @SurveyCompositeIdentifierValuedProp
   aggregateCompositeIdentifier: SurveyCompositeIdentifier;
+
+  @NonEmptyString({
+    label: 'analyzer name',
+    description: 'identifies the analyzer the new category belongs to',
+  })
   analyzerName: string;
+
+  @NonEmptyString({
+    label: 'category',
+    description:
+      'a category is quanitfiable and recieves a running total over all its values per option',
+  })
   category: string;
 }
 

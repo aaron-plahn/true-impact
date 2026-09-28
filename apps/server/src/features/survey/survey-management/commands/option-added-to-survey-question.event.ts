@@ -1,12 +1,34 @@
 import { plainToInstance } from 'class-transformer';
-import { TrueImpactDataExample } from '../../../../libs/data-types';
-import { SurveyCompositeIdentifier } from '../../survey.composite-identifier';
+import {
+  NonEmptyString,
+  TrueImpactDataExample,
+} from '../../../../libs/data-types';
+import {
+  SurveyCompositeIdentifier,
+  SurveyCompositeIdentifierValuedProp,
+} from '../../survey.composite-identifier';
 
-// TODO Decorate all event payload classes
-export class OpenSurveyToAnonymousIndividualPayload {
+export class OptionAddedToSurveyPayload {
+  @SurveyCompositeIdentifierValuedProp
   aggregateCompositeIdentifier: SurveyCompositeIdentifier;
+
+  @NonEmptyString({
+    label: 'question label',
+    description: 'Identifies the question to which an option is being added',
+  })
   questionLabel: string;
+
+  @NonEmptyString({
+    label: 'option label',
+    description:
+      'Uniquely identifies the option amongst other options for this question',
+  })
   optionLabel: string;
+
+  @NonEmptyString({
+    label: 'text',
+    description: 'Text to be displayed for this option',
+  })
   text: string;
 }
 
@@ -27,17 +49,10 @@ export class OpenSurveyToAnonymousIndividualPayload {
 export class OptionAddedToSurveyQuestion {
   readonly type = 'OPTION_ADDED_TO_SURVEY_QUESTION';
 
-  readonly payload: OpenSurveyToAnonymousIndividualPayload;
+  readonly payload: OptionAddedToSurveyPayload;
 
-  constructor({
-    payload,
-  }: {
-    payload: OpenSurveyToAnonymousIndividualPayload;
-  }) {
-    this.payload = plainToInstance(
-      OpenSurveyToAnonymousIndividualPayload,
-      payload,
-    );
+  constructor({ payload }: { payload: OptionAddedToSurveyPayload }) {
+    this.payload = plainToInstance(OptionAddedToSurveyPayload, payload);
   }
 
   static fromPersistenceDto(dto: OptionAddedToSurveyQuestion) {

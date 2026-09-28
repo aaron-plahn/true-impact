@@ -1,11 +1,34 @@
 import { plainToInstance } from 'class-transformer';
-import { TrueImpactDataExample } from '../../../../libs/data-types';
-import { SurveyCompositeIdentifier } from '../../survey.composite-identifier';
+import {
+  NonEmptyString,
+  TrueImpactDataExample,
+} from '../../../../libs/data-types';
+import {
+  SurveyCompositeIdentifier,
+  SurveyCompositeIdentifierValuedProp,
+} from '../../survey.composite-identifier';
 
 export class SurveyOptionFlaggedPayload {
+  @SurveyCompositeIdentifierValuedProp
   aggregateCompositeIdentifier: SurveyCompositeIdentifier;
+
+  @NonEmptyString({
+    label: 'flag ID',
+    description:
+      'identifies a flag that is raised when the specific option is chosen',
+  })
   flagId: string;
+
+  @NonEmptyString({
+    label: 'question label',
+    description: 'identifies the question that holds the relevant option',
+  })
   questionLabel: string;
+
+  @NonEmptyString({
+    label: 'option label',
+    description: 'identifies the relevant option',
+  })
   optionLabel: string;
 }
 

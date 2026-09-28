@@ -1,13 +1,46 @@
 import { plainToInstance } from 'class-transformer';
+import { NestedDataType, NonEmptyString } from 'src/libs/data-types';
 import { SurveyParticipantCompositeIdentifier } from '../../../../../features/survey/survey-completion/models';
-import { SurveyCompositeIdentifier } from '../../../../../features/survey/survey.composite-identifier';
+import {
+  SurveyCompositeIdentifier,
+  SurveyCompositeIdentifierValuedProp,
+} from '../../../../../features/survey/survey.composite-identifier';
 
 export class SurveyOpenedToParticipantPayload {
+  @SurveyCompositeIdentifierValuedProp
   aggregateCompositeIdentifier: SurveyCompositeIdentifier;
+
+  @NestedDataType(() => SurveyParticipantCompositeIdentifier, {
+    label: 'participant composite ID',
+    description: 'system-wide unique identifier for this survey participant',
+  })
   participantCompositeIdentifier: SurveyParticipantCompositeIdentifier;
+
+  // unix timestamp?
+  @NonEmptyString({
+    label: 'date created',
+    description:
+      'date and time at which the survey became available to the participant',
+  })
   dateCreated: string;
+
+  @NonEmptyString({
+    label: 'expiration date',
+    description: 'deadline for the participant to begin this survey',
+  })
   dateExpires: string;
+
+  @NonEmptyString({
+    label: 'hashed access code',
+    description:
+      'hashed (encrypted) access code that was generated to share with the participant',
+  })
   hash: string;
+
+  @NonEmptyString({
+    label: 'algorithm',
+    description: 'which algorithm was used to generate the access code',
+  })
   algorithm: string;
 }
 

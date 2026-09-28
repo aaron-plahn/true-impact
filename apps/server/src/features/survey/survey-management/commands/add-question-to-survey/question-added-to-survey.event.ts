@@ -1,9 +1,26 @@
-import { SurveyCompositeIdentifier } from '../../../../../features/survey/survey.composite-identifier';
-import { TrueImpactDataExample } from '../../../../../libs/data-types';
+import {
+  SurveyCompositeIdentifier,
+  SurveyCompositeIdentifierValuedProp,
+} from '../../../../../features/survey/survey.composite-identifier';
+import {
+  NonEmptyString,
+  TrueImpactDataExample,
+} from '../../../../../libs/data-types';
 
 export class QuestionAddedToSurveyPayload {
+  @SurveyCompositeIdentifierValuedProp
   aggregateCompositeIdentifier: SurveyCompositeIdentifier;
+
+  @NonEmptyString({
+    label: 'label',
+    description: 'identifies this question amongst others in the same survey',
+  })
   label: string;
+
+  @NonEmptyString({
+    label: 'prompt',
+    description: 'participant-facing text for this survey',
+  })
   prompt: string;
 }
 

@@ -1,12 +1,41 @@
 import { plainToInstance } from 'class-transformer';
-import { TrueImpactDataExample } from '../../../../libs/data-types';
-import { SurveyCompositeIdentifier } from '../../survey.composite-identifier';
+import {
+  NonEmptyString,
+  TrueImpactDataExample,
+} from '../../../../libs/data-types';
+import {
+  SurveyCompositeIdentifier,
+  SurveyCompositeIdentifierValuedProp,
+} from '../../survey.composite-identifier';
 
 export class FollowUpQuestionAddedForSurveyOptionPayload {
+  @SurveyCompositeIdentifierValuedProp
   aggregateCompositeIdentifier: SurveyCompositeIdentifier;
+
+  @NonEmptyString({
+    label: 'question label',
+    description: 'question whose option has a follow up question',
+  })
   questionLabel: string;
+
+  @NonEmptyString({
+    label: 'option label',
+    description:
+      'option for which to present the participant with the follow up question',
+  })
   optionLabel: string;
+
+  @NonEmptyString({
+    label: 'follow up question label',
+    description:
+      'uniquely identifies the follow up question amongst other questions in the same survey',
+  })
   followUpQuestionLabel: string;
+
+  @NonEmptyString({
+    label: 'follow up question prompt',
+    description: 'wording of this question to show the user',
+  })
   followUpQuestionPrompt: string;
 }
 

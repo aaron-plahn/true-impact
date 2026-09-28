@@ -38,6 +38,14 @@ class SurveyQuestionResponsePersistenceDto {
   optionLabel: string;
 }
 
+export const SurveyResponseCompositeIdentifierValuedProp = NestedDataType(
+  () => SurveyResponseCompositeIdentifier,
+  {
+    label: 'survey response composite ID',
+    description: 'system-wide unique identifier to this survey response', // attempt?
+  },
+);
+
 export class SurveyResponseCompositeIdentifier {
   @Literal(SURVEY_RESPONSE_AGGREGATE_TYPE, {
     label: 'type',
