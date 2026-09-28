@@ -5,7 +5,7 @@ import {
 } from '../../../../libs/data-types';
 import { SurveyCompositeIdentifier } from '../../survey.composite-identifier';
 
-@TrueImpactDataExample<CreateAnalyzerForSurvey>({
+@TrueImpactDataExample<CreateSurveyAnalyzer>({
   example: {
     aggregateCompositeIdentifier: {
       type: 'survey',
@@ -14,8 +14,8 @@ import { SurveyCompositeIdentifier } from '../../survey.composite-identifier';
     name: 'Medicine Wheel 3',
   },
 })
-export class CreateAnalyzerForSurvey {
-  static readonly type = 'CREATE_ANALYZER_FOR_SURVEY';
+export class CreateSurveyAnalyzer {
+  static readonly type = 'CREATE_SURVEY_ANALYZER';
 
   @NestedDataType(() => SurveyCompositeIdentifier, {
     label: 'composite ID',

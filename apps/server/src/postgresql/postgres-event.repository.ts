@@ -47,25 +47,51 @@ export class PostgresEventRepository implements IEventRepository {
 
   async appendAt(
     revision: number,
-    event: WithEventMetadata<DomainEvent>,
+    ...events: WithEventMetadata<DomainEvent>[]
     // necessary for optimistic concurrency
   ): Promise<{ streamId: string } | Error> {
-    /**
-     * There is a possible data anomale in this design. The `stream_id` must be the same for all events with the same `payload.aggergateCompositeIdentifier.type` and `...id`.
-     */
+    if (events.length === 0) {
+      throw new TrueImpactRuntimeException([
+        new TrueImpactError(`You cannot persist an empty list of events.`),
+      ]);
+    }
+
+    const firstEvent = events[0];
+
+    const streamId = `${firstEvent.payload.aggregateCompositeIdentifier.type}/${firstEvent.payload.aggregateCompositeIdentifier.id}`;
+
+    if (
+      !events.every(
+        ({
+          payload: {
+            aggregateCompositeIdentifier: {
+              type: aggregateType,
+              id: aggregateId,
+            },
+          },
+        }) =>
+          aggregateType ===
+            firstEvent.payload.aggregateCompositeIdentifier.type &&
+          aggregateId === firstEvent.payload.aggregateCompositeIdentifier.id,
+      )
+    ) {
+      return new TrueImpactError(
+        `Invalid request. The Postgres Event Repository only supports appending to one stream. It is meant to support transactional writes inside one aggregate boundary at a time.`,
+      );
+    }
+
     const query = `
         INSERT INTO events (stream_id, event_type, payload, metadata, revision)
-        VALUES ($1, $2, $3, $4, $5 + 1)
-        ON CONFLICT (stream_id, revision) DO NOTHING;
+        SELECT 
+          unpacked.streamId,
+          unpacked.type,
+          unpacked.payload,
+          unpacked.metadata,
+          unpacked.revision
+        FROM jsonb_to_recordset($1::jsonb) AS unpacked(streamId text, type text, payload jsonb, metadata jsonb, revision int )
+        ON CONFLICT (stream_id, revision) DO NOTHING
+        RETURNING *;
     `;
-
-    const values = [
-      event.streamId,
-      event.type,
-      event.payload,
-      event.metadata,
-      revision,
-    ];
 
     const client = await this.pool.connect().catch((postgresError: Error) => {
       return new TrueImpactError(`Failed to connect to the database`, [
@@ -77,13 +103,23 @@ export class PostgresEventRepository implements IEventRepository {
       return client;
     }
 
-    const result = await client.query(query, values).catch((e: Error) => {
-      console.warn({ invalidEvent: event });
+    const jsonPayload = JSON.stringify(
+      events.map(({ type, payload, metadata }, index) => ({
+        streamId,
+        type,
+        payload,
+        metadata,
+        revision: revision + index + 1, // offset the 0th new event by 1 from the revision number at fetch time
+      })),
+    );
 
-      return new TrueImpactError(`Database query failed in Postgres.`, [
-        new TrueImpactError(e.message),
-      ]);
-    });
+    const result = await client
+      .query(query, [jsonPayload])
+      .catch((e: Error) => {
+        return new TrueImpactError(`Database query failed in Postgres.`, [
+          new TrueImpactError(e.message),
+        ]);
+      });
 
     if (result instanceof Error) {
       return result;
@@ -93,12 +129,12 @@ export class PostgresEventRepository implements IEventRepository {
 
     if (result.rowCount === 0) {
       return new Error(
-        `Failed to persist update to event stream: [${event.streamId}]. Somone else has written data since revision [${revision}]`,
+        `Failed to persist update to event stream: [${firstEvent.streamId}]. Somone else has written data since revision [${revision}]`,
       );
     }
 
     return {
-      streamId: event.streamId,
+      streamId: firstEvent.streamId,
     };
   }
 

@@ -1,14 +1,17 @@
 import { buildTestInstance, TrueImpactError } from '../../../libs/data-types';
 import { assertTextMatchesAll } from '../../../libs/test-utils';
+import { SurveyCreated } from './events';
 import { Survey } from './survey.aggregate-root';
 
 const surveyName = 'What kind of person are you?';
 
-const surveyWithNoAnalyzer = buildTestInstance(Survey, {
-  name: surveyName,
-  analyzers: {},
-});
-
+const surveyWithNoAnalyzer = Survey.fromEventHistory([
+  buildTestInstance(SurveyCreated, {
+    payload: {
+      name: surveyName,
+    },
+  }),
+]) as Survey;
 const newAnalyzerName = 'Personality Test';
 
 describe(`Survey.createAnalyzer`, () => {

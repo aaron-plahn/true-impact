@@ -1,4 +1,3 @@
-import { Optional } from '@nestjs/common';
 import { DomainEvent } from '../../../../libs/cqrs-es';
 import {
   BooleanDataType,
@@ -6,7 +5,6 @@ import {
   Entity,
   EventSourcedAggregateRoot,
   InvariantValidationError,
-  Literal,
   NestedDataType,
   NonEmptyString,
   NonNegativeInteger,
@@ -32,24 +30,11 @@ import {
   SurveySubmitted,
 } from '../commands';
 import { SurveyParticipantCompositeIdentifier } from './survey-participant.composite-identifier';
+import { SurveyResponseCompositeIdentifier } from './survey-response-record.composite-identifier';
 
 class SurveyQuestionResponsePersistenceDto {
   questionLabel: string;
   optionLabel: string;
-}
-
-export class SurveyResponseCompositeIdentifier {
-  @Literal(SURVEY_RESPONSE_AGGREGATE_TYPE, {
-    label: 'type',
-    description: 'type',
-  })
-  readonly type = SURVEY_RESPONSE_AGGREGATE_TYPE;
-
-  @NonEmptyString({
-    label: 'ID',
-    description: `unique system identifier for this survey attempt`,
-  })
-  id!: string;
 }
 
 class SurveyQuestionResponse extends Entity {
@@ -377,7 +362,7 @@ export class SurveyResponseRecord extends EventSourcedAggregateRoot {
   }
 
   // TODO base class?
-  getAggregateCompositeIdentifier() {
+  getCompositeIdentifier(): SurveyResponseCompositeIdentifier {
     return {
       type: SURVEY_RESPONSE_AGGREGATE_TYPE,
       id: this.id,
@@ -411,8 +396,6 @@ export class SurveyResponseRecord extends EventSourcedAggregateRoot {
     questionLabel: string,
     chosenOptionLabel: string,
   ): SurveyResponseRecord | TrueImpactError {
-    console.log({ answerQuestion: questionLabel, withOption: Optional });
-
     if (this.hasBeenSubmitted) {
       return new TrueImpactError(
         `You cannot answer question [${questionLabel}] in survey [${this.survey.name}], as the survey has already been submitted.`,
@@ -464,7 +447,7 @@ export class SurveyResponseRecord extends EventSourcedAggregateRoot {
         payload: {
           aggregateCompositeIdentifier:
             // TODO deal with the chicken-and-egg problem of IDs
-            this.getAggregateCompositeIdentifier() as SurveyResponseCompositeIdentifier,
+            this.getCompositeIdentifier(),
           questionLabel,
           chosenOptionLabel,
         },
@@ -510,8 +493,7 @@ export class SurveyResponseRecord extends EventSourcedAggregateRoot {
           dateEffective: Date.now(),
         },
         payload: {
-          aggregateCompositeIdentifier:
-            this.getAggregateCompositeIdentifier() as SurveyResponseCompositeIdentifier,
+          aggregateCompositeIdentifier: this.getCompositeIdentifier(),
         },
       }),
     );
@@ -546,8 +528,7 @@ export class SurveyResponseRecord extends EventSourcedAggregateRoot {
     return this.apply(
       new SurveyCompletionCancelled({
         payload: {
-          aggregateCompositeIdentifier:
-            this.getAggregateCompositeIdentifier() as SurveyResponseCompositeIdentifier,
+          aggregateCompositeIdentifier: this.getCompositeIdentifier(),
           nextAttemptId: replacementAttemptId,
         },
       }),
@@ -577,8 +558,7 @@ export class SurveyResponseRecord extends EventSourcedAggregateRoot {
     const event: DomainEvent<SurveyCompletionAbandonedPayload> =
       new SurveyCompletionAbandoned({
         payload: {
-          aggregateCompositeIdentifier:
-            this.getAggregateCompositeIdentifier() as SurveyResponseCompositeIdentifier,
+          aggregateCompositeIdentifier: this.getCompositeIdentifier(),
         },
       });
 
@@ -858,7 +838,6 @@ export class SurveyResponseRecord extends EventSourcedAggregateRoot {
       nextQuestionLabel: survey.getFirstQuestion()?.label,
       eventHistory: [
         new SurveyBegan({
-          streamId: `${SURVEY_RESPONSE_AGGREGATE_TYPE}/${id}`,
           payload: {
             aggregateCompositeIdentifier: {
               type: SURVEY_RESPONSE_AGGREGATE_TYPE,

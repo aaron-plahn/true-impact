@@ -1,4 +1,4 @@
-import { SurveyResponseCompositeIdentifier } from './survey-response-record.aggregate-root';
+import { SurveyResponseCompositeIdentifier } from './survey-response-record.composite-identifier';
 
 export class SurveyResponseCookie {
   /** Returns the original `maxAge` (time-to-live), in milliseconds, of the session cookie. */

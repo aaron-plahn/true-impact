@@ -6,9 +6,9 @@ import {
 } from '../../../../libs/data-types';
 import { SURVEY_COMMAND_REPOSITORY_DEPENDENCY_TOKEN } from '../../constants';
 import type { ISurveyCommandRepository } from '../../repositories';
-import { CreateAnalyzerForSurvey } from './create-analyzer-for-survey.command';
+import { CreateSurveyAnalyzer } from './create-survey-analyzer.command';
 
-export class CreateAnalyzerForSurveyCommandHandler implements ICommandHandler<CreateAnalyzerForSurvey> {
+export class CreateAnalyzerForSurveyCommandHandler implements ICommandHandler<CreateSurveyAnalyzer> {
   constructor(
     @Inject(SURVEY_COMMAND_REPOSITORY_DEPENDENCY_TOKEN)
     private readonly repository: ISurveyCommandRepository,
@@ -20,7 +20,7 @@ export class CreateAnalyzerForSurveyCommandHandler implements ICommandHandler<Cr
       name: analyzerName,
     },
   }: {
-    payload: CreateAnalyzerForSurvey;
+    payload: CreateSurveyAnalyzer;
   }): Promise<CommandResult> {
     const existing =
       (await this.repository.fetchById(id)) ||

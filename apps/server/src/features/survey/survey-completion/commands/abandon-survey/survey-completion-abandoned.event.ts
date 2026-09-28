@@ -1,8 +1,12 @@
 import { plainToInstance } from 'class-transformer';
 import { TrueImpactDataExample } from '../../../../../libs/data-types';
-import { SurveyResponseCompositeIdentifier } from '../../models';
+import {
+  SurveyResponseCompositeIdentifier,
+  SurveyResponseCompositeIdentifierValuedProp,
+} from '../../models/survey-response-record.composite-identifier';
 
 export class SurveyCompletionAbandonedPayload {
+  @SurveyResponseCompositeIdentifierValuedProp
   aggregateCompositeIdentifier: SurveyResponseCompositeIdentifier;
 }
 

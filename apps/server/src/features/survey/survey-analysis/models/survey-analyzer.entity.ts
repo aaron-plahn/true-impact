@@ -121,8 +121,7 @@ export class SurveyAnalyzer extends Entity {
     return allErrors;
   }
 
-  @UpdateMethod()
-  addCategory(category: string): SurveyAnalyzer | TrueImpactError {
+  canAddCategory(category: string): SurveyAnalyzer | TrueImpactError {
     if (this.categoriesByLabel.has(category)) {
       return new TrueImpactError(
         `You cannot add category [${category}] to analyzer [${this.name}], as it already has the given category.`,
@@ -142,8 +141,6 @@ export class SurveyAnalyzer extends Entity {
         [newCategory],
       );
     }
-
-    this.categoriesByLabel.set(category, newCategory);
 
     return this;
   }

@@ -6,7 +6,7 @@ import {
   InMemoryQueryRepositoryProvider,
 } from '../../common/persistence';
 import { EncryptionService } from '../../libs/auth';
-import { CommandHandlerService } from '../../libs/cqrs-es';
+import { CommandHandlerService, IEventRepository } from '../../libs/cqrs-es';
 import {
   ResourceNotFoundError,
   TrueImpactBadUserInputError,
@@ -19,10 +19,17 @@ import { ClientValidationService } from '../clients/services';
 import { FlagModule } from '../flags/flag.module';
 import {
   AddFollowUpQuestionForSurveyOption,
+  FollowUpQuestionAddedForSurveyOption,
   ImportSurvey,
   ImportSurveyCommandHandler,
   OpenSurveyToClient,
   OpenSurveyToClientCommandHandler,
+  OpenSurveyToPublicCommandHandler,
+  OptionAddedToSurveyQuestion,
+  QuestionAddedToSurvey,
+  SurveyFinalized,
+  SurveyImported,
+  SurveyOpenedToParticipant,
 } from '../survey/survey-management';
 import { UserModule } from '../users/user.module';
 import {
@@ -32,15 +39,18 @@ import {
 import { SURVEY_QUERY_REPOSITORY_PROVIDER_TOKEN } from './queries/survey-query-repository.interface';
 import { SurveyQueryService } from './queries/survey-query.service';
 import { SurveyViewModel } from './queries/survey.view-model';
-import { InMemorySurveyCommandRepository } from './repositories/in-memory-survey-command-repository';
+import { PostgresSurveyCommandRepository } from './repositories';
 import { ISurveyCommandRepository } from './repositories/survey-command-repository.interface';
 import {
   AddCategoryToSurveyAnalyzer,
   AddCategoryToSurveyAnalyzerCommandHandler,
   AddValueForSurveyOption,
   AddValueForSurveyOptionCommandHandler,
-  CreateAnalyzerForSurvey,
+  CategoryAddedToSurveyAnalyzer,
   CreateAnalyzerForSurveyCommandHandler,
+  CreateSurveyAnalyzer,
+  SurveyAnalyzerCreated,
+  ValueAddedForSurveyOption,
 } from './survey-analysis';
 import {
   AbandonSurveyCompletion,
@@ -67,7 +77,7 @@ import {
   ISurveyValidationServiceForBeginPublicSurvey,
 } from './survey-completion/commands/begin-public-survey';
 import { SduiViewDiffer } from './survey-completion/commands/sdui-view-differ';
-import { SurveyParticipantCompositeIdentifier } from './survey-completion/models';
+import { SurveyParticipantCompositeIdentifier } from './survey-completion/models/survey-participant.composite-identifier';
 import {
   SURVEY_RESPONSE_QUERY_REPOSITORY_INJECTION_TOKEN,
   SurveyResponseQueryService,
@@ -93,8 +103,14 @@ import {
 } from './survey-management';
 import { OpenSurveyToAnonymousIndividual } from './survey-management/commands/open-survey-to-anonymous-individual.command';
 import { OpenSurveyToAnonymousIndividualCommandHandler } from './survey-management/commands/open-survey-to-anonymous-individual.command-handler';
-import { OpenSurveyToPublic } from './survey-management/commands/open-survey-to-client/open-survey-to-public.command';
-import { OpenSurveyToPublicCommandHandler } from './survey-management/commands/open-survey-to-client/open-survey-to-public.command-handler';
+import { OpenSurveyToPublic } from './survey-management/commands/open-survey-to-public/open-survey-to-public.command';
+import { SurveyOpenedToPublic } from './survey-management/commands/open-survey-to-public/survey-opened-to-public.event';
+import { SurveyOptionFlagged } from './survey-management/commands/survey-option-flagged.event';
+import {
+  SurveyAccessCodeRedeemed,
+  SurveyCreated,
+} from './survey-management/events';
+import { SurveyOpenedToAnonymousParticipant } from './survey-management/survey-opened-to-anonymous-participant.event';
 import {
   AcknowledgeResponseForSurveyQuestionHasBeenViewed,
   AcknowledgeResponseForSurveyQuestionHasBeenViewedCommandHandler,
@@ -246,7 +262,7 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, FinalizeSurvey];
           // Survey Analysis
           .register({
             CommandHandlerCtor: CreateAnalyzerForSurveyCommandHandler,
-            CommandPayloadCtor: CreateAnalyzerForSurvey,
+            CommandPayloadCtor: CreateSurveyAnalyzer,
           })
           .register({
             CommandHandlerCtor: AddCategoryToSurveyAnalyzerCommandHandler,
@@ -333,7 +349,89 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, FinalizeSurvey];
     },
     {
       provide: SURVEY_COMMAND_REPOSITORY_DEPENDENCY_TOKEN,
-      useClass: InMemorySurveyCommandRepository,
+      useFactory: (
+        eventRepository: IEventRepository,
+        eventFactory: EventFactory,
+      ) => {
+        eventFactory
+          .register('SURVEY_CREATED', (doc) => {
+            return SurveyCreated.fromPersistenceDto(
+              doc as unknown as SurveyCreated,
+            );
+          })
+          .register('QUESTION_ADDED_TO_SURVEY', (doc) => {
+            return QuestionAddedToSurvey.fromPersistenceDto(
+              doc as unknown as QuestionAddedToSurvey,
+            );
+          })
+          .register('FOLLOW-UP_QUESTION_ADDED_FOR_SURVEY', (doc) => {
+            return FollowUpQuestionAddedForSurveyOption.fromPersistenceDto(
+              doc as unknown as FollowUpQuestionAddedForSurveyOption,
+            );
+          })
+          .register('OPTION_ADDED_TO_SURVEY_QUESTION', (doc) => {
+            return OptionAddedToSurveyQuestion.fromPersistenceDto(
+              doc as unknown as OptionAddedToSurveyQuestion,
+            );
+          })
+          .register('SURVEY_OPTION_FLAGGED', (doc) => {
+            return SurveyOptionFlagged.fromPersistenceDto(
+              doc as unknown as SurveyOptionFlagged,
+            );
+          })
+          .register('SURVEY_FINALIZED', (doc) => {
+            return SurveyFinalized.fromPersistenceDto(
+              doc as unknown as SurveyFinalized,
+            );
+          })
+          .register('SURVEY_OPENED_TO_ANONYMOUS_PARTICIPANT', (doc) => {
+            return SurveyOpenedToAnonymousParticipant.fromPersistenceDto(
+              doc as unknown as SurveyOpenedToAnonymousParticipant,
+            );
+          })
+          .register('SURVEY_OPENED_TO_PARTICIPANT', (doc) => {
+            return SurveyOpenedToParticipant.fromPersistenceDto(
+              doc as unknown as SurveyOpenedToParticipant,
+            );
+          })
+          .register('SURVEY_OPENED_TO_PUBLIC', (doc) => {
+            return SurveyOpenedToPublic.fromPersistenceDto(
+              doc as unknown as SurveyOpenedToPublic,
+            );
+          })
+          .register('SURVEY_ACCESS_CODE_REDEEMED', (doc) => {
+            return SurveyAccessCodeRedeemed.fromPersistenceDto(
+              doc as unknown as SurveyAccessCodeRedeemed,
+            );
+          })
+          .register('SURVEY_ANALYZER_CREATED', (doc) => {
+            return SurveyAnalyzerCreated.fromPersistenceDto(
+              doc as unknown as SurveyAnalyzerCreated,
+            );
+          })
+          .register('CATEGORY_ADDED_TO_SURVEY_ANALYZER', (doc) => {
+            return CategoryAddedToSurveyAnalyzer.fromPersistenceDto(
+              doc as unknown as CategoryAddedToSurveyAnalyzer,
+            );
+          })
+          .register('VALUE_ADDED_FOR_SURVEY_OPTION', (doc) => {
+            return ValueAddedForSurveyOption.fromPersistenceDto(
+              doc as unknown as ValueAddedForSurveyOption,
+            );
+          })
+          .register('SURVEY_IMPORTED', (doc) => {
+            return SurveyImported.fromPersistenceDto(
+              doc as unknown as SurveyImported,
+            );
+          });
+        /**
+         * But do we really need this? We could also persist several events
+         * for one `ImportSurvey` command.
+         */
+
+        return new PostgresSurveyCommandRepository(eventRepository);
+      },
+      inject: ['EVENT_REPOSITORY_INJECTION_TOKEN', EventFactory],
     },
     {
       provide: SURVEY_RESPONSE_COMMAND_REPOSITORY_INJECTION_TOKEN,
@@ -444,7 +542,7 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, FinalizeSurvey];
             /**
              * TODO We need to support reuseable codes for group use.
              */
-            const updated = target.revokeAccessCode(hashedAccessCode);
+            const updated = target.redeemAccessCode(hashedAccessCode);
 
             if (updated instanceof Error) {
               return updated;

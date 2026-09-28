@@ -14,6 +14,7 @@ import {
   SurveyOptionImportDto,
   SurveyQuestionImportDto,
 } from './import-survey.command';
+import { SurveyImported } from './survey-imported.event';
 
 const addFollowUpQuestion = (
   draftSurvey: Survey,
@@ -99,7 +100,7 @@ const deepAddOptionToQuestion = (
         return acc;
       }
 
-      return acc.addValueForOption({
+      return acc.addValuesForOption({
         analyzerName,
         questionLabel: parentQuestionLabel,
         optionLabel: option.label,
@@ -149,6 +150,7 @@ export class ImportSurveyCommandHandler implements ICommandHandler<ImportSurvey>
   }: {
     payload: ImportSurvey;
   }): Promise<CommandResult> {
+    // TODO move all logic to the domain model in a static `import` method.
     const duplicateFlagErrors: TrueImpactError[] = [];
 
     const uniqueFlagsAcrossAllQuestions = new Map<
@@ -333,6 +335,21 @@ export class ImportSurveyCommandHandler implements ICommandHandler<ImportSurvey>
     if (finalizedSurvey instanceof Error) {
       return finalizedSurvey;
     }
+
+    finalizedSurvey.eventHistory.push(
+      /**
+       * This doesn't carry all the data for the survey. It simply
+       * ensures that we mark this particular survey as having been imported.
+       * There will be events that were emitted by the several update commands
+       * when we applied the builder pattern above.
+       */
+      new SurveyImported({
+        payload: {
+          aggregateCompositeIdentifier:
+            finalizedSurvey.getCompositeIdentifier(),
+        },
+      }),
+    );
 
     const result = await this.repository.create(finalizedSurvey);
 

@@ -92,31 +92,6 @@ export class InMemorySurveyCommandRepository implements ISurveyCommandRepository
     }
   }
 
-  revokeAccess(
-    id: string,
-    hashedAccessCode: string,
-  ): Promise<PersistenceAcknowledgement | TrueImpactError> {
-    const target = this.entitiesById.get(id);
-
-    if (!target) {
-      return Promise.resolve(
-        new TrueImpactError(`Failed to revoke access to unknown survey: ${id}`),
-      );
-    }
-
-    target.revokeAccessCode(hashedAccessCode);
-
-    target.revision += 1;
-
-    this.entitiesById.set(id, target);
-
-    return Promise.resolve({
-      type: this.type,
-      id,
-      revision: target.revision.toString(),
-    });
-  }
-
   update(
     instance: Survey,
   ): Promise<PersistenceAcknowledgement | TrueImpactError> {

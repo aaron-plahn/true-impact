@@ -1,17 +1,15 @@
 import { plainToInstance } from 'class-transformer';
 import {
-  NestedDataType,
   NonEmptyString,
   TrueImpactDataExample,
 } from '../../../../../libs/data-types';
-import { SurveyResponseCompositeIdentifier } from '../../models';
+import {
+  SurveyResponseCompositeIdentifier,
+  SurveyResponseCompositeIdentifierValuedProp,
+} from '../../models/survey-response-record.composite-identifier';
 
 export class SurveyCompletionCancelledPayload {
-  @NestedDataType(() => SurveyResponseCompositeIdentifier, {
-    label: 'composite ID',
-    description:
-      'system-wide unique reference to the survey attempt that is being cancelled automatically due to a newer attempt',
-  })
+  @SurveyResponseCompositeIdentifierValuedProp
   aggregateCompositeIdentifier: SurveyResponseCompositeIdentifier;
 
   @NonEmptyString({

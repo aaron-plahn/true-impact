@@ -1,11 +1,11 @@
 import { SurveyViewModel } from '../../../features/survey/queries/survey.view-model';
 import { BeginPublicSurvey } from '../../../features/survey/survey-completion/commands/begin-public-survey';
+import { AddQuestionToSurvey } from '../../../features/survey/survey-management';
 import { AddFollowUpQuestionForSurveyOption } from '../../../features/survey/survey-management/commands/add-follow-up-question-for-survey-option.command';
 import { AddOptionToSurveyQuestion } from '../../../features/survey/survey-management/commands/add-option-to-survey-question.command';
-import { AddQuestionToSurvey } from '../../../features/survey/survey-management/commands/add-question-to-survey.command';
 import { CreateSurvey } from '../../../features/survey/survey-management/commands/create-survey.command';
 import { FinalizeSurvey } from '../../../features/survey/survey-management/commands/finalize-survey.command';
-import { OpenSurveyToPublic } from '../../../features/survey/survey-management/commands/open-survey-to-client/open-survey-to-public.command';
+import { OpenSurveyToPublic } from '../../../features/survey/survey-management/commands/open-survey-to-public/open-survey-to-public.command';
 import { TestCommandStream } from '../../../libs/cqrs-es';
 import { assertTextMatchesAll } from '../../../libs/test-utils';
 import {
@@ -144,6 +144,27 @@ describe(`Survey Completion Scenarios: Public Participant (no access code requir
               surveyName,
               'cannot open',
               'has not been finalized',
+            );
+          },
+        });
+      });
+    });
+
+    describe(`when the survey has not yet been finalized`, () => {
+      it(`should return the expected error`, async () => {
+        await assertCommandScenarioError({
+          httpClient: adminHttpClient,
+          endpoint: surveyCompletionCommandsEndpoint,
+          stream: TestCommandStream.first(CreateSurvey, {
+            name: surveyName,
+          }).andThen(OpenSurveyToPublic),
+          assertErrorMessageAsExpected: (message) => {
+            assertTextMatchesAll(
+              message,
+              'cannot open survey',
+              surveyName,
+              'to the public',
+              'not been finalized',
             );
           },
         });

@@ -143,7 +143,7 @@ describe(`SurveyResponseRecord.fromEventHistory`, () => {
       assert.strictEqual(record.hasBeenSubmitted, false);
 
       assert.deepStrictEqual(
-        record.getAggregateCompositeIdentifier(),
+        record.getCompositeIdentifier(),
         surveyQuestionAnswered.payload.aggregateCompositeIdentifier,
       );
 

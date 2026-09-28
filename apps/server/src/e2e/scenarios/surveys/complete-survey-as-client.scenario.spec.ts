@@ -12,9 +12,9 @@ import {
   SubmitSurvey,
 } from '../../../features/survey/survey-completion';
 import { SurveyResponseRecordViewModel } from '../../../features/survey/survey-completion/queries/survey-response-record.view-model';
+import { AddQuestionToSurvey } from '../../../features/survey/survey-management';
 import { AddFollowUpQuestionForSurveyOption } from '../../../features/survey/survey-management/commands/add-follow-up-question-for-survey-option.command';
 import { AddOptionToSurveyQuestion } from '../../../features/survey/survey-management/commands/add-option-to-survey-question.command';
-import { AddQuestionToSurvey } from '../../../features/survey/survey-management/commands/add-question-to-survey.command';
 import { CreateSurvey } from '../../../features/survey/survey-management/commands/create-survey.command';
 import { FinalizeSurvey } from '../../../features/survey/survey-management/commands/finalize-survey.command';
 import { OpenSurveyToClient } from '../../../features/survey/survey-management/commands/open-survey-to-client';
@@ -138,10 +138,6 @@ const finalizeSurvey = buildFullSurveyBeforeFinalizing.andThen(FinalizeSurvey);
 
 const communityName = 'Big Community';
 
-/**
- * We have currently disabled completion of surveys by known clients. We can circle back
- * once we have completed support for anonymous survey completion.
- */
 describe(`Survey Completion Scenarios`, () => {
   const adminHttpClient = new TestHttpClient('http://localhost:3234');
 
@@ -524,12 +520,35 @@ describe(`Survey Completion Scenarios`, () => {
           });
         });
 
-        describe(`when the target survey is not finalized`, () => {
-          it(`should return the expected error response`, async () => {
+        describe(`when the survey has not been finalized`, () => {
+          it(`should not allow a user to open it to the client`, async () => {
+            await assertCommandScenarioError({
+              httpClient: adminHttpClient,
+              endpoint: surveyCompletionCommandsEndpoint,
+              stream: buildFullSurveyBeforeFinalizing.andThen(
+                OpenSurveyToClient,
+                {
+                  clientId,
+                },
+              ),
+              assertErrorMessageAsExpected: (message) => {
+                assertTextMatchesAll(
+                  message,
+                  'cannot open',
+                  surveyName,
+                  'not been finalized',
+                );
+              },
+            });
+          });
+        });
+
+        describe(`when the target survey has not been opened to the client`, () => {
+          it(`should return forbidden`, async () => {
             await assertCommandScenarioSuccess({
               httpClient: adminHttpClient,
               endpoint: surveyCompletionCommandsEndpoint,
-              stream: buildFullSurveyBeforeFinalizing,
+              stream: buildFullSurveyBeforeFinalizing.andThen(FinalizeSurvey),
             });
 
             /**
@@ -550,6 +569,9 @@ describe(`Survey Completion Scenarios`, () => {
               httpClient: anonymousParticipantHttpClient,
               endpoint: surveyCompletionCommandsEndpoint,
               stream: beginSurvey,
+              assertErrorMessageAsExpected: (message) => {
+                assertTextMatchesAll(message, 'Forbidden');
+              },
             });
           });
         });

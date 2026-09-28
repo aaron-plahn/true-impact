@@ -3,7 +3,7 @@ import { SURVEY_COMMAND_REPOSITORY_DEPENDENCY_TOKEN } from '../../../../../featu
 import type { ISurveyCommandRepository } from '../../../../../features/survey/repositories';
 import { CommandResult, ICommandHandler } from '../../../../../libs/cqrs-es';
 import { TrueImpactError } from '../../../../../libs/data-types';
-import { OpenSurveyToPublic } from './open-survey-to-public.command';
+import { OpenSurveyToPublic } from '../open-survey-to-public/open-survey-to-public.command';
 
 export class OpenSurveyToPublicCommandHandler implements ICommandHandler<OpenSurveyToPublic> {
   constructor(

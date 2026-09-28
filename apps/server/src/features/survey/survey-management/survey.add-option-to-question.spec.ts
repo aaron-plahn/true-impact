@@ -1,13 +1,20 @@
 import { buildTestInstance, TrueImpactError } from '../../../libs/data-types';
 import { SurveyQuestion } from '../survey-management/survey-question.entity';
-import { Survey, SurveyPersistenceDto } from './survey.aggregate-root';
+import { OptionAddedToSurveyQuestion, QuestionAddedToSurvey } from './commands';
+import { SurveyCreated } from './events';
+import { Survey } from './survey.aggregate-root';
 
 const surveyId = '123';
 
-const emptySurvey = buildTestInstance<SurveyPersistenceDto, Survey>(Survey, {
-  id: surveyId,
-  questions: {},
-});
+const emptySurvey = Survey.fromEventHistory([
+  buildTestInstance(SurveyCreated, {
+    payload: {
+      aggregateCompositeIdentifier: {
+        id: surveyId,
+      },
+    },
+  }),
+]) as Survey;
 
 const questionLabel = '1';
 
@@ -76,21 +83,34 @@ describe(`Survey.addOptionToQuestion`, () => {
         describe(`when the request is invalid`, () => {
           const existingOptionText = 'Sometimes (test option text)';
 
-          const existingSurvey = buildTestInstance<
-            SurveyPersistenceDto,
-            Survey
-          >(Survey, {
-            questions: {
-              [questionLabel]: {
-                prompt: 'What do you think?',
-                options: {
-                  [optionLabel]: {
-                    text: existingOptionText,
-                  },
+          const existingSurvey = Survey.fromEventHistory([
+            buildTestInstance(SurveyCreated, {
+              payload: {
+                aggregateCompositeIdentifier: {
+                  id: surveyId,
                 },
               },
-            },
-          });
+            }),
+            buildTestInstance(QuestionAddedToSurvey, {
+              payload: {
+                aggregateCompositeIdentifier: {
+                  id: surveyId,
+                },
+                label: questionLabel,
+                prompt: 'What do you think?',
+              },
+            }),
+            buildTestInstance(OptionAddedToSurveyQuestion, {
+              payload: {
+                aggregateCompositeIdentifier: {
+                  id: surveyId,
+                },
+                questionLabel,
+                optionLabel,
+                text: existingOptionText,
+              },
+            }),
+          ]) as Survey;
 
           describe(`when there is already an option with the given label`, () => {
             const invalidRequest = {
