@@ -15,7 +15,11 @@ import {
 } from '../../libs/data-types';
 
 import { DomainEvent } from '../../libs/cqrs-es';
-import type { YesNoOrUnknown } from '../../libs/data-types';
+import {
+  CalendarDate,
+  CalendarDateDto,
+  type YesNoOrUnknown,
+} from '../../libs/data-types';
 import {
   CLIENT_AGGREGATE_TYPE,
   ClientCompositeIdentifier,
@@ -35,7 +39,7 @@ export class ClientPersistenceDto {
 
   fullName: FullNameDto;
 
-  dateOfBirth: string; // Date?
+  dateOfBirth: CalendarDateDto;
 
   isIndigenous: YesNoOrUnknown;
 
@@ -53,7 +57,7 @@ export class ClientPersistenceDto {
       middleNames: ['Bob'],
       lastName: 'Deer',
     },
-    dateOfBirth: '2020-10-01',
+    dateOfBirth: CalendarDate.fromDateString('2020-10-01') as CalendarDate,
     isIndigenous: 'Yes',
     flagIds: [],
   },
@@ -92,11 +96,11 @@ export class Client
   })
   fullName: FullName;
 
-  @NonEmptyString({
-    label: 'DOB',
-    description: `the client's date of birth`,
+  @NestedDataType(() => CalendarDate, {
+    label: 'date of birth',
+    description: `the client's birth date`,
   })
-  dateOfBirth: Date;
+  dateOfBirth: CalendarDate;
 
   // TODO Enum or `OneOf`
   @NonEmptyString({
@@ -138,7 +142,7 @@ export class Client
 
     fullName: FullNameDto;
 
-    dateOfBirth: Date;
+    dateOfBirth: CalendarDateDto;
 
     isIndigenous: YesNoOrUnknown;
 
@@ -158,7 +162,9 @@ export class Client
 
     this.fullName = FullName.fromDto(fullName);
 
-    this.dateOfBirth = new Date(dateOfBirth);
+    this.dateOfBirth = CalendarDate.fromPersitenceDto(
+      dateOfBirth,
+    ) as CalendarDate;
 
     this.isIndigenous = isIndigenous;
 
@@ -287,11 +293,20 @@ export class Client
       return fullNameBuild;
     }
 
+    const dateOfBirthBuild = CalendarDate.fromDateString(dateOfBirth);
+
+    if (dateOfBirthBuild instanceof TrueImpactError) {
+      return new TrueImpactBadUserInputError([
+        new TrueImpactError(`Invalid birth date provided for a client.`),
+        dateOfBirthBuild,
+      ]);
+    }
+
     const instance = new Client({
       id,
       revision: 1,
       fullName: fullNameBuild,
-      dateOfBirth,
+      dateOfBirth: dateOfBirthBuild,
       isIndigenous:
         typeof isIndigenous === 'undefined' ? 'Unknown' : isIndigenous,
       communityId,
@@ -318,10 +333,7 @@ export class Client
     dto: ClientPersistenceDto,
     { shouldValidate }: { shouldValidate?: boolean } = {},
   ): Client | TrueImpactError {
-    const result = new Client({
-      ...dto,
-      dateOfBirth: new Date(dto.dateOfBirth),
-    });
+    const result = new Client(dto);
 
     return shouldValidate ? result.validateInvariants() : result;
   }
@@ -419,7 +431,14 @@ export class Client
       );
     }
 
-    const dateOfBirth = new Date(`${YYYY}-${MM}-${DD}`);
+    const dateOfBirth = CalendarDate.fromDateString(`${YYYY}-${MM}-${DD}`);
+
+    if (dateOfBirth instanceof TrueImpactError) {
+      return new TrueImpactBadUserInputError([
+        new TrueImpactError(`Invalid birthdate for a client.`),
+        dateOfBirth,
+      ]);
+    }
 
     const unverifiedInstance = new Client({
       id,
@@ -446,7 +465,7 @@ export class Client
             lastName,
             middleNames: [],
           }),
-          dateOfBirth: dateOfBirth,
+          dateOfBirth: dateOfBirth.toDateString(),
           isIndigenous: isNonEmptyString(isIndigenous)
             ? isIndigenous
             : 'Unknown',

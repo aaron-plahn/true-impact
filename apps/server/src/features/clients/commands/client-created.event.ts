@@ -1,5 +1,5 @@
 import { plainToInstance } from 'class-transformer';
-import { FullName, FullNameDto } from 'src/common/full-name';
+import { FullName, FullNameDto } from '../../../common/full-name';
 import {
   EnumeratedType,
   NestedDataType,
@@ -27,7 +27,7 @@ export class ClientCreatedPayload {
     label: 'date of birth',
     description: `the user's date of birth`,
   })
-  dateOfBirth: Date; // we persist an ISO date string
+  dateOfBirth: string; // we persist an ISO date string
 
   @EnumeratedType(
     {},
@@ -58,7 +58,7 @@ export const CLIENT_CREATED = 'CLIENT_CREATED';
       },
       fullName: FullName.fromString('Raymond Doe') as FullName,
       // TODO can we ensure this is being converted to ISO before persisting?
-      dateOfBirth: new Date('2005-12-20'),
+      dateOfBirth: '2005-12-20',
     },
   },
 })

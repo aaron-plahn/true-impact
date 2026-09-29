@@ -1,11 +1,12 @@
+import { FullName } from '../../common/full-name';
 import { buildTestInstance, TrueImpactError } from '../../libs/data-types';
 import { Client } from './client.aggregate-root';
 import { ClientCreated } from './commands';
 
 const clientCreated = buildTestInstance(ClientCreated, {
   payload: {
-    fullName: 'Ronald McDonnald',
-    dateOfBirth: 20220801,
+    fullName: FullName.fromString('Ronald McDonnald') as FullName,
+    dateOfBirth: '2022-08-01',
     isIndigenous: 'Yes',
   },
 });
