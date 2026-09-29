@@ -207,7 +207,10 @@ export class ClientViewModel {
     return new ClientViewModel({
       id,
       revision: revision.toString(),
-      dateOfBirth,
+      /**
+       * In the long run, we probably want a `DateView` object.
+       */
+      dateOfBirth: dateOfBirth.toDateString(),
       fullName: FullName.fromDto(fullName),
       isIndigenous,
       community,
