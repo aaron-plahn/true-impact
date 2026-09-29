@@ -27,7 +27,7 @@ export class ClientCreatedPayload {
     label: 'date of birth',
     description: `the user's date of birth`,
   })
-  dateOfBirth: number; // TODO this should be a date object
+  dateOfBirth: Date; // we persist an ISO date string
 
   @EnumeratedType(
     {},
@@ -57,8 +57,8 @@ export const CLIENT_CREATED = 'CLIENT_CREATED';
         id: '333',
       },
       fullName: FullName.fromString('Raymond Doe') as FullName,
-      // TODO this should be an object
-      dateOfBirth: 121206,
+      // TODO can we ensure this is being converted to ISO before persisting?
+      dateOfBirth: new Date('2005-12-20'),
     },
   },
 })

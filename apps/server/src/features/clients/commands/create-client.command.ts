@@ -53,7 +53,10 @@ export class CreateClient {
     label: 'date of birth',
     description: `the new client's date of birth`,
   })
-  dateOfBirth: string; // parse to Date or put date object on payload
+  /**
+   * We use the [date string format](https://developer.mozilla.org/en-US/docs/Web/HTML/Guides/Date_and_time_formats#date_strings).
+   */
+  dateOfBirth: string; // this is parsed to a date upstream
 
   @EnumeratedType(
     {

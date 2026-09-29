@@ -97,7 +97,6 @@ export class FullName {
   }
 
   public static fromString(input: string): FullName | TrueImpactError {
-    // TODO we need to deal with this more carefully before going to prod
     const parts = input.split(' ');
 
     if (parts.length < 2) {

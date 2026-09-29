@@ -92,12 +92,11 @@ export class Client
   })
   fullName: FullName;
 
-  // TODO Make this a Date
   @NonEmptyString({
     label: 'DOB',
     description: `the client's date of birth`,
   })
-  dateOfBirth: string; // Date?
+  dateOfBirth: Date;
 
   // TODO Enum or `OneOf`
   @NonEmptyString({
@@ -139,7 +138,7 @@ export class Client
 
     fullName: FullNameDto;
 
-    dateOfBirth: string; // Date?
+    dateOfBirth: Date;
 
     isIndigenous: YesNoOrUnknown;
 
@@ -159,7 +158,7 @@ export class Client
 
     this.fullName = FullName.fromDto(fullName);
 
-    this.dateOfBirth = dateOfBirth;
+    this.dateOfBirth = new Date(dateOfBirth);
 
     this.isIndigenous = isIndigenous;
 
@@ -212,10 +211,6 @@ export class Client
 
   @UpdateMethod()
   flag(flagId: string): Client | TrueImpactError {
-    if (!this.flagIds) {
-      console.log('HEREEEEEEEEEEEEEEEE');
-    }
-
     if (this.flagIds.includes(flagId)) {
       return new TrueImpactError(
         `You cannot flag client ${this.getName()} with the flag [${flagId}], as the client already has this flag.`,
@@ -296,7 +291,7 @@ export class Client
       id,
       revision: 1,
       fullName: fullNameBuild,
-      dateOfBirth: dateOfBirth.toString(),
+      dateOfBirth,
       isIndigenous:
         typeof isIndigenous === 'undefined' ? 'Unknown' : isIndigenous,
       communityId,
@@ -323,7 +318,10 @@ export class Client
     dto: ClientPersistenceDto,
     { shouldValidate }: { shouldValidate?: boolean } = {},
   ): Client | TrueImpactError {
-    const result = new Client(dto);
+    const result = new Client({
+      ...dto,
+      dateOfBirth: new Date(dto.dateOfBirth),
+    });
 
     return shouldValidate ? result.validateInvariants() : result;
   }
@@ -331,8 +329,97 @@ export class Client
   public static fromCreateClientCommand(
     command: CreateClient & { id: string },
   ): Client | TrueImpactBadUserInputError {
-    const { id, firstName, lastName, dateOfBirth, isIndigenous, communityId } =
-      command;
+    const {
+      id,
+      firstName,
+      lastName,
+      dateOfBirth: dateOfBirthFromRequest,
+      isIndigenous,
+      communityId,
+    } = command;
+
+    /**
+     * It may be better to have an internal `Date` utility class given that
+     * the recommended approach is to manually validate date strings in JS. This
+     * really feels like it should just be on the native `Date` API, but that is
+     * a legacy API.
+     */
+    const dateParts = dateOfBirthFromRequest.split('-');
+
+    if (dateParts.length !== 3) {
+      return new TrueImpactError(
+        `Invalid date format. Expected YYYY-MM-DD, but received ${dateParts.length} occurrences of "-".`,
+      );
+    }
+
+    const [YYYY, MM, DD] = dateParts.map((part, index) => {
+      try {
+        return parseInt(part);
+      } catch (_parseError) {
+        let partLabel: string = 'Unsupported Part';
+
+        if (index === 0) {
+          partLabel = 'YYYY';
+        }
+
+        if (index === 1) {
+          partLabel = 'MM';
+        }
+
+        if (index === 2) {
+          partLabel = 'DD';
+        }
+
+        return new TrueImpactError(
+          `Failed to parse ${partLabel} for a date. Invalid value: [${part}]`,
+        );
+      }
+    });
+
+    if (YYYY instanceof Error) {
+      return YYYY;
+    }
+
+    // TODO We want to be the allowed range of dates to be configurable per use case.
+    if (YYYY < 0 || YYYY > new Date().getFullYear()) {
+      return new TrueImpactError(`Invalid year [${YYYY}] encountered in date.`);
+    }
+
+    if (MM instanceof Error) {
+      return MM;
+    }
+
+    if (MM < 0 || MM > 11) {
+      return new TrueImpactError(`Invalid month [${MM}] encountered in date.`);
+    }
+
+    if (DD instanceof Error) {
+      return DD;
+    }
+
+    if (
+      DD < 1 ||
+      DD > 31 ||
+      ([9, 4, 6, 11]
+        .map((humanIndexedMonth) => humanIndexedMonth - 1)
+        .includes(MM) &&
+        DD > 30) ||
+      (DD === 2 && DD > 29)
+    ) {
+      return new TrueImpactError(
+        `Encountered an invalid day [${DD}] / month [${MM}] combination in date.`,
+      );
+    }
+
+    const isLeapYear = new Date(YYYY, 1, 29).getMonth() === 1;
+
+    if (MM === 1 && !isLeapYear && DD > 28) {
+      return new TrueImpactError(
+        `Invalid date encountered. ${YYYY} is not a leap year.`,
+      );
+    }
+
+    const dateOfBirth = new Date(`${YYYY}-${MM}-${DD}`);
 
     const unverifiedInstance = new Client({
       id,
@@ -359,7 +446,7 @@ export class Client
             lastName,
             middleNames: [],
           }),
-          dateOfBirth: parseInt(result.dateOfBirth),
+          dateOfBirth: dateOfBirth,
           isIndigenous: isNonEmptyString(isIndigenous)
             ? isIndigenous
             : 'Unknown',
