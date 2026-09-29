@@ -2,6 +2,7 @@ import { forwardRef } from '@nestjs/common';
 import { EventFactory } from 'src/postgresql/event-factory';
 import {
   CommandHandlerService,
+  DomainEvent,
   EVENT_REPOSITORY_INJECTION_TOKEN,
   IEventRepository,
 } from '../../libs/cqrs-es';
@@ -21,8 +22,10 @@ import {
   FlagClientCommandHandler,
 } from './commands';
 
+import { Client } from './client.aggregate-root';
+import { CLIENT_AGGREGATE_TYPE } from './client.composite-identifier';
 import { CLIENT_COMMAND_REPOSITORY_INJECTION_TOKEN } from './constants';
-import { PostgresClientCommandRepository } from './repositories/postgres-client-command-repository';
+import { EventSourcedCommandRepository } from './repositories/postgres-client-command-repository';
 import { ClientValidationService } from './services';
 import { ClientQueryService } from './services/client-query.service';
 
@@ -51,7 +54,12 @@ import { ClientQueryService } from './services/client-query.service';
           );
         });
 
-        return new PostgresClientCommandRepository(eventRepository);
+        return new EventSourcedCommandRepository(
+          eventRepository,
+          CLIENT_AGGREGATE_TYPE,
+          (eventHistory: Iterable<DomainEvent>) =>
+            Client.fromEventHistory(eventHistory),
+        );
       },
       inject: [EVENT_REPOSITORY_INJECTION_TOKEN, EventFactory],
     },

@@ -89,6 +89,8 @@ export abstract class EventSourcedAggregateRoot {
     return this.id || 'NOT YET PERSISTED';
   }
 
+  abstract getCompositeIdentifier(): { type: string; id: string };
+
   apply<T extends this>(this: T, event: DomainEvent): T | TrueImpactError {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
     const eventCtorName = Object.getPrototypeOf(event).constructor.name;

@@ -6,20 +6,39 @@ import {
   PersistenceAcknowledgement,
 } from '../../../libs/cqrs-es';
 import {
+  EventSourcedAggregateRoot,
   TrueImpactError,
   TrueImpactRuntimeException,
 } from '../../../libs/data-types';
-import { Client } from '../client.aggregate-root';
-import { CLIENT_AGGREGATE_TYPE } from '../client.composite-identifier';
-import { IClientCommandRepository } from './client-command-repository.interface';
 
-export class PostgresClientCommandRepository implements IClientCommandRepository {
-  private readonly aggregateType = CLIENT_AGGREGATE_TYPE;
+interface EventSourcedAggregateFactory<TAggregateRoot> {
+  (
+    eventHistory: Iterable<DomainEvent>,
+  ): TAggregateRoot | TrueImpactError | null;
+}
+
+// TODO move this!
+export class EventSourcedCommandRepository<
+  TAggregateRoot extends EventSourcedAggregateRoot,
+> {
+  private aggregateLabels: {
+    singular: string;
+    plural: string;
+  };
 
   constructor(
+    // TODO Do we really want this lib depend on the `framework`?
     @Inject(EVENT_REPOSITORY_INJECTION_TOKEN)
     private readonly eventRepository: IEventRepository,
-  ) {}
+    private readonly aggregateType: string,
+    private readonly buildInstance: EventSourcedAggregateFactory<TAggregateRoot>,
+  ) {
+    // TODO use reflection to get this
+    this.aggregateLabels = {
+      singular: aggregateType,
+      plural: `${aggregateType}s`,
+    };
+  }
 
   async exists(id: string): Promise<boolean> {
     const searchResult = await this.fetchById(id);
@@ -27,7 +46,9 @@ export class PostgresClientCommandRepository implements IClientCommandRepository
     return searchResult !== null;
   }
 
-  async fetchById(id: string): Promise<Client | TrueImpactError | null> {
+  async fetchById(
+    id: string,
+  ): Promise<TAggregateRoot | TrueImpactError | null> {
     const eventHistory = await this.eventRepository.read({
       type: this.aggregateType,
       id,
@@ -42,7 +63,7 @@ export class PostgresClientCommandRepository implements IClientCommandRepository
    * of data. You should implement materialized views that are synchronized via event consumers
    * if you have more data than this.
    */
-  async fetchMany(): Promise<Client[]> {
+  async fetchMany(): Promise<TAggregateRoot[]> {
     const events = await this.eventRepository.read();
 
     const eventHistoriesByAggregateId = new Map<string, DomainEvent[]>();
@@ -69,7 +90,7 @@ export class PostgresClientCommandRepository implements IClientCommandRepository
       eventHistoriesByAggregateId.set(id, eventsForThisAggregateRootSoFar);
     }
 
-    const results: Client[] = [];
+    const results: TAggregateRoot[] = [];
 
     const errors: TrueImpactError[] = [];
 
@@ -97,7 +118,7 @@ export class PostgresClientCommandRepository implements IClientCommandRepository
     if (errors.length > 0) {
       throw new TrueImpactRuntimeException([
         new TrueImpactError(
-          `Failed to fetch many surveys due to invalid existing data in the database`,
+          `Failed to fetch many ${this.aggregateLabels.plural} due to invalid existing data in the database`,
           errors,
         ),
       ]);
@@ -106,9 +127,8 @@ export class PostgresClientCommandRepository implements IClientCommandRepository
     return results;
   }
 
-  // TODO should we merge this with `update` to form a single `upsert`?
   async create(
-    instance: Client,
+    instance: TAggregateRoot,
   ): Promise<PersistenceAcknowledgement | TrueImpactError> {
     const { eventHistory } = instance;
 
@@ -133,15 +153,8 @@ export class PostgresClientCommandRepository implements IClientCommandRepository
     return ack;
   }
 
-  // Test helper
-  async createMany(instances: Client[]): Promise<void> {
-    for (const instance of instances) {
-      await this.create(instance);
-    }
-  }
-
   async update(
-    instance: Client,
+    instance: TAggregateRoot,
   ): Promise<PersistenceAcknowledgement | TrueImpactError> {
     const { revision, eventHistory } = instance;
 
@@ -149,7 +162,7 @@ export class PostgresClientCommandRepository implements IClientCommandRepository
       throw new TrueImpactRuntimeException([
         new TrueImpactError(
           // we don't want to expose the name in logs
-          `Failed to persist updated due to missing event history for client [${instance.id}]`,
+          `Failed to persist updated due to missing event history for ${this.aggregateLabels.singular} [${instance.id}]`,
         ),
       ]);
     }
@@ -179,28 +192,8 @@ export class PostgresClientCommandRepository implements IClientCommandRepository
     return {
       ...instance.getCompositeIdentifier(),
       // TODO get this from the db
+      // can we do this now?
       revision: (instance.revision + recentEvents.length).toString(),
     };
-  }
-
-  private buildInstance(
-    eventStream: Iterable<DomainEvent>,
-  ): Client | TrueImpactError | null {
-    return Client.fromEventHistory(eventStream);
-  }
-
-  // TODO remove this?
-  async clear() {
-    if (!['test', 'e2e'].includes(process.env.NODE_ENV || '**NEVER**')) {
-      throw new TrueImpactRuntimeException([
-        new TrueImpactError(
-          `You cannot clear surveys in the non-test environment [${process.env.NODE_ENV}]`,
-        ),
-      ]);
-    }
-
-    // @ts-expect-error This is not part of the interface but it is on all concrete implementations.
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-    await this.eventRepository.clear();
   }
 }
