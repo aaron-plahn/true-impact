@@ -2,7 +2,7 @@ import type {
   DomainEvent,
   IEventRepository,
   PersistenceAcknowledgement,
-} from 'src/libs/cqrs-es';
+} from '../../../libs/cqrs-es';
 import {
   TrueImpactError,
   TrueImpactRuntimeException,
@@ -165,6 +165,10 @@ export class PostgresSurveyCommandRepository implements ISurveyCommandRepository
       );
     }
 
+    /**
+     * TODO change this logic! The domain might have emitted
+     * multiple events since the last checkpoint.
+     */
     const recentEvents = eventHistory.slice(-1);
 
     // TODO can we store `uncommittedEvents` separately?

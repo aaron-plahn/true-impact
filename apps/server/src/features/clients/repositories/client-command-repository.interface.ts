@@ -5,7 +5,7 @@ import { Client } from '../client.aggregate-root';
 export interface IClientCommandRepository {
   exists(id: string): Promise<boolean>;
 
-  fetchById(id: string): Promise<Client | null>; // Maybe<T>
+  fetchById(id: string): Promise<Client | TrueImpactError | null>; // Maybe<T>
 
   fetchMany(): Promise<Client[]>;
 

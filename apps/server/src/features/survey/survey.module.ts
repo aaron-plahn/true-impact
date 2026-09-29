@@ -6,7 +6,11 @@ import {
   InMemoryQueryRepositoryProvider,
 } from '../../common/persistence';
 import { EncryptionService } from '../../libs/auth';
-import { CommandHandlerService, IEventRepository } from '../../libs/cqrs-es';
+import {
+  CommandHandlerService,
+  EVENT_REPOSITORY_INJECTION_TOKEN,
+  IEventRepository,
+} from '../../libs/cqrs-es';
 import {
   ResourceNotFoundError,
   TrueImpactBadUserInputError,
@@ -431,7 +435,7 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, FinalizeSurvey];
 
         return new PostgresSurveyCommandRepository(eventRepository);
       },
-      inject: ['EVENT_REPOSITORY_INJECTION_TOKEN', EventFactory],
+      inject: [EVENT_REPOSITORY_INJECTION_TOKEN, EventFactory],
     },
     {
       provide: SURVEY_RESPONSE_COMMAND_REPOSITORY_INJECTION_TOKEN,

@@ -1,6 +1,10 @@
 import { forwardRef } from '@nestjs/common';
 import { EventFactory } from 'src/postgresql/event-factory';
-import { CommandHandlerService, IEventRepository } from '../../libs/cqrs-es';
+import {
+  CommandHandlerService,
+  EVENT_REPOSITORY_INJECTION_TOKEN,
+  IEventRepository,
+} from '../../libs/cqrs-es';
 import { Module, ModuleRef } from '../../libs/framework';
 import { CommunityModule } from '../communities/community.module';
 import { FlagModule } from '../flags/flag.module';
@@ -15,6 +19,7 @@ import { CreateClientCommandHandler } from './commands/create-client.command-han
 import { FlagClient } from './commands/flag-client.command';
 import { FlagClientCommandHandler } from './commands/flag-client.command-handler';
 import { CLIENT_COMMAND_REPOSITORY_INJECTION_TOKEN } from './constants';
+import { PostgresClientCommandRepository } from './repositories/postgres-client-command-repository';
 import { ClientValidationService } from './services';
 import { ClientQueryService } from './services/client-query.service';
 
@@ -43,9 +48,9 @@ import { ClientQueryService } from './services/client-query.service';
           );
         });
 
-        // we need one of these
         return new PostgresClientCommandRepository(eventRepository);
       },
+      inject: [EVENT_REPOSITORY_INJECTION_TOKEN, EventFactory],
     },
     {
       provide: CommandHandlerService,

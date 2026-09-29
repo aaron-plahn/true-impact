@@ -37,6 +37,9 @@ export type WithEventMetadata<
   streamId: string;
 };
 
+export const EVENT_REPOSITORY_INJECTION_TOKEN =
+  'EVENT_REPOSITORY_INJECTION_TOKEN';
+
 export interface IEventRepository {
   appendAt(
     revision: number,
