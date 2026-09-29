@@ -1,3 +1,4 @@
+import { EventSourcedCommandRepository } from 'src/libs/cqrs-es';
 import {
   CommunityQueryService,
   CommunityViewModelClientDto,
@@ -17,13 +18,12 @@ import { Client } from '../client.aggregate-root';
 import { CLIENT_AGGREGATE_TYPE } from '../client.composite-identifier';
 import { CLIENT_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../constants';
 import { ClientViewModel, ClientViewModelClientDto } from '../queries';
-import type { IClientCommandRepository } from '../repositories';
 
 export class ClientQueryService {
   // For now, we project off the domain (command) models. In the future, we may have a query DB separate from our operational DB.
   constructor(
     @Inject(CLIENT_COMMAND_REPOSITORY_INJECTION_TOKEN)
-    private readonly repository: IClientCommandRepository,
+    private readonly repository: EventSourcedCommandRepository<Client>,
     private readonly communityQueryService: CommunityQueryService,
     private readonly flagQueryService: FlagQueryService,
     private readonly surveyResponseQueryService: SurveyResponseQueryService,

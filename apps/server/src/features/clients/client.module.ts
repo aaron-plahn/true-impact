@@ -4,6 +4,7 @@ import {
   CommandHandlerService,
   DomainEvent,
   EVENT_REPOSITORY_INJECTION_TOKEN,
+  EventSourcedCommandRepository,
   IEventRepository,
 } from '../../libs/cqrs-es';
 import { Module, ModuleRef } from '../../libs/framework';
@@ -25,7 +26,6 @@ import {
 import { Client } from './client.aggregate-root';
 import { CLIENT_AGGREGATE_TYPE } from './client.composite-identifier';
 import { CLIENT_COMMAND_REPOSITORY_INJECTION_TOKEN } from './constants';
-import { EventSourcedCommandRepository } from './repositories/postgres-client-command-repository';
 import { ClientValidationService } from './services';
 import { ClientQueryService } from './services/client-query.service';
 
