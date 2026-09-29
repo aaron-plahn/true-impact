@@ -2,8 +2,8 @@ import {
   NestedDataType,
   NonEmptyString,
   TrueImpactDataExample,
-} from '../../../libs/data-types';
-import { ClientCompositeIdentifier } from '../client.composite-identifier';
+} from '../../../../libs/data-types';
+import { ClientCompositeIdentifier } from '../../client.composite-identifier';
 
 @TrueImpactDataExample<FlagClient>({
   example: {

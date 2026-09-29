@@ -13,7 +13,12 @@ export abstract class EventSourcedAggregateRoot {
 
   abstract revision: number;
 
-  eventHistory: DomainEvent[];
+  /**
+   * The only reason this is here is because we hit some kind of strange
+   * circularity when attempting to annotate the type of the property
+   * here on the base class.
+   */
+  abstract eventHistory: DomainEvent[];
 
   validateAgainstSchema(): TrueImpactError[] {
     const schema = getDataSchemaFromClassCtor(

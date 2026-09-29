@@ -12,11 +12,20 @@ exports[`ClientSchema should match the snapshot 1`] = `
       "type": "NON_EMPTY_STRING",
     },
     "dateOfBirth": {
-      "description": "the client's date of birth",
+      "description": "the client's birth date",
+      "getCtor": [Function],
       "isOptional": false,
-      "label": "DOB",
-      "mustBeUnique": false,
-      "type": "NON_EMPTY_STRING",
+      "label": "date of birth",
+      "type": "object",
+    },
+    "eventHistory": {
+      "canBeEmpty": true,
+      "description": "audit log containing all historical edits of this survey",
+      "items": {
+        "type": "RAW_OBJECT",
+      },
+      "label": "event history",
+      "type": "array",
     },
     "flagIds": {
       "canBeEmpty": true,

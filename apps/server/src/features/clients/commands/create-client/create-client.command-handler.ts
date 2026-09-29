@@ -1,15 +1,15 @@
 import { randomUUID } from 'node:crypto';
-import { COMMUNITY_VALIDATION_SERVICE_INJECTION_TOKEN } from '../../../features/communities/constants';
-import { CommandResult, ICommandHandler } from '../../../libs/cqrs-es';
+import { CommandResult, ICommandHandler } from '../../../../libs/cqrs-es';
 import {
   isNonEmptyString,
   TrueImpactBadUserInputError,
   TrueImpactError,
-} from '../../../libs/data-types';
-import { Inject } from '../../../libs/framework';
-import { Client } from '../client.aggregate-root';
-import { CLIENT_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../constants';
-import type { IClientCommandRepository } from '../repositories';
+} from '../../../../libs/data-types';
+import { Inject } from '../../../../libs/framework';
+import { COMMUNITY_VALIDATION_SERVICE_INJECTION_TOKEN } from '../../../communities/constants';
+import { Client } from '../../client.aggregate-root';
+import { CLIENT_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../../constants';
+import type { IClientCommandRepository } from '../../repositories';
 import { CreateClient } from './create-client.command';
 
 interface ICommunityValidationService {

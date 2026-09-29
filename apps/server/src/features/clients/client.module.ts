@@ -1,20 +1,28 @@
 import { forwardRef } from '@nestjs/common';
-import { InMemoryCommandRepository } from '../../common/persistence';
-import { CommandHandlerService } from '../../libs/cqrs-es';
+import { EventFactory } from 'src/postgresql/event-factory';
+import {
+  CommandHandlerService,
+  EVENT_REPOSITORY_INJECTION_TOKEN,
+  IEventRepository,
+} from '../../libs/cqrs-es';
 import { Module, ModuleRef } from '../../libs/framework';
 import { CommunityModule } from '../communities/community.module';
 import { FlagModule } from '../flags/flag.module';
 import { SurveyModule } from '../survey/survey.module';
 import { UserModule } from '../users/user.module';
-import { Client } from './client.aggregate-root';
 import { ClientController } from './client.controller';
-import { AddCommunityAffiliationForClient } from './commands/add-community-affiliation-for-client';
-import { AddCommunityAffiliationForClientCommandHandler } from './commands/add-community-affiliation-for-client.command-handler';
-import { CreateClient } from './commands/create-client.command';
-import { CreateClientCommandHandler } from './commands/create-client.command-handler';
-import { FlagClient } from './commands/flag-client.command';
-import { FlagClientCommandHandler } from './commands/flag-client.command-handler';
+import {
+  AddCommunityAffiliationForClient,
+  AddCommunityAffiliationForClientCommandHandler,
+  ClientCreated,
+  CreateClient,
+  CreateClientCommandHandler,
+  FlagClient,
+  FlagClientCommandHandler,
+} from './commands';
+
 import { CLIENT_COMMAND_REPOSITORY_INJECTION_TOKEN } from './constants';
+import { PostgresClientCommandRepository } from './repositories/postgres-client-command-repository';
 import { ClientValidationService } from './services';
 import { ClientQueryService } from './services/client-query.service';
 
@@ -33,7 +41,19 @@ import { ClientQueryService } from './services/client-query.service';
     AddCommunityAffiliationForClientCommandHandler,
     {
       provide: CLIENT_COMMAND_REPOSITORY_INJECTION_TOKEN,
-      useFactory: () => new InMemoryCommandRepository(Client),
+      useFactory: (
+        eventRepository: IEventRepository,
+        eventFactory: EventFactory,
+      ) => {
+        eventFactory.register('CLIENT_CREATED', (doc) => {
+          return ClientCreated.fromPersistenceDto(
+            doc as unknown as ClientCreated,
+          );
+        });
+
+        return new PostgresClientCommandRepository(eventRepository);
+      },
+      inject: [EVENT_REPOSITORY_INJECTION_TOKEN, EventFactory],
     },
     {
       provide: CommandHandlerService,

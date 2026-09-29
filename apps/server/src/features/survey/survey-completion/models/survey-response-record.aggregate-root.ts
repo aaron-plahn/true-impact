@@ -433,10 +433,6 @@ export class SurveyResponseRecord extends EventSourcedAggregateRoot {
     }
 
     if (questionLabel !== this.nextQuestionLabel) {
-      console.log(
-        `You were supposed to answer question ${this.nextQuestionLabel} next in survey: ${JSON.stringify(this.survey.toPersistenceDto())}`,
-      );
-
       return new TrueImpactError(
         `You cannot answer question [${questionLabel}] in survey [${this.survey.name}], as it is not the next question ([${this.nextQuestionLabel as string}])`,
       );

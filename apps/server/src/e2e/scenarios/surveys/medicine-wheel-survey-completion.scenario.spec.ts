@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, writeFileSync } from 'fs';
 import path from 'path';
-import { CreateClient } from '../../../features/clients/commands/create-client.command';
+import { CreateClient } from '../../../features/clients/commands';
 import { ClientViewModel } from '../../../features/clients/queries';
 import { CreateCommunity } from '../../../features/communities/commands';
 import {

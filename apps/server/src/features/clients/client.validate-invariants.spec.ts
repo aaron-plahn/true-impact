@@ -1,20 +1,17 @@
-import { clonePlainObject, TrueImpactError } from '../../libs/data-types';
-import { Client, ClientPersistenceDto } from './client.aggregate-root';
+import { FullName } from '../../common/full-name';
+import { buildTestInstance, TrueImpactError } from '../../libs/data-types';
+import { Client } from './client.aggregate-root';
+import { ClientCreated } from './commands';
 
-// TODO Build test instance
-const validDtoWihtoutOptionalProperties: ClientPersistenceDto = {
-  id: '1',
-  revision: 1,
-  fullName: {
-    firstName: 'Ronald',
-    middleNames: [],
-    lastName: 'McDonnald',
+const clientCreated = buildTestInstance(ClientCreated, {
+  payload: {
+    fullName: FullName.fromString('Ronald McDonnald') as FullName,
+    dateOfBirth: '2022-08-01',
+    isIndigenous: 'Yes',
   },
-  dateOfBirth: '2022-08-01',
-  isIndigenous: 'Yes',
-  flagIds: [],
-  // community: undefined
-};
+});
+
+const validInstance = Client.fromEventHistory([clientCreated]) as Client;
 
 function assertValidInstance<T>(
   input: T | TrueImpactError,
@@ -32,15 +29,9 @@ describe(`Client.validateInvariants`, () => {
   describe(`When the client is valid`, () => {
     describe(`when all optional properties are omitted`, () => {
       it(`should return the expected instance`, () => {
-        const result = Client.fromPersistenceDto(
-          validDtoWihtoutOptionalProperties,
-        );
+        const result = validInstance.validateInvariants();
 
         assertValidInstance<Client>(result);
-
-        expect(result.toPersistenceDto()).toEqual(
-          validDtoWihtoutOptionalProperties,
-        );
       });
     });
   });
@@ -48,17 +39,14 @@ describe(`Client.validateInvariants`, () => {
   describe(`When the client is invalid`, () => {
     describe(`when the client is listed as non-indigenous, but has an assigned community`, () => {
       it(`should return the expected error`, () => {
-        const invalidDto = clonePlainObject(validDtoWihtoutOptionalProperties, {
-          isIndigenous: 'No',
-          communityId: 'Blue Lake',
-        });
-
-        const invalidInstance = Client.fromPersistenceDto(
-          invalidDto as ClientPersistenceDto,
-          { shouldValidate: false },
-        ) as Client;
-
-        const result = invalidInstance.validateInvariants();
+        const result = Client.fromEventHistory([
+          buildTestInstance(ClientCreated, {
+            payload: {
+              communityId: '44',
+              isIndigenous: 'No',
+            },
+          }),
+        ]);
 
         assertTrueImpactError(result);
 
@@ -71,16 +59,19 @@ describe(`Client.validateInvariants`, () => {
     });
     describe(`when the has a community but indigenous is "Unknown"`, () => {
       it(`should return the expected error`, () => {
-        const invalidDto = clonePlainObject(validDtoWihtoutOptionalProperties, {
-          isIndigenous: 'Unknown',
-          communityId: '99',
-        });
-
-        const instance = Client.fromPersistenceDto(
-          invalidDto as ClientPersistenceDto,
-        ) as Client;
-
-        const result = instance.validateInvariants();
+        const result = Client.fromEventHistory([
+          buildTestInstance(ClientCreated, {
+            payload: {
+              /**
+               * Command validation should have prevented this situation. But
+               * what if we update our invariant validation rules? We have to ensure
+               * that the invariants still hold.
+               */
+              isIndigenous: 'Unknown',
+              communityId: '99',
+            },
+          }),
+        ]) as Client;
 
         assertTrueImpactError(result);
 
@@ -93,20 +84,15 @@ describe(`Client.validateInvariants`, () => {
     });
 
     describe(`when the community is a number`, () => {
-      const invalidInstance = clonePlainObject(
-        validDtoWihtoutOptionalProperties,
-        {
-          communityId: 78,
-        },
-      );
+      const result = Client.fromEventHistory([
+        buildTestInstance(ClientCreated, {
+          payload: {
+            communityId: 78 as unknown as string,
+          },
+        }),
+      ]) as Client;
 
       it(`should return the expected error`, () => {
-        const instance = Client.fromPersistenceDto(
-          invalidInstance as unknown as ClientPersistenceDto,
-        ) as Client;
-
-        const result = instance.validateInvariants();
-
         assertTrueImpactError(result);
 
         const errorMessage = result.toString();

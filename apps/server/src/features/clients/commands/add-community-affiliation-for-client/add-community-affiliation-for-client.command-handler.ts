@@ -1,13 +1,13 @@
 import { Inject } from '@nestjs/common';
-import { COMMUNITY_VALIDATION_SERVICE_INJECTION_TOKEN } from '../../../features/communities/constants';
-import { CommandResult, ICommandHandler } from '../../../libs/cqrs-es';
+import { COMMUNITY_VALIDATION_SERVICE_INJECTION_TOKEN } from '../../../../features/communities/constants';
+import { CommandResult, ICommandHandler } from '../../../../libs/cqrs-es';
 import {
   TrueImpactBadUserInputError,
   TrueImpactError,
-} from '../../../libs/data-types';
-import { CLIENT_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../constants';
-import type { IClientCommandRepository } from '../repositories';
-import { AddCommunityAffiliationForClient } from './add-community-affiliation-for-client';
+} from '../../../../libs/data-types';
+import { CLIENT_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../../constants';
+import type { IClientCommandRepository } from '../../repositories';
+import { AddCommunityAffiliationForClient } from '../add-community-affiliation-for-client';
 
 interface ICommunityValidationService {
   exists(communityId: string): Promise<boolean>;
