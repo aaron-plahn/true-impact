@@ -286,7 +286,7 @@ export class Client
       },
     } = event;
 
-    const fullNameBuild = FullName.fromString(fullName);
+    const fullNameBuild = FullName.fromDto(fullName);
 
     if (fullNameBuild instanceof Error) {
       return fullNameBuild;
@@ -354,12 +354,11 @@ export class Client
       new ClientCreated({
         payload: {
           aggregateCompositeIdentifier: result.getCompositeIdentifier(),
-          // TODO this has to be an object!!
           fullName: FullName.fromDto({
             firstName,
             lastName,
             middleNames: [],
-          }).toString(),
+          }),
           dateOfBirth: parseInt(result.dateOfBirth),
           isIndigenous: isNonEmptyString(isIndigenous)
             ? isIndigenous

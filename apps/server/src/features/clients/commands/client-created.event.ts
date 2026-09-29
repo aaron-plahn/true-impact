@@ -1,6 +1,8 @@
 import { plainToInstance } from 'class-transformer';
+import { FullName, FullNameDto } from 'src/common/full-name';
 import {
   EnumeratedType,
+  NestedDataType,
   NonEmptyString,
   NonNegativeInteger,
   TrueImpactDataExample,
@@ -14,12 +16,12 @@ export class ClientCreatedPayload {
   @ClientCompositeIdentifierValuedProp
   aggregateCompositeIdentifier: ClientCompositeIdentifier;
 
-  @NonEmptyString({
+  @NestedDataType(() => FullNameDto, {
     label: 'full name',
     // TODO change this into a DTO object
     description: `the client's full name as a single piece of text`,
   })
-  fullName: string; // FullName
+  fullName: FullNameDto;
 
   @NonNegativeInteger({
     label: 'date of birth',
@@ -54,8 +56,7 @@ export const CLIENT_CREATED = 'CLIENT_CREATED';
         type: 'client',
         id: '333',
       },
-      // TODO this should be an object
-      fullName: 'Raymond Doe',
+      fullName: FullName.fromString('Raymond Doe') as FullName,
       // TODO this should be an object
       dateOfBirth: 121206,
     },
