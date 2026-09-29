@@ -41,15 +41,25 @@ export class EventSourcedCommandRepository<
     return searchResult !== null;
   }
 
-  async fetchById(
-    id: string,
-  ): Promise<TAggregateRoot | TrueImpactError | null> {
+  async fetchById(id: string): Promise<TAggregateRoot | null> {
     const eventHistory = await this.eventRepository.read({
       type: this.aggregateType,
       id,
     });
 
-    return this.buildInstance(eventHistory);
+    const result = this.buildInstance(eventHistory);
+
+    // we don't want to leak this
+    if (result instanceof Error) {
+      throw new TrueImpactRuntimeException([
+        new TrueImpactError(
+          `Encountered invalid existing ${this.aggregateLabels.singular} data.`,
+        ),
+        result,
+      ]);
+    }
+
+    return result;
   }
 
   /**
@@ -140,7 +150,7 @@ export class EventSourcedCommandRepository<
     }
 
     const ack: PersistenceAcknowledgement = {
-      type: instance.getCompositeIdentifier().type,
+      type: this.aggregateType,
       id: instance.getId(),
       revision: eventHistory.length.toString(),
     };

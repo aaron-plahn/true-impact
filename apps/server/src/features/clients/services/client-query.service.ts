@@ -9,10 +9,7 @@ import {
 } from '../../../features/flags/queries';
 import { SurveyResponseQueryService } from '../../../features/survey/survey-completion/queries';
 import { SurveyResponseRecordViewModelClientDto } from '../../../features/survey/survey-completion/queries/survey-response-record.view-model';
-import {
-  TrueImpactError,
-  TrueImpactRuntimeException,
-} from '../../../libs/data-types';
+import { TrueImpactError } from '../../../libs/data-types';
 import { Inject } from '../../../libs/framework';
 import { Client } from '../client.aggregate-root';
 import { CLIENT_AGGREGATE_TYPE } from '../client.composite-identifier';
@@ -40,13 +37,6 @@ export class ClientQueryService {
     }
 
     const communitiesById = new Map<string, CommunityViewModelClientDto>();
-
-    if (domainModelSearchResult instanceof Error) {
-      throw new TrueImpactRuntimeException([
-        new TrueImpactError(`Encountered invalid client data in the database`),
-        domainModelSearchResult,
-      ]);
-    }
 
     const { communityId } = domainModelSearchResult;
 
