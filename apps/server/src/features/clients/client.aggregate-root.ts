@@ -3,6 +3,7 @@ import { FullName, FullNameDto } from '../../common/full-name';
 import {
   EventSourcedAggregateRoot,
   isNonEmptyString,
+  Literal,
   NestedDataType,
   NonEmptyString,
   NonNegativeInteger,
@@ -19,10 +20,7 @@ import {
   CalendarDateDto,
   type YesNoOrUnknown,
 } from '../../libs/data-types';
-import {
-  CLIENT_AGGREGATE_TYPE,
-  ClientCompositeIdentifier,
-} from './client.composite-identifier';
+import { CLIENT_AGGREGATE_TYPE } from './client.composite-identifier';
 import {
   ClientCreated,
   ClientFlagged,
@@ -69,7 +67,11 @@ export class Client
   extends EventSourcedAggregateRoot
   implements ValidateInvariants<Client>
 {
-  static readonly type = CLIENT_AGGREGATE_TYPE;
+  @Literal(CLIENT_AGGREGATE_TYPE, {
+    label: 'type',
+    description: 'distinguishes clients from other entities in our system',
+  })
+  readonly type = CLIENT_AGGREGATE_TYPE;
 
   @NonEmptyString({
     label: 'ID',
@@ -266,13 +268,6 @@ export class Client
     }
 
     return allErrors;
-  }
-
-  getCompositeIdentifier(): ClientCompositeIdentifier {
-    return {
-      type: CLIENT_AGGREGATE_TYPE,
-      id: this.id,
-    };
   }
 
   toPersistenceDto(): ClientPersistenceDto {

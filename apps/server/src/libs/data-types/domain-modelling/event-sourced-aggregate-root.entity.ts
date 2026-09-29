@@ -9,7 +9,9 @@ import { DomainEvent } from '../../cqrs-es';
 
 // should this be part of the cqrs lib?
 export abstract class EventSourcedAggregateRoot {
-  abstract id?: string;
+  abstract readonly id?: string;
+
+  abstract readonly type: string;
 
   abstract revision: number;
 
@@ -89,7 +91,12 @@ export abstract class EventSourcedAggregateRoot {
     return this.id || 'NOT YET PERSISTED';
   }
 
-  abstract getCompositeIdentifier(): { type: string; id: string };
+  getCompositeIdentifier(): { type: typeof this.type; id: string } {
+    return {
+      type: this.type,
+      id: this.getId(),
+    };
+  }
 
   apply<T extends this>(this: T, event: DomainEvent): T | TrueImpactError {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access

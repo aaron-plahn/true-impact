@@ -6,6 +6,7 @@ import {
   InvariantValidationError,
   isBoolean,
   isPositiveNumber,
+  Literal,
   NonEmptyString,
   NonNegativeInteger,
   RawObject,
@@ -77,6 +78,13 @@ export class SurveyPersistenceDto {
   },
 })
 export class Survey extends EventSourcedAggregateRoot {
+  @Literal(SURVEY_AGGREGATE_TYPE, {
+    label: 'type',
+    description:
+      'distinguishes survey responses from other entities in our system',
+  })
+  readonly type = SURVEY_AGGREGATE_TYPE;
+
   /**
    * This is useful in case we ever want to iterate through a global collection of
    * entities and build instances.
@@ -219,14 +227,6 @@ export class Survey extends EventSourcedAggregateRoot {
 
   getId(): string {
     return this.id;
-  }
-
-  // TODO rename this to getCompositeIdentifier
-  getCompositeIdentifier() {
-    return {
-      type: SURVEY_AGGREGATE_TYPE,
-      id: this.id,
-    } as const;
   }
 
   getName(): string {

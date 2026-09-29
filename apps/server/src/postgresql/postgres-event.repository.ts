@@ -49,7 +49,8 @@ export class PostgresEventRepository implements IEventRepository {
     revision: number,
     ...events: WithEventMetadata<DomainEvent>[]
     // necessary for optimistic concurrency
-  ): Promise<{ streamId: string } | Error> {
+    // This should include the type \ id instead of stream ID as the outside world isn't aware of this implementation detail
+  ): Promise<{ streamId: string; revision: number } | Error> {
     if (events.length === 0) {
       throw new TrueImpactRuntimeException([
         new TrueImpactError(`You cannot persist an empty list of events.`),
@@ -135,6 +136,7 @@ export class PostgresEventRepository implements IEventRepository {
 
     return {
       streamId: firstEvent.streamId,
+      revision: revision + events.length,
     };
   }
 

@@ -45,7 +45,7 @@ export interface IEventRepository {
     revision: number,
     ...events: DomainEvent[]
     // necessary for optimistic concurrency
-  ): Promise<{ streamId: string } | Error>;
+  ): Promise<{ streamId: string; revision: number } | Error>;
 
   read(aggregateCompositeIdentifier?: {
     type: string;

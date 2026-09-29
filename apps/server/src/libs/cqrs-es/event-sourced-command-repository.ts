@@ -186,9 +186,7 @@ export class EventSourcedCommandRepository<
 
     return {
       ...instance.getCompositeIdentifier(),
-      // TODO get this from the db
-      // can we do this now?
-      revision: (instance.revision + recentEvents.length).toString(),
+      revision: result.revision.toString(),
     };
   }
 
