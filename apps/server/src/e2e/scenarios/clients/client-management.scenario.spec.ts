@@ -1,6 +1,8 @@
-import { AddCommunityAffiliationForClient } from '../../../features/clients/commands/add-community-affiliation-for-client';
-import { CreateClient } from '../../../features/clients/commands/create-client.command';
-import { FlagClient } from '../../../features/clients/commands/flag-client.command';
+import {
+  AddCommunityAffiliationForClient,
+  CreateClient,
+  FlagClient,
+} from '../../../features/clients/commands';
 import { ClientViewModelClientDto } from '../../../features/clients/queries';
 import { CreateCommunity } from '../../../features/communities/commands';
 import {

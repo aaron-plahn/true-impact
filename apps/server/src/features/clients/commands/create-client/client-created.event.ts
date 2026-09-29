@@ -1,16 +1,16 @@
 import { plainToInstance } from 'class-transformer';
-import { FullName, FullNameDto } from '../../../common/full-name';
+import { FullName, FullNameDto } from '../../../../common/full-name';
 import {
   EnumeratedType,
   NestedDataType,
   NonEmptyString,
   NonNegativeInteger,
   TrueImpactDataExample,
-} from '../../../libs/data-types';
+} from '../../../../libs/data-types';
 import {
   ClientCompositeIdentifier,
   ClientCompositeIdentifierValuedProp,
-} from '../client.composite-identifier';
+} from '../../client.composite-identifier';
 
 export class ClientCreatedPayload {
   @ClientCompositeIdentifierValuedProp
@@ -18,7 +18,6 @@ export class ClientCreatedPayload {
 
   @NestedDataType(() => FullNameDto, {
     label: 'full name',
-    // TODO change this into a DTO object
     description: `the client's full name as a single piece of text`,
   })
   fullName: FullNameDto;

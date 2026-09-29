@@ -1,5 +1,3 @@
-// TODO clean up other exports
-export * from './client-created.event';
-export * from './community-affiliation-added-for-client.event';
-
-// TODO organize the command directories
+export * from './add-community-affiliation-for-client';
+export * from './create-client';
+export * from './flag-client';

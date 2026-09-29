@@ -1,7 +1,7 @@
 import { isDeepStrictEqual } from 'util';
 import { Client } from '../../../features/clients/client.aggregate-root';
 import { CLIENT_AGGREGATE_TYPE } from '../../../features/clients/client.composite-identifier';
-import { CreateClient } from '../../../features/clients/commands/create-client.command';
+import { CreateClient } from '../../../features/clients/commands';
 import { CreateCommunity } from '../../../features/communities/commands';
 import { CommunityViewModelClientDto } from '../../../features/communities/queries';
 import { SurveyViewModel } from '../../../features/survey/queries/survey.view-model';

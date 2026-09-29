@@ -1,9 +1,9 @@
 import { plainToInstance } from 'class-transformer';
-import { NonEmptyString } from '../../../libs/data-types';
+import { NonEmptyString } from '../../../../libs/data-types';
 import {
   ClientCompositeIdentifier,
   ClientCompositeIdentifierValuedProp,
-} from '../client.composite-identifier';
+} from '../../client.composite-identifier';
 
 export class ClientFlaggedPayload {
   @ClientCompositeIdentifierValuedProp

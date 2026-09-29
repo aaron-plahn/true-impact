@@ -1,4 +1,3 @@
-import { CreateClient } from './commands/create-client.command';
 // TODO Barrel export?
 import { FullName, FullNameDto } from '../../common/full-name';
 import {
@@ -24,8 +23,12 @@ import {
   CLIENT_AGGREGATE_TYPE,
   ClientCompositeIdentifier,
 } from './client.composite-identifier';
-import { ClientCreated, CommunityAffiliationAddedForClient } from './commands';
-import { ClientFlagged } from './commands/client-flagged.event';
+import {
+  ClientCreated,
+  ClientFlagged,
+  CommunityAffiliationAddedForClient,
+  CreateClient,
+} from './commands';
 
 interface ValidateInvariants<T> {
   // Should we make this an either?

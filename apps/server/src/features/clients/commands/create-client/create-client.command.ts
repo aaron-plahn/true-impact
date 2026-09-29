@@ -1,10 +1,10 @@
 import {
   NonEmptyString,
   TrueImpactDataExample,
-} from '../../../libs/data-types';
-import { EnumeratedType } from '../../../libs/data-types/schema-management/decorators/enumerated-type.decorator';
+} from '../../../../libs/data-types';
+import { EnumeratedType } from '../../../../libs/data-types/schema-management/decorators/enumerated-type.decorator';
 
-import type { YesNoOrUnknown } from '../../../libs/data-types';
+import type { YesNoOrUnknown } from '../../../../libs/data-types';
 
 @TrueImpactDataExample<CreateClient>({
   example: {

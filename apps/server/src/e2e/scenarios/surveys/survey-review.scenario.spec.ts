@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { CreateClient } from '../../../features/clients/commands/create-client.command';
+import { CreateClient } from '../../../features/clients/commands';
 import { CreateCommunity } from '../../../features/communities/commands';
 import { CreateFlag } from '../../../features/flags/commands';
 import { FlagViewModelClientDto } from '../../../features/flags/queries';

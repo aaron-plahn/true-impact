@@ -1,12 +1,12 @@
 import { Inject } from '@nestjs/common';
-import { FLAG_VALIDATION_SERVICE_INJECTION_TOKEN } from '../../../features/flags/constants';
-import { CommandResult, ICommandHandler } from '../../../libs/cqrs-es';
+import { FLAG_VALIDATION_SERVICE_INJECTION_TOKEN } from '../../../../features/flags/constants';
+import { CommandResult, ICommandHandler } from '../../../../libs/cqrs-es';
 import {
   TrueImpactBadUserInputError,
   TrueImpactError,
-} from '../../../libs/data-types';
-import { CLIENT_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../constants';
-import type { IClientCommandRepository } from '../repositories';
+} from '../../../../libs/data-types';
+import { CLIENT_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../../constants';
+import type { IClientCommandRepository } from '../../repositories';
 import { FlagClient } from './flag-client.command';
 
 interface IFlagValidationService {

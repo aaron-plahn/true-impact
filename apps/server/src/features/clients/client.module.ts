@@ -11,13 +11,16 @@ import { FlagModule } from '../flags/flag.module';
 import { SurveyModule } from '../survey/survey.module';
 import { UserModule } from '../users/user.module';
 import { ClientController } from './client.controller';
-import { ClientCreated } from './commands';
-import { AddCommunityAffiliationForClient } from './commands/add-community-affiliation-for-client';
-import { AddCommunityAffiliationForClientCommandHandler } from './commands/add-community-affiliation-for-client.command-handler';
-import { CreateClient } from './commands/create-client.command';
-import { CreateClientCommandHandler } from './commands/create-client.command-handler';
-import { FlagClient } from './commands/flag-client.command';
-import { FlagClientCommandHandler } from './commands/flag-client.command-handler';
+import {
+  AddCommunityAffiliationForClient,
+  AddCommunityAffiliationForClientCommandHandler,
+  ClientCreated,
+  CreateClient,
+  CreateClientCommandHandler,
+  FlagClient,
+  FlagClientCommandHandler,
+} from './commands';
+
 import { CLIENT_COMMAND_REPOSITORY_INJECTION_TOKEN } from './constants';
 import { PostgresClientCommandRepository } from './repositories/postgres-client-command-repository';
 import { ClientValidationService } from './services';
