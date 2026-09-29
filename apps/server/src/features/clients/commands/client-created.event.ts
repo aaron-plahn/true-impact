@@ -3,7 +3,8 @@ import {
   EnumeratedType,
   NonEmptyString,
   NonNegativeInteger,
-} from 'src/libs/data-types';
+  TrueImpactDataExample,
+} from '../../../libs/data-types';
 import {
   ClientCompositeIdentifier,
   ClientCompositeIdentifierValuedProp,
@@ -45,6 +46,21 @@ export class ClientCreatedPayload {
 
 export const CLIENT_CREATED = 'CLIENT_CREATED';
 
+@TrueImpactDataExample<ClientCreated>({
+  example: {
+    type: 'CLIENT_CREATED',
+    payload: {
+      aggregateCompositeIdentifier: {
+        type: 'client',
+        id: '333',
+      },
+      // TODO this should be an object
+      fullName: 'Raymond Doe',
+      // TODO this should be an object
+      dateOfBirth: 121206,
+    },
+  },
+})
 export class ClientCreated {
   readonly type = CLIENT_CREATED;
 

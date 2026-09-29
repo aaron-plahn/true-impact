@@ -1,4 +1,4 @@
-import { NestedDataType } from 'src/libs/data-types';
+import { NestedDataType } from '../../libs/data-types';
 
 export const CLIENT_AGGREGATE_TYPE = 'client';
 

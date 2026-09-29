@@ -36,8 +36,74 @@ export class PostgresClientCommandRepository implements IClientCommandRepository
     return this.buildInstance(eventHistory);
   }
 
-  fetchMany(): Promise<Client[]> {
-    throw new Error('Method not implemented.');
+  /**
+   * **WARNING** This is extremely inefficient. It is provided to support
+   * index queries but will only be feasible for small amounts (say dozens of aggregate roots)
+   * of data. You should implement materialized views that are synchronized via event consumers
+   * if you have more data than this.
+   */
+  async fetchMany(): Promise<Client[]> {
+    const events = await this.eventRepository.read();
+
+    const eventHistoriesByAggregateId = new Map<string, DomainEvent[]>();
+
+    for (const e of events) {
+      const {
+        payload: {
+          aggregateCompositeIdentifier: { id, type: aggregateType },
+        },
+      } = e;
+
+      if (aggregateType !== this.aggregateType) {
+        continue;
+      }
+
+      const existingEventsForThisAggregate =
+        eventHistoriesByAggregateId.get(id);
+
+      const eventsForThisAggregateRootSoFar =
+        existingEventsForThisAggregate || [];
+
+      eventsForThisAggregateRootSoFar.push(e);
+
+      eventHistoriesByAggregateId.set(id, eventsForThisAggregateRootSoFar);
+    }
+
+    const results: Client[] = [];
+
+    const errors: TrueImpactError[] = [];
+
+    for (const aggregateId of eventHistoriesByAggregateId.keys()) {
+      const eventsForThisAggregateRoot =
+        eventHistoriesByAggregateId.get(aggregateId);
+
+      if (!eventsForThisAggregateRoot) {
+        continue;
+      }
+
+      const buildResult = this.buildInstance(eventsForThisAggregateRoot);
+
+      if (!buildResult) {
+        continue;
+      }
+
+      if (buildResult instanceof Error) {
+        errors.push(buildResult);
+      } else {
+        results.push(buildResult);
+      }
+    }
+
+    if (errors.length > 0) {
+      throw new TrueImpactRuntimeException([
+        new TrueImpactError(
+          `Failed to fetch many surveys due to invalid existing data in the database`,
+          errors,
+        ),
+      ]);
+    }
+
+    return results;
   }
 
   // TODO should we merge this with `update` to form a single `upsert`?
@@ -121,5 +187,20 @@ export class PostgresClientCommandRepository implements IClientCommandRepository
     eventStream: Iterable<DomainEvent>,
   ): Client | TrueImpactError | null {
     return Client.fromEventHistory(eventStream);
+  }
+
+  // TODO remove this?
+  async clear() {
+    if (!['test', 'e2e'].includes(process.env.NODE_ENV || '**NEVER**')) {
+      throw new TrueImpactRuntimeException([
+        new TrueImpactError(
+          `You cannot clear surveys in the non-test environment [${process.env.NODE_ENV}]`,
+        ),
+      ]);
+    }
+
+    // @ts-expect-error This is not part of the interface but it is on all concrete implementations.
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+    await this.eventRepository.clear();
   }
 }

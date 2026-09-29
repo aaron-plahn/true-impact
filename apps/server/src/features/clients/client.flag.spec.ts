@@ -1,14 +1,11 @@
 import { buildTestInstance, TrueImpactError } from '../../libs/data-types';
 import { assertTextMatchesAll } from '../../libs/test-utils';
 import { Client } from './client.aggregate-root';
+import { ClientCreated } from './commands';
 
-const clientWithNoFlags = buildTestInstance(
-  Client,
-  {
-    flagIds: [],
-  },
-  { shouldValidate: true },
-);
+const clientWithNoFlags = Client.fromEventHistory([
+  buildTestInstance(ClientCreated),
+]) as Client;
 
 const firstFlagId = '123';
 

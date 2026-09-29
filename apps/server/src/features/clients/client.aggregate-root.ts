@@ -7,13 +7,14 @@ import {
   NestedDataType,
   NonEmptyString,
   NonNegativeInteger,
+  RawObject,
   TrueImpactBadUserInputError,
   TrueImpactDataExample,
   TrueImpactError,
   UpdateMethod,
 } from '../../libs/data-types';
 
-import { DomainEvent } from 'src/libs/cqrs-es';
+import { DomainEvent } from '../../libs/cqrs-es';
 import type { YesNoOrUnknown } from '../../libs/data-types';
 import {
   CLIENT_AGGREGATE_TYPE,
@@ -73,7 +74,17 @@ export class Client
     label: 'revision',
     description: 'tracks historical versions of this client',
   })
+  // latestPersistedRevision?
   revision: number;
+
+  @RawObject({
+    label: 'event history',
+    description: 'audit log containing all historical edits of this survey',
+    isArray: true,
+    // TODO rename this `canBeEmpty` for Array valued props?
+    isOptional: true, // i.e. can be empty
+  })
+  eventHistory: DomainEvent[] = [];
 
   @NestedDataType(() => FullName, {
     label: 'full name',
@@ -201,6 +212,10 @@ export class Client
 
   @UpdateMethod()
   flag(flagId: string): Client | TrueImpactError {
+    if (!this.flagIds) {
+      console.log('HEREEEEEEEEEEEEEEEE');
+    }
+
     if (this.flagIds.includes(flagId)) {
       return new TrueImpactError(
         `You cannot flag client ${this.getName()} with the flag [${flagId}], as the client already has this flag.`,
@@ -260,6 +275,41 @@ export class Client
     return JSON.parse(JSON.stringify(this)) as ClientPersistenceDto;
   }
 
+  public static fromClientCreated(event: ClientCreated) {
+    const {
+      payload: {
+        aggregateCompositeIdentifier: { id },
+        fullName,
+        dateOfBirth,
+        isIndigenous,
+        communityId,
+      },
+    } = event;
+
+    const fullNameBuild = FullName.fromString(fullName);
+
+    if (fullNameBuild instanceof Error) {
+      return fullNameBuild;
+    }
+
+    const instance = new Client({
+      id,
+      revision: 1,
+      fullName: fullNameBuild,
+      dateOfBirth: dateOfBirth.toString(),
+      isIndigenous:
+        typeof isIndigenous === 'undefined' ? 'Unknown' : isIndigenous,
+      communityId,
+      flagIds: [],
+    });
+
+    instance.eventHistory.push(event);
+
+    const validationResult = instance.validateInvariants();
+
+    return validationResult;
+  }
+
   public static fromEventHistory(
     eventHistory: Iterable<DomainEvent>,
   ): Client | TrueImpactError | null {
@@ -304,8 +354,12 @@ export class Client
       new ClientCreated({
         payload: {
           aggregateCompositeIdentifier: result.getCompositeIdentifier(),
-          // TODO this has to be an object!
-          fullName: '', // todo fix this
+          // TODO this has to be an object!!
+          fullName: FullName.fromDto({
+            firstName,
+            lastName,
+            middleNames: [],
+          }).toString(),
           dateOfBirth: parseInt(result.dateOfBirth),
           isIndigenous: isNonEmptyString(isIndigenous)
             ? isIndigenous

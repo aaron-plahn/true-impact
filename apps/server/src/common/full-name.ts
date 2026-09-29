@@ -1,4 +1,4 @@
-import { NonEmptyString } from '../libs/data-types';
+import { NonEmptyString, TrueImpactError } from '../libs/data-types';
 
 export class FullNameDto {
   @NonEmptyString({
@@ -93,6 +93,26 @@ export class FullName {
   }
 
   public static fromDto(dto: FullNameDto) {
+    return new FullName(dto);
+  }
+
+  public static fromString(input: string): FullName | TrueImpactError {
+    // TODO we need to deal with this more carefully before going to prod
+    const parts = input.split(' ');
+
+    if (parts.length < 2) {
+      return new TrueImpactError(
+        // TODO remove the actual input from the log
+        `Invalid full name [${input}]. You must include at a minumum first and last name.`,
+      );
+    }
+
+    const dto = {
+      firstName: parts[0],
+      middleNames: parts.slice(1, -1),
+      lastName: parts.at(-1) as string,
+    };
+
     return new FullName(dto);
   }
 }

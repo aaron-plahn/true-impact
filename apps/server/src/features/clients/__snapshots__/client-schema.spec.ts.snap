@@ -18,6 +18,15 @@ exports[`ClientSchema should match the snapshot 1`] = `
       "mustBeUnique": false,
       "type": "NON_EMPTY_STRING",
     },
+    "eventHistory": {
+      "canBeEmpty": true,
+      "description": "audit log containing all historical edits of this survey",
+      "items": {
+        "type": "RAW_OBJECT",
+      },
+      "label": "event history",
+      "type": "array",
+    },
     "flagIds": {
       "canBeEmpty": true,
       "description": "a reference to flags that indicate warnings or other context when interacting with the given client",
