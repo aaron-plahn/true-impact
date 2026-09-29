@@ -1,11 +1,13 @@
+import { DomainEvent, EventPayload } from 'src/libs/cqrs-es';
 import {
-  AggregateRoot,
+  EventSourcedAggregateRoot,
   NonEmptyString,
   NonNegativeInteger,
   TrueImpactDataExample,
   TrueImpactError,
   UpdateMethod,
 } from '../../../libs/data-types';
+import { FlagCreated, FlagRelabelled } from '../commands';
 import { FLAG_AGGREGATE_TYPE } from '../constants';
 
 export class FlagPersistenceDto {
@@ -23,7 +25,10 @@ export class FlagPersistenceDto {
     description: `Beware of a dangerous animal (e.g., a dog that bites) at the client's primary residence.`,
   },
 })
-export class Flag extends AggregateRoot<FlagPersistenceDto> {
+export class Flag extends EventSourcedAggregateRoot {
+  readonly type = FLAG_AGGREGATE_TYPE;
+
+  eventHistory: DomainEvent<EventPayload>[];
   @NonEmptyString({
     label: 'type',
     description: FLAG_AGGREGATE_TYPE,
@@ -106,9 +111,48 @@ export class Flag extends AggregateRoot<FlagPersistenceDto> {
       );
     }
 
-    this.label = newLabel;
+    const e = new FlagRelabelled({
+      payload: {
+        aggregateCompositeIdentifier: this.getCompositeIdentifier(),
+        newLabel,
+      },
+    });
 
-    return this;
+    return this.apply(e);
+  }
+
+  handleFlagRelabelled({ payload: { newLabel } }: FlagRelabelled) {
+    this.label = newLabel;
+  }
+
+  static fromEventHistory(
+    eventHistory: Iterable<DomainEvent>,
+  ): EventSourcedAggregateRoot | TrueImpactError | null {
+    return EventSourcedAggregateRoot.fromEventHistory.call(
+      Flag,
+      eventHistory,
+    ) as Flag;
+  }
+
+  static fromFlagCreated(event: FlagCreated) {
+    const {
+      payload: {
+        aggregateCompositeIdentifier: { id },
+        label,
+        description,
+      },
+    } = event;
+
+    const instance = new Flag({
+      id,
+      revision: 1,
+      label,
+      description,
+    });
+
+    instance.eventHistory.push(event);
+
+    return instance.validateInvariants();
   }
 
   static fromClientRequest({
