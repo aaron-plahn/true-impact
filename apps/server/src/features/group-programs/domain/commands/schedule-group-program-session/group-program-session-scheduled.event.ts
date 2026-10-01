@@ -1,19 +1,33 @@
 import { plainToInstance } from 'class-transformer';
 import {
   NestedDataType,
+  NonEmptyString,
   TrueImpactDataExample,
 } from '../../../../../libs/data-types';
 import { GROUP_PROGRAM_AGGREGATE_TYPE } from '../../constants';
-import { GroupProgramCompositeIdentifier } from '../../group-program.composite-identifier';
+import {
+  GroupProgramCompositeIdentifier,
+  GroupProgramCompositeIdentifierValuedProperty,
+} from '../../group-program.composite-identifier';
 import { GroupSessionLocationDto } from '../../group-session-location.value-object';
 
-// GroupSessionScheduled?
 export class GroupProgramSessionScheduledPayload {
+  @GroupProgramCompositeIdentifierValuedProperty
   aggregateCompositeIdentifier: GroupProgramCompositeIdentifier;
 
-  // TODO make this a proper date
+  @NonEmptyString({
+    label: 'date',
+    description: 'calendar date on which this session wil occur',
+  })
+  // TODO consider how we persist time stamps \ dates
+  // TODO start time \ end time?
   date: string;
 
+  @NonEmptyString({
+    label: 'session ID',
+    description:
+      'uniquely identifies this session amongst others for the same group program',
+  })
   sessionId: string;
 
   @NestedDataType(() => GroupSessionLocationDto, {
@@ -23,7 +37,7 @@ export class GroupProgramSessionScheduledPayload {
   location: GroupSessionLocationDto;
 }
 
-@TrueImpactDataExample<GroupProgramScheduled>({
+@TrueImpactDataExample<GroupProgramSessionScheduled>({
   example: {
     type: 'GROUP_PROGRAM_SESSION_SCHEDULED',
     payload: {
@@ -37,7 +51,7 @@ export class GroupProgramSessionScheduledPayload {
     },
   },
 })
-export class GroupProgramScheduled {
+export class GroupProgramSessionScheduled {
   readonly type = 'GROUP_PROGRAM_SESSION_SCHEDULED';
 
   readonly payload: GroupProgramSessionScheduledPayload;
@@ -47,5 +61,9 @@ export class GroupProgramScheduled {
       GroupProgramSessionScheduledPayload,
       payload,
     );
+  }
+
+  static fromPersistenceDto(dto: GroupProgramSessionScheduled) {
+    return new GroupProgramSessionScheduled(dto);
   }
 }

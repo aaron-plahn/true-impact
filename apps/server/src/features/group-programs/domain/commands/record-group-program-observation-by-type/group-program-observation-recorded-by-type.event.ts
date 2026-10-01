@@ -61,4 +61,8 @@ export class GroupProgramObservationRecordedByType {
       payload,
     );
   }
+
+  static fromPersistenceDto(dto: GroupProgramObservationRecordedByType) {
+    return new GroupProgramObservationRecordedByType(dto);
+  }
 }

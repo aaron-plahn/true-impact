@@ -13,7 +13,7 @@ import { GroupProgramObservation } from '../queries/group-program-observation.en
 import {
   CreateGroupProgram,
   GroupProgramObservationRecordedByType,
-  GroupProgramScheduled,
+  GroupProgramSessionScheduled,
   NoteAboutGroupProgramClassified,
   NoteAboutGroupProgramObservationMade,
 } from './commands';
@@ -183,7 +183,7 @@ export class GroupProgram extends EventSourcedAggregateRoot {
     }
 
     return this.apply(
-      new GroupProgramScheduled({
+      new GroupProgramSessionScheduled({
         payload: {
           aggregateCompositeIdentifier: {
             id: this.id,
@@ -197,9 +197,9 @@ export class GroupProgram extends EventSourcedAggregateRoot {
     );
   }
 
-  handleGroupProgramScheduled({
+  handleGroupProgramSessionScheduled({
     payload: { date, sessionId, location },
-  }: GroupProgramScheduled) {
+  }: GroupProgramSessionScheduled) {
     const sessionBuildResult = GroupSession.schedule({
       id: sessionId,
       date,
@@ -395,7 +395,6 @@ export class GroupProgram extends EventSourcedAggregateRoot {
         new GroupProgramCreated({
           payload: {
             aggregateCompositeIdentifier: {
-              // TODO we should omit this Let's do this now
               type: GROUP_PROGRAM_AGGREGATE_TYPE,
               id: id,
             },

@@ -16,7 +16,7 @@ import {
   CreateGroupProgram,
   GroupProgramCreated,
   GroupProgramObservationRecordedByType,
-  GroupProgramScheduled,
+  GroupProgramSessionScheduled,
   MakeNoteAboutGroupProgramObservation,
   MakeNoteAboutGroupProgramObservationCommandHandler,
   NoteAboutGroupProgramClassified,
@@ -57,34 +57,25 @@ import { GroupProgram } from './group-program.aggregate-root';
               doc as unknown as GroupProgramCreated,
             ),
           )
-          .register(
-            'NOTE_ABOUT_GROUP_PROGRAM_CLASSIFIED',
-            (doc) =>
-              new NoteAboutGroupProgramClassified(
-                doc as unknown as NoteAboutGroupProgramClassified,
-              ),
+          .register('NOTE_ABOUT_GROUP_PROGRAM_CLASSIFIED', (doc) =>
+            NoteAboutGroupProgramClassified.fromPersistenceDto(
+              doc as unknown as NoteAboutGroupProgramClassified,
+            ),
           )
-          .register(
-            'NOTE_ABOUT_GROUP_PROGRAM_OBSERVATION_MADE',
-            (doc) =>
-              new NoteAboutGroupProgramObservationMade(
-                doc as unknown as NoteAboutGroupProgramObservationMade,
-              ),
+          .register('NOTE_ABOUT_GROUP_PROGRAM_OBSERVATION_MADE', (doc) =>
+            NoteAboutGroupProgramObservationMade.fromPersistenceDto(
+              doc as unknown as NoteAboutGroupProgramObservationMade,
+            ),
           )
-          .register(
-            'GROUP_PROGRAM_OBSERVATION_RECORDED_BY_TYPE',
-            (doc) =>
-              new GroupProgramObservationRecordedByType(
-                doc as unknown as GroupProgramObservationRecordedByType,
-              ),
+          .register('GROUP_PROGRAM_OBSERVATION_RECORDED_BY_TYPE', (doc) =>
+            GroupProgramObservationRecordedByType.fromPersistenceDto(
+              doc as unknown as GroupProgramObservationRecordedByType,
+            ),
           )
-          .register(
-            'GROUP_PROGRAM_SESSION_SCHEDULED',
-            (doc) =>
-              // TODO Rename this?
-              new GroupProgramScheduled(
-                doc as unknown as GroupProgramScheduled,
-              ),
+          .register('GROUP_PROGRAM_SESSION_SCHEDULED', (doc) =>
+            GroupProgramSessionScheduled.fromPersistenceDto(
+              doc as unknown as GroupProgramSessionScheduled,
+            ),
           );
 
         return new EventSourcedCommandRepository(

@@ -67,4 +67,8 @@ export class NoteAboutGroupProgramClassified {
       payload,
     );
   }
+
+  static fromPersistenceDto(dto: NoteAboutGroupProgramClassified) {
+    return new NoteAboutGroupProgramClassified(dto);
+  }
 }
