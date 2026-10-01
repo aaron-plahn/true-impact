@@ -13,6 +13,8 @@ import {
 import { FlagCreated, FlagRelabelled } from '../commands';
 import { FLAG_AGGREGATE_TYPE } from '../constants';
 
+const DEFAULT_LANGUAGE_CODE_FOR_FLAGS = 'en';
+
 export class FlagPersistenceDto {
   id: string;
   revision: number;
@@ -156,7 +158,7 @@ export class Flag extends EventSourcedAggregateRoot {
       payload: {
         aggregateCompositeIdentifier: { id },
         label,
-        description,
+        description: { text: description },
       },
     } = event;
 
@@ -191,7 +193,11 @@ export class Flag extends EventSourcedAggregateRoot {
         payload: {
           aggregateCompositeIdentifier: instance.getCompositeIdentifier(),
           label,
-          description,
+          description: {
+            text: description,
+            languageCode: DEFAULT_LANGUAGE_CODE_FOR_FLAGS,
+            translationType: 'original',
+          },
         },
       }),
     );

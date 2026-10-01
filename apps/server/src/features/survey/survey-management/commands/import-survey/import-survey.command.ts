@@ -12,7 +12,8 @@ export class MultilingualTextItemDto {
     description: 'plain text in the given language',
   })
   text: string;
-  // languageCode
+
+  // TODO support language code
 }
 
 @TrueImpactDataExample<SurveyAnalyzerImportDto>({

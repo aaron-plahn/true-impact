@@ -1,19 +1,52 @@
 import { plainToInstance } from 'class-transformer';
-import { TrueImpactDataExample } from '../../../libs/data-types';
+import {
+  EnumeratedType,
+  NestedDataType,
+  NonEmptyString,
+  TrueImpactDataExample,
+} from '../../../libs/data-types';
 import {
   FlagCompositeIdentifier,
   FlagCompositeIdentifierValuedProp,
 } from '../models';
 
+class MultilingualTextItemEventRecord {
+  @NonEmptyString({
+    label: 'text',
+    description: 'plain text in the given language',
+  })
+  text: string;
+
+  @EnumeratedType(
+    {
+      en: 'English',
+    },
+    {
+      label: 'language code',
+      description: 'standard identifier for a human language',
+    },
+  )
+  languageCode: string;
+
+  translationType: 'original';
+}
+
 export class FlagCreatedPayload {
   @FlagCompositeIdentifierValuedProp
   aggregateCompositeIdentifier: FlagCompositeIdentifier;
 
-  // TODO ML Text Item DTO
+  @NonEmptyString({
+    label: 'label',
+    description: 'the user-facing label for this flag',
+  })
   label: string;
 
-  // TODO ML Text Item DTO
-  description: string;
+  @NestedDataType(() => MultilingualTextItemEventRecord, {
+    label: 'description',
+    description:
+      'short text that helps other users understand when and why this flag should be applied to a client',
+  })
+  description: MultilingualTextItemEventRecord;
 }
 
 @TrueImpactDataExample<FlagCreated>({
@@ -25,8 +58,11 @@ export class FlagCreatedPayload {
         id: '33',
       },
       label: 'my test flag label',
-      description:
-        'is used for flagging tests when you do not care about the specifics of the label itself',
+      description: {
+        text: 'is used for flagging tests when you do not care about the specifics of the label itself',
+        languageCode: 'en',
+        translationType: 'original',
+      },
     },
   },
 })

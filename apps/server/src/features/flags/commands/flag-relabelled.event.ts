@@ -1,4 +1,5 @@
 import { plainToInstance } from 'class-transformer';
+import { NonEmptyString } from '../../../libs/data-types';
 import {
   FlagCompositeIdentifier,
   FlagCompositeIdentifierValuedProp,
@@ -8,7 +9,10 @@ export class FlagRelabelledPayload {
   @FlagCompositeIdentifierValuedProp
   aggregateCompositeIdentifier: FlagCompositeIdentifier;
 
-  // TODO ML text support?
+  @NonEmptyString({
+    label: 'new label',
+    description: 'updated user-facing label for this flag',
+  })
   newLabel: string;
 }
 
