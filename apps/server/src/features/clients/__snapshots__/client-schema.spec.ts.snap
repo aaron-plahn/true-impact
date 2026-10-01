@@ -64,6 +64,15 @@ exports[`ClientSchema should match the snapshot 1`] = `
       "mustBeUnique": false,
       "type": "NON_NEGATIVE_INTEGER",
     },
+    "type": {
+      "description": "distinguishes clients from other entities in our system",
+      "isArray": false,
+      "isOptional": false,
+      "label": "type",
+      "mustBeUnique": false,
+      "type": "LITERAL",
+      "value": "client",
+    },
   },
 }
 `;

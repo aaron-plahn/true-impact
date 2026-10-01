@@ -3,4 +3,5 @@ export * from './command-handler.interface';
 export * from './command-handler.service';
 export * from './domain-event.interface';
 export * from './event-repository.interface';
+export * from './event-sourced-command-repository';
 export * from './test-utils';

@@ -9,6 +9,7 @@ import { EncryptionService } from '../../libs/auth';
 import {
   CommandHandlerService,
   EVENT_REPOSITORY_INJECTION_TOKEN,
+  EventSourcedCommandRepository,
   IEventRepository,
 } from '../../libs/cqrs-es';
 import {
@@ -39,11 +40,11 @@ import { UserModule } from '../users/user.module';
 import {
   SURVEY_AGGREGATE_TYPE,
   SURVEY_COMMAND_REPOSITORY_DEPENDENCY_TOKEN,
+  SURVEY_RESPONSE_AGGREGATE_TYPE,
 } from './constants';
 import { SURVEY_QUERY_REPOSITORY_PROVIDER_TOKEN } from './queries/survey-query-repository.interface';
 import { SurveyQueryService } from './queries/survey-query.service';
 import { SurveyViewModel } from './queries/survey.view-model';
-import { PostgresSurveyCommandRepository } from './repositories';
 import { ISurveyCommandRepository } from './repositories/survey-command-repository.interface';
 import {
   AddCategoryToSurveyAnalyzer,
@@ -72,6 +73,7 @@ import {
   SurveyCompletionAbandoned,
   SurveyQuestionAnswered,
   SurveyQuestionAnsweredViewDiffer,
+  SurveyResponseRecord,
   SurveySubmitted,
   SurveySubmittedViewDiffer,
 } from './survey-completion';
@@ -88,7 +90,6 @@ import {
 } from './survey-completion/queries';
 import { SURVEY_RESPONSE_COMMAND_REPOSITORY_INJECTION_TOKEN } from './survey-completion/repositories';
 import { InMemorySurveyResponseQueryRepository } from './survey-completion/repositories/in-memory-survey-response-query.repository';
-import { PostgresSurveyResponseCommandRepository } from './survey-completion/repositories/postgres-survey-response.command-repository';
 import { SurveyResponseValidationService } from './survey-completion/services';
 import { SurveyResponseQueryController } from './survey-completion/survey-response-query.controller';
 import {
@@ -433,7 +434,11 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, FinalizeSurvey];
          * for one `ImportSurvey` command.
          */
 
-        return new PostgresSurveyCommandRepository(eventRepository);
+        return new EventSourcedCommandRepository(
+          eventRepository,
+          SURVEY_AGGREGATE_TYPE,
+          (eventHistory) => Survey.fromEventHistory(eventHistory),
+        );
       },
       inject: [EVENT_REPOSITORY_INJECTION_TOKEN, EventFactory],
     },
@@ -444,7 +449,10 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, FinalizeSurvey];
        * which repository (E.g., In Memory, an alternative implementation)
        * to use.
        */
-      useFactory: (eventRepository, eventFactory: EventFactory) => {
+      useFactory: (
+        eventRepository: IEventRepository,
+        eventFactory: EventFactory,
+      ) => {
         eventFactory
           .register('SURVEY_BEGAN', (doc) =>
             SurveyBegan.fromPersistenceDto(doc as unknown as SurveyBegan),
@@ -468,8 +476,11 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, FinalizeSurvey];
             ),
           );
 
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-        return new PostgresSurveyResponseCommandRepository(eventRepository);
+        return new EventSourcedCommandRepository(
+          eventRepository,
+          SURVEY_RESPONSE_AGGREGATE_TYPE,
+          (eventHistory) => SurveyResponseRecord.fromEventHistory(eventHistory),
+        );
       },
       inject: ['EVENT_REPOSITORY_INJECTION_TOKEN', EventFactory],
     },

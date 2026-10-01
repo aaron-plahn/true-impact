@@ -5,6 +5,7 @@ import {
   Entity,
   EventSourcedAggregateRoot,
   InvariantValidationError,
+  Literal,
   NestedDataType,
   NonEmptyString,
   NonNegativeInteger,
@@ -194,9 +195,11 @@ export class SurveyResponseRecord extends EventSourcedAggregateRoot {
     label: 'type',
     description: SURVEY_RESPONSE_AGGREGATE_TYPE,
   })
-  // @Literal
-  // this is hard wired. there's no need to validate it.
-  static readonly type = SURVEY_RESPONSE_AGGREGATE_TYPE;
+  @Literal(SURVEY_RESPONSE_AGGREGATE_TYPE, {
+    label: 'type',
+    description: 'distinguishes surveys from other entities in our system',
+  })
+  readonly type = SURVEY_RESPONSE_AGGREGATE_TYPE;
 
   // This is required in the persistence DTO, but optional here because it is generated upon creation in the database
   @NonEmptyString({
