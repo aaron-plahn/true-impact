@@ -2,10 +2,12 @@ import {
   NestedDataType,
   NonEmptyString,
   TrueImpactDataExample,
-} from '../../../libs/data-types';
-import { USER_AGGREGATE_TYPE } from '../constants';
-import type { UserRole } from '../types';
-import { UserCompositeIdentifier } from '../user.composite-identifier';
+} from '../../../../libs/data-types';
+import type { UserRole } from '../../types';
+import {
+  USER_AGGREGATE_TYPE,
+  UserCompositeIdentifier,
+} from '../../user.composite-identifier';
 
 @TrueImpactDataExample<GrantUserRole>({
   example: {

@@ -1,5 +1,14 @@
-import { Literal, NonEmptyString } from '../../libs/data-types';
-import { USER_AGGREGATE_TYPE } from './constants';
+import { Literal, NestedDataType, NonEmptyString } from '../../libs/data-types';
+
+export const USER_AGGREGATE_TYPE = 'system user';
+
+export const UserCompositeIdentifierValuedProp = NestedDataType(
+  () => UserCompositeIdentifier,
+  {
+    label: 'composite ID',
+    description: 'system-wide unique identifier to this user',
+  },
+);
 
 export class UserCompositeIdentifier {
   @Literal(USER_AGGREGATE_TYPE, {

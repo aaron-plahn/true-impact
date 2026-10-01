@@ -8,8 +8,8 @@ import {
   TrueImpactError,
   TrueImpactRuntimeException,
 } from '../../../libs/data-types';
-import { USER_AGGREGATE_TYPE } from '../constants';
 import { User } from '../user.aggregate-root';
+import { USER_AGGREGATE_TYPE } from '../user.composite-identifier';
 import { IUserCommandRepository } from './user-command-repository.interface';
 
 export class InMemoryUserCommandRepository implements IUserCommandRepository {
