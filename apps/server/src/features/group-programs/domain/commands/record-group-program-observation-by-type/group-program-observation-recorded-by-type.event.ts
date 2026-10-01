@@ -20,8 +20,7 @@ export class GroupProgramObservationRecordedByTypePayload {
       'uniquely identifies the session at which the observation was made amongst other sessions of this group program',
     isOptional: true,
   })
-  // TODO should this be optional?
-  sessionId?: string;
+  sessionId: string;
 
   @NonEmptyString({
     label: 'interaction type',
@@ -38,6 +37,7 @@ export class GroupProgramObservationRecordedByTypePayload {
         type: GROUP_PROGRAM_AGGREGATE_TYPE,
         id: '5',
       },
+      sessionId: '1',
       interactionType: 'evil laugh',
     },
   },
@@ -60,5 +60,9 @@ export class GroupProgramObservationRecordedByType {
       GroupProgramObservationRecordedByTypePayload,
       payload,
     );
+  }
+
+  static fromPersistenceDto(dto: GroupProgramObservationRecordedByType) {
+    return new GroupProgramObservationRecordedByType(dto);
   }
 }

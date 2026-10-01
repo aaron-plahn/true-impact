@@ -64,4 +64,8 @@ export class NoteAboutGroupProgramObservationMade {
       payload,
     );
   }
+
+  static fromPersistenceDto(dto: NoteAboutGroupProgramObservationMade) {
+    return new NoteAboutGroupProgramObservationMade(dto);
+  }
 }

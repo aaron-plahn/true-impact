@@ -123,16 +123,7 @@ export class GroupSession extends Entity {
     return this;
   }
 
-  makeNoteAboutInteraction(note: {
-    text: string;
-    languageCode: string;
-  }): GroupSession | TrueImpactError {
-    this.observations.push(GroupProgramObservation.fromUserNote(note));
-
-    return this;
-  }
-
-  classifyInteraction({
+  canClassifyInteraction({
     observationId,
     interactionType,
   }: {
@@ -147,7 +138,7 @@ export class GroupSession extends Entity {
       );
     }
 
-    const updateResult = target.classify(interactionType);
+    const updateResult = target.canClassifyAs(interactionType);
 
     if (updateResult instanceof Error) {
       return updateResult;

@@ -51,14 +51,14 @@ export class GroupProgramObservation {
    * When one has recorded an observation by making a note, this interaction can later
    * be classified using an `interaction type`.
    */
-  classify(interactionType: string): GroupProgramObservation | TrueImpactError {
+  canClassifyAs(
+    interactionType: string,
+  ): GroupProgramObservation | TrueImpactError {
     if (this.interactionType) {
       throw new TrueImpactError(
         `You cannot classify intection as [${interactionType}], as it has already been classified as [${this.interactionType}]`,
       );
     }
-
-    this.interactionType = interactionType;
 
     return this;
   }

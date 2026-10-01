@@ -15,6 +15,12 @@ export class NoteAboutGroupProgramClassifiedPayload {
   aggregateCompositeIdentifier: GroupProgramCompositeIdentifier;
 
   @NonEmptyString({
+    label: 'session ID',
+    description: 'the session under observation',
+  })
+  sessionId: string;
+
+  @NonEmptyString({
     label: 'observation ID',
     description:
       'uniquely identifies the observation that is the subject of this note amongst other observations of this group program',
@@ -36,6 +42,7 @@ export class NoteAboutGroupProgramClassifiedPayload {
         type: GROUP_PROGRAM_AGGREGATE_TYPE,
         id: '565',
       },
+      sessionId: '1',
       observationId: '1',
       interactionType: 'befuddlement',
     },
@@ -59,5 +66,9 @@ export class NoteAboutGroupProgramClassified {
       NoteAboutGroupProgramClassifiedPayload,
       payload,
     );
+  }
+
+  static fromPersistenceDto(dto: NoteAboutGroupProgramClassified) {
+    return new NoteAboutGroupProgramClassified(dto);
   }
 }

@@ -1,15 +1,5 @@
-import { PersistenceAcknowledgement } from '../../../../libs/cqrs-es';
-import { TrueImpactError } from '../../../../libs/data-types';
+import { EventSourcedCommandRepository } from '../../../../libs/cqrs-es';
 import { GroupProgram } from '../group-program.aggregate-root';
 
-export interface IGroupProgramCommandRepository {
-  fetchById(id: string): Promise<GroupProgram | null>;
-
-  create(
-    instance: GroupProgram,
-  ): Promise<PersistenceAcknowledgement | TrueImpactError>;
-
-  update(
-    updatedInstance: GroupProgram,
-  ): Promise<PersistenceAcknowledgement | TrueImpactError>;
-}
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface IGroupProgramCommandRepository extends EventSourcedCommandRepository<GroupProgram> {}

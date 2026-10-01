@@ -82,7 +82,13 @@ describe(`Group Program Scheduling Scenarios`, () => {
           });
         });
 
-        describe(`when the name is already in use by another program`, () => {
+        /**
+         * We don't necessarily want a uniqueness constraint on program names.
+         * It's possible that at the end of fiscal we will create next year's program with
+         * the same name. We **will* want to warn users upstream if they attempt to create a duplicate
+         * and to notify admin of this situation.
+         */
+        describe.skip(`when the name is already in use by another program`, () => {
           it(`should return the expected error`, async () => {
             await assertCommandScenarioSuccess({
               httpClient: adminHttpClient,
