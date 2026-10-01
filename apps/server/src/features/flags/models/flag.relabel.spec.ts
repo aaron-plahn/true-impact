@@ -1,5 +1,6 @@
 import { buildTestInstance, TrueImpactError } from '../../../libs/data-types';
 import { assertTextMatchesAll } from '../../../libs/test-utils';
+import { FlagCreated } from '../commands';
 import { Flag } from './flag.aggregate-root';
 
 const flagId = '555';
@@ -7,7 +8,18 @@ const flagId = '555';
 const existingLabel = 'violent tendencies';
 
 describe(`Flag.relabel`, () => {
-  const flagWithLabel = buildTestInstance(Flag, {
+  const flagWithLabel = Flag.fromEventHistory([
+    buildTestInstance(FlagCreated, {
+      payload: {
+        aggregateCompositeIdentifier: {
+          id: flagId,
+        },
+        label: existingLabel,
+      },
+    }),
+  ]) as Flag;
+
+  buildTestInstance(Flag, {
     id: flagId,
     label: existingLabel,
   });

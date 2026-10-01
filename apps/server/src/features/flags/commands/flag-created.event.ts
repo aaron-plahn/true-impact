@@ -1,4 +1,5 @@
 import { plainToInstance } from 'class-transformer';
+import { TrueImpactDataExample } from '../../../libs/data-types';
 import {
   FlagCompositeIdentifier,
   FlagCompositeIdentifierValuedProp,
@@ -15,6 +16,20 @@ export class FlagCreatedPayload {
   description: string;
 }
 
+@TrueImpactDataExample<FlagCreated>({
+  example: {
+    type: 'FLAG_CREATED',
+    payload: {
+      aggregateCompositeIdentifier: {
+        type: 'FLAG',
+        id: '33',
+      },
+      label: 'my test flag label',
+      description:
+        'is used for flagging tests when you do not care about the specifics of the label itself',
+    },
+  },
+})
 export class FlagCreated {
   readonly type = 'FLAG_CREATED';
 

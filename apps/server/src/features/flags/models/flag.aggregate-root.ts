@@ -1,8 +1,11 @@
+import { randomUUID } from 'crypto';
 import { DomainEvent, EventPayload } from 'src/libs/cqrs-es';
 import {
   EventSourcedAggregateRoot,
+  Literal,
   NonEmptyString,
   NonNegativeInteger,
+  RawObject,
   TrueImpactDataExample,
   TrueImpactError,
   UpdateMethod,
@@ -26,9 +29,21 @@ export class FlagPersistenceDto {
   },
 })
 export class Flag extends EventSourcedAggregateRoot {
+  @Literal(FLAG_AGGREGATE_TYPE, {
+    label: 'type',
+    description: 'distinguishes flags from other entities within our system',
+  })
   readonly type = FLAG_AGGREGATE_TYPE;
 
-  eventHistory: DomainEvent<EventPayload>[];
+  @RawObject({
+    label: 'event history',
+    description: 'audit log containing all historical edits of this survey',
+    isArray: true,
+    // TODO rename this `canBeEmpty` for Array valued props?
+    isOptional: true, // i.e. can be empty
+  })
+  eventHistory: DomainEvent<EventPayload>[] = [];
+
   @NonEmptyString({
     label: 'type',
     description: FLAG_AGGREGATE_TYPE,
@@ -123,6 +138,8 @@ export class Flag extends EventSourcedAggregateRoot {
 
   handleFlagRelabelled({ payload: { newLabel } }: FlagRelabelled) {
     this.label = newLabel;
+
+    return this;
   }
 
   static fromEventHistory(
@@ -163,10 +180,21 @@ export class Flag extends EventSourcedAggregateRoot {
     description: string;
   }): Flag | TrueImpactError {
     const instance = new Flag({
+      id: randomUUID(),
       revision: 0,
       label,
       description,
     });
+
+    instance.eventHistory.push(
+      new FlagCreated({
+        payload: {
+          aggregateCompositeIdentifier: instance.getCompositeIdentifier(),
+          label,
+          description,
+        },
+      }),
+    );
 
     return instance.validateInvariants();
   }
