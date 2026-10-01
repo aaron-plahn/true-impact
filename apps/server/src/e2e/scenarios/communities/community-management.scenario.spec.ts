@@ -85,13 +85,11 @@ describe(`Community Management Scenarios`, () => {
                     ?.text,
                 ).toBe(englishCommunityName);
 
-                const { bandNumber, revision, nation } = newCommunity;
+                const { bandNumber, revision } = newCommunity;
 
                 expect(bandNumber).toBe(bandNumber);
 
                 expect(revision).toBe('1');
-
-                expect(nation).toBe(nation);
               },
             });
           });

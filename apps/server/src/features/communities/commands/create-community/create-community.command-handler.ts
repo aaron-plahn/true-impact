@@ -1,13 +1,13 @@
 import { Inject } from '@nestjs/common';
-import { CommandResult, ICommandHandler } from '../../../libs/cqrs-es';
+import { CommandResult, ICommandHandler } from '../../../../libs/cqrs-es';
 import {
   TrueImpactBadUserInputError,
   TrueImpactError,
-} from '../../../libs/data-types';
-import { COMMUNITY_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../constants';
-import { Community } from '../models';
+} from '../../../../libs/data-types';
+import { COMMUNITY_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../../constants';
+import { Community } from '../../models';
+import { type ICommunityCommandRepository } from '../repositories/community-command-repository.interface';
 import { CreateCommunity } from './create-community.command';
-import type { ICommunityCommandRepository } from './repositories/community-command-repository.interface';
 
 /**
  * This is a placeholder for a future service that will be configurable per-tenant. It allows us
@@ -34,7 +34,7 @@ export class CreateCommunityCommandHandler implements ICommandHandler<CreateComm
   }: {
     payload: CreateCommunity;
   }): Promise<CommandResult> {
-    const { languageCodeForName } = clientRequestDto;
+    const { languageCodeForName, name } = clientRequestDto;
 
     if (!this.languageValidationService.has(languageCodeForName)) {
       return new TrueImpactBadUserInputError([
@@ -42,6 +42,22 @@ export class CreateCommunityCommandHandler implements ICommandHandler<CreateComm
           `You cannot create a community with a name in the unknown language [${languageCodeForName}]`,
         ),
       ]);
+    }
+
+    const existingCommunities = await this.repository.fetchMany();
+
+    const duplicateNamesErrors = existingCommunities.flatMap((c) =>
+      c.name.getOriginalTextItem()?.text === name
+        ? [
+            new TrueImpactError(
+              `You cannot create community [${name}], as there is already a community [${c.bandNumber}] with this name in the language [${languageCodeForName}]`,
+            ),
+          ]
+        : [],
+    );
+
+    if (duplicateNamesErrors.length > 0) {
+      return new TrueImpactBadUserInputError(duplicateNamesErrors);
     }
 
     const newInstance = Community.fromUserRequest(clientRequestDto);

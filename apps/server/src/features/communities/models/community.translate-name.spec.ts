@@ -1,29 +1,25 @@
-import { MultilingualTextItemRole } from '../../../common/multilingual-text';
 import {
   buildTestInstance,
   TrueImpactBadUserInputError,
   TrueImpactError,
 } from '../../../libs/data-types';
 import { assertTextMatchesAll } from '../../../libs/test-utils';
+import { CommunityCreated, CommunityNameTranslated } from '../commands';
 import { Community } from './community.aggregate-root';
 
 const translation = 'Biny Gunchagh';
 
-const communityWithEnglishNameOnly = buildTestInstance(
-  Community,
-  {
-    name: {
-      items: {
-        en: {
-          [MultilingualTextItemRole.original]: {
-            text: 'Big Crek',
-          },
-        },
+const communityWithEnglishNameOnly = Community.fromEventHistory([
+  buildTestInstance(CommunityCreated, {
+    payload: {
+      name: {
+        text: 'Big Creek',
+        languageCode: 'en',
+        translationType: 'original',
       },
     },
-  },
-  { shouldValidate: true },
-);
+  }),
+]) as Community;
 
 describe(`Community.translateName`, () => {
   describe(`when the language code is known`, () => {
@@ -49,26 +45,26 @@ describe(`Community.translateName`, () => {
 
       const extraneousTranslation = 'Second Translation of Name';
 
-      const communityWithTranslationOfName = buildTestInstance(
-        Community,
-        {
-          name: {
-            items: {
-              en: {
-                [MultilingualTextItemRole.original]: {
-                  text: 'Original Name',
-                },
-              },
-              clc: {
-                [MultilingualTextItemRole.freeTranslation]: {
-                  text: existingTranslation,
-                },
-              },
+      const communityWithTranslationOfName = Community.fromEventHistory([
+        buildTestInstance(CommunityCreated, {
+          payload: {
+            name: {
+              text: 'Original Name',
+              languageCode: 'en',
+              translationType: 'original',
             },
           },
-        },
-        { shouldValidate: true },
-      );
+        }),
+        buildTestInstance(CommunityNameTranslated, {
+          payload: {
+            translation: {
+              text: existingTranslation,
+              languageCode: 'clc',
+              translationType: 'free translation',
+            },
+          },
+        }),
+      ]) as Community;
 
       it(`should return the expected error`, () => {
         const result = communityWithTranslationOfName.translateName({
