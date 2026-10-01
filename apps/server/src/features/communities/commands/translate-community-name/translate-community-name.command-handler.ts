@@ -1,8 +1,8 @@
 import { Inject } from '@nestjs/common';
-import { CommandResult, ICommandHandler } from '../../../libs/cqrs-es';
-import { TrueImpactError } from '../../../libs/data-types';
-import { COMMUNITY_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../constants';
-import type { ICommunityCommandRepository } from './repositories/community-command-repository.interface';
+import { CommandResult, ICommandHandler } from '../../../../libs/cqrs-es';
+import { TrueImpactError } from '../../../../libs/data-types';
+import { COMMUNITY_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../../constants';
+import type { ICommunityCommandRepository } from '../repositories/community-command-repository.interface';
 import { TranslateCommunityName } from './translate-community-name.command';
 
 export class TranslateCommunityNameCommandHandler implements ICommandHandler<TranslateCommunityName> {

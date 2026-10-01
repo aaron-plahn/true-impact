@@ -2,7 +2,6 @@ import {
   Entity,
   TrueImpactDataExample,
   TrueImpactError,
-  UpdateMethod,
 } from '../../libs/data-types';
 import { LookupTable } from '../../libs/data-types/schema-management/decorators/lookup-table.decorator';
 import { MultilingualTextItemRole } from './multilingual-text-item-role.enum';
@@ -66,8 +65,7 @@ export class MultilingualText extends Entity<MultilingualTextPersistenceDto> {
     this.items = items;
   }
 
-  @UpdateMethod()
-  translateFreely({
+  canTranslateFreelyAs({
     text,
     languageCode,
   }: {
@@ -91,17 +89,6 @@ export class MultilingualText extends Entity<MultilingualTextPersistenceDto> {
         `You cannot translate [${this.getOriginalTextItem()?.text}] as [${text}], because there is already a translation [${this.get(languageCode)?.text || '-'}] in the target language [${languageCode}]`,
       );
     }
-
-    const translationsByLanguage =
-      this.items.get(languageCode) ||
-      new Map<MultilingualTextItemRole, MultilingualTextItem>();
-
-    translationsByLanguage.set(
-      MultilingualTextItemRole.freeTranslation,
-      new MultilingualTextItem({ text }),
-    );
-
-    this.items.set(languageCode, translationsByLanguage);
 
     return this;
   }

@@ -14,7 +14,6 @@ import { Community } from '../models';
     id: '1',
     bandNumber: '777',
     revision: '5',
-    nation: 'Tha People',
     name: {
       items: {
         en: {
@@ -46,12 +45,6 @@ export class CommunityViewModelClientDto {
   })
   revision: string;
 
-  @NonEmptyString({
-    label: 'nation',
-    description: 'the larger nation to which this community belongs',
-  })
-  nation: string;
-
   @NestedDataType(() => MultilingualTextPersistenceDto, {
     label: 'name',
     description: 'name of this community, including any available translations',
@@ -68,20 +61,16 @@ export class CommunityViewModel {
 
   name: MultilingualText;
 
-  nation: string;
-
   constructor({
     id,
     bandNumber,
     revision,
     name,
-    nation,
   }: {
     id: string;
     bandNumber: string;
     revision: string;
     name: MultilingualText;
-    nation: string;
   }) {
     this.id = id;
 
@@ -90,8 +79,6 @@ export class CommunityViewModel {
     this.revision = revision;
 
     this.name = name;
-
-    this.nation = nation;
   }
 
   toClientDto(): CommunityViewModelClientDto {
@@ -100,24 +87,16 @@ export class CommunityViewModel {
       bandNumber: this.bandNumber,
       revision: this.revision,
       name: this.name.toPersistenceDto(),
-      nation: this.nation,
     };
   }
 
-  static fromDomainModel({
-    id,
-    bandNumber,
-    revision,
-    name,
-    nation,
-  }: Community) {
+  static fromDomainModel({ id, bandNumber, revision, name }: Community) {
     return new CommunityViewModel({
       // this will never be undefined by the point it is reaches the view layer because it will have been persisted (and an ID generated) at least once in the domain
       id: id as string,
       bandNumber,
       revision: revision.toString(),
       name: name,
-      nation,
     });
   }
 }

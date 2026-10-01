@@ -5,6 +5,14 @@ import {
 } from '../../../libs/data-types';
 import { COMMUNITY_AGGREGATE_TYPE } from '../constants';
 
+export const CommunityCompositeIdentifierValuedProp = NestedDataType(
+  () => CommunityCompositeIdentifier,
+  {
+    label: 'composite ID',
+    description: `system-wide unique identifier for a community`,
+  },
+);
+
 export class CommunityCompositeIdentifier {
   @Literal(COMMUNITY_AGGREGATE_TYPE, {
     label: 'type',
@@ -18,11 +26,3 @@ export class CommunityCompositeIdentifier {
   })
   id: string;
 }
-
-export const CommunityCompositeIdentifierDataProperty = NestedDataType(
-  () => CommunityCompositeIdentifier,
-  {
-    label: 'composite identifier',
-    description: 'system-wide unique identifier for this community',
-  },
-);

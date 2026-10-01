@@ -2,6 +2,9 @@
 
 This first release of the True Impact platform introduces a working model for user management, client management, and survey creation and completion.
 
+## 80
+In this PR, we support durable persistence for communities.
+
 ## 79
 In this PR, we support durable persistence for group programs.
 

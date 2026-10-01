@@ -1,11 +1,11 @@
 import {
   NonEmptyString,
   TrueImpactDataExample,
-} from '../../../libs/data-types';
+} from '../../../../libs/data-types';
 import {
   CommunityCompositeIdentifier,
-  CommunityCompositeIdentifierDataProperty,
-} from '../models';
+  CommunityCompositeIdentifierValuedProp,
+} from '../../models';
 
 @TrueImpactDataExample<TranslateCommunityName>({
   example: {
@@ -20,7 +20,7 @@ import {
 export class TranslateCommunityName {
   static readonly type = 'TRANSLATE_COMMUNITY_NAME';
 
-  @CommunityCompositeIdentifierDataProperty
+  @CommunityCompositeIdentifierValuedProp
   aggregateCompositeIdentifier: CommunityCompositeIdentifier;
 
   @NonEmptyString({

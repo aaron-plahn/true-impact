@@ -1,22 +1,31 @@
 import { AuthModule } from '../../auth/auth.module';
 import { InMemoryQueryRepository } from '../../common/persistence';
-import { CommandHandlerService } from '../../libs/cqrs-es';
+import {
+  CommandHandlerService,
+  EVENT_REPOSITORY_INJECTION_TOKEN,
+  EventSourcedCommandRepository,
+  IEventRepository,
+} from '../../libs/cqrs-es';
 import { Module, ModuleRef } from '../../libs/framework';
+import { EventFactory } from '../../postgresql/event-factory';
 import { UserModule } from '../users/user.module';
 import {
+  CommunityCreated,
+  CommunityNameTranslated,
   CreateCommunity,
   CreateCommunityCommandHandler,
   TranslateCommunityName,
   TranslateCommunityNameCommandHandler,
 } from './commands';
-import { InMemoryCommunityCommandRepository } from './commands/repositories';
 import { CommunityController } from './community.controller';
 import {
+  COMMUNITY_AGGREGATE_TYPE,
   COMMUNITY_COMMAND_REPOSITORY_INJECTION_TOKEN,
   COMMUNITY_QUERY_REPOSITORY_INJECTION_TOKEN,
   COMMUNITY_VALIDATION_SERVICE_INJECTION_TOKEN,
 } from './constants';
 import { CommunityValidationService } from './external-services';
+import { Community } from './models';
 import { CommunityQueryService, CommunityViewModel } from './queries';
 
 @Module({
@@ -28,7 +37,29 @@ import { CommunityQueryService, CommunityViewModel } from './queries';
     },
     {
       provide: COMMUNITY_COMMAND_REPOSITORY_INJECTION_TOKEN,
-      useFactory: () => new InMemoryCommunityCommandRepository(),
+      useFactory: (
+        eventRepository: IEventRepository,
+        eventFactory: EventFactory,
+      ) => {
+        eventFactory
+          .register('COMMUNITY_CREATED', (dto) =>
+            CommunityCreated.fromPersistenceDto(
+              dto as unknown as CommunityCreated,
+            ),
+          )
+          .register('COMMUNITY_NAME_TRANSLATED', (dto) =>
+            CommunityNameTranslated.fromPersistenceDto(
+              dto as unknown as CommunityNameTranslated,
+            ),
+          );
+
+        return new EventSourcedCommandRepository(
+          eventRepository,
+          COMMUNITY_AGGREGATE_TYPE,
+          (eventHistory) => Community.fromEventHistory(eventHistory),
+        );
+      },
+      inject: [EVENT_REPOSITORY_INJECTION_TOKEN, EventFactory],
     },
     {
       provide: CommandHandlerService,

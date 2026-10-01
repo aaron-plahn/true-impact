@@ -10,7 +10,8 @@ import {
   FlagCompositeIdentifierValuedProp,
 } from '../models';
 
-class MultilingualTextItemEventRecord {
+// TODO move this
+export class MultilingualTextItemEventRecord {
   @NonEmptyString({
     label: 'text',
     description: 'plain text in the given language',
@@ -23,12 +24,23 @@ class MultilingualTextItemEventRecord {
     },
     {
       label: 'language code',
-      description: 'standard identifier for a human language',
+      description: 'identifies the language of the given text',
     },
   )
   languageCode: string;
 
-  translationType: 'original';
+  @EnumeratedType(
+    {
+      original: 'original',
+      freeTranslation: 'free translation',
+    },
+    {
+      label: 'translation type',
+      description:
+        'Indicates whether this text is original or what kind of translation it represents',
+    },
+  )
+  translationType: 'original' | 'free translation';
 }
 
 export class FlagCreatedPayload {

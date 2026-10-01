@@ -1,5 +1,4 @@
 import { forwardRef } from '@nestjs/common';
-import { EventFactory } from 'src/postgresql/event-factory';
 import {
   CommandHandlerService,
   DomainEvent,
@@ -8,6 +7,7 @@ import {
   IEventRepository,
 } from '../../libs/cqrs-es';
 import { Module, ModuleRef } from '../../libs/framework';
+import { EventFactory } from '../../postgresql/event-factory';
 import { CommunityModule } from '../communities/community.module';
 import { FlagModule } from '../flags/flag.module';
 import { SurveyModule } from '../survey/survey.module';
