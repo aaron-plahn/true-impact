@@ -36,4 +36,8 @@ export class GroupProgramCreated {
   constructor({ payload }: { payload: GroupProgramCreatedPayload }) {
     this.payload = plainToInstance(GroupProgramCreatedPayload, payload);
   }
+
+  static fromPersistenceDto(dto: GroupProgramCreated) {
+    return new GroupProgramCreated(dto);
+  }
 }

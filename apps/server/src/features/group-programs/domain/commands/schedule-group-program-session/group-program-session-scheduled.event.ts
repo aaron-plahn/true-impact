@@ -1,7 +1,11 @@
 import { plainToInstance } from 'class-transformer';
-import { TrueImpactDataExample } from '../../../../../libs/data-types';
+import {
+  NestedDataType,
+  TrueImpactDataExample,
+} from '../../../../../libs/data-types';
 import { GROUP_PROGRAM_AGGREGATE_TYPE } from '../../constants';
 import { GroupProgramCompositeIdentifier } from '../../group-program.composite-identifier';
+import { GroupSessionLocationDto } from '../../group-session-location.value-object';
 
 // GroupSessionScheduled?
 export class GroupProgramSessionScheduledPayload {
@@ -11,6 +15,12 @@ export class GroupProgramSessionScheduledPayload {
   date: string;
 
   sessionId: string;
+
+  @NestedDataType(() => GroupSessionLocationDto, {
+    label: 'location',
+    description: `details about the physical location where this session will take place`,
+  })
+  location: GroupSessionLocationDto;
 }
 
 @TrueImpactDataExample<GroupProgramScheduled>({
@@ -23,6 +33,7 @@ export class GroupProgramSessionScheduledPayload {
       },
       date: '12-12-2013',
       sessionId: '5',
+      location: {},
     },
   },
 })

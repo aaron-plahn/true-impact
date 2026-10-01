@@ -1,7 +1,6 @@
-import { IDomainEvent } from '../../../libs/cqrs-es';
+import { DomainEvent, IDomainEvent } from '../../../libs/cqrs-es';
 import {
-  AggregateRoot,
-  Entity,
+  EventSourcedAggregateRoot,
   NestedDataType,
   NonEmptyString,
   NonNegativeInteger,
@@ -10,7 +9,14 @@ import {
   TrueImpactError,
   UpdateMethod,
 } from '../../../libs/data-types';
-import { CreateGroupProgram, GroupProgramScheduled } from './commands';
+import { GroupProgramObservation } from '../queries/group-program-observation.entity';
+import {
+  CreateGroupProgram,
+  GroupProgramObservationRecordedByType,
+  GroupProgramScheduled,
+  NoteAboutGroupProgramClassified,
+  NoteAboutGroupProgramObservationMade,
+} from './commands';
 import { GroupProgramCreated } from './commands/create-group-program/group-program-created.event';
 import { GROUP_PROGRAM_AGGREGATE_TYPE } from './constants';
 import { GroupProgramCompositeIdentifier } from './group-program.composite-identifier';
@@ -33,7 +39,7 @@ export class GroupProgramPersistenceDto {
   eventHistory: IDomainEvent[];
 }
 
-export class GroupProgram extends AggregateRoot {
+export class GroupProgram extends EventSourcedAggregateRoot {
   @NonEmptyString({
     label: 'type',
     description: GROUP_PROGRAM_AGGREGATE_TYPE,
@@ -65,7 +71,8 @@ export class GroupProgram extends AggregateRoot {
   @NonEmptyString({
     label: 'name',
     description: 'the public-facing name of this group program',
-    mustBeUnique: true,
+    // This is not a strict requirement, but we do make users aware of duplicate names in the view layer.
+    // mustBeUnique: true,
   })
   name: string; // TODO ML Text
 
@@ -162,6 +169,9 @@ export class GroupProgram extends AggregateRoot {
     date: string;
     location: GroupSessionLocationDto;
   }): GroupProgram | TrueImpactError {
+    /**
+     * TODO can we validate a group session without fully building it?
+     */
     const sessionBuildResult = GroupSession.schedule({
       id: this.getNextSessionId(),
       date,
@@ -172,8 +182,6 @@ export class GroupProgram extends AggregateRoot {
       return sessionBuildResult;
     }
 
-    this.sessions.push(sessionBuildResult);
-
     return this.apply(
       new GroupProgramScheduled({
         payload: {
@@ -183,9 +191,28 @@ export class GroupProgram extends AggregateRoot {
           },
           date,
           sessionId: sessionBuildResult.id,
+          location,
         },
       }),
     );
+  }
+
+  handleGroupProgramScheduled({
+    payload: { date, sessionId, location },
+  }: GroupProgramScheduled) {
+    const sessionBuildResult = GroupSession.schedule({
+      id: sessionId,
+      date,
+      location,
+    });
+
+    if (sessionBuildResult instanceof Error) {
+      return sessionBuildResult;
+    }
+
+    this.sessions.push(sessionBuildResult);
+
+    return this;
   }
 
   @UpdateMethod()
@@ -213,16 +240,28 @@ export class GroupProgram extends AggregateRoot {
       );
     }
 
-    const updateResult = targetSession.makeNoteAboutInteraction(note);
-
-    if (updateResult instanceof Error) {
-      return updateResult;
-    }
-
     /**
      * Note that the nested update method executes a side effect that mutates
      * the target session.
      */
+    return this.apply(
+      new NoteAboutGroupProgramObservationMade({
+        payload: {
+          aggregateCompositeIdentifier: this.getCompositeIdentifier(),
+          sessionId,
+          note,
+        },
+      }),
+    );
+  }
+
+  handleNoteAboutGroupProgramObservationMade({
+    payload: { sessionId, note },
+  }: NoteAboutGroupProgramObservationMade) {
+    this.getSessionById(sessionId)?.observations?.push(
+      GroupProgramObservation.fromUserNote(note),
+    );
+
     return this;
   }
 
@@ -242,15 +281,24 @@ export class GroupProgram extends AggregateRoot {
       );
     }
 
-    const updateResult = targetSession.recordObservationByType(interactionType);
+    return this.apply(
+      new GroupProgramObservationRecordedByType({
+        payload: {
+          aggregateCompositeIdentifier: this.getCompositeIdentifier(),
+          sessionId,
+          interactionType,
+        },
+      }),
+    );
+  }
 
-    if (updateResult instanceof Error) {
-      return updateResult;
-    }
+  handleGroupProgramObservationRecordedByType({
+    payload: { sessionId, interactionType },
+  }: GroupProgramObservationRecordedByType) {
+    this.getSessionById(sessionId)?.observations?.push(
+      GroupProgramObservation.fromDirectClassification(interactionType),
+    );
 
-    /**
-     * Note that the nested update method executes a side effect that updates the target session.
-     */
     return this;
   }
 
@@ -272,7 +320,7 @@ export class GroupProgram extends AggregateRoot {
       );
     }
 
-    const updateResult = targetSession.classifyInteraction({
+    const updateResult = targetSession.canClassifyInteraction({
       observationId,
       interactionType,
     });
@@ -281,18 +329,56 @@ export class GroupProgram extends AggregateRoot {
       return updateResult;
     }
 
-    return this;
+    return this.apply(
+      new NoteAboutGroupProgramClassified({
+        payload: {
+          aggregateCompositeIdentifier: this.getCompositeIdentifier(),
+          sessionId,
+          observationId,
+          interactionType,
+        },
+      }),
+    );
   }
 
-  apply(event: IDomainEvent): GroupProgram | TrueImpactError {
-    if (event.type === 'GROUP_PROGRAM_SESSION_SCHEDULED') {
-      /**
-       * This might not be the pattern we want.
-       */
-      this.eventHistory.push(event);
+  handleNoteAboutGroupProgramClassified({
+    payload: { sessionId, observationId, interactionType },
+  }: NoteAboutGroupProgramClassified) {
+    const targetObservation =
+      this.getSessionById(sessionId)?.getObservationById(observationId);
+
+    if (targetObservation) {
+      targetObservation.interactionType = interactionType;
     }
 
     return this;
+  }
+
+  static fromEventHistory(
+    eventHistory: Iterable<DomainEvent>,
+  ): EventSourcedAggregateRoot | TrueImpactError | null {
+    return EventSourcedAggregateRoot.fromEventHistory.call(
+      GroupProgram,
+      eventHistory,
+    ) as GroupProgram;
+  }
+
+  static fromGroupProgramCreated(event: GroupProgramCreated) {
+    const {
+      payload: {
+        aggregateCompositeIdentifier: { id },
+        name,
+      },
+    } = event;
+
+    const instance = new GroupProgram({
+      id,
+      sessions: [],
+      name,
+      eventHistory: [event],
+    });
+
+    return instance.validateInvariants();
   }
 
   static fromUserRequest({
@@ -309,7 +395,7 @@ export class GroupProgram extends AggregateRoot {
         new GroupProgramCreated({
           payload: {
             aggregateCompositeIdentifier: {
-              // TODO we should omit this
+              // TODO we should omit this Let's do this now
               type: GROUP_PROGRAM_AGGREGATE_TYPE,
               id: id,
             },
@@ -330,7 +416,7 @@ export class GroupProgram extends AggregateRoot {
       eventHistory,
     }: GroupProgramPersistenceDto,
     buildOptions: { shouldValidate?: boolean } = {},
-  ): Entity | TrueImpactError {
+  ): GroupProgram | TrueImpactError {
     const sessions: GroupSession[] = [];
 
     const sessionErrors: TrueImpactError[] = [];
@@ -362,8 +448,10 @@ export class GroupProgram extends AggregateRoot {
       eventHistory,
     });
 
-    return buildOptions?.shouldValidate
-      ? instance.validateInvariants()
-      : instance;
+    if (!buildOptions.shouldValidate) {
+      return instance;
+    }
+
+    return instance.validateInvariants();
   }
 }
