@@ -1,11 +1,11 @@
 import { Inject } from '@nestjs/common';
-import { CommandResult, ICommandHandler } from '../../../libs/cqrs-es';
+import { CommandResult, ICommandHandler } from '../../../../libs/cqrs-es';
 import {
   TrueImpactBadUserInputError,
   TrueImpactError,
-} from '../../../libs/data-types';
-import { USER_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../constants';
-import type { IUserCommandRepository } from '../repositories';
+} from '../../../../libs/data-types';
+import { USER_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../../constants';
+import type { IUserCommandRepository } from '../../repositories';
 import { DeactivateUser } from './deactivate-user.command';
 
 export class DeactivateUserCommandHandler implements ICommandHandler<DeactivateUser> {
