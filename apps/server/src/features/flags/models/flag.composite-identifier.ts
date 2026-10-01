@@ -1,5 +1,17 @@
-import { Literal, NonEmptyString } from '../../../libs/data-types';
+import {
+  Literal,
+  NestedDataType,
+  NonEmptyString,
+} from '../../../libs/data-types';
 import { FLAG_AGGREGATE_TYPE } from '../constants';
+
+export const FlagCompositeIdentifierValuedProp = NestedDataType(
+  () => FlagCompositeIdentifier,
+  {
+    label: 'composite ID',
+    description: 'system-wide unique identifier for this flag',
+  },
+);
 
 export class FlagCompositeIdentifier {
   @Literal(FLAG_AGGREGATE_TYPE, {

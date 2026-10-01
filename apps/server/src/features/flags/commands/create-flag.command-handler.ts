@@ -26,6 +26,20 @@ export class CreateFlagCommandHandler implements ICommandHandler<CreateFlag> {
       return new TrueImpactBadUserInputError([buildResult]);
     }
 
+    /**
+     * This is not the scalable way to do this. See comments in the `RelabelFlagCommandHandler`.
+     */
+    const allFlags = await this.repository.fetchMany();
+
+    if (allFlags.some((f) => f.label === label)) {
+      return new TrueImpactBadUserInputError([
+        new TrueImpactError(`Uniqueness constraint violated.`),
+        new TrueImpactError(
+          `The label [${label}] is already in use by another flag.`,
+        ),
+      ]);
+    }
+
     const persistenceResult = await this.repository.create(buildResult);
 
     return persistenceResult;

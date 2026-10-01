@@ -1,19 +1,32 @@
+import { EventFactory } from 'src/postgresql/event-factory';
 import { AuthModule } from '../../auth/auth.module';
 import { InMemoryQueryRepository } from '../../common/persistence';
-import { CommandHandlerService } from '../../libs/cqrs-es';
-import { ConfigService, Module, ModuleRef } from '../../libs/framework';
+import {
+  CommandHandlerService,
+  EVENT_REPOSITORY_INJECTION_TOKEN,
+  EventSourcedCommandRepository,
+  IEventRepository,
+} from '../../libs/cqrs-es';
+import { Module, ModuleRef } from '../../libs/framework';
 import { UserModule } from '../users/user.module';
-import { CreateFlag, RelabelFlag, RelabelFlagCommandHandler } from './commands';
+import {
+  CreateFlag,
+  FlagCreated,
+  FlagRelabelled,
+  RelabelFlag,
+  RelabelFlagCommandHandler,
+} from './commands';
 import { CreateFlagCommandHandler } from './commands/create-flag.command-handler';
 import {
+  FLAG_AGGREGATE_TYPE,
   FLAG_COMMAND_REPOSITORY_DEPENDENCY_TOKEN,
   FLAG_QUERY_REPOSITORY_DEPENDENCY_TOKEN,
   FLAG_VALIDATION_SERVICE_INJECTION_TOKEN,
 } from './constants';
 import { FlagValidationService } from './external-services';
 import { FlagController } from './flag.controller';
+import { Flag } from './models';
 import { FlagQueryService, FlagViewModel } from './queries';
-import { InMemoryFlagCommandRepository } from './repositories';
 
 @Module({
   imports: [UserModule, AuthModule],
@@ -28,9 +41,26 @@ import { InMemoryFlagCommandRepository } from './repositories';
     },
     {
       provide: FLAG_COMMAND_REPOSITORY_DEPENDENCY_TOKEN,
-      useFactory: (configService: ConfigService) =>
-        new InMemoryFlagCommandRepository(new Map(), configService),
-      inject: [ConfigService],
+      useFactory: (
+        eventRepository: IEventRepository,
+        eventFactory: EventFactory,
+      ) => {
+        eventFactory
+          .register('FLAG_CREATED', (doc) =>
+            FlagCreated.fromPersistenceDto(doc as unknown as FlagCreated),
+          )
+          .register('FLAG_RELABELLED', (doc) =>
+            FlagRelabelled.fromPersistenceDto(doc as unknown as FlagRelabelled),
+          );
+
+        // shouldn't we inject the event factory here instead?
+        return new EventSourcedCommandRepository(
+          eventRepository,
+          FLAG_AGGREGATE_TYPE,
+          (eventHistory) => Flag.fromEventHistory(eventHistory),
+        );
+      },
+      inject: [EVENT_REPOSITORY_INJECTION_TOKEN, EventFactory],
     },
     {
       provide: FLAG_VALIDATION_SERVICE_INJECTION_TOKEN,

@@ -270,8 +270,9 @@ describe(`Flag Management Scenarios`, () => {
                 assertErrorMessageAsExpected: (message) => {
                   assertTextMatchesAll(
                     message,
+                    'Uniqueness constraint violated',
                     repeatedFlagLabel,
-                    'already has',
+                    'already in use',
                   );
                 },
               });
