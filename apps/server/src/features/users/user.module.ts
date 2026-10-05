@@ -1,15 +1,12 @@
 import { Module, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ModuleRef } from '@nestjs/core';
+import { Pool } from 'pg';
 import { EventFactory } from 'src/postgresql/event-factory';
+import { PG_POOL_INJECTION_TOKEN } from 'src/postgresql/postgres.module';
 import { InMemoryQueryRepository } from '../../common/persistence';
 import { EncryptionService } from '../../libs/auth';
-import {
-  CommandHandlerService,
-  EVENT_REPOSITORY_INJECTION_TOKEN,
-  EventSourcedCommandRepository,
-  IEventRepository,
-} from '../../libs/cqrs-es';
+import { CommandHandlerService } from '../../libs/cqrs-es';
 import {
   TrueImpactError,
   TrueImpactRuntimeException,
@@ -34,7 +31,7 @@ import { UserViewModel } from './queries';
 import { UserQueryController } from './queries/user-query.controller';
 import { UserQueryService } from './queries/user-query.service';
 import { IUserCommandRepository } from './repositories';
-import { User } from './user.aggregate-root';
+import { PostgresUserCommandRepository } from './repositories/postgres-user-command.repository';
 import { USER_AGGREGATE_TYPE } from './user.composite-identifier';
 
 @Module({
@@ -52,8 +49,9 @@ import { USER_AGGREGATE_TYPE } from './user.composite-identifier';
        */
       provide: USER_COMMAND_REPOSITORY_INJECTION_TOKEN,
       useFactory: (
-        eventRepository: IEventRepository,
+        pool: Pool,
         eventFactory: EventFactory,
+        configService: ConfigService,
       ) => {
         eventFactory
           .register('USER_WITH_PASSWORD_CREATED', (doc) =>
@@ -72,13 +70,13 @@ import { USER_AGGREGATE_TYPE } from './user.composite-identifier';
             ),
           );
 
-        return new EventSourcedCommandRepository(
-          eventRepository,
-          USER_AGGREGATE_TYPE,
-          (eventHistory) => User.fromEventHistory(eventHistory),
+        return new PostgresUserCommandRepository(
+          pool,
+          eventFactory,
+          configService,
         );
       },
-      inject: [EVENT_REPOSITORY_INJECTION_TOKEN, EventFactory],
+      inject: [PG_POOL_INJECTION_TOKEN, EventFactory, ConfigService],
     },
     {
       provide: CommandHandlerService,

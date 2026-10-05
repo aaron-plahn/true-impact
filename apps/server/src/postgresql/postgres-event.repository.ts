@@ -21,7 +21,7 @@ export interface EventDocument {
   revision: number;
 }
 
-const thinMap = (row: EventDocument): EventDto => {
+export const thinMap = (row: EventDocument): EventDto => {
   const streamId = row.stream_id;
   const type = row.event_type;
 
@@ -40,6 +40,8 @@ export class PostgresEventRepository implements IEventRepository {
   constructor(
     @Inject(PG_POOL_INJECTION_TOKEN)
     private readonly pool: Pool,
+    // TODO - CONSTANT DO We need this since the type is concrete?
+    @Inject('EVENT_FACTORY_INJECTION_TOKEN')
     private readonly eventFactory: EventFactory,
   ) {}
 
@@ -120,11 +122,11 @@ export class PostgresEventRepository implements IEventRepository {
         ]);
       });
 
+    client.release();
+
     if (result instanceof Error) {
       return result;
     }
-
-    client.release();
 
     if (result.rowCount === 0) {
       return new Error(
@@ -160,6 +162,7 @@ export class PostgresEventRepository implements IEventRepository {
     ${hasSearchFilters ? 'WHERE payload @> $1' : ''}
     ORDER BY stream_id, revision ASC;
     `;
+    // TODO GROUP BY streamId && ORDER BY revision
 
     const bindVars = hasSearchFilters
       ? [

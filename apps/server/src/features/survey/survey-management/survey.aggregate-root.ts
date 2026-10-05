@@ -85,12 +85,6 @@ export class Survey extends EventSourcedAggregateRoot {
   })
   readonly type = SURVEY_AGGREGATE_TYPE;
 
-  /**
-   * This is useful in case we ever want to iterate through a global collection of
-   * entities and build instances.
-   */
-  static readonly type = SURVEY_AGGREGATE_TYPE;
-
   @NonEmptyString({
     label: 'ID',
     description: 'Unique identifier for this survey',

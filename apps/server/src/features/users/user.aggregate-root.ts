@@ -1,12 +1,14 @@
-import { DomainEvent, EventPayload } from 'src/libs/cqrs-es';
+import { DomainEvent } from 'src/libs/cqrs-es';
 import { FullName, FullNameDto } from '../../common/full-name';
 import {
   BooleanDataType,
   EnumeratedType,
   EventSourcedAggregateRoot,
+  Literal,
   NestedDataType,
   NonEmptyString,
   NonNegativeInteger,
+  RawObject,
   TrueImpactError,
   UpdateMethod,
 } from '../../libs/data-types';
@@ -17,6 +19,7 @@ import { USER_AGGREGATE_TYPE } from './user.composite-identifier';
 
 const DEFAULT_ROLE: UserRole = 'employee';
 
+// TODO do we really want this now?
 export class UserPersistenceDto {
   id: string;
   isActive: boolean;
@@ -26,18 +29,30 @@ export class UserPersistenceDto {
   revision: number;
   role: UserRole;
   fullName: FullNameDto;
+  eventHistory: DomainEvent[];
 }
 
 export class User extends EventSourcedAggregateRoot {
-  type: string;
-  eventHistory: DomainEvent<EventPayload>[];
-  static readonly type = USER_AGGREGATE_TYPE;
+  @Literal(USER_AGGREGATE_TYPE, {
+    label: 'type',
+    description: 'distinguishes users from other entities in our system',
+  })
+  readonly type = USER_AGGREGATE_TYPE;
 
   @NonEmptyString({
     label: 'ID',
     description: 'unique system-identifier for this user',
   })
   id: string;
+
+  @RawObject({
+    label: 'event history',
+    description: 'audit log containing all historical edits of this user',
+    isArray: true,
+    // should we force this to have at least one event?
+    isOptional: true, // i.e. can be empty
+  })
+  eventHistory: DomainEvent[];
 
   @BooleanDataType({
     label: 'is active',
@@ -93,8 +108,10 @@ export class User extends EventSourcedAggregateRoot {
     revision,
     fullName,
     role,
+    eventHistory,
   }: {
     id: string;
+    eventHistory: DomainEvent[];
     isActive: boolean;
     username: string;
     email: string;
@@ -120,6 +137,8 @@ export class User extends EventSourcedAggregateRoot {
 
     this.role = role;
 
+    this.eventHistory = eventHistory;
+
     if (typeof hasEmailBeenValidated === 'boolean') {
       this.hasEmailBeenValidated = hasEmailBeenValidated;
     }
@@ -143,6 +162,7 @@ export class User extends EventSourcedAggregateRoot {
       revision: this.revision,
       role: this.role,
       fullName: this.fullName.toDto(),
+      eventHistory: this.eventHistory,
     };
   }
 
@@ -204,7 +224,6 @@ export class User extends EventSourcedAggregateRoot {
         fullName,
         // TODO do this
         // email,
-        hashedPassword,
       },
     } = event;
 
@@ -212,12 +231,12 @@ export class User extends EventSourcedAggregateRoot {
       id,
       username,
       role: DEFAULT_ROLE,
-      hashedPassword,
       isActive: false,
       email: 'TODO@todo.org',
       hasEmailBeenValidated: false,
       revision: 1,
       fullName: FullName.fromDto(fullName),
+      eventHistory: [event],
     });
 
     instance.eventHistory.push(event);
@@ -227,7 +246,7 @@ export class User extends EventSourcedAggregateRoot {
 
   static fromEventHistory(
     eventHistory: Iterable<DomainEvent>,
-  ): EventSourcedAggregateRoot | TrueImpactError | null {
+  ): User | TrueImpactError | null {
     return EventSourcedAggregateRoot.fromEventHistory.call(
       User,
       eventHistory,
@@ -240,6 +259,7 @@ export class User extends EventSourcedAggregateRoot {
   ): User | TrueImpactError {
     const {
       id,
+      eventHistory,
       isActive,
       username,
       revision,
@@ -258,6 +278,7 @@ export class User extends EventSourcedAggregateRoot {
       revision,
       role,
       fullName: FullName.fromDto(fullNameDto),
+      eventHistory,
     });
 
     return buildOptions?.shouldValidate
@@ -297,6 +318,18 @@ export class User extends EventSourcedAggregateRoot {
       revision: 1,
       // You must run a command to escalate a user's priviliges
       role: 'employee',
+      eventHistory: [
+        new UserWithPasswordCreated({
+          payload: {
+            aggregateCompositeIdentifier: {
+              type: USER_AGGREGATE_TYPE,
+              id,
+            },
+            username,
+            fullName: fullNameBuildResult.toDto(),
+          },
+        }),
+      ],
     });
 
     return user.validateInvariants();

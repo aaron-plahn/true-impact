@@ -21,7 +21,7 @@ export interface IUserCommandRepository {
    * performance \ implementation details without the need for a query language.
    */
   update(
-    intance: DeepPartial<User> & Pick<User, 'id'>,
+    instance: DeepPartial<User> & Pick<User, 'id'>,
   ): Promise<PersistenceAcknowledgement | TrueImpactError>;
 
   isEmpty(): Promise<boolean>;
