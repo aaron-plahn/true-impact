@@ -1,12 +1,12 @@
 import { Inject } from '@nestjs/common';
-import { CommandResult, ICommandHandler } from '../../../../libs/cqrs-es';
+import { CommandResult, ICommandHandler } from '../../../../../libs/cqrs-es';
 import {
   TrueImpactBadUserInputError,
   TrueImpactError,
-} from '../../../../libs/data-types';
-import { SURVEY_REVIEW_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../constants';
+} from '../../../../../libs/data-types';
+import { SURVEY_REVIEW_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../../constants';
+import type { ISurveyReviewCommandRepository } from '../survey-review-command-repository.interface';
 import { AddGeneralNoteAboutSurveyResponse } from './add-general-note-about-survey-response.command';
-import type { ISurveyReviewCommandRepository } from './survey-review-command-repository.interface';
 
 export class AddGeneralNoteAboutSurveyResponseCommandHandler implements ICommandHandler<AddGeneralNoteAboutSurveyResponse> {
   constructor(

@@ -2,21 +2,21 @@ import {
   NestedDataType,
   NonEmptyString,
   TrueImpactDataExample,
-} from '../../../../libs/data-types';
-import { SurveyReviewCompositeIdentifier } from '../survey-review.composite-identifier';
+} from '../../../../../libs/data-types';
+import { SurveyReviewCompositeIdentifier } from '../../survey-review.composite-identifier';
 
-@TrueImpactDataExample<FlagSurveyQuestionResponse>({
+@TrueImpactDataExample<AcknowledgeResponseForSurveyQuestionHasBeenViewed>({
   example: {
     aggregateCompositeIdentifier: {
       type: 'survey review',
       id: '1',
     },
-    questionLabel: 'XX',
-    flagId: '145',
+    questionLabel: 'IV',
   },
 })
-export class FlagSurveyQuestionResponse {
-  static readonly type = 'FLAG_SURVEY_QUESTION_RESPONSE';
+export class AcknowledgeResponseForSurveyQuestionHasBeenViewed {
+  static readonly type =
+    'ACKNOWLEDGE_RESPONSE_FOR_SURVEY_QUESTION_HAS_BEEN_VIEWED';
 
   @NestedDataType(() => SurveyReviewCompositeIdentifier, {
     label: 'survey response composite ID',
@@ -27,13 +27,7 @@ export class FlagSurveyQuestionResponse {
 
   @NonEmptyString({
     label: 'question label',
-    description: 'Which question are you flagging?',
+    description: 'the label of the question you have now viewed',
   })
   questionLabel: string;
-
-  @NonEmptyString({
-    label: 'flag ID',
-    description: `Which flag would you like to add to this question's response?`,
-  })
-  flagId: string;
 }

@@ -1,8 +1,8 @@
 import {
   NestedDataType,
   TrueImpactDataExample,
-} from '../../../../libs/data-types';
-import { SurveyReviewCompositeIdentifier } from '../survey-review.composite-identifier';
+} from '../../../../../libs/data-types';
+import { SurveyReviewCompositeIdentifier } from '../../survey-review.composite-identifier';
 
 @TrueImpactDataExample<SubmitCompleteSurveyReview>({
   example: {
