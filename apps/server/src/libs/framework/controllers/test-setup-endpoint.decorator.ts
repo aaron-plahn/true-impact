@@ -1,6 +1,6 @@
 import { UseGuards } from '@nestjs/common';
 import { ApiExcludeEndpoint } from '@nestjs/swagger';
-import { AuthenticatedUserGuard, RbacAuthGuard } from '../../../auth/guards';
+import { SuperTokensAuthGuard } from 'supertokens-nestjs';
 import { Patch } from './patch.decorator';
 
 /**
@@ -15,11 +15,9 @@ export function TestSetupEndpoint(): MethodDecorator {
     ApiExcludeEndpoint()(target, propertyKey, descriptor);
 
     if (process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'e2e') {
-      UseGuards(AuthenticatedUserGuard, RbacAuthGuard)(
-        target,
-        propertyKey,
-        descriptor,
-      );
+      // UseGuards(AuthenticatedUserGuard, RbacAuthGuard)
+
+      UseGuards(SuperTokensAuthGuard)(target, propertyKey, descriptor);
 
       return Patch('test-setup')(target, propertyKey, descriptor);
     }

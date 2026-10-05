@@ -7,12 +7,14 @@ const baseUrl = `http://localhost:${port}`;
 
 const authBaseEndpoint = `${baseUrl}/auth`;
 
-const logInEndpoint = `${authBaseEndpoint}/logIn`;
+const logInEndpoint = `${authBaseEndpoint}/signin`;
 
-const logOutEndpoint = `${authBaseEndpoint}/logOut`;
+const logOutEndpoint = `${authBaseEndpoint}/signout`;
 
 export const signOut = async (httpClient: TestHttpClient) => {
-  await httpClient.post(logOutEndpoint);
+  await httpClient.post(logOutEndpoint, {
+    headers: { rid: 'session' },
+  });
 };
 
 export const signIn = async (
@@ -20,17 +22,34 @@ export const signIn = async (
   httpClient: TestHttpClient,
 ) => {
   const result = await httpClient
-    .post(logInEndpoint, {
-      username,
-      password,
-    })
+    .post(
+      logInEndpoint,
+      {
+        formFields: [
+          {
+            // TODO can't this be username instead?
+            id: 'email',
+            value: username,
+          },
+          {
+            id: 'password',
+            value: password,
+          },
+        ],
+      },
+      {
+        headers: {
+          rid: 'emailpassword',
+        },
+      },
+    )
     .catch((e: { status: HttpStatus; response: { data: unknown } }) => {
       return {
         status: e.status,
       };
     });
 
-  expect(result.status).toBe(HttpStatus.CREATED);
+  expect(result.status).toBe(HttpStatus.OK);
 
   return result;
 };

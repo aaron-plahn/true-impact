@@ -1,4 +1,4 @@
-import { AuthenticatedUserGuard, RbacAuthGuard } from '../../../auth/guards';
+import { SuperTokensAuthGuard } from 'supertokens-nestjs';
 import type { CommandResult, ICommandFsa } from '../../../libs/cqrs-es';
 import { CommandHandlerService } from '../../../libs/cqrs-es';
 import {
@@ -34,7 +34,8 @@ export class UserCommandController {
     private readonly commandRepository: IUserCommandRepository,
   ) {}
 
-  @UseGuards(AuthenticatedUserGuard, RbacAuthGuard)
+  // @UseGuards(AuthenticatedUserGuard, RbacAuthGuard)
+  @UseGuards(SuperTokensAuthGuard)
   // TODO @CommandExecutionEndpoint
   @Post('commands')
   async executeCommand(@Body() fsa: ICommandFsa): Promise<CommandResult> {

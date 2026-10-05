@@ -1,6 +1,8 @@
 // TODO wrap NestJS Swagger?
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import session from 'express-session';
+import { SuperTokensExceptionFilter } from 'supertokens-nestjs';
+import supertokens from 'supertokens-node';
 import { AppModule } from './app.module';
 import { SurveyResponseSessionStore } from './features/survey/survey-completion/repositories/survey-response.session-store';
 import { TrueImpactError, TrueImpactRuntimeException } from './libs/data-types';
@@ -37,12 +39,15 @@ async function bootstrap() {
       'X-Requested-With',
       'Accept',
       'credentials',
+      ...supertokens.getAllCORSHeaders(),
     ],
     optionSuccessStatus: 204,
     preflightContinue: false,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   });
+
+  app.useGlobalFilters(new SuperTokensExceptionFilter());
 
   console.log(`Enabled CORS for client origin: ${CLIENT_DOMAIN}`);
 

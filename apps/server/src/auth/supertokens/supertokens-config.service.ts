@@ -1,0 +1,38 @@
+import {
+  SuperTokensModuleOptions,
+  SuperTokensModuleOptionsFactory,
+} from 'node_modules/supertokens-nestjs/dist/supertokens.types';
+import Dashboard from 'supertokens-node/recipe/dashboard';
+import EmailPassword from 'supertokens-node/recipe/emailpassword';
+import Session from 'supertokens-node/recipe/session';
+import { ConfigService, Injectable } from '../../libs/framework';
+
+@Injectable()
+export class SupertokensConfigService implements SuperTokensModuleOptionsFactory {
+  constructor(private readonly configService: ConfigService) {}
+
+  createSuperTokensModuleOptions(): SuperTokensModuleOptions {
+    const staticConfig: SuperTokensModuleOptions = {
+      framework: 'express',
+      supertokens: {
+        connectionURI: this.configService.get(
+          'SUPERTOKENS_CONNECTION_URI',
+          'http://supertokens:3567',
+        ),
+        // TODO throw if a secure key is not found
+        apiKey: this.configService.getOrThrow('SUPERTOKENS_API_KEYS'),
+      },
+      appInfo: {
+        appName: 'True Impact Authentication Server',
+        apiDomain: `${this.configService.get('API_DOMAIN', 'http://localhost')}:${this.configService.get('API_PORT', 3001)}`,
+        apiBasePath: '/auth',
+        origin: `${this.configService.get('CLIENT_DOMAIN', 'http://localhost')}:${this.configService.get('CLIENT_PORT', 8080)}`,
+        // websiteDomain: 'http://localhost:4200',
+        websiteBasePath: '/auth',
+      },
+      recipeList: [Dashboard.init(), EmailPassword.init(), Session.init()],
+    };
+
+    return staticConfig;
+  }
+}
