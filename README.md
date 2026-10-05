@@ -20,6 +20,8 @@ Run:
 cp sample.env env.local
 ```
 
+Then replace the placeholders with your own environment variables. You will need to [generate a Supertoken API key](https://supertokens.com/docs/platform-configuration/supertokens-core/api-keys).
+
 ### 3. Run Locally with Docker
 
 After you [install Docker on your machine]() you can run the application locally in Docker containers by running:
