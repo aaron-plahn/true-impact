@@ -202,7 +202,7 @@ export class PostgresEventRepository implements IEventRepository {
    * TODO We need to design a way to clear test data that is external to our persistence layer implementation
    * for better confidence that this could never happen outside of a test environment.
    */
-  async clear() {
+  async clear(aggregateType: string) {
     if (!['test', 'e2e'].includes(process.env.NODE_ENV || '**never**')) {
       throw new TrueImpactRuntimeException([
         new TrueImpactError(
@@ -211,10 +211,17 @@ export class PostgresEventRepository implements IEventRepository {
       ]);
     }
 
-    const truncateQuery = `
-      TRUNCATE TABLE events RESTART IDENTITY;
+    // const truncateQuery = `
+    //   TRUNCATE TABLE events RESTART IDENTITY;
+    // `;
+
+    const clearQuery = `
+    DELETE FROM events
+    WHERE payload @> $1;
     `;
 
-    await this.pool.query(truncateQuery);
+    await this.pool.query(clearQuery, [
+      JSON.stringify({ aggregateCompositeIdentifier: { type: aggregateType } }),
+    ]);
   }
 }

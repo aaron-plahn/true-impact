@@ -35,7 +35,7 @@ export class BeginReviewOfSurveyCommandHandler implements ICommandHandler<BeginR
 
     const newReview = SurveyReview.fromUserRequest({
       surveyResponseRecord: targetSurveyAttempt,
-    }).validateInvariants();
+    });
 
     if (newReview instanceof TrueImpactError) {
       return newReview;

@@ -18,7 +18,10 @@ import {
   UseGuards,
   UseInterceptors,
 } from '../../../libs/framework';
-import { USER_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../constants';
+import {
+  USER_AGGREGATE_TYPE,
+  USER_COMMAND_REPOSITORY_INJECTION_TOKEN,
+} from '../constants';
 import type { IUserCommandRepository } from '../repositories';
 
 @UseFilters(ResourceNotFoundFilter, BadUserInputFilter)
@@ -52,7 +55,7 @@ export class UserCommandController {
 
     // @ts-expect-error This will only work if the private, concrete dependency has a `clear` method (not for the production implementation)
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-    await this.commandRepository.clear();
+    await this.commandRepository.clear(USER_AGGREGATE_TYPE);
 
     return 'OK';
   }

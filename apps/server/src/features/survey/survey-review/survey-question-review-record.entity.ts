@@ -2,7 +2,14 @@ import {
   MultilingualText,
   MultilingualTextPersistenceDto,
 } from '../../../common/multilingual-text';
-import { Entity, TrueImpactError } from '../../../libs/data-types';
+import {
+  BooleanDataType,
+  Entity,
+  NestedDataType,
+  NonEmptyString,
+  TrueImpactError,
+} from '../../../libs/data-types';
+import { SetDataType } from '../../../libs/data-types/schema-management/decorators/set-data-type.decorator';
 
 export class SurveyQuestionReviewRecordPersistenceDto {
   questionLabel: string;
@@ -13,11 +20,38 @@ export class SurveyQuestionReviewRecordPersistenceDto {
 }
 
 export class SurveyQuestionReviewRecord extends Entity<SurveyQuestionReviewRecordPersistenceDto> {
+  @NonEmptyString({
+    label: 'label',
+    description: 'identifier for the question whose response is recorded here',
+  })
   label: string;
+
+  @NonEmptyString({
+    label: 'label',
+    description:
+      'identifies the option the participant chose for this question',
+  })
   chosenOptionLabel: string;
+
+  @BooleanDataType({
+    label: 'has been viewed',
+    description: `Has a reviewer has acknowledged that this question has been reviewed?`,
+  })
   hasBeenViewed: boolean;
+
   // TODO `class Note` ?
-  notes: MultilingualText[];
+  @NestedDataType(() => MultilingualText, {
+    label: 'notees',
+    description: `notes about the client's response to this particular question`,
+    isArray: true,
+    isOptional: true,
+  })
+  notes: MultilingualText[] = [];
+
+  @SetDataType('string', {
+    label: 'flag IDs',
+    description: `a set of references to the flags that the reviewer has raised due to the participant's response to this question`,
+  })
   flagIds = new Set<string>();
 
   constructor({
@@ -41,7 +75,11 @@ export class SurveyQuestionReviewRecord extends Entity<SurveyQuestionReviewRecor
 
     this.hasBeenViewed = hasBeenViewed;
 
-    this.notes = notes || [];
+    if (Array.isArray(notes)) {
+      this.notes = notes;
+    } else {
+      this.notes = [];
+    }
 
     if (flagIds) {
       flagIds.forEach((flagId) => {

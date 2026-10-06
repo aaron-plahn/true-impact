@@ -1,6 +1,6 @@
 import { plainToInstance } from 'class-transformer';
-import { MultilingualTextItemEventRecord } from 'src/features/flags/commands';
-import { NestedDataType } from 'src/libs/data-types';
+import { MultilingualTextItemEventRecord } from '../../../../../features/flags/commands';
+import { NestedDataType } from '../../../../../libs/data-types';
 import {
   SurveyReviewCompositeIdentifier,
   SurveyReviewCompositeIdentifierValuedProp,
@@ -33,7 +33,7 @@ export class GeneralNoteAboutSurveyResponseAdded {
     );
   }
 
-  private fromPersistenceDto(dto: GeneralNoteAboutSurveyResponseAdded) {
+  static fromPersistenceDto(dto: GeneralNoteAboutSurveyResponseAdded) {
     return new GeneralNoteAboutSurveyResponseAdded(dto);
   }
 }

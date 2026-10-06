@@ -18,7 +18,7 @@ export class SurveyResponseValidationService {
 
     if (!target) {
       return new TrueImpactError(
-        `There is no survey response ${surveyResponseId} available for review.`,
+        `Failed to begin review of ${surveyResponseId} as no such attempt exists.`,
       );
     }
 

@@ -14,6 +14,7 @@ import {
   UseFilters,
   UseInterceptors,
 } from '../../libs/framework';
+import { SURVEY_REVIEW_AGGREGATE_TYPE } from './survey-review/constants';
 import { SurveyReviewQueryService } from './survey-review/queries/survey-review-query.service';
 
 @UseFilters(ResourceNotFoundFilter, BadUserInputFilter)
@@ -54,7 +55,9 @@ export class SurveyReviewController {
 
     // @ts-expect-error This will only work if the private, concrete dependency has a `clear` method (not for the production implementation)
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-    await this.surveyReviewQueryService.surveyReviewCommandRepository.clear();
+    await this.surveyReviewQueryService.surveyReviewCommandRepository.clear(
+      SURVEY_REVIEW_AGGREGATE_TYPE,
+    );
 
     return 'OK';
   }

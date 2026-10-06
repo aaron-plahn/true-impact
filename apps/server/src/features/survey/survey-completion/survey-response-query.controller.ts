@@ -235,7 +235,9 @@ export class SurveyResponseQueryController {
 
     // @ts-expect-error This will only work if the private, concrete dependency has a `clear` method (not for the production implementation)
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-    await this.surveyCompletionQueryService.surveyCompletionCommandRepository.clear();
+    await this.surveyCompletionQueryService.surveyCompletionCommandRepository.clear(
+      SURVEY_RESPONSE_AGGREGATE_TYPE,
+    );
 
     return 'OK';
   }

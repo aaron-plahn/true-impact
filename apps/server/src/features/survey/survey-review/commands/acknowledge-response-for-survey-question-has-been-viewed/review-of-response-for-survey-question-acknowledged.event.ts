@@ -1,5 +1,5 @@
 import { plainToInstance } from 'class-transformer';
-import { NonEmptyString } from 'src/libs/data-types';
+import { NonEmptyString } from '../../../../../libs/data-types';
 import {
   SurveyReviewCompositeIdentifier,
   SurveyReviewCompositeIdentifierValuedProp,
@@ -17,7 +17,7 @@ export class ReviewOfResponseForSurveyQuestionAcknowledgedPayload {
 }
 
 export class ReviewOfResponseForSurveyQuestionAcknowledged {
-  readonly type = 'REVIEW_OF_RESPONSE_FOR_SURVEY_QUESTION_ACKNOWLEDGE';
+  readonly type = 'REVIEW_OF_RESPONSE_FOR_SURVEY_QUESTION_ACKNOWLEDGED';
 
   readonly payload: ReviewOfResponseForSurveyQuestionAcknowledgedPayload;
 
