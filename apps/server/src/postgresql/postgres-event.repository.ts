@@ -159,7 +159,8 @@ export class PostgresEventRepository implements IEventRepository {
     // The `pg` driver safely serializes the object. Note that users can't choose IDs or types, so there isn't much risk to being with here.
     const selectAllEvents = `
     SELECT * FROM events
-    ${hasSearchFilters ? 'WHERE payload @> $1' : ''};
+    ${hasSearchFilters ? 'WHERE payload @> $1' : ''}
+    ORDER BY stream_id, revision ASC;
     `;
 
     const bindVars = hasSearchFilters
