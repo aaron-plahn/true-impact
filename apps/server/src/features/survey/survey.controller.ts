@@ -38,7 +38,10 @@ import {
 } from '../../libs/framework';
 import { tiSduiToHtml } from '../../libs/server-driven-ui';
 import { tiSduiSectionToHtmlFragment } from '../../libs/server-driven-ui/html/tisdui-to-html-fragment';
-import { SURVEY_RESPONSE_AGGREGATE_TYPE } from './constants';
+import {
+  SURVEY_AGGREGATE_TYPE,
+  SURVEY_RESPONSE_AGGREGATE_TYPE,
+} from './constants';
 import { SurveyQueryService } from './queries/survey-query.service';
 import { SurveyViewModelClientDto } from './queries/survey.view-model';
 import { SduiViewDiffer } from './survey-completion/commands/sdui-view-differ';
@@ -333,7 +336,9 @@ export class SurveyController implements OnModuleInit {
 
     // @ts-expect-error This will only work if the private, concrete dependency has a `clear` method (not for the production implementation)
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-    await this.surveyQueryService.surveyCommandRepository.clear();
+    await this.surveyQueryService.surveyCommandRepository.clear(
+      SURVEY_AGGREGATE_TYPE,
+    );
 
     return 'OK';
   }

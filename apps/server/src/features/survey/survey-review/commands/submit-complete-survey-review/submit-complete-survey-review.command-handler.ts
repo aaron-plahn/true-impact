@@ -1,12 +1,12 @@
 import { Inject } from '@nestjs/common';
-import { CommandResult, ICommandHandler } from '../../../../libs/cqrs-es';
+import { CommandResult, ICommandHandler } from '../../../../../libs/cqrs-es';
 import {
   TrueImpactBadUserInputError,
   TrueImpactError,
-} from '../../../../libs/data-types';
-import { SURVEY_REVIEW_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../constants';
+} from '../../../../../libs/data-types';
+import { SURVEY_REVIEW_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../../constants';
+import type { ISurveyReviewCommandRepository } from '../survey-review-command-repository.interface';
 import { SubmitCompleteSurveyReview } from './submit-complete-survey-review.command';
-import type { ISurveyReviewCommandRepository } from './survey-review-command-repository.interface';
 
 export class SubmitCompleteSurveyReviewCommandHandler implements ICommandHandler<SubmitCompleteSurveyReview> {
   constructor(

@@ -26,6 +26,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '../../libs/framework';
+import { CLIENT_AGGREGATE_TYPE } from './client.composite-identifier';
 import { ClientViewModelClientDto } from './queries';
 import { ClientQueryService } from './services/client-query.service';
 
@@ -90,7 +91,7 @@ export class ClientController implements OnModuleInit {
 
     // @ts-expect-error This will only work if the private, concrete dependency has a `clear` method (not for the production implementation)
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-    await this.clientsService.repository.clear();
+    await this.clientsService.repository.clear(CLIENT_AGGREGATE_TYPE);
 
     return 'OK';
   }

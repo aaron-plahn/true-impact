@@ -24,7 +24,10 @@ import {
   UseFilters,
 } from '../../../libs/framework/exceptions';
 import type { IGroupProgramCommandRepository } from './commands/group-command-repository.interface';
-import { GROUP_PROGRAM_COMMAND_REPOSITORY_INJECTION_TOKEN } from './constants';
+import {
+  GROUP_PROGRAM_AGGREGATE_TYPE,
+  GROUP_PROGRAM_COMMAND_REPOSITORY_INJECTION_TOKEN,
+} from './constants';
 
 @UseFilters(ResourceNotFoundFilter, BadUserInputFilter)
 @UseInterceptors(QueryResponseInterceptor)
@@ -55,7 +58,7 @@ export class GroupProgramCommandController {
       ]);
     }
 
-    await this.commandRepository.clear();
+    await this.commandRepository.clear(GROUP_PROGRAM_AGGREGATE_TYPE);
 
     return 'OK';
   }

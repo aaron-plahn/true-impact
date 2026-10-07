@@ -25,6 +25,7 @@ import {
   UseFilters,
   UseInterceptors,
 } from '../../libs/framework';
+import { FLAG_AGGREGATE_TYPE } from './constants';
 import { FlagQueryService, FlagViewModelClientDto } from './queries';
 
 const schema = convertToOpenApiSchema(
@@ -100,7 +101,9 @@ export class FlagController implements OnModuleInit {
 
     // @ts-expect-error This will only work if the private, concrete dependency has a `clear` method (not for the production implementation)
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-    await this.flagQueryService.flagCommandRepository.clear();
+    await this.flagQueryService.flagCommandRepository.clear(
+      FLAG_AGGREGATE_TYPE,
+    );
 
     return 'OK';
   }

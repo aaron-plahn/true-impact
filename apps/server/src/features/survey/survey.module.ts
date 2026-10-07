@@ -1,10 +1,7 @@
 import { forwardRef } from '@nestjs/common';
 import { EventFactory } from 'src/postgresql/event-factory';
 import { AuthModule } from '../../auth/auth.module';
-import {
-  InMemoryCommandRepository,
-  InMemoryQueryRepositoryProvider,
-} from '../../common/persistence';
+import { InMemoryQueryRepositoryProvider } from '../../common/persistence';
 import { EncryptionService } from '../../libs/auth';
 import {
   CommandHandlerService,
@@ -117,22 +114,30 @@ import {
 } from './survey-management/events';
 import { SurveyOpenedToAnonymousParticipant } from './survey-management/survey-opened-to-anonymous-participant.event';
 import {
-  AcknowledgeResponseForSurveyQuestionHasBeenViewed,
-  AcknowledgeResponseForSurveyQuestionHasBeenViewedCommandHandler,
+  AcknowledgeResponseToSurveyQuestionHasBeenViewed,
+  AcknowledgeResponseToSurveyQuestionHasBeenViewedCommandHandler,
   AddGeneralNoteAboutSurveyResponse,
   AddGeneralNoteAboutSurveyResponseCommandHandler,
   AddNoteAboutQuestionResponse,
   AddNoteAboutQuestionResponseCommandHandler,
   BeginReviewOfSurvey,
   BeginReviewOfSurveyCommandHandler,
+  CompleteReviewOfSurveySubmitted,
   FlagSurveyQuestionResponse,
   FlagSurveyQuestionResponseCommandHandler,
+  GeneralNoteAboutSurveyResponseAdded,
+  NoteAboutQuestionResponseAdded,
+  PartialReviewOfSurveySubmitted,
+  ReviewOfResponseForSurveyQuestionAcknowledged,
+  ReviewOfSurveyBegan,
   SubmitCompleteSurveyReview,
   SubmitCompleteSurveyReviewCommandHandler,
   SubmitPartialSurveyReview,
   SubmitPartialSurveyReviewCommandHandler,
+  SURVEY_REVIEW_AGGREGATE_TYPE,
   SURVEY_REVIEW_COMMAND_REPOSITORY_INJECTION_TOKEN,
   SURVEY_REVIEW_QUERY_REPOSITORY_INJECTION_TOKEN,
+  SurveyQuestionResponseFlagged,
   SurveyReview,
   SurveyReviewQueryService,
 } from './survey-review';
@@ -168,7 +173,7 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, FinalizeSurvey];
     AddValueForSurveyOptionCommandHandler,
     // Survey Review Commands
     BeginReviewOfSurveyCommandHandler,
-    AcknowledgeResponseForSurveyQuestionHasBeenViewedCommandHandler,
+    AcknowledgeResponseToSurveyQuestionHasBeenViewedCommandHandler,
     AddNoteAboutQuestionResponseCommandHandler,
     AddGeneralNoteAboutSurveyResponseCommandHandler,
     FlagSurveyQuestionResponseCommandHandler,
@@ -284,9 +289,9 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, FinalizeSurvey];
           })
           .register({
             CommandHandlerCtor:
-              AcknowledgeResponseForSurveyQuestionHasBeenViewedCommandHandler,
+              AcknowledgeResponseToSurveyQuestionHasBeenViewedCommandHandler,
             CommandPayloadCtor:
-              AcknowledgeResponseForSurveyQuestionHasBeenViewed,
+              AcknowledgeResponseToSurveyQuestionHasBeenViewed,
           })
           .register({
             CommandHandlerCtor: AddNoteAboutQuestionResponseCommandHandler,
@@ -486,9 +491,56 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, FinalizeSurvey];
     },
     {
       provide: SURVEY_REVIEW_COMMAND_REPOSITORY_INJECTION_TOKEN,
-      useFactory: () => {
-        return new InMemoryCommandRepository(SurveyReview);
+      useFactory: (
+        eventRepository: IEventRepository,
+        eventFactory: EventFactory,
+      ) => {
+        eventFactory
+          .register('REVIEW_OF_SURVEY_BEGAN', (doc) =>
+            ReviewOfSurveyBegan.fromPersistenceDto(
+              doc as unknown as ReviewOfSurveyBegan,
+            ),
+          )
+          .register(
+            'REVIEW_OF_RESPONSE_FOR_SURVEY_QUESTION_ACKNOWLEDGED',
+            (doc) =>
+              ReviewOfResponseForSurveyQuestionAcknowledged.fromPersistenceDto(
+                doc as unknown as ReviewOfResponseForSurveyQuestionAcknowledged,
+              ),
+          )
+          .register('GENERAL_NOTE_ABOUT_SURVEY_RESPONSE_ADDED', (doc) =>
+            GeneralNoteAboutSurveyResponseAdded.fromPersistenceDto(
+              doc as unknown as GeneralNoteAboutSurveyResponseAdded,
+            ),
+          )
+          .register('NOTE_ABOUT_QUESTION_RESPONSE_ADDED', (doc) =>
+            NoteAboutQuestionResponseAdded.fromPersistenceDto(
+              doc as unknown as NoteAboutQuestionResponseAdded,
+            ),
+          )
+          .register('SURVEY_QUESTION_RESPONSE_FLAGGED', (doc) =>
+            SurveyQuestionResponseFlagged.fromPersistenceDto(
+              doc as unknown as SurveyQuestionResponseFlagged,
+            ),
+          )
+          .register('COMPLETE_REVIEW_OF_SURVEY_SUBMITTED', (doc) =>
+            CompleteReviewOfSurveySubmitted.fromPersistenceDto(
+              doc as unknown as CompleteReviewOfSurveySubmitted,
+            ),
+          )
+          .register('PARTIAL_REVIEW_OF_SURVEY_SUBMITTED', (doc) =>
+            PartialReviewOfSurveySubmitted.fromPersistenceDto(
+              doc as unknown as PartialReviewOfSurveySubmitted,
+            ),
+          );
+
+        return new EventSourcedCommandRepository(
+          eventRepository,
+          SURVEY_REVIEW_AGGREGATE_TYPE,
+          (eventHistory) => SurveyReview.fromEventHistory(eventHistory),
+        );
       },
+      inject: [EVENT_REPOSITORY_INJECTION_TOKEN, EventFactory],
     },
     {
       provide: SURVEY_REVIEW_QUERY_REPOSITORY_INJECTION_TOKEN,

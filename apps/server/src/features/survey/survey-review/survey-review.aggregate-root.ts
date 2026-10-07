@@ -1,16 +1,31 @@
+import { randomUUID } from 'crypto';
+import { DomainEvent, EventPayload } from 'src/libs/cqrs-es';
 import {
   MultilingualText,
   MultilingualTextPersistenceDto,
 } from '../../../common/multilingual-text';
 import {
-  AggregateRoot,
-  Entity,
+  BooleanDataType,
+  EventSourcedAggregateRoot,
+  Literal,
   NestedDataType,
+  NonEmptyString,
+  NonNegativeInteger,
+  RawObject,
   TrueImpactError,
   UpdateMethod,
 } from '../../../libs/data-types';
 import { SurveyResponseRecord } from '../survey-completion';
 import { SurveyParticipantCompositeIdentifier } from '../survey-completion/models/survey-participant.composite-identifier';
+import {
+  CompleteReviewOfSurveySubmitted,
+  GeneralNoteAboutSurveyResponseAdded,
+  NoteAboutQuestionResponseAdded,
+  PartialReviewOfSurveySubmitted,
+  ReviewOfResponseForSurveyQuestionAcknowledged,
+  ReviewOfSurveyBegan,
+  SurveyQuestionResponseFlagged,
+} from './commands';
 import { SURVEY_REVIEW_AGGREGATE_TYPE } from './constants';
 import {
   SurveyQuestionReviewRecord,
@@ -19,8 +34,8 @@ import {
 
 class SurveyReviewPersistenceDto {
   id: string;
+  eventHistory: DomainEvent[];
   revision: number;
-  // TODO change this to submission timestamp
   hasBeenSubmitted: boolean;
   questionsReviewed: SurveyQuestionReviewRecordPersistenceDto[];
   surveyName: string;
@@ -28,48 +43,86 @@ class SurveyReviewPersistenceDto {
   generalNotes: MultilingualTextPersistenceDto[];
 }
 
-export class SurveyReview extends AggregateRoot<SurveyReviewPersistenceDto> {
-  static readonly type = SURVEY_REVIEW_AGGREGATE_TYPE;
+export class SurveyReview extends EventSourcedAggregateRoot {
+  @Literal(SURVEY_REVIEW_AGGREGATE_TYPE, {
+    label: 'type',
+    description:
+      'distinguishes survey reviews from other types of entity in our system',
+  })
+  readonly type = SURVEY_REVIEW_AGGREGATE_TYPE;
 
+  @RawObject({
+    label: 'event history',
+    description: 'audit log of all changes ever made to this survey review',
+    isArray: true,
+    isOptional: true, // i.e. can be empty - can it?
+  })
+  eventHistory: DomainEvent<EventPayload>[];
+
+  @NonEmptyString({
+    label: 'id',
+    description: 'unique identifier for this survey review',
+  })
   id: string;
 
+  @NonNegativeInteger({
+    label: 'revision',
+    description:
+      'tracks the number of historical edits that have been made to this survey review',
+  })
   revision: number;
 
+  @BooleanDataType({
+    label: 'has been submitted',
+    description: 'has the reviewer submitted this review?',
+  })
   hasBeenSubmitted: boolean;
 
+  // This is only cached to build more meaningful error messages.
+  @NonEmptyString({
+    label: 'survey name',
+    description: `name of the survey for which a client's response is being reviewed`,
+  })
   surveyName: string;
 
-  surveyParticipantCompositeIdentifier?: SurveyParticipantCompositeIdentifier;
-
-  // @lookup table
+  @NestedDataType(() => SurveyQuestionReviewRecord, {
+    label: 'questions reviewed',
+    description:
+      'an ordered list of question responses and their review markup',
+    isArray: true,
+  })
   questionsReviewed: SurveyQuestionReviewRecord[];
 
   @NestedDataType(() => MultilingualText, {
     label: 'notes',
     description: `A list of general notes about this participant's response to this survey in general.`,
+    isArray: true,
+    isOptional: true, // can be empty
   })
   generalNotes: MultilingualText[] = [];
 
   constructor({
     id,
+    eventHistory,
     revision,
     hasBeenSubmitted,
     questionsReviewed,
     surveyName,
-    surveyParticipantCompositeIdentifier,
     generalNotes,
   }: {
     id: string;
+    eventHistory: DomainEvent[];
     revision: number;
     hasBeenSubmitted: boolean;
     questionsReviewed: SurveyQuestionReviewRecord[];
     surveyName: string;
-    surveyParticipantCompositeIdentifier?: SurveyParticipantCompositeIdentifier;
     generalNotes?: MultilingualText[];
   }) {
     super();
 
     this.id = id;
+
+    this.eventHistory = eventHistory;
 
     this.revision = revision;
 
@@ -77,11 +130,10 @@ export class SurveyReview extends AggregateRoot<SurveyReviewPersistenceDto> {
 
     this.surveyName = surveyName;
 
-    this.surveyParticipantCompositeIdentifier =
-      surveyParticipantCompositeIdentifier;
-
     if (Array.isArray(generalNotes)) {
       this.generalNotes = generalNotes;
+    } else {
+      this.generalNotes = [];
     }
 
     this.hasBeenSubmitted = hasBeenSubmitted;
@@ -91,6 +143,14 @@ export class SurveyReview extends AggregateRoot<SurveyReviewPersistenceDto> {
   acknowledgeResponseToQuestionViewed(
     questionLabel: string,
   ): SurveyReview | TrueImpactError {
+    const frozenReviewCheck = this.canUpdate(
+      `mark question [${questionLabel}] as viewed`,
+    );
+
+    if (frozenReviewCheck instanceof Error) {
+      return frozenReviewCheck;
+    }
+
     const questionSearchResult =
       this.questionsReviewed.find((q) => q.label === questionLabel) ||
       new TrueImpactError(
@@ -108,12 +168,28 @@ export class SurveyReview extends AggregateRoot<SurveyReviewPersistenceDto> {
       );
     }
 
-    // Note that this is modified as an original array element by reference (a side-effect)
-    questionSearchResult.hasBeenViewed = true;
-
-    return this.applyUpdateIfPossible(
-      `mark question [${questionLabel}] as viewed`,
+    return this.apply(
+      new ReviewOfResponseForSurveyQuestionAcknowledged({
+        payload: {
+          aggregateCompositeIdentifier: this.getCompositeIdentifier(),
+          questionLabel,
+        },
+      }),
     );
+  }
+
+  handleReviewOfResponseForSurveyQuestionAcknowledged({
+    payload: { questionLabel },
+  }: ReviewOfResponseForSurveyQuestionAcknowledged) {
+    const targetQuestion = this.questionsReviewed.find(
+      (q) => q.label === questionLabel,
+    );
+
+    if (targetQuestion) {
+      targetQuestion.hasBeenViewed = true;
+    }
+
+    return this;
   }
 
   @UpdateMethod()
@@ -126,6 +202,14 @@ export class SurveyReview extends AggregateRoot<SurveyReviewPersistenceDto> {
     text: string;
     languageCode: string;
   }): SurveyReview | TrueImpactError {
+    const frozenReviewCheck = this.canUpdate(
+      `add a note about question [${questionLabel}]`,
+    );
+
+    if (frozenReviewCheck instanceof Error) {
+      return frozenReviewCheck;
+    }
+
     const targetQuestion =
       this.questionsReviewed.find((q) => q.label === questionLabel) ||
       new TrueImpactError(
@@ -145,17 +229,45 @@ export class SurveyReview extends AggregateRoot<SurveyReviewPersistenceDto> {
       );
     }
 
-    targetQuestion.notes.push(textBuildResult);
-
-    /**
-     * We automatically mark the question as viewed once a note has been made.
-     * We need to gather user feedback on this once the UX is complete.
-     */
-    targetQuestion.hasBeenViewed = true;
-
-    return this.applyUpdateIfPossible(
-      `add a note about question [${questionLabel}]`,
+    return this.apply(
+      new NoteAboutQuestionResponseAdded({
+        payload: {
+          aggregateCompositeIdentifier: this.getCompositeIdentifier(),
+          questionLabel,
+          note: {
+            text,
+            languageCode,
+            translationType: 'original',
+          },
+        },
+      }),
     );
+  }
+
+  handleNoteAboutQuestionResponseAdded({
+    payload: { questionLabel, note },
+  }: NoteAboutQuestionResponseAdded) {
+    const targetQuestion = this.questionsReviewed.find(
+      (q) => q.label === questionLabel,
+    );
+
+    const textBuildResult = MultilingualText.withText(note);
+
+    if (textBuildResult instanceof Error) {
+      return textBuildResult;
+    }
+
+    if (targetQuestion) {
+      targetQuestion.notes.push(textBuildResult);
+
+      /**
+       * We automatically mark the question as viewed once a note has been made.
+       * We need to gather user feedback on this once the UX is complete.
+       */
+      targetQuestion.hasBeenViewed = true;
+    }
+
+    return this;
   }
 
   @UpdateMethod()
@@ -166,6 +278,14 @@ export class SurveyReview extends AggregateRoot<SurveyReviewPersistenceDto> {
     text: string;
     languageCode: string;
   }) {
+    const frozenReviewCheck = this.canUpdate(
+      `add a general note about this client's survey response`,
+    );
+
+    if (frozenReviewCheck instanceof Error) {
+      return frozenReviewCheck;
+    }
+
     const multilingualTextBuildResult = MultilingualText.withText({
       text,
       languageCode,
@@ -178,11 +298,32 @@ export class SurveyReview extends AggregateRoot<SurveyReviewPersistenceDto> {
       );
     }
 
-    this.generalNotes.push(multilingualTextBuildResult);
-
-    return this.applyUpdateIfPossible(
-      `add a general note about this client's survey response`,
+    return this.apply(
+      new GeneralNoteAboutSurveyResponseAdded({
+        payload: {
+          aggregateCompositeIdentifier: this.getCompositeIdentifier(),
+          note: {
+            text,
+            languageCode,
+            translationType: 'original',
+          },
+        },
+      }),
     );
+  }
+
+  handleGeneralNoteAboutSurveyResponseAdded({
+    payload: { note },
+  }: GeneralNoteAboutSurveyResponseAdded) {
+    const textBuildResult = MultilingualText.withText(note);
+
+    if (textBuildResult instanceof Error) {
+      return textBuildResult;
+    }
+
+    this.generalNotes.push(textBuildResult);
+
+    return this;
   }
 
   @UpdateMethod()
@@ -193,6 +334,14 @@ export class SurveyReview extends AggregateRoot<SurveyReviewPersistenceDto> {
     questionLabel: string;
     flagId: string;
   }): SurveyReview | TrueImpactError {
+    const frozenReviewCheck = this.canUpdate(
+      `flag question [${questionLabel}] with flag [${flagId}]`,
+    );
+
+    if (frozenReviewCheck instanceof Error) {
+      return frozenReviewCheck;
+    }
+
     const targetQuestion =
       this.questionsReviewed.find((q) => q.label === questionLabel) ||
       new TrueImpactError(
@@ -209,17 +358,35 @@ export class SurveyReview extends AggregateRoot<SurveyReviewPersistenceDto> {
       );
     }
 
-    targetQuestion.flagIds.add(flagId);
-
-    /**
-     * We automatically mark the question as viewed once it has been flagged.
-     * We need to gather user feedback on this once the UX is complete.
-     */
-    targetQuestion.hasBeenViewed = true;
-
-    return this.applyUpdateIfPossible(
-      `flag question [${questionLabel}] with flag [${flagId}]`,
+    return this.apply(
+      new SurveyQuestionResponseFlagged({
+        payload: {
+          aggregateCompositeIdentifier: this.getCompositeIdentifier(),
+          questionLabel,
+          flagId,
+        },
+      }),
     );
+  }
+
+  handleSurveyQuestionResponseFlagged({
+    payload: { questionLabel, flagId },
+  }: SurveyQuestionResponseFlagged) {
+    const targetQuestion = this.questionsReviewed.find(
+      (q) => q.label === questionLabel,
+    );
+
+    if (targetQuestion) {
+      targetQuestion.flagIds.add(flagId);
+
+      /**
+       * We automatically mark the question as viewed once it has been flagged.
+       * We need to gather user feedback on this once the UX is complete.
+       */
+      targetQuestion.hasBeenViewed = true;
+    }
+
+    return this;
   }
 
   @UpdateMethod()
@@ -236,6 +403,16 @@ export class SurveyReview extends AggregateRoot<SurveyReviewPersistenceDto> {
       );
     }
 
+    return this.apply(
+      new PartialReviewOfSurveySubmitted({
+        payload: {
+          aggregateCompositeIdentifier: this.getCompositeIdentifier(),
+        },
+      }),
+    );
+  }
+
+  handlePartialReviewOfSurveySubmitted(_event: PartialReviewOfSurveySubmitted) {
     this.hasBeenSubmitted = true;
 
     return this;
@@ -249,7 +426,10 @@ export class SurveyReview extends AggregateRoot<SurveyReviewPersistenceDto> {
       );
     }
 
-    // TODO Do we want the same approach for submit partial review?
+    /**
+     * Note that `isComplete` isn't the right abstraction here because we want the
+     * unreviewed questions to appear in the message.
+     */
     const unreviewedQuestions = this.questionsReviewed.filter(
       (qr) => !qr.hasBeenViewed,
     );
@@ -262,12 +442,24 @@ export class SurveyReview extends AggregateRoot<SurveyReviewPersistenceDto> {
       );
     }
 
+    return this.apply(
+      new CompleteReviewOfSurveySubmitted({
+        payload: {
+          aggregateCompositeIdentifier: this.getCompositeIdentifier(),
+        },
+      }),
+    );
+  }
+
+  handleCompleteReviewOfSurveySubmitted(
+    _event: CompleteReviewOfSurveySubmitted,
+  ) {
     this.hasBeenSubmitted = true;
 
     return this;
   }
 
-  private applyUpdateIfPossible(action: string): this | TrueImpactError {
+  private canUpdate(action: string): this | TrueImpactError {
     if (this.hasBeenSubmitted) {
       return new TrueImpactError(
         `You cannot ${action}, as review [${this.id}] of survey [${this.surveyName}] has already been submitted.`,
@@ -288,6 +480,7 @@ export class SurveyReview extends AggregateRoot<SurveyReviewPersistenceDto> {
   toPersistenceDto(): SurveyReviewPersistenceDto {
     return {
       id: this.id,
+      eventHistory: this.eventHistory,
       revision: this.revision,
       hasBeenSubmitted: this.hasBeenSubmitted,
       questionsReviewed: this.questionsReviewed.map((qr) =>
@@ -295,8 +488,6 @@ export class SurveyReview extends AggregateRoot<SurveyReviewPersistenceDto> {
       ),
       generalNotes: this.generalNotes.map((gn) => gn.toPersistenceDto()),
       surveyName: this.surveyName,
-      surveyParticipantCompositeIdentifier:
-        this.surveyParticipantCompositeIdentifier,
     };
   }
 
@@ -312,7 +503,63 @@ export class SurveyReview extends AggregateRoot<SurveyReviewPersistenceDto> {
     return `${this.surveyName} - review [${this.id}]`;
   }
 
-  static fromUserRequest({
+  static fromReviewOfSurveyBegan(event: ReviewOfSurveyBegan) {
+    const {
+      payload: {
+        aggregateCompositeIdentifier: { id },
+        surveyName,
+        responses,
+      },
+    } = event;
+
+    const surveyQuestionErrors: TrueImpactError[] = [];
+
+    const surveyQuestions: SurveyQuestionReviewRecord[] = [];
+
+    responses.forEach(({ questionLabel, optionLabel }) => {
+      const buildResult = SurveyQuestionReviewRecord.fromPersistenceDto({
+        questionLabel,
+        optionLabel,
+        hasBeenViewed: false,
+        notes: [],
+        flagIds: [],
+      });
+
+      if (buildResult instanceof Error) {
+        surveyQuestionErrors.push(buildResult);
+      } else {
+        surveyQuestions.push(buildResult);
+      }
+    });
+
+    if (surveyQuestionErrors.length > 0) {
+      return new TrueImpactError(
+        `Failed to build survey review from an event history due to invalid existing data in the database.`,
+        surveyQuestionErrors,
+      );
+    }
+
+    return new SurveyReview({
+      id,
+      surveyName,
+      questionsReviewed: surveyQuestions,
+      generalNotes: [],
+      revision: 1,
+      hasBeenSubmitted: false,
+      eventHistory: [event],
+    });
+  }
+
+  static fromEventHistory(
+    eventHistory: Iterable<DomainEvent>,
+  ): SurveyReview | TrueImpactError | null {
+    return EventSourcedAggregateRoot.fromEventHistory.call(
+      SurveyReview,
+      eventHistory,
+    ) as SurveyReview;
+  }
+
+  static ofSurveyResponse({
     surveyResponseRecord,
   }: {
     surveyResponseRecord: SurveyResponseRecord;
@@ -324,25 +571,46 @@ export class SurveyReview extends AggregateRoot<SurveyReviewPersistenceDto> {
 
     const surveyName = surveyResponseRecord.survey.name;
 
-    return new SurveyReview({
-      id: undefined as unknown as string,
+    // is this the right place?
+    const id = randomUUID();
+
+    const instance = new SurveyReview({
+      id,
+      eventHistory: [
+        new ReviewOfSurveyBegan({
+          payload: {
+            aggregateCompositeIdentifier: {
+              type: SURVEY_REVIEW_AGGREGATE_TYPE,
+              id,
+            },
+            surveyName: surveyResponseRecord.survey.name,
+            responses: surveyResponseRecord.responses.map(
+              ({ questionLabel, optionLabel }) => ({
+                questionLabel,
+                optionLabel,
+              }),
+            ),
+          },
+        }),
+      ],
       revision: 0,
       hasBeenSubmitted: false,
       questionsReviewed: questions,
       surveyName,
-      surveyParticipantCompositeIdentifier: surveyResponseRecord.participant,
     });
+
+    return instance.validateInvariants();
   }
 
   static fromPersistenceDto(
     dto: SurveyReviewPersistenceDto,
     buildOptions?: { shouldValidate?: boolean },
-  ): Entity | TrueImpactError {
-    const questionsReviewed = dto.questionsReviewed.map((qr) =>
+  ): SurveyReview | TrueImpactError {
+    const questionsReviewedBuildResult = dto.questionsReviewed.map((qr) =>
       SurveyQuestionReviewRecord.fromPersistenceDto(qr, buildOptions),
     );
 
-    const questionBuildErrors = questionsReviewed.filter(
+    const questionBuildErrors = questionsReviewedBuildResult.filter(
       (qr): qr is TrueImpactError => qr instanceof TrueImpactError,
     );
 
@@ -378,13 +646,13 @@ export class SurveyReview extends AggregateRoot<SurveyReviewPersistenceDto> {
 
     return new SurveyReview({
       id: dto.id,
+      eventHistory: dto.eventHistory,
       revision: dto.revision,
       hasBeenSubmitted: dto.hasBeenSubmitted,
-      questionsReviewed: questionsReviewed as SurveyQuestionReviewRecord[],
+      questionsReviewed:
+        questionsReviewedBuildResult as SurveyQuestionReviewRecord[],
       surveyName: dto.surveyName,
       generalNotes,
-      surveyParticipantCompositeIdentifier:
-        dto.surveyParticipantCompositeIdentifier,
     });
   }
 }

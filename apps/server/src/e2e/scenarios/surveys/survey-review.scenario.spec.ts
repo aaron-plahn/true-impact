@@ -1,4 +1,3 @@
-import axios from 'axios';
 import { CreateClient } from '../../../features/clients/commands';
 import { CreateCommunity } from '../../../features/communities/commands';
 import { CreateFlag } from '../../../features/flags/commands';
@@ -18,7 +17,7 @@ import { OpenSurveyToAnonymousIndividual } from '../../../features/survey/survey
 import { SurveyOptionPersistenceDto } from '../../../features/survey/survey-management/survey-option.entity';
 import { SurveyQuestionPersistenceDto } from '../../../features/survey/survey-management/survey-question.entity';
 import {
-  AcknowledgeResponseForSurveyQuestionHasBeenViewed,
+  AcknowledgeResponseToSurveyQuestionHasBeenViewed,
   AddGeneralNoteAboutSurveyResponse,
   AddNoteAboutQuestionResponse,
   BeginReviewOfSurvey,
@@ -39,6 +38,7 @@ import {
   assertCommandSuccess,
 } from '../utils';
 import { assertCommandAccessDeniedToUser } from '../utils/assert-command-access-denied-to-user';
+import { signInAsAdmin } from '../utils/sign-in';
 import { TestHttpClient } from '../utils/test-http-client';
 
 /**
@@ -62,6 +62,8 @@ const indexEndpoints = {
   reviews: `${baseEndpoint}/surveys/reviews`,
   flags: `${baseEndpoint}/flags`,
 };
+
+const adminHttpClient = new TestHttpClient('http://localhost:4200');
 
 const buildCommandEndpoint = (indexEndpoint: string) =>
   `${indexEndpoint}/commands`;
@@ -151,10 +153,12 @@ const missingQuestionLabel = 'Q3';
 const flagLabel = 'Sus';
 
 const seedRequiredState = async ({
+  httpClient,
   // indexEndpoint,
   stream,
   commandEndpoint,
 }: {
+  httpClient?: TestHttpClient;
   indexEndpoint: string;
   stream: TestCommandStream;
   commandEndpoint: string;
@@ -164,6 +168,8 @@ const seedRequiredState = async ({
   let id: string;
 
   await assertCommandScenarioSuccess({
+    // Usually we want the admin client, so we use this as a default. Only client survey responses require a different HTTP context.
+    httpClient: httpClient || adminHttpClient,
     endpoint: commandEndpoint,
     stream,
     assertSuccess: (acks) => {
@@ -177,16 +183,7 @@ const seedRequiredState = async ({
   return { id, accessCode };
 };
 
-const httpClient = new TestHttpClient('http://localhost:4200');
-
-/**
- * This test suite become broken when introducing session-based auth for completing surveys. We need a
- * way to seed test survey responses that bypasses this flow. Alternatively, we can add cookie support to
- * axios for our `RestCommandExecutor`.
- *
- * TODO Re-instate this test
- */
-describe.skip(`when reviewing a survey (e.g. when a clinician reviews a client's response to a particular survey)`, () => {
+describe(`when reviewing a survey (e.g. when a clinician reviews a client's response to a particular survey)`, () => {
   let communityId: string;
   let _clientId: string;
   let surveyId: string;
@@ -197,11 +194,18 @@ describe.skip(`when reviewing a survey (e.g. when a clinician reviews a client's
   let reviewAllQuestions: TestCommandStream;
 
   beforeAll(async () => {
-    await axios.patch(buildTestSetupEndpoint(indexEndpoints.communities));
-    await axios.patch(buildTestSetupEndpoint(indexEndpoints.clients));
-    await axios.patch(buildTestSetupEndpoint(indexEndpoints.surveys));
-    await axios.patch(buildTestSetupEndpoint(indexEndpoints.responses));
-    await axios.patch(buildTestSetupEndpoint(indexEndpoints.flags));
+    // ensure that we have the authority to execute commands
+    await signInAsAdmin(adminHttpClient);
+
+    await adminHttpClient.patch(
+      buildTestSetupEndpoint(indexEndpoints.communities),
+    );
+    await adminHttpClient.patch(buildTestSetupEndpoint(indexEndpoints.clients));
+    await adminHttpClient.patch(buildTestSetupEndpoint(indexEndpoints.surveys));
+    await adminHttpClient.patch(
+      buildTestSetupEndpoint(indexEndpoints.responses),
+    );
+    await adminHttpClient.patch(buildTestSetupEndpoint(indexEndpoints.flags));
 
     flagId = (
       await seedRequiredState({
@@ -221,6 +225,7 @@ describe.skip(`when reviewing a survey (e.g. when a clinician reviews a client's
       })
     ).id;
 
+    // TODO use this
     _clientId = (
       await seedRequiredState({
         indexEndpoint: indexEndpoints.clients,
@@ -270,7 +275,7 @@ describe.skip(`when reviewing a survey (e.g. when a clinician reviews a client's
 
     surveyId = surveySeedResult.id;
 
-    const accessCode = surveySeedResult.accessCode;
+    const accessCode = surveySeedResult.accessCode as string;
 
     const completeSurveyAsClient = TestCommandStream.first(BeginSurvey, {
       surveyId,
@@ -292,6 +297,12 @@ describe.skip(`when reviewing a survey (e.g. when a clinician reviews a client's
 
     surveyResponseRecordId = (
       await seedRequiredState({
+        /**
+         * We require a different HTTP client for this setup scenario because
+         * the survey particpant (which is a client in the domain not in the networking sense)
+         * must redeem the access code for a short-lived survey response session.
+         */
+        httpClient: new TestHttpClient('http://localhost:4200'),
         indexEndpoint: indexEndpoints.responses,
         commandEndpoint: buildCommandEndpoint(indexEndpoints.surveys),
         stream: completeSurveyAsClient,
@@ -301,7 +312,7 @@ describe.skip(`when reviewing a survey (e.g. when a clinician reviews a client's
     reviewAllButLastQuestion = TestCommandStream.first(BeginReviewOfSurvey, {
       surveyResponseRecordId,
     })
-      .andThen(AcknowledgeResponseForSurveyQuestionHasBeenViewed, {
+      .andThen(AcknowledgeResponseToSurveyQuestionHasBeenViewed, {
         questionLabel: '1',
       })
       .andThen(AddNoteAboutQuestionResponse, {
@@ -318,7 +329,7 @@ describe.skip(`when reviewing a survey (e.g. when a clinician reviews a client's
       });
 
     reviewAllQuestions = reviewAllButLastQuestion.andThen(
-      AcknowledgeResponseForSurveyQuestionHasBeenViewed,
+      AcknowledgeResponseToSurveyQuestionHasBeenViewed,
       {
         questionLabel: '3',
       },
@@ -326,7 +337,9 @@ describe.skip(`when reviewing a survey (e.g. when a clinician reviews a client's
   });
 
   beforeEach(async () => {
-    await axios.patch(buildTestSetupEndpoint(indexEndpoints.reviews));
+    const endpoint = buildTestSetupEndpoint(indexEndpoints.reviews);
+
+    await adminHttpClient.patch(endpoint);
   });
 
   describe(`when beginning a review`, () => {
@@ -335,13 +348,14 @@ describe.skip(`when reviewing a survey (e.g. when a clinician reviews a client's
         describe(`when there are no existing reviews of this survey response`, () => {
           it(`should create a new in-progress review`, async () => {
             await assertCommandScenarioSuccess({
+              httpClient: adminHttpClient,
               endpoint: buildCommandEndpoint(indexEndpoints.surveys),
               stream: TestCommandStream.first(BeginReviewOfSurvey, {
                 surveyResponseRecordId,
               }),
               assertSuccess: async (acks) => {
                 const newReviewRecord = (
-                  await axios.get(
+                  await adminHttpClient.get(
                     buildDetailQueryEndpoint(
                       indexEndpoints.reviews,
                       acks[0].id,
@@ -365,6 +379,7 @@ describe.skip(`when reviewing a survey (e.g. when a clinician reviews a client's
         describe(`when there is another review of this survey response`, () => {
           it(`should add another review`, async () => {
             await assertCommandScenarioSuccess({
+              httpClient: adminHttpClient,
               endpoint: commandEndpointForSurveyReviews,
               stream: TestCommandStream.first(BeginReviewOfSurvey, {
                 surveyResponseRecordId,
@@ -372,13 +387,15 @@ describe.skip(`when reviewing a survey (e.g. when a clinician reviews a client's
             });
 
             await assertCommandScenarioSuccess({
+              httpClient: adminHttpClient,
               endpoint: commandEndpointForSurveyReviews,
               stream: TestCommandStream.first(BeginReviewOfSurvey, {
                 surveyResponseRecordId,
               }),
               assertSuccess: async (_acks) => {
-                const allReviews = (await axios.get(indexEndpoints.reviews))
-                  .data as SurveyReviewViewModelClientDto[];
+                const allReviews = (
+                  await adminHttpClient.get(indexEndpoints.reviews)
+                ).data as SurveyReviewViewModelClientDto[];
 
                 expect(allReviews).toHaveLength(2);
               },
@@ -389,15 +406,33 @@ describe.skip(`when reviewing a survey (e.g. when a clinician reviews a client's
 
       describe(`when the attempt has not been submitted`, () => {
         it(`should return the expected error response`, async () => {
+          let newAccessCode: string;
+
           await assertCommandScenarioSuccess({
+            httpClient: adminHttpClient,
+            endpoint: buildCommandEndpoint(indexEndpoints.surveys),
+            stream: TestCommandStream.first(OpenSurveyToAnonymousIndividual, {
+              aggregateCompositeIdentifier: {
+                id: surveyId,
+              },
+            }),
+            assertSuccess: (acks) => {
+              newAccessCode = acks[0].accessCode as string;
+            },
+          });
+
+          await assertCommandScenarioSuccess({
+            httpClient: new TestHttpClient('http://localhost:4200'),
             endpoint: commandEndpointForSurveyReviews,
             stream: TestCommandStream.first(BeginSurvey, {
               surveyId,
+              // @ts-expect-error TODO find a better way to handle this required state setup
+              accessCode: newAccessCode,
             }),
           });
 
           const incompleteResponseRecordQueryResult = (
-            (await axios.get(indexEndpoints.responses))
+            (await adminHttpClient.get(indexEndpoints.responses))
               .data as SurveyResponseRecordViewModel[]
           ).find((r) => r.hasBeenSubmitted === false);
 
@@ -405,6 +440,7 @@ describe.skip(`when reviewing a survey (e.g. when a clinician reviews a client's
             incompleteResponseRecordQueryResult?.id as string;
 
           await assertCommandScenarioError({
+            httpClient: adminHttpClient,
             endpoint: commandEndpointForSurveyReviews,
             stream: TestCommandStream.first(BeginReviewOfSurvey, {
               surveyResponseRecordId: incompleteSurveyResponseId,
@@ -413,7 +449,7 @@ describe.skip(`when reviewing a survey (e.g. when a clinician reviews a client's
               assertTextMatchesAll(
                 message,
                 surveyName,
-                'has not been submitted',
+                'has not been completed',
               );
             },
           });
@@ -424,6 +460,7 @@ describe.skip(`when reviewing a survey (e.g. when a clinician reviews a client's
     describe(`when the target survey attempt does not exist`, () => {
       it(`should return the expected error response`, async () => {
         await assertCommandError({
+          httpClient: adminHttpClient,
           endpoint: commandEndpointForSurveyReviews,
           commandFsa: TestCommandStream.buildOne(BeginReviewOfSurvey, {
             surveyResponseRecordId: missingAggregateId,
@@ -445,10 +482,11 @@ describe.skip(`when reviewing a survey (e.g. when a clinician reviews a client's
       describe(`when the target review has been submitted`, () => {
         it(`should return the expected error`, async () => {
           await assertCommandScenarioError({
+            httpClient: adminHttpClient,
             endpoint: commandEndpointForSurveyReviews,
             stream: reviewAllButLastQuestion
               .andThen(SubmitPartialSurveyReview)
-              .andThen(AcknowledgeResponseForSurveyQuestionHasBeenViewed, {
+              .andThen(AcknowledgeResponseToSurveyQuestionHasBeenViewed, {
                 questionLabel: lastQuestionLabel,
               }),
             assertErrorMessageAsExpected: (message) => {
@@ -470,15 +508,16 @@ describe.skip(`when reviewing a survey (e.g. when a clinician reviews a client's
         describe(`when the question has not yet been marked as viewed`, () => {
           it(`should mark the question as viewed`, async () => {
             await assertCommandScenarioSuccess({
+              httpClient: adminHttpClient,
               endpoint: commandEndpointForSurveyReviews,
               stream: TestCommandStream.first(BeginReviewOfSurvey, {
                 surveyResponseRecordId,
-              }).andThen(AcknowledgeResponseForSurveyQuestionHasBeenViewed, {
+              }).andThen(AcknowledgeResponseToSurveyQuestionHasBeenViewed, {
                 questionLabel: '1',
               }),
               assertSuccess: async (acks) => {
                 const updatedReviewRecord = (
-                  await axios.get(
+                  await adminHttpClient.get(
                     buildDetailQueryEndpoint(
                       indexEndpoints.reviews,
                       acks[0].id,
@@ -497,14 +536,15 @@ describe.skip(`when reviewing a survey (e.g. when a clinician reviews a client's
 
           it(`should return the expected error response`, async () => {
             await assertCommandScenarioError({
+              httpClient: adminHttpClient,
               endpoint: commandEndpointForSurveyReviews,
               stream: TestCommandStream.first(BeginReviewOfSurvey, {
                 surveyResponseRecordId,
               })
-                .andThen(AcknowledgeResponseForSurveyQuestionHasBeenViewed, {
+                .andThen(AcknowledgeResponseToSurveyQuestionHasBeenViewed, {
                   questionLabel: repeatedQuestionLabel,
                 })
-                .andThen(AcknowledgeResponseForSurveyQuestionHasBeenViewed, {
+                .andThen(AcknowledgeResponseToSurveyQuestionHasBeenViewed, {
                   questionLabel: repeatedQuestionLabel,
                 }),
               assertErrorMessageAsExpected: (message) => {
@@ -525,9 +565,10 @@ describe.skip(`when reviewing a survey (e.g. when a clinician reviews a client's
     describe(`when the target in-progress review does not exist`, () => {
       it(`should return the expected error response`, async () => {
         await assertCommandError({
+          httpClient: adminHttpClient,
           endpoint: commandEndpointForSurveyReviews,
           commandFsa: TestCommandStream.buildOne(
-            AcknowledgeResponseForSurveyQuestionHasBeenViewed,
+            AcknowledgeResponseToSurveyQuestionHasBeenViewed,
             {
               aggregateCompositeIdentifier: {
                 id: missingAggregateId,
@@ -551,6 +592,7 @@ describe.skip(`when reviewing a survey (e.g. when a clinician reviews a client's
       describe(`when the question has no notes`, () => {
         it(`should add a first note`, async () => {
           await assertCommandScenarioSuccess({
+            httpClient: adminHttpClient,
             endpoint: commandEndpointForSurveyReviews,
             stream: TestCommandStream.first(BeginReviewOfSurvey, {
               surveyResponseRecordId,
@@ -559,7 +601,7 @@ describe.skip(`when reviewing a survey (e.g. when a clinician reviews a client's
             }),
             assertSuccess: async (acks) => {
               const updatedReviewRecord = (
-                await axios.get(
+                await adminHttpClient.get(
                   buildDetailQueryEndpoint(indexEndpoints.reviews, acks[0].id),
                 )
               ).data as SurveyReviewViewModelClientDto;
@@ -591,6 +633,7 @@ describe.skip(`when reviewing a survey (e.g. when a clinician reviews a client's
 
         it(`should add an additional note`, async () => {
           await assertCommandScenarioSuccess({
+            httpClient: adminHttpClient,
             endpoint: commandEndpointForSurveyReviews,
             stream: TestCommandStream.first(BeginReviewOfSurvey, {
               surveyResponseRecordId,
@@ -605,7 +648,7 @@ describe.skip(`when reviewing a survey (e.g. when a clinician reviews a client's
               }),
             assertSuccess: async (acks) => {
               const updatedReviewRecord = (
-                await axios.get(
+                await adminHttpClient.get(
                   buildDetailQueryEndpoint(indexEndpoints.reviews, acks[0].id),
                 )
               ).data as SurveyReviewViewModelClientDto;
@@ -637,6 +680,7 @@ describe.skip(`when reviewing a survey (e.g. when a clinician reviews a client's
       describe(`when the review has already been submitted`, () => {
         it(`should return the expected error response`, async () => {
           await assertCommandScenarioError({
+            httpClient: adminHttpClient,
             endpoint: commandEndpointForSurveyReviews,
             stream: reviewAllButLastQuestion
               .andThen(SubmitPartialSurveyReview)
@@ -662,6 +706,7 @@ describe.skip(`when reviewing a survey (e.g. when a clinician reviews a client's
     describe(`when the question does not exist`, () => {
       it(`should return the expected error response`, async () => {
         await assertCommandScenarioError({
+          httpClient: adminHttpClient,
           endpoint: commandEndpointForSurveyReviews,
           stream: TestCommandStream.first(BeginReviewOfSurvey, {
             surveyResponseRecordId,
@@ -685,6 +730,7 @@ describe.skip(`when reviewing a survey (e.g. when a clinician reviews a client's
 
       it(`should return the expected error response`, async () => {
         await assertCommandScenarioError({
+          httpClient: adminHttpClient,
           endpoint: commandEndpointForSurveyReviews,
           stream: TestCommandStream.first(BeginReviewOfSurvey, {
             surveyResponseRecordId,
@@ -720,6 +766,7 @@ describe.skip(`when reviewing a survey (e.g. when a clinician reviews a client's
       describe(`when there are no general notes`, () => {
         it(`should add a first general note`, async () => {
           await assertCommandScenarioSuccess({
+            httpClient: adminHttpClient,
             endpoint: commandEndpointForSurveyReviews,
             stream: TestCommandStream.first(BeginReviewOfSurvey, {
               surveyResponseRecordId,
@@ -729,7 +776,7 @@ describe.skip(`when reviewing a survey (e.g. when a clinician reviews a client's
             }),
             assertSuccess: async (acks) => {
               const updatedReviewRecord = (
-                await axios.get(
+                await adminHttpClient.get(
                   buildDetailQueryEndpoint(indexEndpoints.reviews, acks[0].id),
                 )
               ).data as SurveyReviewViewModelClientDto;
@@ -754,6 +801,7 @@ describe.skip(`when reviewing a survey (e.g. when a clinician reviews a client's
 
         it(`should add an additional note`, async () => {
           await assertCommandScenarioSuccess({
+            httpClient: adminHttpClient,
             endpoint: commandEndpointForSurveyReviews,
             stream: TestCommandStream.first(BeginReviewOfSurvey, {
               surveyResponseRecordId,
@@ -770,7 +818,7 @@ describe.skip(`when reviewing a survey (e.g. when a clinician reviews a client's
               const updatedReviewRecord =
                 // TODO review or review record in the name here?
                 (
-                  await axios.get(
+                  await adminHttpClient.get(
                     buildDetailQueryEndpoint(
                       indexEndpoints.reviews,
                       acks[0].id,
@@ -795,6 +843,7 @@ describe.skip(`when reviewing a survey (e.g. when a clinician reviews a client's
       describe(`when the review has already been submitted`, () => {
         it(`should return the expected error response`, async () => {
           await assertCommandScenarioError({
+            httpClient: adminHttpClient,
             endpoint: commandEndpointForSurveyReviews,
             stream: reviewAllButLastQuestion
               .andThen(SubmitPartialSurveyReview)
@@ -825,6 +874,7 @@ describe.skip(`when reviewing a survey (e.g. when a clinician reviews a client's
           describe(`when the survey has already been submitted`, () => {
             it(`should return the expected error response`, async () => {
               await assertCommandScenarioError({
+                httpClient: adminHttpClient,
                 endpoint: commandEndpointForSurveyReviews,
                 stream: reviewAllButLastQuestion
                   .andThen(SubmitPartialSurveyReview)
@@ -850,6 +900,7 @@ describe.skip(`when reviewing a survey (e.g. when a clinician reviews a client's
             describe(`when the question has no existing flags`, () => {
               it(`should add the first flag`, async () => {
                 await assertCommandScenarioSuccess({
+                  httpClient: adminHttpClient,
                   endpoint: commandEndpointForSurveyReviews,
                   stream: TestCommandStream.first(BeginReviewOfSurvey, {
                     surveyResponseRecordId,
@@ -868,15 +919,16 @@ describe.skip(`when reviewing a survey (e.g. when a clinician reviews a client's
 
               beforeEach(async () => {
                 await assertCommandSuccess({
-                  httpClient,
+                  httpClient: adminHttpClient,
                   endpoint: buildCommandEndpoint(indexEndpoints.flags),
                   commandFsa: TestCommandStream.buildOne(CreateFlag, {
                     label: secondFlagLabel,
                   }),
                 });
 
-                const allFlags = (await axios.get(indexEndpoints.flags))
-                  .data as FlagViewModelClientDto[];
+                const allFlags = (
+                  await adminHttpClient.get(indexEndpoints.flags)
+                ).data as FlagViewModelClientDto[];
 
                 const secondFlag = allFlags.find(
                   (f) => f.label === secondFlagLabel,
@@ -887,6 +939,7 @@ describe.skip(`when reviewing a survey (e.g. when a clinician reviews a client's
 
               it(`should add the additional flag`, async () => {
                 await assertCommandScenarioSuccess({
+                  httpClient: adminHttpClient,
                   endpoint: commandEndpointForSurveyReviews,
                   stream: TestCommandStream.first(BeginReviewOfSurvey, {
                     surveyResponseRecordId,
@@ -901,7 +954,7 @@ describe.skip(`when reviewing a survey (e.g. when a clinician reviews a client's
                     }),
                   assertSuccess: async (acks) => {
                     const updatedReviewRecord = (
-                      await axios.get(
+                      await adminHttpClient.get(
                         buildDetailQueryEndpoint(
                           indexEndpoints.reviews,
                           acks[0].id,
@@ -938,6 +991,7 @@ describe.skip(`when reviewing a survey (e.g. when a clinician reviews a client's
           describe(`when the question already has the given flag`, () => {
             it(`should return the expected error response`, async () => {
               await assertCommandScenarioError({
+                httpClient: adminHttpClient,
                 endpoint: commandEndpointForSurveyReviews,
                 stream: TestCommandStream.first(BeginReviewOfSurvey, {
                   surveyResponseRecordId,
@@ -970,6 +1024,7 @@ describe.skip(`when reviewing a survey (e.g. when a clinician reviews a client's
 
           it(`should return the expected error response`, async () => {
             await assertCommandScenarioError({
+              httpClient: adminHttpClient,
               endpoint: commandEndpointForSurveyReviews,
               stream: TestCommandStream.first(BeginReviewOfSurvey, {
                 surveyResponseRecordId,
@@ -994,6 +1049,7 @@ describe.skip(`when reviewing a survey (e.g. when a clinician reviews a client's
       describe(`when the question does not exist`, () => {
         it(`should return the epected error response`, async () => {
           await assertCommandScenarioError({
+            httpClient: adminHttpClient,
             endpoint: commandEndpointForSurveyReviews,
             stream: TestCommandStream.first(BeginReviewOfSurvey, {
               surveyResponseRecordId,
@@ -1018,6 +1074,7 @@ describe.skip(`when reviewing a survey (e.g. when a clinician reviews a client's
     describe(`when the target survey review does not exist`, () => {
       it(`should return the expected error response`, async () => {
         await assertCommandError({
+          httpClient: adminHttpClient,
           endpoint: commandEndpointForSurveyReviews,
           commandFsa: TestCommandStream.buildOne(FlagSurveyQuestionResponse, {
             aggregateCompositeIdentifier: {
@@ -1040,6 +1097,7 @@ describe.skip(`when reviewing a survey (e.g. when a clinician reviews a client's
         describe(`when the survey review is complete`, () => {
           it(`should return the expected error resposne`, async () => {
             await assertCommandScenarioError({
+              httpClient: adminHttpClient,
               endpoint: commandEndpointForSurveyReviews,
               stream: reviewAllQuestions.andThen(SubmitPartialSurveyReview),
               assertErrorMessageAsExpected: (message) => {
@@ -1056,6 +1114,7 @@ describe.skip(`when reviewing a survey (e.g. when a clinician reviews a client's
         describe(`when the survey review is incomplete`, () => {
           it(`should submit the review`, async () => {
             await assertCommandScenarioSuccess({
+              httpClient: adminHttpClient,
               endpoint: commandEndpointForSurveyReviews,
               stream: reviewAllButLastQuestion.andThen(
                 SubmitPartialSurveyReview,
@@ -1063,7 +1122,7 @@ describe.skip(`when reviewing a survey (e.g. when a clinician reviews a client's
               ),
               assertSuccess: async (acks) => {
                 const updatedReviewRecord = (
-                  await axios.get(
+                  await adminHttpClient.get(
                     buildDetailQueryEndpoint(
                       indexEndpoints.reviews,
                       acks[0].id,
@@ -1084,6 +1143,7 @@ describe.skip(`when reviewing a survey (e.g. when a clinician reviews a client's
         describe(`when a partial review has been submitted`, () => {
           it(`should return the expected error response`, async () => {
             await assertCommandScenarioError({
+              httpClient: adminHttpClient,
               endpoint: commandEndpointForSurveyReviews,
               stream: reviewAllButLastQuestion
                 .andThen(SubmitPartialSurveyReview)
@@ -1104,6 +1164,7 @@ describe.skip(`when reviewing a survey (e.g. when a clinician reviews a client's
         describe(`when a full review has been submitted`, () => {
           it(`should return the expected error response`, async () => {
             await assertCommandScenarioError({
+              httpClient: adminHttpClient,
               endpoint: commandEndpointForSurveyReviews,
               stream: reviewAllQuestions
                 .andThen(SubmitCompleteSurveyReview)
@@ -1118,6 +1179,7 @@ describe.skip(`when reviewing a survey (e.g. when a clinician reviews a client's
     describe(`when the target survey review does not exist`, () => {
       it(`should return the expected error response`, async () => {
         await assertCommandError({
+          httpClient: adminHttpClient,
           endpoint: commandEndpointForSurveyReviews,
           commandFsa: TestCommandStream.buildOne(SubmitPartialSurveyReview, {
             aggregateCompositeIdentifier: {
@@ -1138,11 +1200,12 @@ describe.skip(`when reviewing a survey (e.g. when a clinician reviews a client's
         describe(`when the survey review is complete`, () => {
           it(`should submit the review`, async () => {
             await assertCommandScenarioSuccess({
+              httpClient: adminHttpClient,
               endpoint: commandEndpointForSurveyReviews,
               stream: reviewAllQuestions.andThen(SubmitCompleteSurveyReview),
               assertSuccess: async (acks) => {
                 const updatedReviewRecord = (
-                  await axios.get(
+                  await adminHttpClient.get(
                     buildDetailQueryEndpoint(
                       indexEndpoints.reviews,
                       acks[0].id,
@@ -1173,6 +1236,7 @@ describe.skip(`when reviewing a survey (e.g. when a clinician reviews a client's
 
           it(`should return the expected error response`, async () => {
             await assertCommandScenarioError({
+              httpClient: adminHttpClient,
               endpoint: commandEndpointForSurveyReviews,
               stream: reviewAllButLastQuestion.andThen(
                 SubmitCompleteSurveyReview,
@@ -1195,6 +1259,7 @@ describe.skip(`when reviewing a survey (e.g. when a clinician reviews a client's
         describe(`when a partial review has been submitted`, () => {
           it(`should return the expected error response`, async () => {
             await assertCommandScenarioError({
+              httpClient: adminHttpClient,
               endpoint: commandEndpointForSurveyReviews,
               stream: reviewAllButLastQuestion
                 .andThen(SubmitPartialSurveyReview)
@@ -1214,6 +1279,7 @@ describe.skip(`when reviewing a survey (e.g. when a clinician reviews a client's
         describe(`when a complete review has been submitted`, () => {
           it(`should return the expected error response`, async () => {
             await assertCommandScenarioError({
+              httpClient: adminHttpClient,
               endpoint: commandEndpointForSurveyReviews,
               stream: reviewAllQuestions
                 .andThen(SubmitCompleteSurveyReview)
@@ -1235,6 +1301,7 @@ describe.skip(`when reviewing a survey (e.g. when a clinician reviews a client's
     describe(`when the target survey review does not exist`, () => {
       it(`should return the expected error response`, async () => {
         await assertCommandError({
+          httpClient: adminHttpClient,
           endpoint: commandEndpointForSurveyReviews,
           commandFsa: TestCommandStream.buildOne(SubmitCompleteSurveyReview, {
             aggregateCompositeIdentifier: {

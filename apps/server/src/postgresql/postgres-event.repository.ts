@@ -40,8 +40,6 @@ export class PostgresEventRepository implements IEventRepository {
   constructor(
     @Inject(PG_POOL_INJECTION_TOKEN)
     private readonly pool: Pool,
-    // TODO - CONSTANT
-    @Inject('EVENT_FACTORY_INJECTION_TOKEN')
     private readonly eventFactory: EventFactory,
   ) {}
 
@@ -159,7 +157,8 @@ export class PostgresEventRepository implements IEventRepository {
     // The `pg` driver safely serializes the object. Note that users can't choose IDs or types, so there isn't much risk to being with here.
     const selectAllEvents = `
     SELECT * FROM events
-    ${hasSearchFilters ? 'WHERE payload @> $1' : ''};
+    ${hasSearchFilters ? 'WHERE payload @> $1' : ''}
+    ORDER BY stream_id, revision ASC;
     `;
 
     const bindVars = hasSearchFilters
@@ -202,7 +201,7 @@ export class PostgresEventRepository implements IEventRepository {
    * TODO We need to design a way to clear test data that is external to our persistence layer implementation
    * for better confidence that this could never happen outside of a test environment.
    */
-  async clear() {
+  async clear(aggregateType: string) {
     if (!['test', 'e2e'].includes(process.env.NODE_ENV || '**never**')) {
       throw new TrueImpactRuntimeException([
         new TrueImpactError(
@@ -211,10 +210,17 @@ export class PostgresEventRepository implements IEventRepository {
       ]);
     }
 
-    const truncateQuery = `
-      TRUNCATE TABLE events RESTART IDENTITY;
+    // const truncateQuery = `
+    //   TRUNCATE TABLE events RESTART IDENTITY;
+    // `;
+
+    const clearQuery = `
+    DELETE FROM events
+    WHERE payload @> $1;
     `;
 
-    await this.pool.query(truncateQuery);
+    await this.pool.query(clearQuery, [
+      JSON.stringify({ aggregateCompositeIdentifier: { type: aggregateType } }),
+    ]);
   }
 }

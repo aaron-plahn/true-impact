@@ -201,7 +201,7 @@ export class EventSourcedCommandRepository<
   }
 
   // TODO remove this?
-  async clear() {
+  async clear(aggregateType: string) {
     if (!['test', 'e2e'].includes(process.env.NODE_ENV || '**NEVER**')) {
       throw new TrueImpactRuntimeException([
         new TrueImpactError(
@@ -212,6 +212,6 @@ export class EventSourcedCommandRepository<
 
     // @ts-expect-error This is not part of the interface but it is on all concrete implementations.
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-    await this.eventRepository.clear();
+    await this.eventRepository.clear(aggregateType);
   }
 }

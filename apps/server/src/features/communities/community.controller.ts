@@ -21,6 +21,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '../../libs/framework';
+import { COMMUNITY_AGGREGATE_TYPE } from './constants';
 import { CommunityQueryService, CommunityViewModelClientDto } from './queries';
 
 @UseFilters(ResourceNotFoundFilter, BadUserInputFilter)
@@ -71,7 +72,9 @@ export class CommunityController implements OnModuleInit {
 
     // @ts-expect-error This will only work if the private, concrete dependency has a `clear` method (not for the production implementation)
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-    await this.communityQueryService.commandRepository.clear();
+    await this.communityQueryService.commandRepository.clear(
+      COMMUNITY_AGGREGATE_TYPE,
+    );
 
     return 'OK';
   }
