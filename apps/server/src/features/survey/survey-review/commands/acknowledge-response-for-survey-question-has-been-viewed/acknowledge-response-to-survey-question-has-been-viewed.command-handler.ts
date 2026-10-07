@@ -6,9 +6,9 @@ import {
 } from '../../../../../libs/data-types';
 import { SURVEY_REVIEW_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../../constants';
 import type { ISurveyReviewCommandRepository } from '../survey-review-command-repository.interface';
-import { AcknowledgeResponseForSurveyQuestionHasBeenViewed } from './acknowledge-response-for-survey-question-has-been-viewed.command';
+import { AcknowledgeResponseToSurveyQuestionHasBeenViewed } from './acknowledge-response-to-survey-question-has-been-viewed.command';
 
-export class AcknowledgeResponseForSurveyQuestionHasBeenViewedCommandHandler implements ICommandHandler<AcknowledgeResponseForSurveyQuestionHasBeenViewed> {
+export class AcknowledgeResponseToSurveyQuestionHasBeenViewedCommandHandler implements ICommandHandler<AcknowledgeResponseToSurveyQuestionHasBeenViewed> {
   constructor(
     @Inject(SURVEY_REVIEW_COMMAND_REPOSITORY_INJECTION_TOKEN)
     private readonly repository: ISurveyReviewCommandRepository,
@@ -20,7 +20,7 @@ export class AcknowledgeResponseForSurveyQuestionHasBeenViewedCommandHandler imp
       questionLabel,
     },
   }: {
-    payload: AcknowledgeResponseForSurveyQuestionHasBeenViewed;
+    payload: AcknowledgeResponseToSurveyQuestionHasBeenViewed;
   }): Promise<CommandResult> {
     const existing =
       (await this.repository.fetchById(id)) ||

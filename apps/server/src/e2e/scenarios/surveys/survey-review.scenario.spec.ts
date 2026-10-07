@@ -17,7 +17,7 @@ import { OpenSurveyToAnonymousIndividual } from '../../../features/survey/survey
 import { SurveyOptionPersistenceDto } from '../../../features/survey/survey-management/survey-option.entity';
 import { SurveyQuestionPersistenceDto } from '../../../features/survey/survey-management/survey-question.entity';
 import {
-  AcknowledgeResponseForSurveyQuestionHasBeenViewed,
+  AcknowledgeResponseToSurveyQuestionHasBeenViewed,
   AddGeneralNoteAboutSurveyResponse,
   AddNoteAboutQuestionResponse,
   BeginReviewOfSurvey,
@@ -152,8 +152,6 @@ const missingQuestionLabel = 'Q3';
 
 const flagLabel = 'Sus';
 
-let accessCode: string;
-
 const seedRequiredState = async ({
   httpClient,
   // indexEndpoint,
@@ -227,6 +225,7 @@ describe(`when reviewing a survey (e.g. when a clinician reviews a client's resp
       })
     ).id;
 
+    // TODO use this
     _clientId = (
       await seedRequiredState({
         indexEndpoint: indexEndpoints.clients,
@@ -276,7 +275,7 @@ describe(`when reviewing a survey (e.g. when a clinician reviews a client's resp
 
     surveyId = surveySeedResult.id;
 
-    accessCode = surveySeedResult.accessCode as string;
+    const accessCode = surveySeedResult.accessCode as string;
 
     const completeSurveyAsClient = TestCommandStream.first(BeginSurvey, {
       surveyId,
@@ -313,7 +312,7 @@ describe(`when reviewing a survey (e.g. when a clinician reviews a client's resp
     reviewAllButLastQuestion = TestCommandStream.first(BeginReviewOfSurvey, {
       surveyResponseRecordId,
     })
-      .andThen(AcknowledgeResponseForSurveyQuestionHasBeenViewed, {
+      .andThen(AcknowledgeResponseToSurveyQuestionHasBeenViewed, {
         questionLabel: '1',
       })
       .andThen(AddNoteAboutQuestionResponse, {
@@ -330,7 +329,7 @@ describe(`when reviewing a survey (e.g. when a clinician reviews a client's resp
       });
 
     reviewAllQuestions = reviewAllButLastQuestion.andThen(
-      AcknowledgeResponseForSurveyQuestionHasBeenViewed,
+      AcknowledgeResponseToSurveyQuestionHasBeenViewed,
       {
         questionLabel: '3',
       },
@@ -339,13 +338,6 @@ describe(`when reviewing a survey (e.g. when a clinician reviews a client's resp
 
   beforeEach(async () => {
     const endpoint = buildTestSetupEndpoint(indexEndpoints.reviews);
-
-    // TODO why is this necessary? I can't seem to find the race condition. The `beforeAll` already does this.
-    try {
-      await signInAsAdmin(adminHttpClient);
-    } catch {
-      console.log('that wasnt it');
-    }
 
     await adminHttpClient.patch(endpoint);
   });
@@ -494,7 +486,7 @@ describe(`when reviewing a survey (e.g. when a clinician reviews a client's resp
             endpoint: commandEndpointForSurveyReviews,
             stream: reviewAllButLastQuestion
               .andThen(SubmitPartialSurveyReview)
-              .andThen(AcknowledgeResponseForSurveyQuestionHasBeenViewed, {
+              .andThen(AcknowledgeResponseToSurveyQuestionHasBeenViewed, {
                 questionLabel: lastQuestionLabel,
               }),
             assertErrorMessageAsExpected: (message) => {
@@ -520,7 +512,7 @@ describe(`when reviewing a survey (e.g. when a clinician reviews a client's resp
               endpoint: commandEndpointForSurveyReviews,
               stream: TestCommandStream.first(BeginReviewOfSurvey, {
                 surveyResponseRecordId,
-              }).andThen(AcknowledgeResponseForSurveyQuestionHasBeenViewed, {
+              }).andThen(AcknowledgeResponseToSurveyQuestionHasBeenViewed, {
                 questionLabel: '1',
               }),
               assertSuccess: async (acks) => {
@@ -549,10 +541,10 @@ describe(`when reviewing a survey (e.g. when a clinician reviews a client's resp
               stream: TestCommandStream.first(BeginReviewOfSurvey, {
                 surveyResponseRecordId,
               })
-                .andThen(AcknowledgeResponseForSurveyQuestionHasBeenViewed, {
+                .andThen(AcknowledgeResponseToSurveyQuestionHasBeenViewed, {
                   questionLabel: repeatedQuestionLabel,
                 })
-                .andThen(AcknowledgeResponseForSurveyQuestionHasBeenViewed, {
+                .andThen(AcknowledgeResponseToSurveyQuestionHasBeenViewed, {
                   questionLabel: repeatedQuestionLabel,
                 }),
               assertErrorMessageAsExpected: (message) => {
@@ -576,7 +568,7 @@ describe(`when reviewing a survey (e.g. when a clinician reviews a client's resp
           httpClient: adminHttpClient,
           endpoint: commandEndpointForSurveyReviews,
           commandFsa: TestCommandStream.buildOne(
-            AcknowledgeResponseForSurveyQuestionHasBeenViewed,
+            AcknowledgeResponseToSurveyQuestionHasBeenViewed,
             {
               aggregateCompositeIdentifier: {
                 id: missingAggregateId,
@@ -1129,16 +1121,14 @@ describe(`when reviewing a survey (e.g. when a clinician reviews a client's resp
                 {},
               ),
               assertSuccess: async (acks) => {
-                const updatedReviewRecord =
-                  // TODO Are all query endpoints protected?
-                  (
-                    await adminHttpClient.get(
-                      buildDetailQueryEndpoint(
-                        indexEndpoints.reviews,
-                        acks[0].id,
-                      ),
-                    )
-                  ).data as SurveyReviewViewModelClientDto;
+                const updatedReviewRecord = (
+                  await adminHttpClient.get(
+                    buildDetailQueryEndpoint(
+                      indexEndpoints.reviews,
+                      acks[0].id,
+                    ),
+                  )
+                ).data as SurveyReviewViewModelClientDto;
 
                 expect(updatedReviewRecord.isComplete).toBe(false);
 

@@ -1,4 +1,3 @@
-import { SurveyParticipantCompositeIdentifier } from '../../../../../features/survey/survey-completion/models';
 import { NestedDataType, NonEmptyString } from '../../../../../libs/data-types';
 import {
   SurveyReviewCompositeIdentifier,
@@ -47,28 +46,16 @@ export class ReviewOfSurveyBeganPayload {
   })
   responses: SurveyQuestionResponseRecordForEvent[];
 
-  // TODO is this necessary? We don't validate any invariants for this.
-  @NestedDataType(() => SurveyParticipantCompositeIdentifier, {
-    label: 'participant composite ID',
-    description:
-      'system-wide unique reference to the participant who completed this survey',
-    isOptional: true,
-  })
-  participantCompositeIdentifier?: SurveyParticipantCompositeIdentifier;
-
   constructor({
     aggregateCompositeIdentifier,
     surveyName,
     responses,
-    participantCompositeIdentifier,
   }: ReviewOfSurveyBeganPayload) {
     this.aggregateCompositeIdentifier = aggregateCompositeIdentifier;
 
     this.surveyName = surveyName;
 
     this.responses = responses;
-
-    this.participantCompositeIdentifier = participantCompositeIdentifier;
   }
 }
 

@@ -114,8 +114,8 @@ import {
 } from './survey-management/events';
 import { SurveyOpenedToAnonymousParticipant } from './survey-management/survey-opened-to-anonymous-participant.event';
 import {
-  AcknowledgeResponseForSurveyQuestionHasBeenViewed,
-  AcknowledgeResponseForSurveyQuestionHasBeenViewedCommandHandler,
+  AcknowledgeResponseToSurveyQuestionHasBeenViewed,
+  AcknowledgeResponseToSurveyQuestionHasBeenViewedCommandHandler,
   AddGeneralNoteAboutSurveyResponse,
   AddGeneralNoteAboutSurveyResponseCommandHandler,
   AddNoteAboutQuestionResponse,
@@ -173,7 +173,7 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, FinalizeSurvey];
     AddValueForSurveyOptionCommandHandler,
     // Survey Review Commands
     BeginReviewOfSurveyCommandHandler,
-    AcknowledgeResponseForSurveyQuestionHasBeenViewedCommandHandler,
+    AcknowledgeResponseToSurveyQuestionHasBeenViewedCommandHandler,
     AddNoteAboutQuestionResponseCommandHandler,
     AddGeneralNoteAboutSurveyResponseCommandHandler,
     FlagSurveyQuestionResponseCommandHandler,
@@ -289,9 +289,9 @@ const dataClasses = [Survey, CreateSurvey, AddQuestionToSurvey, FinalizeSurvey];
           })
           .register({
             CommandHandlerCtor:
-              AcknowledgeResponseForSurveyQuestionHasBeenViewedCommandHandler,
+              AcknowledgeResponseToSurveyQuestionHasBeenViewedCommandHandler,
             CommandPayloadCtor:
-              AcknowledgeResponseForSurveyQuestionHasBeenViewed,
+              AcknowledgeResponseToSurveyQuestionHasBeenViewed,
           })
           .register({
             CommandHandlerCtor: AddNoteAboutQuestionResponseCommandHandler,

@@ -40,8 +40,6 @@ export class PostgresEventRepository implements IEventRepository {
   constructor(
     @Inject(PG_POOL_INJECTION_TOKEN)
     private readonly pool: Pool,
-    // TODO - CONSTANT
-    @Inject('EVENT_FACTORY_INJECTION_TOKEN')
     private readonly eventFactory: EventFactory,
   ) {}
 

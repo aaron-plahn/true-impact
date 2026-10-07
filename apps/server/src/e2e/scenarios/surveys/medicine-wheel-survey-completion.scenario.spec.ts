@@ -158,10 +158,6 @@ const medicineWheelSurvey: ImportSurvey = {
   ],
 };
 
-const _assertSurveyReportCorrectness = () => {
-  throw new Error(`helper not implemented`);
-};
-
 describe(`Medicine wheel survey completion`, () => {
   const adminHttpClient = new TestHttpClient('localhost:4200');
 

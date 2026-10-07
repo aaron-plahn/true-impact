@@ -85,14 +85,6 @@ export class SurveyReview extends EventSourcedAggregateRoot {
   })
   surveyName: string;
 
-  @NestedDataType(() => SurveyParticipantCompositeIdentifier, {
-    label: 'survey participant composite ID',
-    description:
-      'system-wide unique identifier for the particpant who completed this survey',
-    isOptional: true,
-  })
-  surveyParticipantCompositeIdentifier?: SurveyParticipantCompositeIdentifier;
-
   @NestedDataType(() => SurveyQuestionReviewRecord, {
     label: 'questions reviewed',
     description:
@@ -116,7 +108,6 @@ export class SurveyReview extends EventSourcedAggregateRoot {
     hasBeenSubmitted,
     questionsReviewed,
     surveyName,
-    surveyParticipantCompositeIdentifier,
     generalNotes,
   }: {
     id: string;
@@ -125,7 +116,6 @@ export class SurveyReview extends EventSourcedAggregateRoot {
     hasBeenSubmitted: boolean;
     questionsReviewed: SurveyQuestionReviewRecord[];
     surveyName: string;
-    surveyParticipantCompositeIdentifier?: SurveyParticipantCompositeIdentifier;
     generalNotes?: MultilingualText[];
   }) {
     super();
@@ -140,13 +130,10 @@ export class SurveyReview extends EventSourcedAggregateRoot {
 
     this.surveyName = surveyName;
 
-    this.surveyParticipantCompositeIdentifier =
-      surveyParticipantCompositeIdentifier;
-
     if (Array.isArray(generalNotes)) {
       this.generalNotes = generalNotes;
     } else {
-      generalNotes = [];
+      this.generalNotes = [];
     }
 
     this.hasBeenSubmitted = hasBeenSubmitted;
@@ -439,7 +426,10 @@ export class SurveyReview extends EventSourcedAggregateRoot {
       );
     }
 
-    // TODO Do we want the same approach for submit partial review ?
+    /**
+     * Note that `isComplete` isn't the right abstraction here because we want the
+     * unreviewed questions to appear in the message.
+     */
     const unreviewedQuestions = this.questionsReviewed.filter(
       (qr) => !qr.hasBeenViewed,
     );
@@ -498,8 +488,6 @@ export class SurveyReview extends EventSourcedAggregateRoot {
       ),
       generalNotes: this.generalNotes.map((gn) => gn.toPersistenceDto()),
       surveyName: this.surveyName,
-      surveyParticipantCompositeIdentifier:
-        this.surveyParticipantCompositeIdentifier,
     };
   }
 
@@ -521,8 +509,6 @@ export class SurveyReview extends EventSourcedAggregateRoot {
         aggregateCompositeIdentifier: { id },
         surveyName,
         responses,
-        // TODO can we remove this?
-        participantCompositeIdentifier,
       },
     } = event;
 
@@ -558,7 +544,6 @@ export class SurveyReview extends EventSourcedAggregateRoot {
       surveyName,
       questionsReviewed: surveyQuestions,
       generalNotes: [],
-      surveyParticipantCompositeIdentifier: participantCompositeIdentifier,
       revision: 1,
       hasBeenSubmitted: false,
       eventHistory: [event],
@@ -574,14 +559,9 @@ export class SurveyReview extends EventSourcedAggregateRoot {
     ) as SurveyReview;
   }
 
-  /**
-   * The name is misleading here. The `surveyResponseRecord` was fetched
-   * from a survey completion service **based on** the user request.
-   */
-  static fromUserRequest({
+  static ofSurveyResponse({
     surveyResponseRecord,
   }: {
-    // Should this be a DTO?
     surveyResponseRecord: SurveyResponseRecord;
   }) {
     const questions = surveyResponseRecord.responses.map(
@@ -604,7 +584,6 @@ export class SurveyReview extends EventSourcedAggregateRoot {
               id,
             },
             surveyName: surveyResponseRecord.survey.name,
-            participantCompositeIdentifier: surveyResponseRecord.participant,
             responses: surveyResponseRecord.responses.map(
               ({ questionLabel, optionLabel }) => ({
                 questionLabel,
@@ -618,7 +597,6 @@ export class SurveyReview extends EventSourcedAggregateRoot {
       hasBeenSubmitted: false,
       questionsReviewed: questions,
       surveyName,
-      surveyParticipantCompositeIdentifier: surveyResponseRecord.participant,
     });
 
     return instance.validateInvariants();
@@ -628,11 +606,11 @@ export class SurveyReview extends EventSourcedAggregateRoot {
     dto: SurveyReviewPersistenceDto,
     buildOptions?: { shouldValidate?: boolean },
   ): SurveyReview | TrueImpactError {
-    const questionsReviewed = dto.questionsReviewed.map((qr) =>
+    const questionsReviewedBuildResult = dto.questionsReviewed.map((qr) =>
       SurveyQuestionReviewRecord.fromPersistenceDto(qr, buildOptions),
     );
 
-    const questionBuildErrors = questionsReviewed.filter(
+    const questionBuildErrors = questionsReviewedBuildResult.filter(
       (qr): qr is TrueImpactError => qr instanceof TrueImpactError,
     );
 
@@ -671,11 +649,10 @@ export class SurveyReview extends EventSourcedAggregateRoot {
       eventHistory: dto.eventHistory,
       revision: dto.revision,
       hasBeenSubmitted: dto.hasBeenSubmitted,
-      questionsReviewed: questionsReviewed as SurveyQuestionReviewRecord[],
+      questionsReviewed:
+        questionsReviewedBuildResult as SurveyQuestionReviewRecord[],
       surveyName: dto.surveyName,
       generalNotes,
-      surveyParticipantCompositeIdentifier:
-        dto.surveyParticipantCompositeIdentifier,
     });
   }
 }

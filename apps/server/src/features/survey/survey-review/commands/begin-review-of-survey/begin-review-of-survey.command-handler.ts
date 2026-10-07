@@ -33,7 +33,7 @@ export class BeginReviewOfSurveyCommandHandler implements ICommandHandler<BeginR
       return targetSurveyAttempt;
     }
 
-    const newReview = SurveyReview.fromUserRequest({
+    const newReview = SurveyReview.ofSurveyResponse({
       surveyResponseRecord: targetSurveyAttempt,
     });
 

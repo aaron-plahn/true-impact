@@ -5,7 +5,7 @@ import {
 } from '../../../../../libs/data-types';
 import { SurveyReviewCompositeIdentifier } from '../../survey-review.composite-identifier';
 
-@TrueImpactDataExample<AcknowledgeResponseForSurveyQuestionHasBeenViewed>({
+@TrueImpactDataExample<AcknowledgeResponseToSurveyQuestionHasBeenViewed>({
   example: {
     aggregateCompositeIdentifier: {
       type: 'survey review',
@@ -14,9 +14,9 @@ import { SurveyReviewCompositeIdentifier } from '../../survey-review.composite-i
     questionLabel: 'IV',
   },
 })
-export class AcknowledgeResponseForSurveyQuestionHasBeenViewed {
+export class AcknowledgeResponseToSurveyQuestionHasBeenViewed {
   static readonly type =
-    'ACKNOWLEDGE_RESPONSE_FOR_SURVEY_QUESTION_HAS_BEEN_VIEWED';
+    'ACKNOWLEDGE_RESPONSE_TO_SURVEY_QUESTION_HAS_BEEN_VIEWED';
 
   @NestedDataType(() => SurveyReviewCompositeIdentifier, {
     label: 'survey response composite ID',
