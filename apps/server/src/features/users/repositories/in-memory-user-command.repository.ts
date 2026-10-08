@@ -55,21 +55,6 @@ export class InMemoryUserCommandRepository implements IUserCommandRepository {
     return count === 0;
   }
 
-  fetchByCredentials(credentials: {
-    username: string;
-    hashedPassword: string;
-  }): Promise<User | null> {
-    const searchResult = Array.from(this.entitiesById.values()).find((user) => {
-      return (
-        user.username === credentials.username &&
-        user.hashedPassword === credentials.hashedPassword &&
-        user.isActive
-      );
-    });
-
-    return Promise.resolve(searchResult || null);
-  }
-
   fetchMany(): Promise<User[] | TrueImpactError> {
     const instances = Array.from(this.entitiesById.values());
 

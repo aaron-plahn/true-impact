@@ -5,11 +5,11 @@ const port = '3234';
 
 const baseUrl = `http://localhost:${port}`;
 
-const authBaseEndpoint = `${baseUrl}/auth`;
+const authBaseEndpoint = `${baseUrl}`;
 
-const logInEndpoint = `${authBaseEndpoint}/signin`;
+const logInEndpoint = `${authBaseEndpoint}/auth/signin`;
 
-const logOutEndpoint = `${authBaseEndpoint}/signout`;
+const logOutEndpoint = `${authBaseEndpoint}/auth/signout`;
 
 export const signOut = async (httpClient: TestHttpClient) => {
   await httpClient.post(logOutEndpoint, {
@@ -22,7 +22,7 @@ export const signIn = async (
   httpClient: TestHttpClient,
 ) => {
   const result = await httpClient
-    .post(
+    .post<Record<string, unknown>>(
       logInEndpoint,
       {
         formFields: [
@@ -40,16 +40,26 @@ export const signIn = async (
       {
         headers: {
           rid: 'emailpassword',
+          'st-auth-mode': 'header',
         },
       },
     )
     .catch((e: { status: HttpStatus; response: { data: unknown } }) => {
       return {
         status: e.status,
+        data: {},
       };
     });
 
+  console.log({
+    result,
+    username,
+    password,
+  });
+
   expect(result.status).toBe(HttpStatus.OK);
+
+  expect((result.data as { status?: string })?.status).not.toBe('FIELD_ERROR');
 
   return result;
 };

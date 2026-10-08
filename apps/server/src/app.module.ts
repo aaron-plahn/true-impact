@@ -1,4 +1,4 @@
-import { SuperTokensModule } from 'supertokens-nestjs';
+import { SupertokensService } from 'supertokens-node/recipe/passwordless/smsdelivery';
 import { AppController } from './app.controller';
 import { SupertokensConfigService, SupertokensMiddleware } from './auth';
 import { AuthModule } from './auth/auth.module';
@@ -31,7 +31,7 @@ console.log(`Loading NestJS configuration for environment: ${nodeEnv}`);
       envFilePath: [`.env.${nodeEnv}`, `../../.env.${nodeEnv}`],
     }),
     PostgresModule.forRootAsync(),
-    SuperTokensModule.forRootAsync({
+    AuthModule.forRootAsync({
       imports: [], // [ConfigModule?]
       useFactory: (configService: ConfigService) => {
         return new SupertokensConfigService(
@@ -51,7 +51,7 @@ console.log(`Loading NestJS configuration for environment: ${nodeEnv}`);
     GroupProgramModule,
   ],
   controllers: [AppController],
-  providers: [],
+  providers: [SupertokensService],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
