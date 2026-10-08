@@ -6,8 +6,8 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
+import { SuperTokensAuthGuard } from 'supertokens-nestjs';
 import { isDeepStrictEqual } from 'util';
-import { AuthenticatedUserGuard, RbacAuthGuard } from '../../auth/guards';
 import { SurveyCommandAuthGuard } from '../../e2e/scenarios/surveys/guards';
 import type { ICommandFsa } from '../../libs/cqrs-es';
 import { CommandHandlerService, CommandResult } from '../../libs/cqrs-es';
@@ -65,7 +65,8 @@ export class SurveyController implements OnModuleInit {
     private readonly surveyResponseViewDiffer: SduiViewDiffer,
   ) {}
 
-  @UseGuards(AuthenticatedUserGuard, RbacAuthGuard)
+  // @UseGuards(AuthenticatedUserGuard, RbacAuthGuard)
+  @UseGuards(SuperTokensAuthGuard)
   @DetailQueryEndpoint()
   @ApiOkResponse({
     schema,
@@ -80,7 +81,8 @@ export class SurveyController implements OnModuleInit {
     return result;
   }
 
-  @UseGuards(AuthenticatedUserGuard, RbacAuthGuard)
+  // @UseGuards(AuthenticatedUserGuard, RbacAuthGuard)
+  @UseGuards(SuperTokensAuthGuard)
   @IndexQueryEndpoint()
   @ApiOkResponse({
     schema,
@@ -102,7 +104,8 @@ export class SurveyController implements OnModuleInit {
    */
   // TODO @CommandExecutionEndpoint()
   // @UseGuards(AuthenticatedUserGuard, RbacAuthGuard)
-  @UseGuards(SurveyCommandAuthGuard)
+  // @UseGuards(SurveyCommandAuthGuard)
+  @UseGuards(SuperTokensAuthGuard)
   @Post('commands')
   async executeCommand(
     @Body()

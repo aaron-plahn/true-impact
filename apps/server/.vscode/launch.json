@@ -29,6 +29,7 @@
         "${relativeFile}",
         "--inspect-brk"
       ],
+      "envFile": "${workspaceFolder}/../../.env.local",
       "console": "internalConsole",
       "internalConsoleOptions": "neverOpen"
     },

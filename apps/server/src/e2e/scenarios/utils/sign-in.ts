@@ -5,14 +5,16 @@ const port = '3234';
 
 const baseUrl = `http://localhost:${port}`;
 
-const authBaseEndpoint = `${baseUrl}/auth`;
+const authBaseEndpoint = `${baseUrl}`;
 
-const logInEndpoint = `${authBaseEndpoint}/logIn`;
+const logInEndpoint = `${authBaseEndpoint}/auth/signin`;
 
-const logOutEndpoint = `${authBaseEndpoint}/logOut`;
+const logOutEndpoint = `${authBaseEndpoint}/auth/signout`;
 
 export const signOut = async (httpClient: TestHttpClient) => {
-  await httpClient.post(logOutEndpoint);
+  await httpClient.post(logOutEndpoint, {
+    headers: { rid: 'session' },
+  });
 };
 
 export const signIn = async (
@@ -20,17 +22,44 @@ export const signIn = async (
   httpClient: TestHttpClient,
 ) => {
   const result = await httpClient
-    .post(logInEndpoint, {
-      username,
-      password,
-    })
+    .post<Record<string, unknown>>(
+      logInEndpoint,
+      {
+        formFields: [
+          {
+            // TODO can't this be username instead?
+            id: 'email',
+            value: username,
+          },
+          {
+            id: 'password',
+            value: password,
+          },
+        ],
+      },
+      {
+        headers: {
+          rid: 'emailpassword',
+          'st-auth-mode': 'header',
+        },
+      },
+    )
     .catch((e: { status: HttpStatus; response: { data: unknown } }) => {
       return {
         status: e.status,
+        data: {},
       };
     });
 
-  expect(result.status).toBe(HttpStatus.CREATED);
+  console.log({
+    result,
+    username,
+    password,
+  });
+
+  expect(result.status).toBe(HttpStatus.OK);
+
+  expect((result.data as { status?: string })?.status).not.toBe('FIELD_ERROR');
 
   return result;
 };

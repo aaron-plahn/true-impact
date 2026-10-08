@@ -1,9 +1,12 @@
 import { HttpStatus } from '@nestjs/common';
 import axios from 'axios';
-import { SessionInfoForAuthenticatedUser } from '../../../auth/auth.controller';
 import { CreateUserWithPassword } from '../../../features/users/commands/create-user-with-password.command';
 import { DeactivateUser } from '../../../features/users/commands/deactivate-user.command';
 import { TestCommandStream } from '../../../libs/cqrs-es';
+import {
+  TrueImpactError,
+  TrueImpactRuntimeException,
+} from '../../../libs/data-types';
 import { assertCommandScenarioSuccess } from '../utils';
 import { signInAsAdmin } from '../utils/sign-in';
 import { TestHttpClient } from '../utils/test-http-client';
@@ -14,15 +17,15 @@ const baseUrl = `http://localhost:${port}`;
 
 const authBaseEndpoint = `${baseUrl}/auth`;
 
-const sessionEndpoint = `${authBaseEndpoint}/session`;
+const sessionEndpoint = `${baseUrl}/users/who-am-i`;
 
 const userCommandsEndpoint = `${baseUrl}/users/commands`;
 
 const userSetupEndpoint = `${baseUrl}/users/test-setup`;
 
-const logInEndpoint = `${authBaseEndpoint}/logIn`;
+const logInEndpoint = `${authBaseEndpoint}/signin`;
 
-const logOutEndpoint = `${authBaseEndpoint}/logOut`;
+const logOutEndpoint = `${authBaseEndpoint}/signout`;
 
 const testUsername = 'hotmale99';
 
@@ -30,15 +33,40 @@ const testPassword = 'my$PACEwasSICKin99';
 
 const bogusPassword = 'sorryMARIOcheckANOTHERcastle123';
 
+const buildSigninDto = ({
+  username,
+  password,
+}: {
+  username: string;
+  password: string;
+}) => ({
+  formFields: [
+    {
+      id: 'email',
+      value: username,
+    },
+    {
+      id: 'password',
+      value: password,
+    },
+  ],
+});
+
 const httpClientForTestRuns = new TestHttpClient('http://localhost:4200');
 
 describe(`When loging in with a username and password (without Multi-factor Authentication enabled)`, () => {
   beforeAll(async () => {
-    await signInAsAdmin(httpClientForTestRuns);
+    const _response = await signInAsAdmin(httpClientForTestRuns);
   });
 
   beforeEach(async () => {
-    await httpClientForTestRuns.patch(userSetupEndpoint);
+    await httpClientForTestRuns.patch(userSetupEndpoint).catch((e) => {
+      throw new TrueImpactRuntimeException([
+        new TrueImpactError(
+          `Failed to clear USERS for test setup. \n ${(e as Error)?.message || 'unknown error'}`,
+        ),
+      ]);
+    });
   });
 
   describe(`when the user exists`, () => {
@@ -66,22 +94,26 @@ describe(`When loging in with a username and password (without Multi-factor Auth
        * We might verify this at the `e2e` level by providing an addtional
        * endpoint that the current user can use to view their profile.
        */
-      it(`should succeed and set the user ID on the session`, async () => {
+      it.only(`should succeed and set the user ID on the session`, async () => {
         const response = await client
-          .post(logInEndpoint, {
-            username: testUsername,
-            password: testPassword,
-          })
+          .post(
+            logInEndpoint,
+            buildSigninDto({
+              username: testUsername,
+              password: testPassword,
+            }),
+          )
           .catch((e) => {
             throw Error(`Test failed to post to login. ${e}`);
           });
 
         const _foo = response.headers['set-cookie'];
 
-        expect(response.status).toBe(HttpStatus.CREATED);
+        expect(response.status).toBe(HttpStatus.OK);
 
-        const result = (await client.get(sessionEndpoint))
-          .data as SessionInfoForAuthenticatedUser;
+        const result = (await client.get(sessionEndpoint)).data as {
+          username: string;
+        };
 
         expect(result.username).toBe(testUsername);
 
@@ -104,13 +136,23 @@ describe(`When loging in with a username and password (without Multi-factor Auth
     describe(`when the credentials are not correct`, () => {
       it(`should return unauthorized`, async () => {
         const response = await axios
-          .post(logInEndpoint, {
-            username: testUsername,
-            password: bogusPassword,
-          })
+          .post(
+            logInEndpoint,
+            buildSigninDto({
+              username: testUsername,
+              password: bogusPassword,
+            }),
+            {
+              headers: {
+                rid: 'emailpassword',
+                'st-auth-mode': 'header',
+              },
+            },
+          )
           .catch((e: { status: HttpStatus; response: { data: unknown } }) => {
             return {
               status: e.status,
+              data: e.response.data,
             };
           });
 

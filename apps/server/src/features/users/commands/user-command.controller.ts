@@ -1,4 +1,5 @@
-import { AuthenticatedUserGuard, RbacAuthGuard } from '../../../auth/guards';
+import { OptionalUserGuard } from 'src/auth/guards';
+import supertokens, { deleteUser } from 'supertokens-node';
 import type { CommandResult, ICommandFsa } from '../../../libs/cqrs-es';
 import { CommandHandlerService } from '../../../libs/cqrs-es';
 import {
@@ -8,6 +9,7 @@ import {
 import {
   BadUserInputFilter,
   Body,
+  ConfigService,
   Controller,
   Inject,
   Post,
@@ -32,9 +34,11 @@ export class UserCommandController {
     private readonly commandHandlerService: CommandHandlerService,
     @Inject(USER_COMMAND_REPOSITORY_INJECTION_TOKEN)
     private readonly commandRepository: IUserCommandRepository,
+    private readonly configService: ConfigService,
   ) {}
 
-  @UseGuards(AuthenticatedUserGuard, RbacAuthGuard)
+  // @UseGuards(AuthenticatedUserGuard, RbacAuthGuard)
+  @UseGuards(OptionalUserGuard)
   // TODO @CommandExecutionEndpoint
   @Post('commands')
   async executeCommand(@Body() fsa: ICommandFsa): Promise<CommandResult> {
@@ -56,6 +60,28 @@ export class UserCommandController {
     // @ts-expect-error This will only work if the private, concrete dependency has a `clear` method (not for the production implementation)
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     await this.commandRepository.clear(USER_AGGREGATE_TYPE);
+
+    const paginationResult = await supertokens.getUsersNewestFirst({
+      limit: 100,
+      tenantId: 'public', // this is the only tenant ID we use
+    });
+
+    const usersToDelete = paginationResult.users.flatMap((user) =>
+      user.emails[0] === this.configService.get<string>('SYSTEM_ADMIN_USERNAME')
+        ? []
+        : [user],
+    );
+
+    // 2. Iterate and delete each user
+    const deletePromises = usersToDelete.map((user) => {
+      return deleteUser(user.id);
+    });
+
+    console.log(
+      `DELETING ______________________________________${deletePromises.length} \n users: ${usersToDelete.map(({ emails }) => emails[0]).join('\n')}`,
+    );
+
+    await Promise.all(deletePromises);
 
     return 'OK';
   }

@@ -15,6 +15,7 @@ declare module 'express-session' {
   }
 }
 
+// TODO remove this
 export class SurveyResponseSessionStore extends session.Store {
   constructor(
     @Inject(SURVEY_RESPONSE_SESSION_REPOSITORY_TOKEN)
