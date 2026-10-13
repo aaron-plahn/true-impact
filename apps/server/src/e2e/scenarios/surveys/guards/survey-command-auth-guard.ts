@@ -1,5 +1,5 @@
 import { CanActivate, ExecutionContext, Inject } from '@nestjs/common';
-import { RbacAuthGuard } from '../../../../auth/guards';
+import { AdminRbacAuthGuard } from '../../../../auth/guards';
 import { SURVEY_RESPONSE_AGGREGATE_TYPE } from '../../../../features/survey/constants';
 import { BeginSurvey } from '../../../../features/survey/survey-completion';
 import { USER_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../../../../features/users/constants';
@@ -94,6 +94,8 @@ export class SurveyCommandAuthGuard implements CanActivate {
      * Nest's abstraction makes composability tough. Note that our use case is
      * highly unique here.
      */
-    return new RbacAuthGuard().canActivate(context);
+    return new AdminRbacAuthGuard(this.userCommandRepository).canActivate(
+      context,
+    );
   }
 }

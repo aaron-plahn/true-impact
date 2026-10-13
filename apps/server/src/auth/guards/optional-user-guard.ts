@@ -1,9 +1,9 @@
 import { CanActivate, ExecutionContext, Inject } from '@nestjs/common';
-import { isNonEmptyString } from 'src/libs/data-types';
 import { SessionContainer } from 'supertokens-node/recipe/session';
 import { USER_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../../features/users/constants';
 import type { IUserCommandRepository } from '../../features/users/repositories';
 import { User } from '../../features/users/user.aggregate-root';
+import { isNonEmptyString } from '../../libs/data-types';
 
 export class OptionalUserGuard implements CanActivate {
   constructor(

@@ -1,7 +1,7 @@
 import {
+  AdminRbacAuthGuard,
   AuthenticatedUserGuard,
   AuthGuard,
-  RbacAuthGuard,
 } from '../../auth/guards';
 import type { ICommandFsa } from '../../libs/cqrs-es';
 import { CommandHandlerService, CommandResult } from '../../libs/cqrs-es';
@@ -39,11 +39,7 @@ export class CommunityController implements OnModuleInit {
 
   // TODO @CommandExecutionEndpoint
   // TODO add a separate command controller
-  @UseGuards(
-    new AuthGuard({ sessionRequired: false }),
-    AuthenticatedUserGuard,
-    RbacAuthGuard,
-  )
+  @UseGuards(AdminRbacAuthGuard)
   @Post('commands')
   async executeCommand(@Body() fsa: ICommandFsa): Promise<CommandResult> {
     const result = await this.commandHandlerService.execute(fsa);
@@ -54,7 +50,7 @@ export class CommunityController implements OnModuleInit {
   @UseGuards(
     new AuthGuard({ sessionRequired: false }),
     AuthenticatedUserGuard,
-    RbacAuthGuard,
+    AdminRbacAuthGuard,
   )
   @DetailQueryEndpoint()
   async fetchById(
@@ -68,7 +64,7 @@ export class CommunityController implements OnModuleInit {
   @UseGuards(
     new AuthGuard({ sessionRequired: false }),
     AuthenticatedUserGuard,
-    RbacAuthGuard,
+    AdminRbacAuthGuard,
   )
   @IndexQueryEndpoint()
   async fetchMany(): Promise<CommunityViewModelClientDto[] | TrueImpactError> {

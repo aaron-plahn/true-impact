@@ -1,4 +1,4 @@
-import { AuthenticatedUserGuard, RbacAuthGuard } from '../../../auth/guards';
+import { AdminRbacAuthGuard } from '../../../auth/guards';
 import {
   Controller,
   DetailQueryEndpoint,
@@ -13,7 +13,7 @@ export class GroupProgramQueryController {
     private readonly groupProgramQueryService: GroupProgramQueryService,
   ) {}
 
-  @UseGuards(AuthenticatedUserGuard, RbacAuthGuard)
+  @UseGuards(AdminRbacAuthGuard)
   @DetailQueryEndpoint()
   async fetchById(@IdParam() id: string) {
     const result = await this.groupProgramQueryService.fetchById(id);
