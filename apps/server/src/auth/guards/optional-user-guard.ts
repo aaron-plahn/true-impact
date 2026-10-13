@@ -1,4 +1,6 @@
 import { CanActivate, ExecutionContext, Inject } from '@nestjs/common';
+import { isNonEmptyString } from 'src/libs/data-types';
+import { SessionContainer } from 'supertokens-node/recipe/session';
 import { USER_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../../features/users/constants';
 import type { IUserCommandRepository } from '../../features/users/repositories';
 import { User } from '../../features/users/user.aggregate-root';
@@ -12,9 +14,11 @@ export class OptionalUserGuard implements CanActivate {
   public async canActivate(context: ExecutionContext): Promise<boolean> {
     const req = context
       .switchToHttp()
-      .getRequest<{ session?: { userId?: string }; user?: User }>();
+      .getRequest<{ session?: SessionContainer; user?: User }>();
 
-    if (!req.session?.userId) {
+    const userId = req?.session?.getUserId();
+
+    if (!isNonEmptyString(userId)) {
       /**
        * The user can activate this endpoint but the controller \ service may
        * decide to respond differently because the user is a member of the general
@@ -23,9 +27,7 @@ export class OptionalUserGuard implements CanActivate {
       return true;
     }
 
-    const searchResult = await this.userCommandRepository.fetchById(
-      req.session.userId,
-    );
+    const searchResult = await this.userCommandRepository.fetchById(userId);
 
     if (!searchResult) {
       /**

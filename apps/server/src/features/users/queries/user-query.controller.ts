@@ -29,6 +29,7 @@ export class UserQueryController {
 
   @UseGuards(
     new AuthGuard({
+      // can we make this true and avoid the !userId check?
       sessionRequired: false,
     }),
   )

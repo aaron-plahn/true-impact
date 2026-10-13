@@ -75,6 +75,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      supertokens:
+        condition: service_healthy
     networks:
       - app_network
     healthcheck:

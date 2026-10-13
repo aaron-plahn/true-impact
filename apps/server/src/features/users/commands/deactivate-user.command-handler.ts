@@ -1,5 +1,5 @@
 import { Inject } from '@nestjs/common';
-import { SupertokensAuthService } from 'src/auth';
+import { SupertokensAuthService } from '../../../auth';
 import { CommandResult, ICommandHandler } from '../../../libs/cqrs-es';
 import {
   TrueImpactBadUserInputError,

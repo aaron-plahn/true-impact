@@ -1,9 +1,9 @@
+import { deleteUser } from 'supertokens-node';
+import EmailPassword from 'supertokens-node/recipe/emailpassword';
 import {
   TrueImpactBadUserInputError,
   TrueImpactError,
-} from 'src/libs/data-types';
-import { deleteUser } from 'supertokens-node';
-import EmailPassword from 'supertokens-node/recipe/emailpassword';
+} from '../../libs/data-types';
 
 export class SupertokensAuthService {
   async delete(userId: string): Promise<{ id: string } | TrueImpactError> {

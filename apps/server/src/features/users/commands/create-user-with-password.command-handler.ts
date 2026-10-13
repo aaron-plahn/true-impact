@@ -1,4 +1,4 @@
-import { SupertokensAuthService } from 'src/auth';
+import { SupertokensAuthService } from '../../../auth';
 import { CommandResult, ICommandHandler } from '../../../libs/cqrs-es';
 import { TrueImpactError } from '../../../libs/data-types';
 import { Inject } from '../../../libs/framework';

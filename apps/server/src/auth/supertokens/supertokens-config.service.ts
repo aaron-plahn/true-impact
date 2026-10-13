@@ -3,10 +3,10 @@ import {
   SuperTokensModuleOptions,
   SuperTokensModuleOptionsFactory,
 } from 'node_modules/supertokens-nestjs/dist/supertokens.types';
-import { isNonEmptyString } from 'src/libs/data-types';
 import Dashboard from 'supertokens-node/recipe/dashboard';
 import EmailPassword from 'supertokens-node/recipe/emailpassword';
 import Session from 'supertokens-node/recipe/session';
+import { isNonEmptyString } from '../../libs/data-types';
 import { ConfigService, Injectable } from '../../libs/framework';
 
 @Injectable()
