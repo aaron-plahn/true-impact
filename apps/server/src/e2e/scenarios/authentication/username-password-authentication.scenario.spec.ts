@@ -33,6 +33,9 @@ const testPassword = 'my$PACEwasSICKin99';
 
 const bogusPassword = 'sorryMARIOcheckANOTHERcastle123';
 
+/**
+ * TODO Can we adapt to our old API when configuring supertokens?
+ */
 const buildSigninDto = ({
   username,
   password,
@@ -94,7 +97,7 @@ describe(`When loging in with a username and password (without Multi-factor Auth
        * We might verify this at the `e2e` level by providing an addtional
        * endpoint that the current user can use to view their profile.
        */
-      it.only(`should succeed and set the user ID on the session`, async () => {
+      it(`should succeed and set the user ID on the session`, async () => {
         const response = await client
           .post(
             logInEndpoint,
@@ -111,6 +114,8 @@ describe(`When loging in with a username and password (without Multi-factor Auth
 
         expect(response.status).toBe(HttpStatus.OK);
 
+        console.log({ sessionEndpoint });
+
         const result = (await client.get(sessionEndpoint)).data as {
           username: string;
         };
@@ -119,7 +124,8 @@ describe(`When loging in with a username and password (without Multi-factor Auth
 
         const logoutResult = await client.post(logOutEndpoint);
 
-        expect(logoutResult.status).toBe(HttpStatus.CREATED);
+        // This should really be `201 [CREATED]` because the user is creating a session. Supertokens doesn't adhere to HTTP standards, but we should wrap it to do so.
+        expect(logoutResult.status).toBe(HttpStatus.OK);
 
         const unauthenticatedSessionAccessResult = await client
           .get(sessionEndpoint)
@@ -161,6 +167,26 @@ describe(`When loging in with a username and password (without Multi-factor Auth
     });
   });
 
+  describe(`when the request is invalidly formatted`, () => {
+    it(`should return the expected error`, async () => {
+      const response = await axios
+        .post(logInEndpoint, {
+          username: testUsername,
+          password: testPassword,
+        })
+        .catch((e: { status: HttpStatus; response: { data: unknown } }) => {
+          return {
+            status: e.status,
+            data: e.response.data,
+          };
+        });
+
+      expect(response.status).toBe(HttpStatus.BAD_REQUEST);
+
+      // TODO check error message
+    });
+  });
+
   describe(`when the user does not exist`, () => {
     /**
      * Note that there should be no observable difference between
@@ -172,10 +198,13 @@ describe(`When loging in with a username and password (without Multi-factor Auth
       const missingUsername = 'badactor55';
 
       const response = await axios
-        .post(logInEndpoint, {
-          username: missingUsername,
-          password: testPassword,
-        })
+        .post(
+          logInEndpoint,
+          buildSigninDto({
+            username: missingUsername,
+            password: testPassword,
+          }),
+        )
         .catch((e: { status: HttpStatus; response: { data: unknown } }) => {
           return {
             status: e.status,
@@ -206,10 +235,13 @@ describe(`When loging in with a username and password (without Multi-factor Auth
 
     it(`should return unauthorized`, async () => {
       const response = await axios
-        .post(logInEndpoint, {
-          username: testUsername,
-          password: testPassword,
-        })
+        .post(
+          logInEndpoint,
+          buildSigninDto({
+            username: testUsername,
+            password: testPassword,
+          }),
+        )
         .catch((e: { status: HttpStatus; response: { data: unknown } }) => {
           return {
             status: e.status,

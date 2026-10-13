@@ -1,9 +1,9 @@
 import { UnauthorizedException } from '@nestjs/common';
 import { Session } from 'supertokens-nestjs';
-import { type SessionContainer } from 'supertokens-node/recipe/session';
+import type { SessionContainer } from 'supertokens-node/recipe/session';
 import {
   AuthenticatedUserGuard,
-  OptionalUserGuard,
+  AuthGuard,
   RbacAuthGuard,
 } from '../../../auth/guards';
 import {
@@ -27,20 +27,21 @@ import { UserViewModelClientDto } from './user.view-model';
 export class UserQueryController {
   constructor(private readonly queryService: UserQueryService) {}
 
-  @UseGuards(AuthenticatedUserGuard, RbacAuthGuard)
-  @DetailQueryEndpoint()
-  fetchById(@IdParam() id: string) {
-    return this.queryService.fetchById(id);
-  }
-
-  @UseGuards(OptionalUserGuard)
+  @UseGuards(
+    new AuthGuard({
+      sessionRequired: false,
+    }),
+  )
   @Get('who-am-i')
   async whoAmI(
-    // can we not use the auth gurad for this?
     @Session()
     session: SessionContainer,
   ): Promise<UserViewModelClientDto> {
-    const userId = session.getUserId();
+    const userId = session?.getUserId();
+
+    if (!userId) {
+      throw new UnauthorizedException();
+    }
 
     const searchResult = await this.queryService.fetchById(userId);
 
@@ -49,5 +50,11 @@ export class UserQueryController {
     }
 
     return searchResult;
+  }
+
+  @UseGuards(AuthenticatedUserGuard, RbacAuthGuard)
+  @DetailQueryEndpoint()
+  fetchById(@IdParam() id: string) {
+    return this.queryService.fetchById(id);
   }
 }

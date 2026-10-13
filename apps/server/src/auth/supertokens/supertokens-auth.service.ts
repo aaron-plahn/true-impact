@@ -1,7 +1,28 @@
-import { TrueImpactError } from 'src/libs/data-types';
+import {
+  TrueImpactBadUserInputError,
+  TrueImpactError,
+} from 'src/libs/data-types';
+import { deleteUser } from 'supertokens-node';
 import EmailPassword from 'supertokens-node/recipe/emailpassword';
 
 export class SupertokensAuthService {
+  async delete(userId: string): Promise<{ id: string } | TrueImpactError> {
+    try {
+      // Supertokens throws instead of returning recoverable errors, so `OK` is the only possible result here.
+      const _result = await deleteUser(userId);
+
+      return { id: userId };
+    } catch (error) {
+      return new TrueImpactBadUserInputError([
+        new TrueImpactError(`Failed to remove user [${userId}].`),
+        new TrueImpactError(
+          (error as { message?: string })?.message ||
+            'unknown Supertokens error',
+        ),
+      ]);
+    }
+  }
+
   async signUp({
     username,
     password,

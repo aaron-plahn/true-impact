@@ -48,20 +48,6 @@ export class TestHttpClient implements Omit<
         }
       }
 
-      if ('st-access-token' in config.headers) {
-        this.authHeaders.set(
-          'st-access-token',
-          config.headers['st-access-token'] as string,
-        );
-      }
-
-      if ('st-refresh-token' in config.headers) {
-        this.authHeaders.set(
-          'st-refresh-token',
-          config.headers['st-refresh-token'] as string,
-        );
-      }
-
       return config;
     });
   }
@@ -188,20 +174,6 @@ export class TestHttpClient implements Omit<
       },
     };
 
-    // TODO do we want this?
-    if (this.authHeaders.has('st-access-token')) {
-      if (!this.authHeaders.has('st-refresh-token')) {
-        throw new Error(
-          `Found a SuperTokens access token without an accompanying refresh token.`,
-        );
-      }
-
-      Object.assign(newConfig, {
-        'st-access-token': this.authHeaders.get('st-access-token'),
-        'st-refresh-token': this.authHeaders.get('st-refresh-token'),
-      });
-    }
-
-    return config;
+    return newConfig;
   }
 }

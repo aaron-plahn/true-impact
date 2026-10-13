@@ -1,4 +1,3 @@
-import { OptionalUserGuard } from 'src/auth/guards';
 import supertokens, { deleteUser } from 'supertokens-node';
 import type { CommandResult, ICommandFsa } from '../../../libs/cqrs-es';
 import { CommandHandlerService } from '../../../libs/cqrs-es';
@@ -17,7 +16,6 @@ import {
   ResourceNotFoundFilter,
   TestSetupEndpoint,
   UseFilters,
-  UseGuards,
   UseInterceptors,
 } from '../../../libs/framework';
 import {
@@ -38,7 +36,7 @@ export class UserCommandController {
   ) {}
 
   // @UseGuards(AuthenticatedUserGuard, RbacAuthGuard)
-  @UseGuards(OptionalUserGuard)
+  // @UseGuards(OptionalUserGuard)
   // TODO @CommandExecutionEndpoint
   @Post('commands')
   async executeCommand(@Body() fsa: ICommandFsa): Promise<CommandResult> {
