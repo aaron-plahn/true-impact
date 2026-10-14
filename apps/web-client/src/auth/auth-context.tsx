@@ -49,23 +49,25 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
     // TODO can we refactor this? The try catch is really hard to follow. Throwing for control flow is confusing.
     try {
-      const signInResponse = await fetch(`${config.API_URL}/auth/logIn`, {
+      const signInResponse = await fetch(`${config.API_URL}/auth/signin`, {
         method: "POST",
         credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },
         // body: JSON.stringify(credentials),
-        body: JSON.stringify([
-          {
-            id: "email",
-            value: credentials.username,
-          },
-          {
-            id: "password",
-            value: credentials.password,
-          },
-        ]),
+        body: JSON.stringify({
+          formFields: [
+            {
+              id: "email",
+              value: credentials.username,
+            },
+            {
+              id: "password",
+              value: credentials.password,
+            },
+          ],
+        }),
       });
 
       if (!signInResponse.ok) {
@@ -73,7 +75,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
 
       const userProfileResponse = await fetch(
-        `${config.API_URL}/auth/session`,
+        `${config.API_URL}/users/who-am-i`,
         {
           method: "GET",
           credentials: "include",
@@ -106,7 +108,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   const logOut = async () => {
-    await fetch(`${config.API_URL}/auth/logOut`, {
+    await fetch(`${config.API_URL}/auth/signout`, {
       method: "POST",
       credentials: "include",
     });
