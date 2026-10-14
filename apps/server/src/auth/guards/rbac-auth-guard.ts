@@ -33,13 +33,6 @@ export class AdminRbacAuthGuard implements CanActivate {
      * getSession will throw an error that will be handled by the exception filter, returning a 401 response.
      */
 
-    /**
-     * To avoid an error when the session doesn't exist, pass {sessionRequired: false} to the AuthGuard constructor.
-     * In this case, req.session will be undefined if the session doesn't exist.
-     *
-     * TODO support a separate `OptionalAuthGuard`.
-     */
-
     const session = await supertokensRecipeSession.getSession(req, resp, {
       sessionRequired: false,
     });
