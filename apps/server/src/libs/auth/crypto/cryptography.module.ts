@@ -1,5 +1,4 @@
-import { Global } from '@nestjs/common';
-import { Module } from '../../framework';
+import { Global, Module } from '@nestjs/common';
 import { EncryptionService } from './encryption.service';
 
 @Global()

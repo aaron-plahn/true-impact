@@ -1,12 +1,12 @@
-import {
-  ForbiddenException,
-  Req,
-  Res,
-  Session,
-  UseGuards,
-} from '@nestjs/common';
+import { ForbiddenException, Req, Res, UseGuards } from '@nestjs/common';
 import type { Request, Response } from 'express';
-import { AdminRbacAuthGuard } from 'src/auth/guards';
+import { AdminRbacAuthGuard, OptionalUserGuard } from 'src/auth/guards';
+import { SurveyCommandAuthGuard } from 'src/e2e/scenarios/surveys/guards';
+import { Session } from 'supertokens-nestjs';
+import { RecipeUserId } from 'supertokens-node';
+import SessionRecipe, {
+  type SessionContainer,
+} from 'supertokens-node/recipe/session';
 import { isDeepStrictEqual } from 'util';
 import type { ICommandFsa } from '../../libs/cqrs-es';
 import { CommandHandlerService, CommandResult } from '../../libs/cqrs-es';
@@ -14,6 +14,7 @@ import {
   buildTestInstance,
   convertToOpenApiSchema,
   getDataSchemaFromClassCtor,
+  isNonEmptyString,
   ResourceNotFoundError,
   TrueImpactBadUserInputError,
   TrueImpactError,
@@ -43,7 +44,13 @@ import {
 } from './constants';
 import { SurveyQueryService } from './queries/survey-query.service';
 import { SurveyViewModelClientDto } from './queries/survey.view-model';
+import { BeginSurvey } from './survey-completion';
+import { BeginPublicSurvey } from './survey-completion/commands/begin-public-survey';
 import { SduiViewDiffer } from './survey-completion/commands/sdui-view-differ';
+import {
+  AnonymousSurveyParticipantUser,
+  SurveyResponseCompositeIdentifier,
+} from './survey-completion/models';
 import { CommandSuccessPage } from './survey-completion/views';
 import { CommandErrorPage } from './survey-completion/views/command-error-page';
 
@@ -101,7 +108,7 @@ export class SurveyController implements OnModuleInit {
    */
   // TODO @CommandExecutionEndpoint()
   // @UseGuards(AuthenticatedUserGuard, RbacAuthGuard)
-  @UseGuards(AdminRbacAuthGuard)
+  @UseGuards(OptionalUserGuard, SurveyCommandAuthGuard)
   @Post('commands')
   async executeCommand(
     @Body()
@@ -109,13 +116,19 @@ export class SurveyController implements OnModuleInit {
       aggregateCompositeIdentifier?: { type: string; id: string };
     }>,
     // TODO inject the user instead
-    @Session() session: Record<string, any>,
+    @Session() session: SessionContainer,
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ): Promise<CommandResult | null> {
     if (!fsa) {
       throw new Error(`Missing fsa!`);
     }
+
+    const accessTokenPayload = session?.getAccessTokenPayload() as
+      | {
+          subject: SurveyResponseCompositeIdentifier;
+        }
+      | undefined;
 
     // TODO think about the logic of this carefully
     // Note that BEGIN_SURVEY \ BEGIN_PUBLIC_SURVEY will not be handled here because it doesn't have an `aggregateCompositeIdentifier`
@@ -124,6 +137,10 @@ export class SurveyController implements OnModuleInit {
       fsa.payload.aggregateCompositeIdentifier.type ==
         SURVEY_RESPONSE_AGGREGATE_TYPE
     ) {
+      const { user } = req as unknown as {
+        user: AnonymousSurveyParticipantUser;
+      };
+
       /**
        * The permissions model for survey completion allows users to exchange
        * an access code for access to a particular survey attempt (specified as the `subject` on the session).
@@ -133,7 +150,7 @@ export class SurveyController implements OnModuleInit {
        *
        * TODO Remove the subject or clear the session entirely after the survey is submitted.
        */
-      if (!session) {
+      if (!user || user.type !== 'ANONYMOUS_SURVEY_PARTICIPANT') {
         throw new ForbiddenException();
       }
 
@@ -144,10 +161,10 @@ export class SurveyController implements OnModuleInit {
          * So only if a valid ID is provided on the FSA **and** the signed cookie states that
          * the user has the authority to update that survey attempt will the request succeed.
          */
-        !isDeepStrictEqual(
-          fsa.payload.aggregateCompositeIdentifier,
-          session.subject,
-        )
+        !isDeepStrictEqual(fsa.payload.aggregateCompositeIdentifier, {
+          type: SURVEY_RESPONSE_AGGREGATE_TYPE,
+          id: user.surveyResponseId,
+        })
       ) {
         throw new ForbiddenException();
       }
@@ -156,43 +173,61 @@ export class SurveyController implements OnModuleInit {
     const isRequestToBeginSurvey =
       fsa.type === 'BEGIN_SURVEY' || fsa.type === 'BEGIN_PUBLIC_SURVEY';
 
-    if (isRequestToBeginSurvey && session && session.subject) {
+    if (isRequestToBeginSurvey && session && accessTokenPayload?.subject) {
       /**
        * If the user has a different attempt in progress, we
        * need to remove authorization for this survey from the session
        * before starting a new session.
        */
-      delete session.subject;
-
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-      session.save();
+      // await this.destroySession(session, req, res);
     }
 
     const result = await this.commandHandlerService.execute(fsa);
 
     if (!(result instanceof Error)) {
-      if (fsa.type === 'BEGIN_SURVEY' || fsa.type === 'BEGIN_PUBLIC_SURVEY') {
-        if (session.subject) {
+      if (isRequestToBeginSurvey) {
+        const beginSurveyFsa = fsa as
+          ICommandFsa<BeginSurvey> | ICommandFsa<BeginPublicSurvey>;
+
+        if (accessTokenPayload?.subject) {
           throw new TrueImpactError(
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-            `The previous session for attempt ${session.subject.id} was not cleared ahead of starting survey ${result.id}`,
+            `The previous session for attempt ${accessTokenPayload.subject.id} was not cleared ahead of starting survey ${result.id}`,
           );
         }
 
-        session.subject = {
-          type: SURVEY_RESPONSE_AGGREGATE_TYPE,
-          id: result.id,
-        };
-
         try {
-          req.session.save((err) => {
-            throw new TrueImpactRuntimeException([
-              new TrueImpactError(`Failed to persist survey response session.`),
-              new TrueImpactError(
-                (err as { message?: string }).message || 'Unknown Error',
-              ),
-            ]);
-          });
+          if (!session) {
+            if (!isNonEmptyString(beginSurveyFsa.payload.surveyId)) {
+              throw new Error(
+                `Invalid FSA encountered when creating a survey session.`,
+              );
+            }
+
+            const { id: surveyAttemptId } = result;
+
+            const subject = {
+              type: SURVEY_RESPONSE_AGGREGATE_TYPE,
+              id: surveyAttemptId,
+            };
+
+            const anonymousUserId = `survey-participant/${beginSurveyFsa.payload.surveyId}`;
+
+            await SessionRecipe.createNewSession(
+              req,
+              res,
+              'public',
+              // TODO do we really need the subject below if we have a user ID like this?
+              new RecipeUserId(anonymousUserId),
+              {
+                subject,
+              },
+              // TODO use this only on the JWT or in the session DB
+              {
+                subject,
+              },
+            );
+          }
         } catch (_error) {
           // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
           throw new Error(_error.toString());
@@ -206,7 +241,7 @@ export class SurveyController implements OnModuleInit {
          * Submitting a survey successfully amounts to logging out of the session
          * to complete a survey.
          */
-        this.destroySession(session, req, res);
+        await this.destroySession(session, req, res);
 
         return result;
       }
@@ -242,14 +277,13 @@ export class SurveyController implements OnModuleInit {
    * SDUI (JSON DSL) to UX without any domain knowledge.
    */
   @Post('commands-html')
-  @UseGuards(AdminRbacAuthGuard)
+  @UseGuards(OptionalUserGuard, SurveyCommandAuthGuard)
   async executeCommandWithSduiResponse(
     @Body()
     fsa: ICommandFsa<{
       aggregateCompositeIdentifier?: { type: string; id: string };
     }>,
-    // TODO inject the user instead
-    @Session() session: Record<string, unknown>,
+    @Session() session: SessionContainer,
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
@@ -343,23 +377,23 @@ export class SurveyController implements OnModuleInit {
   }
 
   // TODO we will need to manage these sessions using Supertokens now
-  private destroySession(
-    @Session() session: Record<string, any>,
+  private async destroySession(
+    @Session() session: SessionContainer,
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
-    session.subject = null;
+    res.clearCookie('survey-response-session'); // wait is this still the cookie?
+    // TODO is there a more idiomatic way to do this with supertokens?
+    res.clearCookie('sAccessToken');
+    res.clearCookie('sRefreshToken');
 
-    res.clearCookie('survey-response-session');
+    delete (req as unknown as { user: unknown }).user;
 
-    req.session.destroy((err) => {
-      throw new TrueImpactRuntimeException([
-        new TrueImpactError(`Logout failed after submitting a survey`),
-        new TrueImpactError(
-          (err as { message?: string })?.message || 'Unknown error',
-        ),
-      ]);
-    });
+    await session?.revokeSession();
+
+    // @ts-expect-error FIX types
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+    await req?.session?.revokeSession();
   }
 
   onModuleInit() {

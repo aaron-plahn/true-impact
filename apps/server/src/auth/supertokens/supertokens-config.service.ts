@@ -39,6 +39,7 @@ export class SupertokensConfigService implements SuperTokensModuleOptionsFactory
             apis: (originalImplementation) => {
               return {
                 ...originalImplementation,
+                // TODO adapt this to our existing API
                 signInPOST: async function (input) {
                   if (typeof originalImplementation.signInPOST !== 'function') {
                     throw new Error(

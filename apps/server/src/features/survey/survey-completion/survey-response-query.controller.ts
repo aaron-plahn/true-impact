@@ -1,10 +1,7 @@
 // TODO framework lib?
 import { Session, UseGuards } from '@nestjs/common';
 import { ApiOkResponse } from '@nestjs/swagger';
-import {
-  AdminRbacAuthGuard,
-  AuthenticatedUserGuard,
-} from '../../../auth/guards';
+import { AdminRbacAuthGuard } from '../../../auth/guards';
 import {
   buildTestInstance,
   convertToOpenApiSchema,
@@ -164,7 +161,7 @@ export class SurveyResponseQueryController {
   }
 
   @Get('submitted')
-  @UseGuards(AuthenticatedUserGuard, AdminRbacAuthGuard)
+  @UseGuards(AdminRbacAuthGuard)
   // TODO pagination
   @ApiOkResponse({
     schema,
@@ -186,7 +183,7 @@ export class SurveyResponseQueryController {
     return sorted;
   }
 
-  @UseGuards(AuthenticatedUserGuard, AdminRbacAuthGuard)
+  @UseGuards(AdminRbacAuthGuard)
   @IndexQueryEndpoint()
   @ApiOkResponse({
     schema,
@@ -204,7 +201,7 @@ export class SurveyResponseQueryController {
     return dtos;
   }
 
-  @UseGuards(AuthenticatedUserGuard, AdminRbacAuthGuard)
+  @UseGuards(AdminRbacAuthGuard)
   @DetailQueryEndpoint()
   @ApiOkResponse({
     schema,
