@@ -47,8 +47,6 @@ async function bootstrap() {
 
   app.useGlobalFilters(new SuperTokensExceptionFilter());
 
-  console.log(`Enabled CORS for client origin: ${CLIENT_DOMAIN}`);
-
   const config = new DocumentBuilder()
     .setTitle('True Impact API')
     .setDescription('Internal Rest API for the True Impact Platform')

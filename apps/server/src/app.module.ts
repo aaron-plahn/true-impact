@@ -1,6 +1,7 @@
 import { SupertokensService } from 'supertokens-node/recipe/passwordless/smsdelivery';
 import { AppController } from './app.controller';
-import { SupertokensConfigService, SupertokensMiddleware } from './auth';
+import { SupertokensConfigService } from './auth';
+import { SupertokensSignInRequestAdapter } from './auth/adapters';
 import { AuthModule } from './auth/auth.module';
 import { ClientModule } from './features/clients/client.module';
 import { CommunityModule } from './features/communities/community.module';
@@ -40,6 +41,7 @@ console.log(`Loading NestJS configuration for environment: ${nodeEnv}`);
       },
       inject: [ConfigService],
     }),
+    // TODO can we use Supertokens for one-time code generation too?
     CryptographyModule,
     AuthModule,
     ClientModule,
@@ -55,6 +57,9 @@ console.log(`Loading NestJS configuration for environment: ${nodeEnv}`);
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(SupertokensMiddleware).forRoutes('*');
+    consumer
+      // This allows us to use our own auth API (a different request body structure) from that of Supertokens
+      .apply(SupertokensSignInRequestAdapter)
+      .forRoutes('*');
   }
 }

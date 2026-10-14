@@ -35,6 +35,9 @@ export class SupertokensConfigService implements SuperTokensModuleOptionsFactory
       recipeList: [
         Dashboard.init(),
         EmailPassword.init({
+          /**
+           * TODO Consider refactoring to wire up our own controller that leverages Supertokens instead.
+           */
           override: {
             apis: (originalImplementation) => {
               return {

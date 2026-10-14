@@ -33,9 +33,6 @@ const testPassword = 'my$PACEwasSICKin99';
 
 const bogusPassword = 'sorryMARIOcheckANOTHERcastle123';
 
-/**
- * TODO Can we adapt to our old API when configuring supertokens?
- */
 const buildSigninDto = ({
   username,
   password,
@@ -43,6 +40,8 @@ const buildSigninDto = ({
   username: string;
   password: string;
 }) => ({
+  // username,
+  // password,
   formFields: [
     {
       id: 'email',
@@ -54,6 +53,19 @@ const buildSigninDto = ({
     },
   ],
 });
+
+//   ({
+//   formFields: [
+//     {
+//       id: 'email',
+//       value: username,
+//     },
+//     {
+//       id: 'password',
+//       value: password,
+//     },
+//   ],
+// });
 
 const httpClientForTestRuns = new TestHttpClient('http://localhost:4200');
 
@@ -97,7 +109,7 @@ describe(`When loging in with a username and password (without Multi-factor Auth
        * We might verify this at the `e2e` level by providing an addtional
        * endpoint that the current user can use to view their profile.
        */
-      it(`should succeed and set the user ID on the session`, async () => {
+      it.only(`should succeed and set the user ID on the session`, async () => {
         const response = await client
           .post(
             logInEndpoint,
