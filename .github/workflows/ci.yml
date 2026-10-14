@@ -84,6 +84,8 @@ jobs:
           TI_COOKIES_SECRET: ${{ secrets.TI_COOKIES_SECRET }}
           SYSTEM_ADMIN_USERNAME: ${{ secrets.SYSTEM_ADMIN_USERNAME }}
           INITIAL_ADMIN_PASSWORD: ${{ secrets.INITIAL_ADMIN_PASSWORD }}
+          SUPERTOKENS_API_KEYS: ${{ secrets.SUPERTOKENS_API_KEYS }}
+          SUPERTOKENS_CONNECTION_URI: ${{ secrets.SUPERTOKENS_CONNECTION_URI }}
         run: |
           docker compose config
           docker compose up -d --build
