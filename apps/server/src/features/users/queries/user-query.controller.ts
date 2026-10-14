@@ -1,11 +1,7 @@
 import { UnauthorizedException } from '@nestjs/common';
 import { Session } from 'supertokens-nestjs';
 import type { SessionContainer } from 'supertokens-node/recipe/session';
-import {
-  AdminRbacAuthGuard,
-  AuthenticatedUserGuard,
-  AuthGuard,
-} from '../../../auth/guards';
+import { AdminRbacAuthGuard, AuthGuard } from '../../../auth/guards';
 import {
   BadUserInputFilter,
   Controller,
@@ -53,7 +49,7 @@ export class UserQueryController {
     return searchResult;
   }
 
-  @UseGuards(AuthenticatedUserGuard, AdminRbacAuthGuard)
+  @UseGuards(AdminRbacAuthGuard)
   @DetailQueryEndpoint()
   fetchById(@IdParam() id: string) {
     return this.queryService.fetchById(id);
