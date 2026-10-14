@@ -126,8 +126,6 @@ describe(`When loging in with a username and password (without Multi-factor Auth
 
         expect(response.status).toBe(HttpStatus.OK);
 
-        console.log({ sessionEndpoint });
-
         const result = (await client.get(sessionEndpoint)).data as {
           username: string;
         };

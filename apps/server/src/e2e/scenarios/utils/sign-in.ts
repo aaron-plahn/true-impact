@@ -53,12 +53,6 @@ export const signIn = async (
       };
     });
 
-  console.log({
-    result,
-    username,
-    password,
-  });
-
   expect(result.status).toBe(HttpStatus.OK);
 
   expect((result.data as { status?: string })?.status).not.toBe('FIELD_ERROR');
