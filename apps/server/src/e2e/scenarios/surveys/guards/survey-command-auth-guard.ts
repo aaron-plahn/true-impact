@@ -1,5 +1,6 @@
 import { CanActivate, ExecutionContext, Inject } from '@nestjs/common';
-import { RbacAuthGuard } from '../../../../auth/guards';
+import { SessionContainer } from 'supertokens-node/recipe/session';
+import { AdminRbacAuthGuard } from '../../../../auth/guards';
 import { SURVEY_RESPONSE_AGGREGATE_TYPE } from '../../../../features/survey/constants';
 import { BeginSurvey } from '../../../../features/survey/survey-completion';
 import { USER_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../../../../features/users/constants';
@@ -19,10 +20,9 @@ export class SurveyCommandAuthGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const req = context.switchToHttp().getRequest<{
-      session?: { userId: string };
+      session?: SessionContainer;
       user?: User;
-      subject?: { id: string };
-      body?: unknown;
+      body?: ICommandFsa;
     }>();
 
     // Any survey command must have a survey command FSA as the body
@@ -34,7 +34,7 @@ export class SurveyCommandAuthGuard implements CanActivate {
      * An `accessCode` is required to execute BEGIN_SURVEY.
      * This code is validated when executing the command.
      */
-    const test = req.body as ICommandFsa;
+    const test = req.body;
 
     if (!test.payload) {
       // every command FSA must have a payload
@@ -76,24 +76,16 @@ export class SurveyCommandAuthGuard implements CanActivate {
       return true;
     }
 
-    if (!req.session?.userId) {
+    if (!req.user) {
       return false;
     }
-
-    const searchResult = await this.userCommandRepository.fetchById(
-      req.session.userId,
-    );
-
-    if (!searchResult) {
-      return false;
-    }
-
-    req.user = searchResult;
 
     /**
      * Nest's abstraction makes composability tough. Note that our use case is
      * highly unique here.
      */
-    return new RbacAuthGuard().canActivate(context);
+    return new AdminRbacAuthGuard(this.userCommandRepository).canActivate(
+      context,
+    );
   }
 }

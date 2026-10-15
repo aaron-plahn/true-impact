@@ -18,6 +18,8 @@ export class TestHttpClient implements Omit<
 
   private readonly cookies = new Map<string, string>();
 
+  private authHeaders = new Map<string, string>();
+
   constructor(clientOrigin: string) {
     this.axiosInstance = axios.create({
       withCredentials: true,
@@ -77,14 +79,14 @@ export class TestHttpClient implements Omit<
     url: string,
     config?: axios.AxiosRequestConfig<D>,
   ): Promise<R> {
-    return this.axiosInstance.get(url, this.configWithCookies(config));
+    return this.axiosInstance.get(url, this.configWithCredentials(config));
   }
 
   delete<T = any, R = axios.AxiosResponse<T, any, Headers>, D = any>(
     url: string,
     config?: axios.AxiosRequestConfig<D>,
   ): Promise<R> {
-    return this.axiosInstance.delete(url, this.configWithCookies(config));
+    return this.axiosInstance.delete(url, this.configWithCredentials(config));
   }
 
   head<T = any, R = axios.AxiosResponse<T, any, Headers>, D = any>(
@@ -106,7 +108,11 @@ export class TestHttpClient implements Omit<
     data?: D,
     config?: axios.AxiosRequestConfig<D>,
   ): Promise<R> {
-    return this.axiosInstance.post(url, data, this.configWithCookies(config));
+    return this.axiosInstance.post<T, R, D>(
+      url,
+      data,
+      this.configWithCredentials(config),
+    );
   }
 
   put<T = any, R = axios.AxiosResponse<T, any, Headers>, D = any>(
@@ -114,7 +120,11 @@ export class TestHttpClient implements Omit<
     data?: D,
     config?: axios.AxiosRequestConfig<D>,
   ): Promise<R> {
-    return this.axiosInstance.put(url, data, this.configWithCookies(config));
+    return this.axiosInstance.put(
+      url,
+      data,
+      this.configWithCredentials(config),
+    );
   }
 
   patch<T = any, R = axios.AxiosResponse<T, any, Headers>, D = any>(
@@ -122,7 +132,11 @@ export class TestHttpClient implements Omit<
     data?: D,
     config?: axios.AxiosRequestConfig<D>,
   ): Promise<R> {
-    return this.axiosInstance.patch(url, data, this.configWithCookies(config));
+    return this.axiosInstance.patch(
+      url,
+      data,
+      this.configWithCredentials(config),
+    );
   }
 
   postForm<T = any, R = axios.AxiosResponse<T, any, Headers>, D = any>(
@@ -149,13 +163,17 @@ export class TestHttpClient implements Omit<
     throw new Error('Method not implemented.');
   }
 
-  private configWithCookies(config: axios.AxiosRequestConfig = {}) {
-    return {
+  private configWithCredentials(config: axios.AxiosRequestConfig = {}) {
+    const Cookie = Array.from(this.cookies.values());
+
+    const newConfig = {
       ...config,
       headers: {
         ...config.headers,
-        Cookie: Array.from(this.cookies.values()),
+        Cookie,
       },
     };
+
+    return newConfig;
   }
 }

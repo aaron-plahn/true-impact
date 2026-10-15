@@ -1,6 +1,6 @@
 import { UseGuards } from '@nestjs/common';
 import { ApiExcludeEndpoint } from '@nestjs/swagger';
-import { AuthenticatedUserGuard, RbacAuthGuard } from '../../../auth/guards';
+import { AdminRbacAuthGuard } from '../../../auth/guards';
 import { Patch } from './patch.decorator';
 
 /**
@@ -15,11 +15,8 @@ export function TestSetupEndpoint(): MethodDecorator {
     ApiExcludeEndpoint()(target, propertyKey, descriptor);
 
     if (process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'e2e') {
-      UseGuards(AuthenticatedUserGuard, RbacAuthGuard)(
-        target,
-        propertyKey,
-        descriptor,
-      );
+      // TODO we need one test that these endpoints are protected for each test setup endpoint
+      UseGuards(AdminRbacAuthGuard)(target, propertyKey, descriptor);
 
       return Patch('test-setup')(target, propertyKey, descriptor);
     }

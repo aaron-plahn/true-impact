@@ -37,7 +37,7 @@ class LoginPage extends Page {
   }
 
   /**
-   * a method to encapsule automation code to interact with the page
+   * a method to encapsulate automation code to interact with the page
    * e.g. to log in using username and password
    */
   public async logIn(username: string, password: string) {

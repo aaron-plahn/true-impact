@@ -7,11 +7,6 @@ export interface IUserCommandRepository {
 
   fetchMany(): Promise<User[] | TrueImpactError>;
 
-  fetchByCredentials(credentials: {
-    username: string;
-    hashedPassword: string;
-  }): Promise<User | null>;
-
   create(instance: User): Promise<PersistenceAcknowledgement | TrueImpactError>;
 
   //   TODO error? Acknowledgement?

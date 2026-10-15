@@ -14,6 +14,8 @@ Given("I have cleared all existing surveys", async () => {
 
   await loginPage.logInAsAdmin();
 
+  await expect(loginPage.avatarMenuControl).toBeExisting();
+
   const browserCookies = await browser.getCookies();
 
   const cookieHeader = browserCookies

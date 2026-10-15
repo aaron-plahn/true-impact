@@ -1,7 +1,11 @@
 import { CanActivate, ExecutionContext, Inject } from '@nestjs/common';
+import * as supertokensRecipeSession from 'supertokens-node/recipe/session';
+import { SURVEY_RESPONSE_AGGREGATE_TYPE } from '../../features/survey/constants';
+import { AnonymousSurveyParticipantUser } from '../../features/survey/survey-completion/models';
 import { USER_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../../features/users/constants';
 import type { IUserCommandRepository } from '../../features/users/repositories';
 import { User } from '../../features/users/user.aggregate-root';
+import { isNonEmptyString } from '../../libs/data-types';
 
 export class OptionalUserGuard implements CanActivate {
   constructor(
@@ -9,32 +13,53 @@ export class OptionalUserGuard implements CanActivate {
     private readonly userCommandRepository: IUserCommandRepository,
   ) {}
 
-  public async canActivate(context: ExecutionContext): Promise<boolean> {
-    const req = context
-      .switchToHttp()
-      .getRequest<{ session?: { userId?: string }; user?: User }>();
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    const ctx = context.switchToHttp();
 
-    if (!req.session?.userId) {
-      /**
-       * The user can activate this endpoint but the controller \ service may
-       * decide to respond differently because the user is a member of the general
-       * public.
-       */
+    const req: { user: User | AnonymousSurveyParticipantUser } =
+      ctx.getRequest();
+    const resp: Response = ctx.getResponse();
+
+    /**
+     * If the session doesn't exist and {sessionRequired: true} is passed to the AuthGuard constructor (default is true),
+     * getSession will throw an error that will be handled by the exception filter, returning a 401 response.
+     */
+
+    const session = await supertokensRecipeSession.getSession(req, resp, {
+      sessionRequired: false,
+    });
+
+    const userId = session?.getUserId();
+
+    if (!isNonEmptyString(userId)) {
       return true;
     }
 
-    const searchResult = await this.userCommandRepository.fetchById(
-      req.session.userId,
-    );
+    const searchResult = await this.userCommandRepository.fetchById(userId);
 
     if (!searchResult) {
-      /**
-       * This is a system error. Some how the userId on the cookie
-       * did not correspond to a member of the general public.
-       * However, we fail gracefully by treating this user as a member of the general public.
-       *
-       * TODO Can we force the client to remove the cookie in this case?
-       */
+      const accessTokenPayload = session?.getAccessTokenPayload() as {
+        subject?: { type: string; id: string };
+      };
+
+      if (accessTokenPayload && accessTokenPayload.subject) {
+        const { type: subjectType, id: subjectId } = accessTokenPayload.subject;
+
+        if (
+          subjectType !== SURVEY_RESPONSE_AGGREGATE_TYPE ||
+          !isNonEmptyString(subjectId)
+        ) {
+          return true;
+        }
+
+        // The session is for survey participation
+        req.user = new AnonymousSurveyParticipantUser({
+          surveyResponseId: subjectId,
+        });
+
+        return true;
+      }
+
       return true;
     }
 

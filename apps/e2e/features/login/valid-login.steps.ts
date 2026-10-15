@@ -7,6 +7,10 @@ const pages = {
   login: loginPage,
 } as const;
 
+Given("I am logged out to begin with", async () => {
+  await browser.deleteAllCookies();
+});
+
 Given("I am on the login page", async () => {
   await pages.login.open();
 });

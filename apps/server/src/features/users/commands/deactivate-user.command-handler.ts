@@ -1,4 +1,5 @@
 import { Inject } from '@nestjs/common';
+import { SupertokensAuthService } from '../../../auth';
 import { CommandResult, ICommandHandler } from '../../../libs/cqrs-es';
 import {
   TrueImpactBadUserInputError,
@@ -10,6 +11,7 @@ import { DeactivateUser } from './deactivate-user.command';
 
 export class DeactivateUserCommandHandler implements ICommandHandler<DeactivateUser> {
   constructor(
+    private readonly authService: SupertokensAuthService,
     @Inject(USER_COMMAND_REPOSITORY_INJECTION_TOKEN)
     private readonly userCommandRepository: IUserCommandRepository,
   ) {}
@@ -26,6 +28,8 @@ export class DeactivateUserCommandHandler implements ICommandHandler<DeactivateU
      * we can always manually append a `USER_REACTIVATED` in the DB to
      * recover from this situation, so we avoid complicated validation of
      * that situation here.
+     *
+     * What if we make this a no-op in case we have a lone admin user?
      */
     const target = await this.userCommandRepository.fetchById(id);
 
@@ -35,6 +39,30 @@ export class DeactivateUserCommandHandler implements ICommandHandler<DeactivateU
           `You cannot deactivate user: [${id}], as there is no such user.`,
         ),
       ]);
+    }
+
+    /**
+     * We have test coverage in `username-password-authentication.scenario.ts`.
+     *
+     * We should add an `integration` test where we put the auth service down
+     * and check that the appropriate error message is returned.
+     */
+    const authProviderDeactivationResult = await this.authService.delete(id);
+
+    /**
+     * The auth service is out-of-process with our internal user service. As such,
+     * we opt for the failure state where the deactivated user can no longer log in
+     * even though they are not marked as deactivated in the database.
+     *
+     * We should resolve this using eventually consistent notifications. Alternatively,
+     * we could use an outbox pattern in the auth DB where the command deletes the user and writes
+     * to an outbox in the auth DB transactionally. A second process would pull from this outbox
+     * and delete the user within our system. We will opt for the former as this situation
+     * should be exceedingly rare given that we will have a small number of users that are rarely deactivated
+     * for our current use-case.
+     */
+    if (authProviderDeactivationResult instanceof Error) {
+      return authProviderDeactivationResult;
     }
 
     const updateResult = target.deactivate();
