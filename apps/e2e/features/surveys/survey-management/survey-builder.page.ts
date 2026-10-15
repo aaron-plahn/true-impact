@@ -69,6 +69,9 @@ class SurveyManagementIndexPage extends Page {
   public async goToResponsePage() {
     await $("#copyAccessCode").click();
 
+    /**
+     * If we click this, it opens in a new tab.
+     */
     const responsePageLink = await $("#surveyResponseLink");
 
     const responsePageUrl = await responsePageLink.getAttribute("href");
@@ -78,6 +81,12 @@ class SurveyManagementIndexPage extends Page {
         `The test has failed because the link element with ID #surveyResponseLink is missing an href attribute`,
       );
     }
+
+    /**
+     * We are simulating the effect of following the link.
+     * We need a second test that proves that clicking the link logs the user out in the original tab.
+     */
+    await browser.deleteAllCookies();
 
     await browser.url(responsePageUrl);
   }

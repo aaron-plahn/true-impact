@@ -30,22 +30,6 @@ export const importSurvey = async (
 
     const fixtureData = JSON.parse(rawData);
 
-    const adminUser = process.env.SYSTEM_ADMIN_USERNAME;
-
-    if (!adminUser) {
-      throw new Error(
-        `You need to set $SYSTEM_ADMIN_USERNAME in your test environment.`,
-      );
-    }
-
-    const adminPassword = process.env.INITIAL_ADMIN_PASSWORD;
-
-    if (!adminPassword) {
-      throw new Error(
-        `You need to set $INITIAL_ADMIN_PASSWORD in your test environment.`,
-      );
-    }
-
     const apiDomain = process.env.API_DOMAIN;
 
     if (!apiDomain) {

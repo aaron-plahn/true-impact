@@ -1,4 +1,10 @@
-import { createContext, ReactNode, useContext, useState } from "react";
+import {
+  createContext,
+  ReactNode,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import { config } from "../config";
 
 interface AppCredentials {
@@ -35,9 +41,39 @@ interface AuthProviderProps {
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<UserSessionInfo | null>(null);
 
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [error, setError] = useState<AuthError | null>(null);
+
+  useEffect(() => {
+    const checkForSession = async () => {
+      try {
+        const userProfileResponse = await fetch(
+          `${config.API_URL}/users/who-am-i`,
+          {
+            method: "GET",
+            credentials: "include",
+          },
+        );
+
+        const userProfileResponseData = await userProfileResponse.json();
+
+        if (!userProfileResponse.ok) {
+          setUser(null);
+
+          return;
+        }
+
+        setUser(userProfileResponseData);
+      } catch (error) {
+        setUser(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkForSession();
+  }, []);
 
   const doesSessionExist = user !== null;
 
@@ -82,14 +118,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         },
       );
 
+      const userProfileResponseData =
+        (await userProfileResponse.json()) as UserSessionInfo;
+
       if (!userProfileResponse.ok) {
         throw new Error(`Failed to fetch user profile.`);
       }
 
-      const userProfileData =
-        (await userProfileResponse.json()) as UserSessionInfo;
-
-      setUser(userProfileData);
+      setUser(userProfileResponseData);
 
       setIsLoading(false);
 

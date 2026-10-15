@@ -1,6 +1,6 @@
+import { UseGuards } from '@nestjs/common';
 import { ApiExcludeEndpoint } from '@nestjs/swagger';
 import { AdminRbacAuthGuard } from '../../../auth/guards';
-import { UseGuards } from '../../../libs/framework';
 import { Patch } from './patch.decorator';
 
 /**

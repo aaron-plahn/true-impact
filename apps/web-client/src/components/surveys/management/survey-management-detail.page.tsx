@@ -1,6 +1,7 @@
 import { Stack, Typography } from "@mui/material";
 import { JSX } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+import { useAuth } from "../../../auth";
 import { config } from "../../../config";
 import {
   AddOptionToSurveyQuestionCommandForm,
@@ -17,6 +18,20 @@ import { AccessCodeClipboard } from "./access-code-clipboard";
 
 export const SurveyManagementDetailPage = (): JSX.Element => {
   const { id } = useParams();
+
+  const auth = useAuth();
+
+  const navigate = useNavigate();
+
+  const logOutIfLoggedIn = () => {
+    if (!auth) {
+      return;
+    }
+
+    auth.logOut().then(() => {
+      navigate("/");
+    });
+  };
 
   /**
    * TypeScript and React conflict here. TypeScript prefers for us to null-check
@@ -47,8 +62,6 @@ export const SurveyManagementDetailPage = (): JSX.Element => {
   const isEditable = !isFinal;
 
   const shouldShowOpenAccessButton = isFinal && !accessCode && !isOpenToPublic;
-
-  console.log({ keystone: config.KEYSTONE_EXCLUDES });
 
   const shouldShowOpenToPublicButton =
     isFinal &&
@@ -149,7 +162,13 @@ export const SurveyManagementDetailPage = (): JSX.Element => {
         />
       ) : null}
       {accessCode ? (
-        <AccessCodeClipboard accessCode={accessCode} attemptId={id || ""} />
+        <AccessCodeClipboard
+          accessCode={accessCode}
+          attemptId={id || ""}
+          onFollowLink={() => {
+            logOutIfLoggedIn();
+          }}
+        />
       ) : null}
       {!isFinal ? (
         <CommandExecutor

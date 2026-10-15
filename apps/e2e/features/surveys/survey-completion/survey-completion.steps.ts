@@ -5,26 +5,13 @@ import { surveyManagementIndexPage } from "../survey-management/survey-builder.p
 import { surveyCompletionPage } from "./survey-completion.page";
 
 Given("There is a survey named {string}", async (surveyName) => {
+  await browser.deleteAllCookies();
+
   await loginPage.open();
 
-  const adminUsername = process.env.SYSTEM_ADMIN_USERNAME as string;
+  await loginPage.logInAsAdmin();
 
-  if (!adminUsername) {
-    throw new Error(
-      `Failed to read admin username for e2e test. Did you set $SYSTEM_ADMIN_USERNAME?`,
-    );
-  }
-
-  const adminPassword = process.env.INITIAL_ADMIN_PASSWORD as string;
-
-  if (!adminPassword) {
-    throw new Error(
-      `Failed to read admin password for e2e test. Did you set $INITIAL_ADMIN_PASSWORD?`,
-    );
-  }
-
-  // TODO Can we change the step to "Given I am logged in as admin"?
-  await loginPage.logIn(adminUsername, adminPassword);
+  await expect(loginPage.avatarMenuControl).toBeExisting();
 
   await surveyManagementIndexPage.open();
 
@@ -58,8 +45,8 @@ Given("I am on the survey response page", async () => {
   await surveyManagementIndexPage.goToResponsePage();
 });
 
-When("I begin the survey {string}", async (surveyName: string) => {
-  await surveyCompletionPage.beginSurvey(surveyName);
+When("I begin the survey {string}", async (_surveyName: string) => {
+  await surveyCompletionPage.beginSurvey();
 });
 
 Then(
@@ -92,6 +79,10 @@ When("I submit the survey", async () => {
 
   // Ensure that sucessfully submitting the survey logs the user out of the session
   expect(cookies).toHaveLength(0);
+});
+
+When("I refresh at the home screen", () => {
+  browser.url("http://localhost:4200");
 });
 
 Then(

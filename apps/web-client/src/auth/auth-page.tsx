@@ -20,7 +20,6 @@ export const AuthPage = (): JSX.Element => {
   }
 
   if (user) {
-
     navigate("/");
   }
 

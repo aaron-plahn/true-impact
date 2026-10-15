@@ -1,9 +1,12 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { UserRole } from 'src/features/users/types';
+import { Request } from 'express';
 import * as supertokensRecipeSession from 'supertokens-node/recipe/session';
+import { AnonymousSurveyParticipantUser } from '../../features/survey/survey-completion/models';
 import { USER_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../../features/users/constants';
 import { type IUserCommandRepository } from '../../features/users/repositories';
+import { UserRole } from '../../features/users/types';
+import { User } from '../../features/users/user.aggregate-root';
 import { isNonEmptyString } from '../../libs/data-types';
 import {
   CanActivate,
@@ -25,7 +28,9 @@ export class AdminRbacAuthGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const ctx = context.switchToHttp();
 
-    const req = ctx.getRequest();
+    const req = ctx.getRequest<
+      Request & { user: User | AnonymousSurveyParticipantUser }
+    >();
     const resp = ctx.getResponse();
 
     /**
