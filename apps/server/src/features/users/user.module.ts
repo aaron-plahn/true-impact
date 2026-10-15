@@ -1,9 +1,15 @@
 import { Module, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ModuleRef } from '@nestjs/core';
+import { EventFactory } from 'src/postgresql/event-factory';
 import { InMemoryQueryRepository } from '../../common/persistence';
 import { EncryptionService } from '../../libs/auth';
-import { CommandHandlerService } from '../../libs/cqrs-es';
+import {
+  CommandHandlerService,
+  EVENT_REPOSITORY_INJECTION_TOKEN,
+  EventSourcedCommandRepository,
+  IEventRepository,
+} from '../../libs/cqrs-es';
 import {
   TrueImpactError,
   TrueImpactRuntimeException,
@@ -15,10 +21,12 @@ import {
   DeactivateUserCommandHandler,
   GrantUserRole,
   GrantUserRoleCommandHandler,
+  UserDeactivated,
+  UserGrantedRole,
+  UserWithPasswordCreated,
 } from './commands';
 import { UserCommandController } from './commands/user-command.controller';
 import {
-  USER_AGGREGATE_TYPE,
   USER_COMMAND_REPOSITORY_INJECTION_TOKEN,
   USER_QUERY_REPOSITORY_INJECTION_TOKEN,
 } from './constants';
@@ -26,7 +34,8 @@ import { UserViewModel } from './queries';
 import { UserQueryController } from './queries/user-query.controller';
 import { UserQueryService } from './queries/user-query.service';
 import type { IUserCommandRepository } from './repositories';
-import { InMemoryUserCommandRepository } from './repositories/in-memory-user-command.repository';
+import { User } from './user.aggregate-root';
+import { USER_AGGREGATE_TYPE } from './user.composite-identifier';
 
 @Module({
   providers: [
@@ -35,10 +44,41 @@ import { InMemoryUserCommandRepository } from './repositories/in-memory-user-com
       useFactory: () => new InMemoryQueryRepository(UserViewModel),
     },
     {
+      /**
+       * CLEAR will cause trouble if it removes the bootstrapped
+       * initial system admin. We probably shouldn't ever
+       * remove users in tests, but instead create one user of every
+       * desired identity.
+       */
       provide: USER_COMMAND_REPOSITORY_INJECTION_TOKEN,
-      useFactory: (configService: ConfigService) =>
-        new InMemoryUserCommandRepository(new Map(), configService),
-      inject: [ConfigService],
+      useFactory: (
+        eventRepository: IEventRepository,
+        eventFactory: EventFactory,
+      ) => {
+        eventFactory
+          .register('USER_WITH_PASSWORD_CREATED', (doc) =>
+            UserWithPasswordCreated.fromPersistenceDto(
+              doc as unknown as UserWithPasswordCreated,
+            ),
+          )
+          .register('USER_GRANTED_ROLE', (doc) =>
+            UserGrantedRole.fromPersistenceDto(
+              doc as unknown as UserGrantedRole,
+            ),
+          )
+          .register('USER_DEACTIVATED', (doc) =>
+            UserDeactivated.fromPersistenceDto(
+              doc as unknown as UserDeactivated,
+            ),
+          );
+
+        return new EventSourcedCommandRepository(
+          eventRepository,
+          USER_AGGREGATE_TYPE,
+          (eventHistory) => User.fromEventHistory(eventHistory),
+        );
+      },
+      inject: [EVENT_REPOSITORY_INJECTION_TOKEN, EventFactory],
     },
     {
       provide: CommandHandlerService,

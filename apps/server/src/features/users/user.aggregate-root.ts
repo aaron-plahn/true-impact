@@ -1,17 +1,21 @@
+import { DomainEvent, EventPayload } from 'src/libs/cqrs-es';
 import { FullName, FullNameDto } from '../../common/full-name';
 import {
-  AggregateRoot,
   BooleanDataType,
-  Entity,
   EnumeratedType,
+  EventSourcedAggregateRoot,
   NestedDataType,
   NonEmptyString,
   NonNegativeInteger,
   TrueImpactError,
   UpdateMethod,
 } from '../../libs/data-types';
-import { USER_AGGREGATE_TYPE } from './constants';
+import { UserDeactivated, UserWithPasswordCreated } from './commands';
+import { UserGrantedRole } from './commands/grant-user-role/user-granted-role.event';
 import { userRoleValuesAndLabels, type UserRole } from './types';
+import { USER_AGGREGATE_TYPE } from './user.composite-identifier';
+
+const DEFAULT_ROLE: UserRole = 'employee';
 
 export class UserPersistenceDto {
   id: string;
@@ -25,7 +29,9 @@ export class UserPersistenceDto {
   fullName: FullNameDto;
 }
 
-export class User extends AggregateRoot<UserPersistenceDto> {
+export class User extends EventSourcedAggregateRoot {
+  type: string;
+  eventHistory: DomainEvent<EventPayload>[];
   static readonly type = USER_AGGREGATE_TYPE;
 
   @NonEmptyString({
@@ -160,10 +166,20 @@ export class User extends AggregateRoot<UserPersistenceDto> {
       );
     }
 
-    /**
-     * Where do we validate the allowed values of the user role?
-     */
-    this.role = newRole;
+    // TODO be sure there is a test case for when an invalid role is used
+
+    return this.apply(
+      new UserGrantedRole({
+        payload: {
+          aggregateCompositeIdentifier: this.getCompositeIdentifier(),
+          role: newRole,
+        },
+      }),
+    );
+  }
+
+  handleUserGrantedRole({ payload: { role } }: UserGrantedRole) {
+    this.role = role;
 
     return this;
   }
@@ -176,15 +192,64 @@ export class User extends AggregateRoot<UserPersistenceDto> {
       );
     }
 
+    return this.apply(
+      new UserDeactivated({
+        payload: {
+          aggregateCompositeIdentifier: this.getCompositeIdentifier(),
+        },
+      }),
+    );
+  }
+
+  handleUserDeactivated(_: UserDeactivated) {
     this.isActive = false;
 
     return this;
   }
 
+  static fromUserWithPasswordCreated(event: UserWithPasswordCreated) {
+    const {
+      payload: {
+        aggregateCompositeIdentifier: { id },
+        username,
+        // role,
+        fullName,
+        // TODO do this
+        // email,
+        hashedPassword,
+      },
+    } = event;
+
+    const instance = new User({
+      id,
+      username,
+      role: DEFAULT_ROLE,
+      hashedPassword,
+      isActive: false,
+      email: 'TODO@todo.org',
+      hasEmailBeenValidated: false,
+      revision: 1,
+      fullName: FullName.fromDto(fullName),
+    });
+
+    instance.eventHistory.push(event);
+
+    return instance.validateInvariants();
+  }
+
+  static fromEventHistory(
+    eventHistory: Iterable<DomainEvent>,
+  ): EventSourcedAggregateRoot | TrueImpactError | null {
+    return EventSourcedAggregateRoot.fromEventHistory.call(
+      User,
+      eventHistory,
+    ) as User;
+  }
+
   static fromPersistenceDto(
     dto: UserPersistenceDto,
     buildOptions?: { shouldValidate?: boolean },
-  ): Entity | TrueImpactError {
+  ): User | TrueImpactError {
     const {
       id,
       hashedPassword,

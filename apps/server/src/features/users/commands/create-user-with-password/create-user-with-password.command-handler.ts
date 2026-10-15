@@ -1,11 +1,11 @@
 import { randomUUID } from 'node:crypto';
-import { EncryptionService } from '../../../libs/auth';
-import { CommandResult, ICommandHandler } from '../../../libs/cqrs-es';
-import { TrueImpactError } from '../../../libs/data-types';
-import { Inject } from '../../../libs/framework';
-import { USER_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../constants';
-import type { IUserCommandRepository } from '../repositories';
-import { User } from '../user.aggregate-root';
+import { EncryptionService } from '../../../../libs/auth';
+import { CommandResult, ICommandHandler } from '../../../../libs/cqrs-es';
+import { TrueImpactError } from '../../../../libs/data-types';
+import { Inject } from '../../../../libs/framework';
+import { USER_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../../constants';
+import type { IUserCommandRepository } from '../../repositories';
+import { User } from '../../user.aggregate-root';
 import { CreateUserWithPassword } from './create-user-with-password.command';
 
 export class CreateUserWithPasswordCommandHandler implements ICommandHandler<CreateUserWithPassword> {

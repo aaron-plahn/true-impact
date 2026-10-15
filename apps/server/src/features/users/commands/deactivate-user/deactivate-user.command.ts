@@ -1,9 +1,11 @@
 import {
   NestedDataType,
   TrueImpactDataExample,
-} from '../../../libs/data-types';
-import { USER_AGGREGATE_TYPE } from '../constants';
-import { UserCompositeIdentifier } from '../user.composite-identifier';
+} from '../../../../libs/data-types';
+import {
+  USER_AGGREGATE_TYPE,
+  UserCompositeIdentifier,
+} from '../../user.composite-identifier';
 
 @TrueImpactDataExample<DeactivateUser>({
   example: {

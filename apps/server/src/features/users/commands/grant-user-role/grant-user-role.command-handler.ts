@@ -1,11 +1,11 @@
-import { CommandResult, ICommandHandler } from '../../../libs/cqrs-es';
+import { CommandResult, ICommandHandler } from '../../../../libs/cqrs-es';
 import {
   TrueImpactBadUserInputError,
   TrueImpactError,
-} from '../../../libs/data-types';
-import { Inject } from '../../../libs/framework';
-import { USER_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../constants';
-import type { IUserCommandRepository } from '../repositories';
+} from '../../../../libs/data-types';
+import { Inject } from '../../../../libs/framework';
+import { USER_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../../constants';
+import type { IUserCommandRepository } from '../../repositories';
 import { GrantUserRole } from './grant-user-role.command';
 
 export class GrantUserRoleCommandHandler implements ICommandHandler<GrantUserRole> {
