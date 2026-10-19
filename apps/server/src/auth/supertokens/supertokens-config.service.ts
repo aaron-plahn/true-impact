@@ -53,7 +53,7 @@ export class SupertokensConfigService implements SuperTokensModuleOptionsFactory
         connectionURI: this.configService.get(
           'SUPERTOKENS_CONNECTION_URI',
           'http://supertokens:3567',
-        ), // TODO force the tenant ID to be `public` just to be safe? (even though we use single-tenancy)
+        ), // note that we currently are assuming single tenancy with the default ('public') tenant. As such have not explicitly included the tenant here.
         apiKey,
       },
       appInfo: {
@@ -91,6 +91,10 @@ export class SupertokensConfigService implements SuperTokensModuleOptionsFactory
 
                   return result;
                 },
+                /**
+                 * We do not want arbitrary public users to be able to sing up without an invite \ admin approval.
+                 */
+                signUpPOST: undefined,
               };
             },
           },

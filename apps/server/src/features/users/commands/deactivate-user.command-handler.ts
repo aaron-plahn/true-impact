@@ -41,6 +41,19 @@ export class DeactivateUserCommandHandler implements ICommandHandler<DeactivateU
       ]);
     }
 
+    const updateResult = target.deactivate();
+
+    if (updateResult instanceof Error) {
+      return updateResult;
+    }
+
+    const persistenceResult =
+      await this.userCommandRepository.update(updateResult);
+
+    if (persistenceResult instanceof Error) {
+      return persistenceResult;
+    }
+
     /**
      * We have test coverage in `username-password-authentication.scenario.ts`.
      *
@@ -51,8 +64,12 @@ export class DeactivateUserCommandHandler implements ICommandHandler<DeactivateU
 
     /**
      * The auth service is out-of-process with our internal user service. As such,
-     * we opt for the failure state where the deactivated user can no longer log in
-     * even though they are not marked as deactivated in the database.
+     * we opt for the failure state where the user is deactivated in our database,
+     * though active in the auth provider. Our auth middleware will return no user in this case.
+     *
+     * We choose this failure state over the alternative because we don't want the user to be visible to
+     * other users. Also, this approach allows us to move to an outbox pattern within our own users (domain) database
+     * instead of the supertokens DB, which is harder to customize.l
      *
      * We should resolve this using eventually consistent notifications. Alternatively,
      * we could use an outbox pattern in the auth DB where the command deletes the user and writes
@@ -64,15 +81,6 @@ export class DeactivateUserCommandHandler implements ICommandHandler<DeactivateU
     if (authProviderDeactivationResult instanceof Error) {
       return authProviderDeactivationResult;
     }
-
-    const updateResult = target.deactivate();
-
-    if (updateResult instanceof Error) {
-      return updateResult;
-    }
-
-    const persistenceResult =
-      await this.userCommandRepository.update(updateResult);
 
     return persistenceResult;
   }

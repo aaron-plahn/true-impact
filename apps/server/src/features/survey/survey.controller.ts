@@ -386,10 +386,6 @@ export class SurveyController implements OnModuleInit {
     delete (req as unknown as { user: unknown }).user;
 
     await session?.revokeSession();
-
-    // @ts-expect-error FIX types
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-    await req?.session?.revokeSession();
   }
 
   onModuleInit() {
