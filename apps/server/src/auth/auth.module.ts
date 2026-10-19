@@ -1,6 +1,7 @@
 import { DynamicModule, Module } from '@nestjs/common';
 import { SuperTokensModuleAsyncOptions } from 'node_modules/supertokens-nestjs/dist/supertokens.types';
 import { SuperTokensModule } from 'supertokens-nestjs';
+import { AuthController } from './auth.controller';
 import { SupertokensAuthService } from './supertokens';
 
 @Module({
@@ -8,7 +9,7 @@ import { SupertokensAuthService } from './supertokens';
   providers: [],
   exports: [],
 
-  controllers: [],
+  controllers: [AuthController],
 })
 export class AuthModule {
   static forRootAsync(options: SuperTokensModuleAsyncOptions): DynamicModule {

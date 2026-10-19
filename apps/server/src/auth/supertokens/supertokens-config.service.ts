@@ -1,4 +1,3 @@
-import { UnauthorizedException } from '@nestjs/common';
 import {
   SuperTokensModuleOptions,
   SuperTokensModuleOptionsFactory,
@@ -59,7 +58,11 @@ export class SupertokensConfigService implements SuperTokensModuleOptionsFactory
       appInfo: {
         appName: 'True Impact Authentication Server',
         apiDomain: `${this.configService.get('API_DOMAIN', 'http://localhost')}:${this.configService.get('API_PORT', 3001)}`,
-        apiBasePath: '/auth',
+        /**
+         * We implement a custom Auth Controller at `/auth` to take fine-grained controll of the auth process. We don't
+         * want the default (magical) Supertokens implementation to interfere.
+         */
+        apiBasePath: 'supertokens', // '/auth',
         origin: `${this.configService.get('CLIENT_DOMAIN', 'http://localhost')}:${this.configService.get('CLIENT_PORT', 8080)}`,
         // We use a custom login UX, so the following is not necessary.
         // websiteDomain: 'http://localhost:4200',
@@ -75,22 +78,9 @@ export class SupertokensConfigService implements SuperTokensModuleOptionsFactory
             apis: (originalImplementation) => {
               return {
                 ...originalImplementation,
-                // TODO adapt this to our existing API
-                signInPOST: async function (input) {
-                  if (typeof originalImplementation.signInPOST !== 'function') {
-                    throw new Error(
-                      `Unexpected error when configuring Supertokens. signInPOST was missing a default implementation.`,
-                    );
-                  }
-
-                  const result = await originalImplementation.signInPOST(input);
-
-                  if (result.status !== 'OK') {
-                    throw new UnauthorizedException();
-                  }
-
-                  return result;
-                },
+                // We have implemented our own Supertokens controller in order to customize the APIs and easily wire up documentation.
+                signInPost: undefined,
+                signOutPost: undefined,
                 /**
                  * We do not want arbitrary public users to be able to sing up without an invite \ admin approval.
                  */

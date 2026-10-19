@@ -40,18 +40,18 @@ const buildSigninDto = ({
   username: string;
   password: string;
 }) => ({
-  // username,
-  // password,
-  formFields: [
-    {
-      id: 'email',
-      value: username,
-    },
-    {
-      id: 'password',
-      value: password,
-    },
-  ],
+  username,
+  password,
+  // formFields: [
+  //   {
+  //     id: 'email',
+  //     value: username,
+  //   },
+  //   {
+  //     id: 'password',
+  //     value: password,
+  //   },
+  // ],
 });
 
 const httpClientForTestRuns = new TestHttpClient('http://localhost:4200');
@@ -109,9 +109,11 @@ describe(`When loging in with a username and password (without Multi-factor Auth
             throw Error(`Test failed to post to login. ${e}`);
           });
 
-        const _foo = response.headers['set-cookie'];
+        const setCookieHeaders = response.headers['set-cookie'];
 
-        expect(response.status).toBe(HttpStatus.OK);
+        expect(setCookieHeaders).toBeTruthy();
+
+        expect(response.status).toBe(HttpStatus.CREATED);
 
         const result = (await client.get(sessionEndpoint)).data as {
           username: string;
@@ -122,7 +124,7 @@ describe(`When loging in with a username and password (without Multi-factor Auth
         const logoutResult = await client.post(logOutEndpoint);
 
         // This should really be `201 [CREATED]` because the user is creating a session. Supertokens doesn't adhere to HTTP standards, but we should wrap it to do so.
-        expect(logoutResult.status).toBe(HttpStatus.OK);
+        expect(logoutResult.status).toBe(HttpStatus.CREATED);
 
         const unauthenticatedSessionAccessResult = await client
           .get(sessionEndpoint)
@@ -138,20 +140,18 @@ describe(`When loging in with a username and password (without Multi-factor Auth
 
     describe(`when the credentials are not correct`, () => {
       it(`should return unauthorized`, async () => {
+        const dto = buildSigninDto({
+          username: testUsername,
+          password: bogusPassword,
+        });
+
         const response = await axios
-          .post(
-            logInEndpoint,
-            buildSigninDto({
-              username: testUsername,
-              password: bogusPassword,
-            }),
-            {
-              headers: {
-                rid: 'emailpassword',
-                'st-auth-mode': 'header',
-              },
+          .post(logInEndpoint, dto, {
+            headers: {
+              rid: 'emailpassword',
+              'st-auth-mode': 'header',
             },
-          )
+          })
           .catch((e: { status: HttpStatus; response: { data: unknown } }) => {
             return {
               status: e.status,

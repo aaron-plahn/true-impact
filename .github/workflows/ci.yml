@@ -99,6 +99,7 @@ jobs:
           INITIAL_ADMIN_PASSWORD: ${{ secrets.INITIAL_ADMIN_PASSWORD }}
         run: |
           yarn run jest --runInBand
+      # is --runInBand still necessary?
         working-directory: ./apps/server
       # Teardown isn't necessary because this job runs in an ephemeral container
       # - if: always()

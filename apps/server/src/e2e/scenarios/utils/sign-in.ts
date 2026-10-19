@@ -25,19 +25,19 @@ export const signIn = async (
     .post<Record<string, unknown>>(
       logInEndpoint,
       {
-        // username,
-        // password,
-        formFields: [
-          {
-            // TODO can't this be username instead?
-            id: 'email',
-            value: username,
-          },
-          {
-            id: 'password',
-            value: password,
-          },
-        ],
+        username,
+        password,
+        // formFields: [
+        //   {
+        //     // TODO can't this be username instead?
+        //     id: 'email',
+        //     value: username,
+        //   },
+        //   {
+        //     id: 'password',
+        //     value: password,
+        //   },
+        // ],
       },
       {
         headers: {
@@ -53,7 +53,7 @@ export const signIn = async (
       };
     });
 
-  expect(result.status).toBe(HttpStatus.OK);
+  expect(result.status).toBe(HttpStatus.CREATED);
 
   expect((result.data as { status?: string })?.status).not.toBe('FIELD_ERROR');
 
