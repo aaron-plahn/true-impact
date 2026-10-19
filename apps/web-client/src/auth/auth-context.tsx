@@ -91,7 +91,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         headers: {
           "Content-Type": "application/json",
         },
-        // body: JSON.stringify(credentials),
+        /**
+         * This is Supertoken's API. In the future, we should wrap this in the
+         * back-end in favor of a more natural `{username: string, password: string}` DTO structure.
+         */
         body: JSON.stringify({
           formFields: [
             {

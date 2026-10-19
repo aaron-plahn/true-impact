@@ -54,19 +54,6 @@ const buildSigninDto = ({
   ],
 });
 
-//   ({
-//   formFields: [
-//     {
-//       id: 'email',
-//       value: username,
-//     },
-//     {
-//       id: 'password',
-//       value: password,
-//     },
-//   ],
-// });
-
 const httpClientForTestRuns = new TestHttpClient('http://localhost:4200');
 
 describe(`When loging in with a username and password (without Multi-factor Authentication enabled)`, () => {
@@ -109,7 +96,7 @@ describe(`When loging in with a username and password (without Multi-factor Auth
        * We might verify this at the `e2e` level by providing an addtional
        * endpoint that the current user can use to view their profile.
        */
-      it.only(`should succeed and set the user ID on the session`, async () => {
+      it(`should succeed and set the user ID on the session`, async () => {
         const response = await client
           .post(
             logInEndpoint,
@@ -180,10 +167,13 @@ describe(`When loging in with a username and password (without Multi-factor Auth
   describe(`when the request is invalidly formatted`, () => {
     it(`should return the expected error`, async () => {
       const response = await axios
-        .post(logInEndpoint, {
-          username: testUsername,
-          password: testPassword,
-        })
+        .post(
+          logInEndpoint,
+          buildSigninDto({
+            username: testUsername,
+            password: testPassword,
+          }),
+        )
         .catch((e: { status: HttpStatus; response: { data: unknown } }) => {
           return {
             status: e.status,
@@ -191,9 +181,9 @@ describe(`When loging in with a username and password (without Multi-factor Auth
           };
         });
 
-      expect(response.status).toBe(HttpStatus.BAD_REQUEST);
+      expect(response.status).toBe(HttpStatus.UNAUTHORIZED);
 
-      // TODO check error message
+      expect(JSON.stringify(response.data)).toContain('Unauthorized');
     });
   });
 

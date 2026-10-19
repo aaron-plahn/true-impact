@@ -52,9 +52,6 @@ export class CreateUserWithPasswordCommandHandler implements ICommandHandler<Cre
       email,
       firstName,
       lastName,
-      /**
-       * TODO use a random uuid and append an `AuthToken`?
-       */
       id,
     });
 

@@ -107,7 +107,6 @@ export class SurveyController implements OnModuleInit {
    * a read-only state for certain deployment strategies or maintenance windows.
    */
   // TODO @CommandExecutionEndpoint()
-  // @UseGuards(AuthenticatedUserGuard, RbacAuthGuard)
   @UseGuards(OptionalUserGuard, SurveyCommandAuthGuard)
   @Post('commands')
   async executeCommand(
@@ -222,10 +221,7 @@ export class SurveyController implements OnModuleInit {
               {
                 subject,
               },
-              // TODO use this only on the JWT or in the session DB
-              {
-                subject,
-              },
+              // We put the data only on the JWT for short-lived survey completion sessions
             );
           }
         } catch (_error) {

@@ -1,8 +1,4 @@
-import {
-  AdminRbacAuthGuard,
-  AuthenticatedUserGuard,
-  AuthGuard,
-} from '../../auth/guards';
+import { AdminRbacAuthGuard } from '../../auth/guards';
 import type { ICommandFsa } from '../../libs/cqrs-es';
 import { CommandHandlerService, CommandResult } from '../../libs/cqrs-es';
 import {
@@ -47,11 +43,7 @@ export class CommunityController implements OnModuleInit {
     return result;
   }
 
-  @UseGuards(
-    new AuthGuard({ sessionRequired: false }),
-    AuthenticatedUserGuard,
-    AdminRbacAuthGuard,
-  )
+  @UseGuards(AdminRbacAuthGuard)
   @DetailQueryEndpoint()
   async fetchById(
     @IdParam() id: string,
@@ -61,11 +53,7 @@ export class CommunityController implements OnModuleInit {
     return result;
   }
 
-  @UseGuards(
-    new AuthGuard({ sessionRequired: false }),
-    AuthenticatedUserGuard,
-    AdminRbacAuthGuard,
-  )
+  @UseGuards(AdminRbacAuthGuard)
   @IndexQueryEndpoint()
   async fetchMany(): Promise<CommunityViewModelClientDto[] | TrueImpactError> {
     const result = await this.communityQueryService.fetchMany();

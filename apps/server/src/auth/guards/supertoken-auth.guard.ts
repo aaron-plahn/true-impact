@@ -7,6 +7,10 @@ import {
   Injectable,
 } from '../../libs/framework';
 
+/**
+ * We are not currently using this approach except for in the `who-am-i` endpoint. But if we end up needing several auth guards, we
+ * migth want to have one that is customizable in their place.
+ */
 @Injectable()
 export class AuthGuard implements CanActivate {
   constructor(

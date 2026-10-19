@@ -23,8 +23,4 @@ export class AnonymousSurveyParticipantUser {
   constructor({ surveyResponseId }: { surveyResponseId: string }) {
     this.surveyResponseId = surveyResponseId;
   }
-
-  canWrite(surveyResponseId: string): boolean {
-    return surveyResponseId === this.surveyResponseId;
-  }
 }

@@ -23,6 +23,12 @@ export class SupertokensAuthService {
     }
   }
 
+  /**
+   * Do we want to expose the password at this level? The admin user shouldn't be aware of
+   * any initial placeholder password. We can either
+   * 1. Generate a random password in the command handler and not expose this on the command payload.
+   * 2. Generate a random password at the present level or lower (Supertokens)?
+   */
   async signUp({
     username,
     password,
@@ -34,8 +40,14 @@ export class SupertokensAuthService {
       'public',
       username,
       password,
-      // session ?
-      // userContext ?
+      /**
+       * Note that we don't directly expose this to end users. This method is
+       * used in a command handler (only available to admin users). As such,
+       * the user on the request is the admin user, not the new user. A newly
+       * added users will have to be notified and sign-in to a separate session.
+       */
+      // session
+      // userContext
     );
 
     if (signUpResult.status !== 'OK') {
