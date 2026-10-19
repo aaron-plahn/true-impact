@@ -22,6 +22,8 @@ Given("I am logged in as an admin", async () => {
   await loginPage.open();
 
   await loginPage.logInAsAdmin();
+
+  await expect(loginPage.logoutIcon).toBeExisting();
 });
 
 Given("I am on the survey management index page", async () => {

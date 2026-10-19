@@ -3,8 +3,10 @@ import { Then, When } from "@wdio/cucumber-framework";
 import loginPage from "./login.page.js";
 
 When(
-  "I enter invalid credentials: username {string}, password {string}",
+  "I submit invalid credentials: username {string}, password {string}",
   async (username, password) => {
+    await browser.deleteCookies();
+
     await loginPage.logIn(username, password);
   },
 );

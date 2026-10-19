@@ -1,7 +1,6 @@
 import { DomainEvent } from '../../../../libs/cqrs-es';
 import {
   BooleanDataType,
-  buildTestInstance,
   Entity,
   EventSourcedAggregateRoot,
   InvariantValidationError,
@@ -165,9 +164,11 @@ export class SurveyResponseRecordPersistenceDto {
   nextQuestionLabel: string | undefined;
 }
 
-const testSurveyExample = buildTestInstance(Survey, {
-  isFinal: false,
-});
+const testSurveyExample = {} as unknown as SurveyPersistenceDto;
+
+// buildTestInstance(Survey, {
+//   isFinal: false,
+// });
 
 @TrueImpactDataExample<SurveyResponseRecordPersistenceDto>({
   example: {
@@ -176,7 +177,7 @@ const testSurveyExample = buildTestInstance(Survey, {
     /**
      * TODO Can `buildTestInstance` use the schema to recurse on missing nested properties?
      */
-    survey: testSurveyExample.toPersistenceDto(),
+    survey: testSurveyExample,
     hasBeenAbandoned: false,
     hasBeenCancelled: false,
     hasBeenSubmitted: false,

@@ -8,11 +8,13 @@ import { ClearAccessCodeButton } from "./clear-access-button";
 interface AccessCodeClipboardProps {
   attemptId: string;
   accessCode: string;
+  onFollowLink: () => void;
 }
 
 export const AccessCodeClipboard = ({
   attemptId,
   accessCode,
+  onFollowLink,
 }: AccessCodeClipboardProps): JSX.Element => {
   const copyCodeToKeyboard = async () => {
     try {
@@ -47,6 +49,9 @@ export const AccessCodeClipboard = ({
           href={surveyParticipationLink}
           rel="noopener noreferrer"
           target="_blank"
+          onClick={() => {
+            onFollowLink();
+          }}
         >
           Survey Link
         </a>

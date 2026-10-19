@@ -11,6 +11,7 @@ Feature: Access to survey review routes should depend on the user
         # We are less concerned about admin trying to directly load routes because this is not currently an intended use case
 
         Scenario: A public user should not see survey review on the main menu
+                Given I am a public user
                 Given I am on the home page
                 When I load the home page
                 And I open the menu

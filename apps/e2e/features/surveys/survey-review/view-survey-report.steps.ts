@@ -47,6 +47,9 @@ When(
 
     await loginPage.logInAsAdmin();
 
+    // avoid a race-condition by waiting for the login response to load
+    await expect(loginPage.avatarMenuControl).toBeExisting();
+
     const browserCookies = await browser.getCookies();
 
     const cookieHeader = browserCookies

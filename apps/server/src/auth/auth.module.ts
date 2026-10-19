@@ -1,27 +1,23 @@
-import { Module } from '@nestjs/common';
-import { SURVEY_RESPONSE_SESSION_REPOSITORY_TOKEN } from '../features/survey/survey-completion/repositories/survey-response.session-repository.interface';
-
-import { InMemorySurveyResponseSessionRepository } from '../features/survey/survey-completion/repositories/in-memory-survey-response.session-repository';
-import { SurveyResponseSessionStore } from '../features/survey/survey-completion/repositories/survey-response.session-store';
-import { UserAuthenticationService } from '../features/users/user-authentication.service';
-import { UserModule } from '../features/users/user.module';
-import { AuthController } from './auth.controller';
+import { DynamicModule, Module } from '@nestjs/common';
+import { SuperTokensModuleAsyncOptions } from 'node_modules/supertokens-nestjs/dist/supertokens.types';
+import { SuperTokensModule } from 'supertokens-nestjs';
+import { SupertokensAuthService } from './supertokens';
 
 @Module({
-  imports: [UserModule],
-  providers: [
-    UserAuthenticationService,
-    {
-      provide: SURVEY_RESPONSE_SESSION_REPOSITORY_TOKEN,
-      useClass: InMemorySurveyResponseSessionRepository,
-    },
-    SurveyResponseSessionStore,
-  ],
-  exports: [
-    SURVEY_RESPONSE_SESSION_REPOSITORY_TOKEN,
-    SurveyResponseSessionStore,
-  ],
+  imports: [],
+  providers: [],
+  exports: [],
 
-  controllers: [AuthController],
+  controllers: [],
 })
-export class AuthModule {}
+export class AuthModule {
+  static forRootAsync(options: SuperTokensModuleAsyncOptions): DynamicModule {
+    return {
+      module: AuthModule,
+      global: options.global || true,
+      imports: [SuperTokensModule.forRootAsync(options)],
+      providers: [SupertokensAuthService],
+      exports: [SupertokensAuthService],
+    };
+  }
+}

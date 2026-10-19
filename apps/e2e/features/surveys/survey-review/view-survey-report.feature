@@ -13,6 +13,7 @@ Feature: Viewing a report for a survey response record
         And I answer question "1.1" by choosing option "c"
         And I answer question "1.1.1" by choosing option "b"
         And I submit the survey
+        And I refresh at the home screen
         And I log in as admin
         And I navigate to the survey review page
         And I select the most recently submitted survey response

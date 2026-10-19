@@ -25,7 +25,7 @@ import {
 import { UserViewModel } from './queries';
 import { UserQueryController } from './queries/user-query.controller';
 import { UserQueryService } from './queries/user-query.service';
-import type { IUserCommandRepository } from './repositories';
+import { IUserCommandRepository } from './repositories';
 import { InMemoryUserCommandRepository } from './repositories/in-memory-user-command.repository';
 
 @Module({
@@ -49,6 +49,7 @@ import { InMemoryUserCommandRepository } from './repositories/in-memory-user-com
               return moduleRef.get(injectionToken);
             },
           },
+          // Can't we do this in a write hook on the DB?
           {
             publishEvent: (_e) => {
               // TODO User Events Gateway
@@ -90,11 +91,8 @@ export class UserModule implements OnModuleInit {
   async onModuleInit() {
     const isUserDbEmpty = await this.moduleRef
       .get<IUserCommandRepository>(USER_COMMAND_REPOSITORY_INJECTION_TOKEN)
-
       .isEmpty();
-
     const INITIAL_ADMIN_PASSWORD_VAR_NAME = 'INITIAL_ADMIN_PASSWORD';
-
     if (isUserDbEmpty) {
       const adminPasswordFromConfig = this.moduleRef
         .get(ConfigService, { strict: false })
@@ -111,7 +109,6 @@ export class UserModule implements OnModuleInit {
         this.moduleRef
           .get(ConfigService, { strict: false })
           .get<string | null>('SYSTEM_ADMIN_USERNAME') || 'ti-admin-user';
-
       const userCommandHandler = this.moduleRef.get(CommandHandlerService);
 
       const userCreationCommandPayload: CreateUserWithPassword = {

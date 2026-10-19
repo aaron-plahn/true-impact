@@ -69,7 +69,7 @@ export const UserProfile = (): JSX.Element => {
 
   /**
    * This is not exactly what we want to do. This is just a placeholder for now. Remove this soon
-   * in favour of hitting a `who-am-i` endpoint.
+   * in favour of hitting the `who-am-i` endpoint.
    */
   return <div>{JSON.stringify(userInfo)}</div>;
 };

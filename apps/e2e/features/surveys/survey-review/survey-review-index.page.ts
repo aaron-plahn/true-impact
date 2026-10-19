@@ -8,7 +8,9 @@ class SurveyReviewIndexPage extends Page {
   }
 
   public async open() {
-    await super.open("surveys/review");
+    await expect($('//a[text()="Review a Survey"]')).toBeExisting();
+
+    await $('//a[text()="Review a Survey"]').click();
   }
 }
 

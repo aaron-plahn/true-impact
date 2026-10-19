@@ -6,7 +6,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { AuthenticatedUserGuard, RbacAuthGuard } from '../../../auth/guards';
+import { AdminRbacAuthGuard } from '../../../auth/guards';
 import { UserCommandController } from '../../../features/users/commands/user-command.controller';
 import type { ICommandFsa } from '../../../libs/cqrs-es';
 import { CommandHandlerService, CommandResult } from '../../../libs/cqrs-es';
@@ -39,7 +39,7 @@ export class GroupProgramCommandController {
     private readonly commandRepository: IGroupProgramCommandRepository,
   ) {}
 
-  @UseGuards(AuthenticatedUserGuard, RbacAuthGuard)
+  @UseGuards(AdminRbacAuthGuard)
   // TODO @CommandExecutionEndpoint
   @Post('commands')
   async executeCommand(@Body() fsa: ICommandFsa): Promise<CommandResult> {

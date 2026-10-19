@@ -295,11 +295,18 @@ export const config: WebdriverIO.Config = {
    * @param {number}             result.duration  duration of scenario in milliseconds
    * @param {object}             context          Cucumber World object
    */
-  // afterStep: async function (_step, scenario, { error }, _context) {
-  //   if (error) {
-  //     await browser.saveScreenshot(`./errorScreenShots/${scenario.name}.png`);
-  //   }
-  // },
+  afterStep: async function (_step, _scenario, result, _context) {
+    const { error } = result;
+
+    // if (error) {
+    //   await browser.saveScreenshot(`./errorScreenShots/${scenario.name}.png`);
+    // }
+
+    if (error) {
+      // Pauses the test and keeps the browser open for inspection
+      await browser.debug();
+    }
+  },
   /**
    *
    * Runs after a Cucumber Scenario.

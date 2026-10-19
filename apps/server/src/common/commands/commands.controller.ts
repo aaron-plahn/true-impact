@@ -1,4 +1,4 @@
-import { AuthenticatedUserGuard, RbacAuthGuard } from '../../auth/guards';
+import { AdminRbacAuthGuard } from '../../auth/guards';
 import type { ICommandFsa } from '../../libs/cqrs-es';
 import { CommandHandlerService, CommandResult } from '../../libs/cqrs-es';
 import { TrueImpactBadUserInputError } from '../../libs/data-types';
@@ -24,7 +24,7 @@ import {
 export class CommandsController {
   constructor(private readonly commandHandlerService: CommandHandlerService) {}
 
-  @UseGuards(AuthenticatedUserGuard, RbacAuthGuard)
+  @UseGuards(AdminRbacAuthGuard)
   @Post('')
   async execute(@Body() fsa: ICommandFsa): Promise<CommandResult> {
     const typeValidationResult = this.commandHandlerService.validate(fsa);
