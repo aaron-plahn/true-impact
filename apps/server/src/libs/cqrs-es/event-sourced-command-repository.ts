@@ -132,6 +132,19 @@ export class EventSourcedCommandRepository<
     return results;
   }
 
+  async isEmpty(): Promise<boolean> {
+    /**
+     * TODO provide a more efficient implementation. For example,
+     * you can select the first event with `e.aggregateCompositeIdentifier.type === this.aggregateType`
+     * and check if you get 1 or 0.
+     *
+     * This could cause slow startup when the number of users in the system grows large otherwise.
+     */
+    const all = await this.fetchMany();
+
+    return all.length === 0;
+  }
+
   async create(
     instance: TAggregateRoot,
   ): Promise<PersistenceAcknowledgement | TrueImpactError> {
