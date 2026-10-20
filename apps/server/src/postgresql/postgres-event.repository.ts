@@ -21,7 +21,7 @@ export interface EventDocument {
   revision: number;
 }
 
-export const thinMap = (row: EventDocument): EventDto => {
+const thinMap = (row: EventDocument): EventDto => {
   const streamId = row.stream_id;
   const type = row.event_type;
 
