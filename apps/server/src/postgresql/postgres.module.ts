@@ -91,19 +91,20 @@ export class PostgresModule implements OnModuleDestroy {
         });
 
         // TODO use a lib to get static analysis \ type safety on SQL queries
+        // not null constraints?
 
-        const createEventsTableQuery = `
-        CREATE TABLE IF NOT EXISTS events (
-          stream_id VARCHAR(128) NOT NULL,
-          revision INT NOT NULL,
-          event_type VARCHAR(64) NOT NULL,
-          payload JSONB DEFAULT '{}'::jsonb,
-          metadata JSONB DEFAULT '{}'::jsonb,
-          CONSTRAINT uq_stream_version UNIQUE (stream_id, revision)
+        const createTableQuery = `
+      CREATE TABLE IF NOT EXISTS events (
+        stream_id TEXT,
+        revision INT NOT NULL,
+        event_type VARCHAR(64) NOT NULL,
+        payload JSONB DEFAULT '{}'::jsonb,
+        metadata JSONB DEFAULT '{}'::jsonb,
+        CONSTRAINT uq_stream_version UNIQUE (stream_id, revision)
         );
       `;
 
-        await client.query(createEventsTableQuery).catch((e) => {
+        await client.query(createTableQuery).catch((e) => {
           throw e;
         });
 
@@ -152,7 +153,6 @@ export class PostgresModule implements OnModuleDestroy {
         ...(shouldIncludeTestHelper ? [postgresTestHelperProvider] : []),
       ],
       exports: [
-        poolProvider,
         EventFactory,
         // TODO double check that circular deps checks are running
         // TODO const DO THIS
