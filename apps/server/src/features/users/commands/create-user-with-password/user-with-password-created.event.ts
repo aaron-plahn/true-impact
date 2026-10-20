@@ -1,13 +1,16 @@
 import { plainToInstance } from 'class-transformer';
-import { FullNameDto } from 'src/common/full-name';
-import { NonEmptyString, TrueImpactDataExample } from 'src/libs/data-types';
+import { FullNameDto } from '../../../../common/full-name';
+import {
+  NonEmptyString,
+  TrueImpactDataExample,
+} from '../../../../libs/data-types';
 import {
   USER_AGGREGATE_TYPE,
   UserCompositeIdentifier,
   UserCompositeIdentifierValuedProp,
 } from '../../user.composite-identifier';
 
-export class UserWithPasswordCreatedPayload {
+export class UserCreatedPayload {
   @UserCompositeIdentifierValuedProp
   aggregateCompositeIdentifier: UserCompositeIdentifier;
 
@@ -17,41 +20,42 @@ export class UserWithPasswordCreatedPayload {
   })
   username: string;
 
-  fullName: FullNameDto;
-
+  // TODO @EmailAddress
   @NonEmptyString({
-    label: 'hashed password',
-    description: `hashed (encrypted) copy of the user's password`,
+    label: 'email',
+    description:
+      'the primary email address used for system communication with this user (does not serve as a unique identifier and can be changed)',
   })
-  hashedPassword: string;
+  // Can we use a `branded type` here?
+  email: string;
 
-  // algorithm?
+  fullName: FullNameDto;
 }
 
-@TrueImpactDataExample<UserWithPasswordCreated>({
+@TrueImpactDataExample<UserCreated>({
   example: {
-    type: 'USER_WITH_PASSWORD_CREATED',
+    type: 'USER_CREATED',
     payload: {
       aggregateCompositeIdentifier: {
         type: USER_AGGREGATE_TYPE,
         id: '444',
       },
       username: 'roboticardvark34',
+      email: 'roboticardvark@mytotallybogusacmedomain.com',
       fullName: new FullNameDto(),
-      hashedPassword: 'abc123eee999',
     },
   },
 })
-export class UserWithPasswordCreated {
-  readonly type = 'USER_WITH_PASSWORD_CREATED';
+export class UserCreated {
+  readonly type = 'USER_CREATED';
 
-  readonly payload: UserWithPasswordCreatedPayload;
+  readonly payload: UserCreatedPayload;
 
-  constructor({ payload }: { payload: UserWithPasswordCreatedPayload }) {
-    this.payload = plainToInstance(UserWithPasswordCreatedPayload, payload);
+  constructor({ payload }: { payload: UserCreatedPayload }) {
+    this.payload = plainToInstance(UserCreatedPayload, payload);
   }
 
-  static fromPersistenceDto(dto: UserWithPasswordCreated) {
-    return new UserWithPasswordCreated(dto);
+  static fromPersistenceDto(dto: UserCreated) {
+    return new UserCreated(dto);
   }
 }

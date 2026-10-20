@@ -1,5 +1,5 @@
 import { plainToInstance } from 'class-transformer';
-import { TrueImpactDataExample } from 'src/libs/data-types';
+import { TrueImpactDataExample } from '../../../../libs/data-types';
 import { type UserRole, UserRoleEnumValuedProp } from '../../types';
 import {
   USER_AGGREGATE_TYPE,

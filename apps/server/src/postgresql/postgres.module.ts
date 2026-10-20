@@ -108,21 +108,6 @@ export class PostgresModule implements OnModuleDestroy {
           throw e;
         });
 
-        const createUserCredentialsTableQuery = `
-        CREATE TABLE IF NOT EXISTS user_credentials (
-          user_id TEXT PRIMARY KEY,
-          username VARCHAR(64),
-          hashed_password TEXT,
-          algorithm TEXT,
-          is_active BOOLEAN NOT NULL,
-          revision INT NOT NULL
-        )
-        `;
-
-        await client.query(createUserCredentialsTableQuery).catch((e) => {
-          throw e;
-        });
-
         await client.end();
 
         const pool = new Pool({

@@ -1,18 +1,18 @@
 import { Inject } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Pool } from 'pg';
-import { DomainEvent, PersistenceAcknowledgement } from 'src/libs/cqrs-es';
+import { DomainEvent, PersistenceAcknowledgement } from '../../../libs/cqrs-es';
 import {
   DeepPartial,
   TrueImpactError,
   TrueImpactRuntimeException,
-} from 'src/libs/data-types';
-import { EventFactory } from 'src/postgresql/event-factory';
+} from '../../../libs/data-types';
+import { EventFactory } from '../../../postgresql/event-factory';
 import {
   EventDocument,
   thinMap,
-} from 'src/postgresql/postgres-event.repository';
-import { PG_POOL_INJECTION_TOKEN } from 'src/postgresql/postgres.module';
+} from '../../../postgresql/postgres-event.repository';
+import { PG_POOL_INJECTION_TOKEN } from '../../../postgresql/postgres.module';
 import { User } from '../user.aggregate-root';
 import { USER_AGGREGATE_TYPE } from '../user.composite-identifier';
 import { IUserCommandRepository } from './user-command-repository.interface';
@@ -36,8 +36,6 @@ export class PostgresUserCommandRepository implements IUserCommandRepository {
     const selectUserEvents = `
         SELECT e 
         FROM events e
-        JOIN user_credentials uc
-        ON (e.payload #>> '{aggregateCompositeIdentifier, id}') = uc.user_id
         WHERE (e.payload->>'type') = '${USER_AGGREGATE_TYPE}'
         AND (e.payload->>'id') = $1;
         `;
@@ -66,30 +64,6 @@ export class PostgresUserCommandRepository implements IUserCommandRepository {
       return eventWithMetadata;
     });
 
-    const allEventResult = await this.pool.query(`
-        SELECT *
-        from events;
-      `);
-
-    const allUserCredentialsResult = await this.pool.query(`
-            SELECT *
-            from user_credentials;
-          `);
-
-    console.log({
-      allEventZZZZZZZZZZZZZZZZZZZZZZZ: allEventResult.rows.map((r) =>
-        JSON.stringify(r),
-      ),
-      allUserCredentialsResultZZZZZZZZZZZ: allUserCredentialsResult.rows.map(
-        (r) => JSON.stringify(r),
-      ),
-      userIdZZZZZZZZZZZZZZZ: id,
-    });
-
-    console.log({
-      eventsForThisUserZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ: eventsForThisUser,
-    });
-
     const result = User.fromEventHistory(eventsForThisUser);
 
     if (result instanceof Error) {
@@ -107,56 +81,6 @@ export class PostgresUserCommandRepository implements IUserCommandRepository {
    */
   fetchMany(): Promise<User[] | TrueImpactError> {
     throw new Error('Method not implemented.');
-  }
-
-  async fetchByCredentials({
-    username,
-    hashedPassword,
-  }: {
-    username: string;
-    hashedPassword: string;
-  }): Promise<User | null> {
-    const selectUserEvents = `
-        SELECT e 
-        FROM events e
-        JOIN user_credentials uc
-        ON (e.payload #>> '{aggregateCompositeIdentifier, id}') = uc.user_id
-        WHERE uc.username = $1
-        AND uc.hashed_password = $2
-        `;
-
-    const bindVars = [username, hashedPassword];
-
-    const eventQueryResult = await this.pool
-      .query<EventDocument>(selectUserEvents, bindVars)
-      .catch((e) => {
-        throw e;
-      });
-
-    const eventsForThisUser = eventQueryResult.rows.map((row) => {
-      const plainEvent = this.eventFactory.build(thinMap(row));
-
-      const { metadata } = row;
-
-      // TODO SSOT for this
-      const eventWithMetadata = Object.assign(plainEvent, {
-        metadata,
-        revision: row.revision,
-        streamId: row.stream_id,
-      });
-
-      return eventWithMetadata;
-    });
-
-    const result = User.fromEventHistory(eventsForThisUser);
-
-    if (result instanceof Error) {
-      throw new Error(
-        `Failed to validate a user due to invalid existing data in the database.`,
-      );
-    }
-
-    return result;
   }
 
   async create(
@@ -207,17 +131,11 @@ export class PostgresUserCommandRepository implements IUserCommandRepository {
     try {
       await client.query('BEGIN');
 
-      const insertIntoUserCredentials = `
-          INSERT INTO user_credentials (user_id, username, hashed_password, algorithm, is_active, revision)
-          VALUES ( $1, $2, $3, $4, TRUE, 1);
-      `;
-
-      await client.query(insertIntoUserCredentials, [
-        instance.id,
-        instance.username,
-        instance.hashedPassword,
-        'TODO-set-algorithm',
-      ]);
+      /**
+       * Note that externally the client credentials are persisted in Supertoken's database. Supertokens
+       * is only responsible for managing credentials and authentication. Our `UserCommandRepository` is always
+       * the single source of truth for the User's state (roles, permissions, identity).
+       */
 
       const insertIntoEvents = `
         INSERT INTO events (stream_id, event_type, payload, metadata, revision)
@@ -246,10 +164,6 @@ export class PostgresUserCommandRepository implements IUserCommandRepository {
           revision: index + 1, // offset the 0th new event by 1 from the revision number at fetch time
         })),
       );
-
-      console.log({
-        jsonEventsPayload1111111111111111111111111111111111: jsonEventsPayload,
-      });
 
       await client.query(insertIntoEvents, [jsonEventsPayload]);
 
@@ -359,13 +273,9 @@ export class PostgresUserCommandRepository implements IUserCommandRepository {
       );
     }
 
+    // TODO we don't need a transaction here because we are no longer writing to a second credentials table
     const query = `
         BEGIN;
-
-        UPDATE user_credentials
-        SET revision = $1,
-            is_active = $2
-        WHERE user_id == $3;
 
         INSERT INTO events (stream_id, event_type, payload, metadata, revision)
         SELECT 
@@ -408,9 +318,6 @@ export class PostgresUserCommandRepository implements IUserCommandRepository {
       }),
     );
 
-    console.log({
-      jsonEventsPayloadzzzzzzzzzzzzzzzzzZZZ: jsonEventsPayload,
-    });
     const result = await client
       .query(query, [
         (instance.revision || 0) + recentEvents.length,
@@ -469,15 +376,6 @@ export class PostgresUserCommandRepository implements IUserCommandRepository {
     }
 
     const query = `
-        BEGIN;
-
-        SELECT user_id into v_user_id
-        FROM user_credentials
-        WHERE username = $1;
-
-        DELETE FROM user_credentials
-        WHERE username != v_user_id;
-
         DELETE FROM events
         WHERE (payload.aggregateCompositeIdentifier->>id) != v_user_id
         OR (payload.aggregateCompositeIdentifier->>type) != '${USER_AGGREGATE_TYPE}'

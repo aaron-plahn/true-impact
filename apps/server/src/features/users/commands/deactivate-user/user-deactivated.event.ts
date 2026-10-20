@@ -1,5 +1,5 @@
 import { plainToInstance } from 'class-transformer';
-import { TrueImpactDataExample } from 'src/libs/data-types';
+import { TrueImpactDataExample } from '../../../../libs/data-types';
 import {
   USER_AGGREGATE_TYPE,
   UserCompositeIdentifier,
@@ -13,7 +13,7 @@ export class UserDeactivatedPayload {
 
 @TrueImpactDataExample<UserDeactivated>({
   example: {
-    type: 'USER_DEACTIVATE',
+    type: 'USER_DEACTIVATED',
     payload: {
       aggregateCompositeIdentifier: {
         type: USER_AGGREGATE_TYPE,
@@ -23,7 +23,7 @@ export class UserDeactivatedPayload {
   },
 })
 export class UserDeactivated {
-  readonly type = 'USER_DEACTIVATE';
+  readonly type = 'USER_DEACTIVATED';
 
   readonly payload: UserDeactivatedPayload;
 

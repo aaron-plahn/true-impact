@@ -1,7 +1,7 @@
 import {
   CoreDataTypeDecoratorOptions,
   EnumeratedType,
-} from 'src/libs/data-types';
+} from '../../../libs/data-types';
 
 export type UserRole = 'system admin' | 'tenant admin' | 'employee';
 

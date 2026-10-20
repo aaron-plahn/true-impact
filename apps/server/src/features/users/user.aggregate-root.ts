@@ -12,7 +12,7 @@ import {
   TrueImpactError,
   UpdateMethod,
 } from '../../libs/data-types';
-import { UserDeactivated, UserWithPasswordCreated } from './commands';
+import { UserCreated, UserDeactivated } from './commands';
 import { UserGrantedRole } from './commands/grant-user-role/user-granted-role.event';
 import { userRoleValuesAndLabels, type UserRole } from './types';
 import { USER_AGGREGATE_TYPE } from './user.composite-identifier';
@@ -215,7 +215,7 @@ export class User extends EventSourcedAggregateRoot {
     return this;
   }
 
-  static fromUserWithPasswordCreated(event: UserWithPasswordCreated) {
+  static fromUserCreated(event: UserCreated) {
     const {
       payload: {
         aggregateCompositeIdentifier: { id },
@@ -231,15 +231,13 @@ export class User extends EventSourcedAggregateRoot {
       id,
       username,
       role: DEFAULT_ROLE,
-      isActive: false,
+      isActive: true,
       email: 'TODO@todo.org',
       hasEmailBeenValidated: false,
       revision: 1,
       fullName: FullName.fromDto(fullName),
       eventHistory: [event],
     });
-
-    instance.eventHistory.push(event);
 
     return instance.validateInvariants();
   }
@@ -319,12 +317,13 @@ export class User extends EventSourcedAggregateRoot {
       // You must run a command to escalate a user's priviliges
       role: 'employee',
       eventHistory: [
-        new UserWithPasswordCreated({
+        new UserCreated({
           payload: {
             aggregateCompositeIdentifier: {
               type: USER_AGGREGATE_TYPE,
               id,
             },
+            email,
             username,
             fullName: fullNameBuildResult.toDto(),
           },

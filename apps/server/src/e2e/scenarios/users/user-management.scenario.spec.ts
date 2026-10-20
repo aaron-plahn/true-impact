@@ -1,7 +1,9 @@
 import { HttpStatus } from '@nestjs/common';
-import { CreateUserWithPassword } from '../../../features/users/commands/create-user-with-password.command';
-import { DeactivateUser } from '../../../features/users/commands/deactivate-user.command';
-import { GrantUserRole } from '../../../features/users/commands/grant-user-role.command';
+import {
+  CreateUserWithPassword,
+  DeactivateUser,
+  GrantUserRole,
+} from '../../../features/users/commands';
 import { UserViewModel } from '../../../features/users/queries';
 import { UserRole } from '../../../features/users/types';
 import { TestCommandStream } from '../../../libs/cqrs-es';
@@ -208,8 +210,9 @@ describe('User Management Scenarios', () => {
               .andThen(DeactivateUser, {}),
             assertErrorMessageAsExpected: (message) => {
               expect(message).toContain('cannot deactivate');
-              // note that we treat a deleted and deactivated user as the same in the repository implementation
-              expect(message).toContain('no such user');
+              // TODO we need a deactivated user test case for all other update commands for users
+              // note that we need to think about how we want to deal with deactivated users in `fetchById`. Should it return null when the user is inactive?
+              expect(message).toContain('already been deactivated');
             },
           });
         });
