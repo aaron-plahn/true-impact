@@ -1,7 +1,9 @@
 import { HttpStatus } from '@nestjs/common';
-import { CreateUserWithPassword } from '../../../features/users/commands/create-user-with-password.command';
-import { DeactivateUser } from '../../../features/users/commands/deactivate-user.command';
-import { GrantUserRole } from '../../../features/users/commands/grant-user-role.command';
+import {
+  CreateUserWithPassword,
+  DeactivateUser,
+  GrantUserRole,
+} from '../../../features/users/commands';
 import { UserViewModel } from '../../../features/users/queries';
 import { UserRole } from '../../../features/users/types';
 import { TestCommandStream } from '../../../libs/cqrs-es';
@@ -85,75 +87,99 @@ describe('User Management Scenarios', () => {
 
   describe(`When granting a role to a user`, () => {
     describe(`when the user exists`, () => {
-      describe(`when the role is a valid role`, () => {
-        describe(`when the user currently has a different role`, () => {
-          const newRole: UserRole = 'tenant admin';
+      describe(`when the user is active`, () => {
+        describe(`when the role is a valid role`, () => {
+          describe(`when the user currently has a different role`, () => {
+            const newRole: UserRole = 'tenant admin';
 
-          it(`should grant the user the new role`, async () => {
-            await assertCommandScenarioSuccess({
-              httpClient,
-              endpoint: userCommandsEndpoint,
-              stream: TestCommandStream.first(
-                CreateUserWithPassword,
-                {},
-              ).andThen(GrantUserRole, {
-                role: newRole,
-              }),
-              assertSuccess: async (acks) => {
-                const { id } = acks[0];
+            it(`should grant the user the new role`, async () => {
+              await assertCommandScenarioSuccess({
+                httpClient,
+                endpoint: userCommandsEndpoint,
+                stream: TestCommandStream.first(
+                  CreateUserWithPassword,
+                  {},
+                ).andThen(GrantUserRole, {
+                  role: newRole,
+                }),
+                assertSuccess: async (acks) => {
+                  const { id } = acks[0];
 
-                const updatedUserView = (
-                  await httpClient.get(buildUserDetailEndpoint(id))
-                ).data as UserViewModel;
+                  const updatedUserView = (
+                    await httpClient.get(buildUserDetailEndpoint(id))
+                  ).data as UserViewModel;
 
-                expect(updatedUserView.role).toBe(newRole);
-              },
+                  expect(updatedUserView.role).toBe(newRole);
+                },
+              });
+            });
+          });
+
+          describe(`when the user already has the given role`, () => {
+            it(`should return the expected error response`, async () => {
+              const redundantRole: UserRole = 'tenant admin';
+
+              await assertCommandScenarioError({
+                httpClient,
+                endpoint: userCommandsEndpoint,
+                stream: TestCommandStream.first(CreateUserWithPassword, {
+                  username: testUsername,
+                })
+                  .andThen(GrantUserRole, {
+                    role: redundantRole,
+                  })
+                  .andThen(GrantUserRole, {
+                    role: redundantRole,
+                  }),
+
+                assertErrorMessageAsExpected: (message) => {
+                  expect(message).toContain(redundantRole);
+                  expect(message).toContain(testUsername);
+                  expect(message).toContain('already has');
+                },
+              });
             });
           });
         });
 
-        describe(`when the user already has the given role`, () => {
-          it(`should return the expected error response`, async () => {
-            const redundantRole: UserRole = 'tenant admin';
+        describe(`when the role is invalid`, () => {
+          const bogusRole = 'not a valid role';
 
+          it(`should return the expected error`, async () => {
             await assertCommandScenarioError({
               httpClient,
               endpoint: userCommandsEndpoint,
-              stream: TestCommandStream.first(CreateUserWithPassword, {
-                username: testUsername,
-              })
-                .andThen(GrantUserRole, {
-                  role: redundantRole,
-                })
-                .andThen(GrantUserRole, {
-                  role: redundantRole,
-                }),
-
+              stream: TestCommandStream.first(CreateUserWithPassword).andThen(
+                GrantUserRole,
+                {
+                  role: bogusRole as UserRole,
+                },
+              ),
               assertErrorMessageAsExpected: (message) => {
-                expect(message).toContain(redundantRole);
-                expect(message).toContain(testUsername);
-                expect(message).toContain('already has');
+                assertTextMatchesAll(
+                  message,
+                  bogusRole,
+                  'Invalid value',
+                  'role',
+                );
               },
             });
           });
         });
       });
 
-      describe(`when the role is invalid`, () => {
-        const bogusRole = 'not a valid role';
-
+      describe(`when the user is inactive`, () => {
         it(`should return the expected error`, async () => {
           await assertCommandScenarioError({
             httpClient,
             endpoint: userCommandsEndpoint,
-            stream: TestCommandStream.first(CreateUserWithPassword).andThen(
-              GrantUserRole,
-              {
-                role: bogusRole as UserRole,
-              },
-            ),
+            stream: TestCommandStream.first(CreateUserWithPassword, {
+              username: testUsername,
+            })
+              .andThen(DeactivateUser)
+              .andThen(GrantUserRole, {}),
             assertErrorMessageAsExpected: (message) => {
-              assertTextMatchesAll(message, bogusRole, 'Invalid value', 'role');
+              assertTextMatchesAll(message, 'user is inactive');
             },
           });
         });
@@ -208,8 +234,7 @@ describe('User Management Scenarios', () => {
               .andThen(DeactivateUser, {}),
             assertErrorMessageAsExpected: (message) => {
               expect(message).toContain('cannot deactivate');
-              // note that we treat a deleted and deactivated user as the same in the repository implementation
-              expect(message).toContain('no such user');
+              expect(message).toContain('already been deactivated');
             },
           });
         });
