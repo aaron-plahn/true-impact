@@ -1,6 +1,7 @@
 import { plainToInstance } from 'class-transformer';
 import { FullNameDto } from '../../../../common/full-name';
 import {
+  EmailAddress,
   NestedDataType,
   NonEmptyString,
   TrueImpactDataExample,
@@ -21,8 +22,7 @@ export class UserCreatedPayload {
   })
   username: string;
 
-  // TODO @EmailAddress
-  @NonEmptyString({
+  @EmailAddress({
     label: 'email',
     description:
       'the primary email address used for system communication with this user (does not serve as a unique identifier and can be changed)',

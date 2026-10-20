@@ -18,6 +18,7 @@ import { SchemaObject as OpenApiSchema } from './open-api-spec.interface';
 
 const trueImpactDataTypeToOpenApiDataType = {
   NON_EMPTY_STRING: 'string',
+  EMAIL_ADDRESS: 'string',
   NON_NEGATIVE_INTEGER: 'integer',
   BOOLEAN: 'boolean',
   RAW_OBJECT: 'object',

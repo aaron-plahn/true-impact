@@ -2,6 +2,7 @@ import { DomainEvent } from 'src/libs/cqrs-es';
 import { FullName } from '../../common/full-name';
 import {
   BooleanDataType,
+  EmailAddress,
   EnumeratedType,
   EventSourcedAggregateRoot,
   Literal,
@@ -55,9 +56,10 @@ export class User extends EventSourcedAggregateRoot {
   })
   username: string;
 
-  @NonEmptyString({
+  @EmailAddress({
     label: 'email',
     description: `the user's email address`,
+    // Can we validate this within our system? Should we?
     mustBeUnique: true,
   })
   email: string;
