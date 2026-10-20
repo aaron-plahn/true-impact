@@ -1,6 +1,7 @@
 import { plainToInstance } from 'class-transformer';
 import { FullNameDto } from '../../../../common/full-name';
 import {
+  NestedDataType,
   NonEmptyString,
   TrueImpactDataExample,
 } from '../../../../libs/data-types';
@@ -29,6 +30,10 @@ export class UserCreatedPayload {
   // Can we use a `branded type` here?
   email: string;
 
+  @NestedDataType(() => FullNameDto, {
+    label: 'full name',
+    description: `the new user's full name`,
+  })
   fullName: FullNameDto;
 }
 

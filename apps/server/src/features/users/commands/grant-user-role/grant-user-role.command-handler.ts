@@ -32,6 +32,14 @@ export class GrantUserRoleCommandHandler implements ICommandHandler<GrantUserRol
       ]);
     }
 
+    if (!target.isActive) {
+      return new TrueImpactBadUserInputError([
+        new TrueImpactError(
+          `You cannot grant role: [${role}] to the user with ID: [${id}], as the user is inactive.`,
+        ),
+      ]);
+    }
+
     const updateResult = target.grantUserRole(role);
 
     if (updateResult instanceof Error) {

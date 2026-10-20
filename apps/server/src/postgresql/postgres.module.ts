@@ -92,10 +92,9 @@ export class PostgresModule implements OnModuleDestroy {
 
         // TODO use a lib to get static analysis \ type safety on SQL queries
 
-        // TODOD stream_id not null
         const createEventsTableQuery = `
         CREATE TABLE IF NOT EXISTS events (
-          stream_id VARCHAR(128),
+          stream_id VARCHAR(128) NOT NULL,
           revision INT NOT NULL,
           event_type VARCHAR(64) NOT NULL,
           payload JSONB DEFAULT '{}'::jsonb,

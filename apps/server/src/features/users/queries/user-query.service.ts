@@ -18,6 +18,10 @@ export class UserQueryService {
       return result;
     }
 
+    if (!result.isActive) {
+      return null;
+    }
+
     return this.buildView(result).toClientDto();
   }
 

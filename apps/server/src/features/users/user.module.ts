@@ -44,12 +44,6 @@ import { USER_AGGREGATE_TYPE } from './user.composite-identifier';
       useFactory: () => new InMemoryQueryRepository(UserViewModel),
     },
     {
-      /**
-       * CLEAR will cause trouble if it removes the bootstrapped
-       * initial system admin. We probably shouldn't ever
-       * remove users in tests, but instead create one user of every
-       * desired identity.
-       */
       provide: USER_COMMAND_REPOSITORY_INJECTION_TOKEN,
       useFactory: (
         eventRepository: IEventRepository,
@@ -132,6 +126,7 @@ export class UserModule implements OnModuleInit {
       .isEmpty();
 
     const INITIAL_ADMIN_PASSWORD_VAR_NAME = 'INITIAL_ADMIN_PASSWORD';
+
     if (isUserDbEmpty) {
       const adminPasswordFromConfig = this.moduleRef
         .get(ConfigService, { strict: false })

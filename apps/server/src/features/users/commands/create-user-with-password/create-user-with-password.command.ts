@@ -13,7 +13,7 @@ import {
   },
 })
 export class CreateUserWithPassword {
-  static readonly type = 'USER_CREATED';
+  static readonly type = 'CREATE_USER';
 
   @NonEmptyString({
     label: 'username',

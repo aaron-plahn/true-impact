@@ -1,5 +1,5 @@
 import { DomainEvent } from 'src/libs/cqrs-es';
-import { FullName, FullNameDto } from '../../common/full-name';
+import { FullName } from '../../common/full-name';
 import {
   BooleanDataType,
   EnumeratedType,
@@ -18,19 +18,6 @@ import { userRoleValuesAndLabels, type UserRole } from './types';
 import { USER_AGGREGATE_TYPE } from './user.composite-identifier';
 
 const DEFAULT_ROLE: UserRole = 'employee';
-
-// TODO do we really want this now?
-export class UserPersistenceDto {
-  id: string;
-  isActive: boolean;
-  email: string;
-  hasEmailBeenValidated: boolean;
-  username: string;
-  revision: number;
-  role: UserRole;
-  fullName: FullNameDto;
-  eventHistory: DomainEvent[];
-}
 
 export class User extends EventSourcedAggregateRoot {
   @Literal(USER_AGGREGATE_TYPE, {
@@ -152,20 +139,6 @@ export class User extends EventSourcedAggregateRoot {
     return this.fullName.toString();
   }
 
-  toPersistenceDto(): UserPersistenceDto {
-    return {
-      id: this.id,
-      isActive: this.isActive,
-      username: this.username,
-      email: this.email,
-      hasEmailBeenValidated: this.hasEmailBeenValidated,
-      revision: this.revision,
-      role: this.role,
-      fullName: this.fullName.toDto(),
-      eventHistory: this.eventHistory,
-    };
-  }
-
   @UpdateMethod()
   grantUserRole(newRole: UserRole): User | TrueImpactError {
     if (this.role === newRole) {
@@ -173,8 +146,6 @@ export class User extends EventSourcedAggregateRoot {
         `You cannot grant the role: [${newRole}] to user: [${this.username}], as the user already has the given role.`,
       );
     }
-
-    // TODO be sure there is a test case for when an invalid role is used
 
     return this.apply(
       new UserGrantedRole({
@@ -222,8 +193,7 @@ export class User extends EventSourcedAggregateRoot {
         username,
         // role,
         fullName,
-        // TODO do this
-        // email,
+        email,
       },
     } = event;
 
@@ -232,7 +202,7 @@ export class User extends EventSourcedAggregateRoot {
       username,
       role: DEFAULT_ROLE,
       isActive: true,
-      email: 'TODO@todo.org',
+      email,
       hasEmailBeenValidated: false,
       revision: 1,
       fullName: FullName.fromDto(fullName),
@@ -249,39 +219,6 @@ export class User extends EventSourcedAggregateRoot {
       User,
       eventHistory,
     ) as User;
-  }
-
-  static fromPersistenceDto(
-    dto: UserPersistenceDto,
-    buildOptions?: { shouldValidate?: boolean },
-  ): User | TrueImpactError {
-    const {
-      id,
-      eventHistory,
-      isActive,
-      username,
-      revision,
-      role,
-      fullName: fullNameDto,
-      email,
-      hasEmailBeenValidated,
-    } = dto;
-
-    const instance = new User({
-      id,
-      isActive,
-      username,
-      email,
-      hasEmailBeenValidated,
-      revision,
-      role,
-      fullName: FullName.fromDto(fullNameDto),
-      eventHistory,
-    });
-
-    return buildOptions?.shouldValidate
-      ? instance.validateInvariants()
-      : instance;
   }
 
   static fromUserRequest(payload: {
