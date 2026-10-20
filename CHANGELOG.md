@@ -2,6 +2,13 @@
 
 This first release of the True Impact platform introduces a working model for user management, client management, and survey creation and completion.
 
+## 84
+In this PR, we customize our Supertokens implementation. This allows us to use custom request bodies that match our original API. It also allows us to return standard HTTP status codes, whereas Supertokens returns a 200, for example, even if the
+user request is invalid, opting for a nested `request.body.status` that must be parsed instead of `request.status`. (They do 
+this to avoid try\catch in their client SDK's when using standard HTTP client libs that throw for non-200 status responses.)
+
+Finally, the new approach simplifies the process of setting up Swagger API documentation for the auth routes.
+
 ## 83
 In this PR, we integrate Supertokens with our core user management system.
 

@@ -4,6 +4,7 @@ import {
   TrueImpactBadUserInputError,
   TrueImpactError,
 } from '../../libs/data-types';
+import { DEFAULT_AUTH_TENANT } from '../constants';
 
 export class SupertokensAuthService {
   async delete(userId: string): Promise<{ id: string } | TrueImpactError> {
@@ -37,7 +38,7 @@ export class SupertokensAuthService {
     password: string;
   }): Promise<{ id: string } | TrueImpactError> {
     const signUpResult = await EmailPassword.signUp(
-      'public',
+      DEFAULT_AUTH_TENANT,
       username,
       password,
       /**
