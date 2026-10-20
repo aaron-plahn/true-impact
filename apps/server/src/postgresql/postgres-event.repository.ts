@@ -120,11 +120,11 @@ export class PostgresEventRepository implements IEventRepository {
         ]);
       });
 
+    client.release();
+
     if (result instanceof Error) {
       return result;
     }
-
-    client.release();
 
     if (result.rowCount === 0) {
       return new Error(
