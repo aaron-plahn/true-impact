@@ -1,3 +1,4 @@
+import { DEFAULT_AUTH_TENANT } from 'src/auth/constants';
 import supertokens, { deleteUser } from 'supertokens-node';
 import { AdminRbacAuthGuard } from '../../../auth/guards';
 import type { CommandResult, ICommandFsa } from '../../../libs/cqrs-es';
@@ -62,7 +63,7 @@ export class UserCommandController {
 
     const paginationResult = await supertokens.getUsersNewestFirst({
       limit: 100,
-      tenantId: 'public', // this is the only tenant ID we use
+      tenantId: DEFAULT_AUTH_TENANT, // we are currently set up for single-tenancy
     });
 
     const usersToDelete = paginationResult.users.flatMap((user) =>

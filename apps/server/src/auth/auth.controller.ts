@@ -13,6 +13,7 @@ import {
   TrueImpactRuntimeException,
 } from '../libs/data-types';
 import { ApiBody, Body, Controller, Post } from '../libs/framework';
+import { DEFAULT_AUTH_TENANT } from './constants';
 import { AuthGuard } from './guards';
 import { LogInRequestDto } from './log-in-request.dto';
 
@@ -33,10 +34,8 @@ export class AuthController {
     schema: convertToOpenApiSchema(getDataSchemaFromClassCtor(LogInRequestDto)),
   })
   async logIn(
-    // TODO fuzz \ type test
+    // TODO Wrap in data sample registration in our `Body` decorator wrapper
     @Body() body: LogInRequestDto,
-    // TODO adapt to our own API
-    // LogInRequestDto,
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
@@ -47,17 +46,17 @@ export class AuthController {
       throw new UnauthorizedException();
     }
 
-    const result = await EmailPassword.signIn('public', username, password);
+    const result = await EmailPassword.signIn(
+      DEFAULT_AUTH_TENANT,
+      username,
+      password,
+    );
 
     if (result.status === 'WRONG_CREDENTIALS_ERROR') {
       throw new UnauthorizedException();
     }
 
-    // if (result === 'MFA required') {
-    //   return {
-    //     message: 'MFA Required',
-    //   };
-    // }
+    // TODO We also need to support MFA
 
     const { recipeUserId: userId } = result;
 
@@ -69,8 +68,7 @@ export class AuthController {
     const session = await SessionRecipe.createNewSession(
       req,
       res,
-      // TODO export a const "DEFAULT_TENANT_ID"
-      'public',
+      DEFAULT_AUTH_TENANT,
       userId,
       // these are not necessary for our use case
       // jwtPayload,

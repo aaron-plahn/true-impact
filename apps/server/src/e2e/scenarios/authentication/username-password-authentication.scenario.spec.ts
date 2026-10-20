@@ -42,16 +42,6 @@ const buildSigninDto = ({
 }) => ({
   username,
   password,
-  // formFields: [
-  //   {
-  //     id: 'email',
-  //     value: username,
-  //   },
-  //   {
-  //     id: 'password',
-  //     value: password,
-  //   },
-  // ],
 });
 
 const httpClientForTestRuns = new TestHttpClient('http://localhost:4200');
@@ -165,25 +155,101 @@ describe(`When loging in with a username and password (without Multi-factor Auth
   });
 
   describe(`when the request is invalidly formatted`, () => {
-    it(`should return the expected error`, async () => {
-      const response = await axios
-        .post(
-          logInEndpoint,
-          buildSigninDto({
-            username: testUsername,
+    describe(`when the username is provided at an invalid key`, () => {
+      it(`should return the expected error`, async () => {
+        const response = await axios
+          .post(logInEndpoint, {
+            uname: testUsername,
             password: testPassword,
-          }),
-        )
-        .catch((e: { status: HttpStatus; response: { data: unknown } }) => {
-          return {
-            status: e.status,
-            data: e.response.data,
-          };
-        });
+          })
+          .catch((e: { status: HttpStatus; response: { data: unknown } }) => {
+            return {
+              status: e.status,
+              data: e.response.data,
+            };
+          });
 
-      expect(response.status).toBe(HttpStatus.UNAUTHORIZED);
+        expect(response.status).toBe(HttpStatus.UNAUTHORIZED);
 
-      expect(JSON.stringify(response.data)).toContain('Unauthorized');
+        expect(JSON.stringify(response.data)).toContain('Unauthorized');
+      });
+    });
+
+    describe(`when the username is omitted`, () => {
+      it(`should return the expected error`, async () => {
+        const response = await axios
+          .post(logInEndpoint, {
+            // username: testUsername,
+            password: testPassword,
+          })
+          .catch((e: { status: HttpStatus; response: { data: unknown } }) => {
+            return {
+              status: e.status,
+              data: e.response.data,
+            };
+          });
+
+        expect(response.status).toBe(HttpStatus.UNAUTHORIZED);
+
+        expect(JSON.stringify(response.data)).toContain('Unauthorized');
+      });
+    });
+
+    describe(`when the password is omitted`, () => {
+      it(`should return the expected error`, async () => {
+        const response = await axios
+          .post(logInEndpoint, {
+            username: testUsername,
+            // password: testPassword,
+          })
+          .catch((e: { status: HttpStatus; response: { data: unknown } }) => {
+            return {
+              status: e.status,
+              data: e.response.data,
+            };
+          });
+
+        expect(response.status).toBe(HttpStatus.UNAUTHORIZED);
+
+        expect(JSON.stringify(response.data)).toContain('Unauthorized');
+      });
+    });
+
+    describe(`when an empty DTO is provided`, () => {
+      it(`should return the expected error`, async () => {
+        const response = await axios
+          .post(logInEndpoint, {
+            // username: testUsername,
+            // password: testPassword,
+          })
+          .catch((e: { status: HttpStatus; response: { data: unknown } }) => {
+            return {
+              status: e.status,
+              data: e.response.data,
+            };
+          });
+
+        expect(response.status).toBe(HttpStatus.UNAUTHORIZED);
+
+        expect(JSON.stringify(response.data)).toContain('Unauthorized');
+      });
+    });
+
+    describe(`when no request body is provided`, () => {
+      it(`should return the expected error`, async () => {
+        const response = await axios
+          .post(logInEndpoint)
+          .catch((e: { status: HttpStatus; response: { data: unknown } }) => {
+            return {
+              status: e.status,
+              data: e.response.data,
+            };
+          });
+
+        expect(response.status).toBe(HttpStatus.UNAUTHORIZED);
+
+        expect(JSON.stringify(response.data)).toContain('Unauthorized');
+      });
     });
   });
 

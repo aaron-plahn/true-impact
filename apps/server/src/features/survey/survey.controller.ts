@@ -1,5 +1,6 @@
 import { ForbiddenException, Req, Res, UseGuards } from '@nestjs/common';
 import type { Request, Response } from 'express';
+import { DEFAULT_AUTH_TENANT } from 'src/auth/constants';
 import { AdminRbacAuthGuard, OptionalUserGuard } from 'src/auth/guards';
 import { SurveyCommandAuthGuard } from 'src/e2e/scenarios/surveys/guards';
 import { Session } from 'supertokens-nestjs';
@@ -215,7 +216,7 @@ export class SurveyController implements OnModuleInit {
             await SessionRecipe.createNewSession(
               req,
               res,
-              'public',
+              DEFAULT_AUTH_TENANT,
               // TODO do we really need the subject below if we have a user ID like this?
               new RecipeUserId(anonymousUserId),
               {

@@ -27,17 +27,6 @@ export const signIn = async (
       {
         username,
         password,
-        // formFields: [
-        //   {
-        //     // TODO can't this be username instead?
-        //     id: 'email',
-        //     value: username,
-        //   },
-        //   {
-        //     id: 'password',
-        //     value: password,
-        //   },
-        // ],
       },
       {
         headers: {
