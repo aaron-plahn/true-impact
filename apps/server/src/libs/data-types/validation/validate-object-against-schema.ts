@@ -3,6 +3,7 @@ import { isFunction } from 'rxjs/internal/util/isFunction';
 import { TrueImpactError, TrueImpactRuntimeException } from '../error-handling';
 import {
   BOOLEAN,
+  EMAIL_ADDRESS,
   ENUMERATED_TYPE,
   NON_EMPTY_STRING,
   NON_NEGATIVE_INTEGER,
@@ -91,6 +92,23 @@ const validateSimpleDataType = (
             propertyKey,
             value,
             'non-empty text',
+            propertySchema.index,
+          ),
+        ),
+      );
+    }
+
+    return acc;
+  }
+
+  if (propertySchema.type === EMAIL_ADDRESS) {
+    if (!isNonEmptyString(value)) {
+      acc.push(
+        new TrueImpactError(
+          buildSimplePropertyErrorMessage(
+            propertyKey,
+            value,
+            'email address',
             propertySchema.index,
           ),
         ),
