@@ -79,6 +79,19 @@ export class PostgresEventRepository implements IEventRepository {
       );
     }
 
+    /**
+     * Ideally, we would declare the `stream_id` field as `NOT NULL` when creating the `events` table in Postgres.
+     * For some yet undiagnosed reason, doing so causes the CI to hang when awaiting the server health check,
+     * presumably due to the Postgres container hanging, even though there is no problem locally.
+     */
+    if (!streamId) {
+      throw new TrueImpactRuntimeException([
+        new TrueImpactError(
+          `Missing streamID for event of type: ${firstEvent.type}`,
+        ),
+      ]);
+    }
+
     const query = `
         INSERT INTO events (stream_id, event_type, payload, metadata, revision)
         SELECT 

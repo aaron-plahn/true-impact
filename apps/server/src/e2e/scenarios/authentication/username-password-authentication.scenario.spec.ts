@@ -1,7 +1,9 @@
 import { HttpStatus } from '@nestjs/common';
 import axios from 'axios';
-import { CreateUserWithPassword } from '../../../features/users/commands/create-user-with-password.command';
-import { DeactivateUser } from '../../../features/users/commands/deactivate-user.command';
+import {
+  CreateUserWithPassword,
+  DeactivateUser,
+} from '../../../features/users/commands';
 import { TestCommandStream } from '../../../libs/cqrs-es';
 import {
   TrueImpactError,

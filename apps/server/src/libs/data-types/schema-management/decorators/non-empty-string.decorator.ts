@@ -1,7 +1,6 @@
 import { appendSimplePropertyMetadata } from './append-metadata';
 import { SimpleDataTypeDecoratorOptions } from './type-decorator-options';
 
-// TODO Do we want an enum?
 export const NON_EMPTY_STRING = 'NON_EMPTY_STRING';
 
 export function NonEmptyString(

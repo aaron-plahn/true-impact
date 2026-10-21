@@ -2,6 +2,7 @@
 export * from './append-metadata';
 export * from './boolean-data-type.decorator';
 export * from './data-example.decorator';
+export * from './email-address.decorator';
 export * from './enumerated-type.decorator';
 export * from './literal.decorator';
 export * from './lookup-table.decorator';

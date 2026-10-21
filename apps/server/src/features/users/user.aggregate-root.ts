@@ -1,37 +1,46 @@
-import { FullName, FullNameDto } from '../../common/full-name';
+import { DomainEvent } from 'src/libs/cqrs-es';
+import { FullName } from '../../common/full-name';
 import {
-  AggregateRoot,
   BooleanDataType,
-  Entity,
+  EmailAddress,
   EnumeratedType,
+  EventSourcedAggregateRoot,
+  Literal,
   NestedDataType,
   NonEmptyString,
   NonNegativeInteger,
+  RawObject,
   TrueImpactError,
   UpdateMethod,
 } from '../../libs/data-types';
-import { USER_AGGREGATE_TYPE } from './constants';
+import { UserCreated, UserDeactivated } from './commands';
+import { UserGrantedRole } from './commands/grant-user-role/user-granted-role.event';
 import { userRoleValuesAndLabels, type UserRole } from './types';
+import { USER_AGGREGATE_TYPE } from './user.composite-identifier';
 
-export class UserPersistenceDto {
-  id: string;
-  isActive: boolean;
-  email: string;
-  hasEmailBeenValidated: boolean;
-  username: string;
-  revision: number;
-  role: UserRole;
-  fullName: FullNameDto;
-}
+const DEFAULT_ROLE: UserRole = 'employee';
 
-export class User extends AggregateRoot<UserPersistenceDto> {
-  static readonly type = USER_AGGREGATE_TYPE;
+export class User extends EventSourcedAggregateRoot {
+  @Literal(USER_AGGREGATE_TYPE, {
+    label: 'type',
+    description: 'distinguishes users from other entities in our system',
+  })
+  readonly type = USER_AGGREGATE_TYPE;
 
   @NonEmptyString({
     label: 'ID',
     description: 'unique system-identifier for this user',
   })
   id: string;
+
+  @RawObject({
+    label: 'event history',
+    description: 'audit log containing all historical edits of this user',
+    isArray: true,
+    // should we force this to have at least one event?
+    isOptional: true, // i.e. can be empty
+  })
+  eventHistory: DomainEvent[];
 
   @BooleanDataType({
     label: 'is active',
@@ -47,9 +56,10 @@ export class User extends AggregateRoot<UserPersistenceDto> {
   })
   username: string;
 
-  @NonEmptyString({
+  @EmailAddress({
     label: 'email',
     description: `the user's email address`,
+    // Can we validate this within our system? Should we?
     mustBeUnique: true,
   })
   email: string;
@@ -87,8 +97,10 @@ export class User extends AggregateRoot<UserPersistenceDto> {
     revision,
     fullName,
     role,
+    eventHistory,
   }: {
     id: string;
+    eventHistory: DomainEvent[];
     isActive: boolean;
     username: string;
     email: string;
@@ -114,6 +126,8 @@ export class User extends AggregateRoot<UserPersistenceDto> {
 
     this.role = role;
 
+    this.eventHistory = eventHistory;
+
     if (typeof hasEmailBeenValidated === 'boolean') {
       this.hasEmailBeenValidated = hasEmailBeenValidated;
     }
@@ -127,19 +141,6 @@ export class User extends AggregateRoot<UserPersistenceDto> {
     return this.fullName.toString();
   }
 
-  toPersistenceDto(): UserPersistenceDto {
-    return {
-      id: this.id,
-      isActive: this.isActive,
-      username: this.username,
-      email: this.email,
-      hasEmailBeenValidated: this.hasEmailBeenValidated,
-      revision: this.revision,
-      role: this.role,
-      fullName: this.fullName.toDto(),
-    };
-  }
-
   @UpdateMethod()
   grantUserRole(newRole: UserRole): User | TrueImpactError {
     if (this.role === newRole) {
@@ -148,10 +149,18 @@ export class User extends AggregateRoot<UserPersistenceDto> {
       );
     }
 
-    /**
-     * Where do we validate the allowed values of the user role?
-     */
-    this.role = newRole;
+    return this.apply(
+      new UserGrantedRole({
+        payload: {
+          aggregateCompositeIdentifier: this.getCompositeIdentifier(),
+          role: newRole,
+        },
+      }),
+    );
+  }
+
+  handleUserGrantedRole({ payload: { role } }: UserGrantedRole) {
+    this.role = role;
 
     return this;
   }
@@ -164,40 +173,54 @@ export class User extends AggregateRoot<UserPersistenceDto> {
       );
     }
 
+    return this.apply(
+      new UserDeactivated({
+        payload: {
+          aggregateCompositeIdentifier: this.getCompositeIdentifier(),
+        },
+      }),
+    );
+  }
+
+  handleUserDeactivated(_: UserDeactivated) {
     this.isActive = false;
 
     return this;
   }
 
-  static fromPersistenceDto(
-    dto: UserPersistenceDto,
-    buildOptions?: { shouldValidate?: boolean },
-  ): Entity | TrueImpactError {
+  static fromUserCreated(event: UserCreated) {
     const {
-      id,
-      isActive,
-      username,
-      revision,
-      role,
-      fullName: fullNameDto,
-      email,
-      hasEmailBeenValidated,
-    } = dto;
+      payload: {
+        aggregateCompositeIdentifier: { id },
+        username,
+        // role,
+        fullName,
+        email,
+      },
+    } = event;
 
     const instance = new User({
       id,
-      isActive,
       username,
+      role: DEFAULT_ROLE,
+      isActive: true,
       email,
-      hasEmailBeenValidated,
-      revision,
-      role,
-      fullName: FullName.fromDto(fullNameDto),
+      hasEmailBeenValidated: false,
+      revision: 1,
+      fullName: FullName.fromDto(fullName),
+      eventHistory: [event],
     });
 
-    return buildOptions?.shouldValidate
-      ? instance.validateInvariants()
-      : instance;
+    return instance.validateInvariants();
+  }
+
+  static fromEventHistory(
+    eventHistory: Iterable<DomainEvent>,
+  ): User | TrueImpactError | null {
+    return EventSourcedAggregateRoot.fromEventHistory.call(
+      User,
+      eventHistory,
+    ) as User;
   }
 
   static fromUserRequest(payload: {
@@ -232,6 +255,19 @@ export class User extends AggregateRoot<UserPersistenceDto> {
       revision: 1,
       // You must run a command to escalate a user's priviliges
       role: 'employee',
+      eventHistory: [
+        new UserCreated({
+          payload: {
+            aggregateCompositeIdentifier: {
+              type: USER_AGGREGATE_TYPE,
+              id,
+            },
+            email,
+            username,
+            fullName: fullNameBuildResult.toDto(),
+          },
+        }),
+      ],
     });
 
     return user.validateInvariants();

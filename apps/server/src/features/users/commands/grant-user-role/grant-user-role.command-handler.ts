@@ -1,11 +1,11 @@
-import { CommandResult, ICommandHandler } from '../../../libs/cqrs-es';
+import { CommandResult, ICommandHandler } from '../../../../libs/cqrs-es';
 import {
   TrueImpactBadUserInputError,
   TrueImpactError,
-} from '../../../libs/data-types';
-import { Inject } from '../../../libs/framework';
-import { USER_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../constants';
-import type { IUserCommandRepository } from '../repositories';
+} from '../../../../libs/data-types';
+import { Inject } from '../../../../libs/framework';
+import { USER_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../../constants';
+import type { IUserCommandRepository } from '../../repositories';
 import { GrantUserRole } from './grant-user-role.command';
 
 export class GrantUserRoleCommandHandler implements ICommandHandler<GrantUserRole> {
@@ -28,6 +28,14 @@ export class GrantUserRoleCommandHandler implements ICommandHandler<GrantUserRol
       return new TrueImpactBadUserInputError([
         new TrueImpactError(
           `You cannot grant role: [${role}] to the user with ID: [${id}], as there is no user with that ID.`,
+        ),
+      ]);
+    }
+
+    if (!target.isActive) {
+      return new TrueImpactBadUserInputError([
+        new TrueImpactError(
+          `You cannot grant role: [${role}] to the user with ID: [${id}], as the user is inactive.`,
         ),
       ]);
     }

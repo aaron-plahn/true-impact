@@ -1,9 +1,15 @@
 import { Module, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ModuleRef } from '@nestjs/core';
+import { EventFactory } from 'src/postgresql/event-factory';
 import { InMemoryQueryRepository } from '../../common/persistence';
 import { EncryptionService } from '../../libs/auth';
-import { CommandHandlerService } from '../../libs/cqrs-es';
+import {
+  CommandHandlerService,
+  EVENT_REPOSITORY_INJECTION_TOKEN,
+  EventSourcedCommandRepository,
+  IEventRepository,
+} from '../../libs/cqrs-es';
 import {
   TrueImpactError,
   TrueImpactRuntimeException,
@@ -15,10 +21,12 @@ import {
   DeactivateUserCommandHandler,
   GrantUserRole,
   GrantUserRoleCommandHandler,
+  UserCreated,
+  UserDeactivated,
+  UserGrantedRole,
 } from './commands';
 import { UserCommandController } from './commands/user-command.controller';
 import {
-  USER_AGGREGATE_TYPE,
   USER_COMMAND_REPOSITORY_INJECTION_TOKEN,
   USER_QUERY_REPOSITORY_INJECTION_TOKEN,
 } from './constants';
@@ -26,7 +34,8 @@ import { UserViewModel } from './queries';
 import { UserQueryController } from './queries/user-query.controller';
 import { UserQueryService } from './queries/user-query.service';
 import { IUserCommandRepository } from './repositories';
-import { InMemoryUserCommandRepository } from './repositories/in-memory-user-command.repository';
+import { User } from './user.aggregate-root';
+import { USER_AGGREGATE_TYPE } from './user.composite-identifier';
 
 @Module({
   providers: [
@@ -36,9 +45,32 @@ import { InMemoryUserCommandRepository } from './repositories/in-memory-user-com
     },
     {
       provide: USER_COMMAND_REPOSITORY_INJECTION_TOKEN,
-      useFactory: (configService: ConfigService) =>
-        new InMemoryUserCommandRepository(new Map(), configService),
-      inject: [ConfigService],
+      useFactory: (
+        eventRepository: IEventRepository,
+        eventFactory: EventFactory,
+      ) => {
+        eventFactory
+          .register('USER_CREATED', (doc) =>
+            UserCreated.fromPersistenceDto(doc as unknown as UserCreated),
+          )
+          .register('USER_GRANTED_ROLE', (doc) =>
+            UserGrantedRole.fromPersistenceDto(
+              doc as unknown as UserGrantedRole,
+            ),
+          )
+          .register('USER_DEACTIVATED', (doc) =>
+            UserDeactivated.fromPersistenceDto(
+              doc as unknown as UserDeactivated,
+            ),
+          );
+
+        return new EventSourcedCommandRepository(
+          eventRepository,
+          USER_AGGREGATE_TYPE,
+          (eventHistory) => User.fromEventHistory(eventHistory),
+        );
+      },
+      inject: [EVENT_REPOSITORY_INJECTION_TOKEN, EventFactory],
     },
     {
       provide: CommandHandlerService,
@@ -92,7 +124,9 @@ export class UserModule implements OnModuleInit {
     const isUserDbEmpty = await this.moduleRef
       .get<IUserCommandRepository>(USER_COMMAND_REPOSITORY_INJECTION_TOKEN)
       .isEmpty();
+
     const INITIAL_ADMIN_PASSWORD_VAR_NAME = 'INITIAL_ADMIN_PASSWORD';
+
     if (isUserDbEmpty) {
       const adminPasswordFromConfig = this.moduleRef
         .get(ConfigService, { strict: false })
@@ -110,6 +144,8 @@ export class UserModule implements OnModuleInit {
           .get(ConfigService, { strict: false })
           .get<string | null>('SYSTEM_ADMIN_USERNAME') || 'ti-admin-user';
       const userCommandHandler = this.moduleRef.get(CommandHandlerService);
+
+      console.log('Attempting to create first admin user');
 
       const userCreationCommandPayload: CreateUserWithPassword = {
         // TODO make this configurable
@@ -133,6 +169,10 @@ export class UserModule implements OnModuleInit {
           userCreationResult,
         ]);
       }
+
+      console.log(
+        'Attempting to grant role: [system admin] to first admin user',
+      );
 
       const grantAdminUserRolePayload: GrantUserRole = {
         aggregateCompositeIdentifier: {

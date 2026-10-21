@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-floating-promises */
 import { strict as assert } from 'node:assert';
 import { describe, it } from 'node:test';
-import { TrueImpactError } from 'src/libs/data-types';
+import { TrueImpactError } from '../../libs/data-types';
 import { validateNewUsername } from './validate-new-username';
 
 const validShortUsername = 'abc';

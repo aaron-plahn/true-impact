@@ -2,199 +2,260 @@
 
 This first release of the True Impact platform introduces a working model for user management, client management, and survey creation and completion.
 
+## 81
+
+In this PR, we support durable persistence for users.
+
 ## 84
+
 In this PR, we customize our Supertokens implementation. This allows us to use custom request bodies that match our original API. It also allows us to return standard HTTP status codes, whereas Supertokens returns a 200, for example, even if the
-user request is invalid, opting for a nested `request.body.status` that must be parsed instead of `request.status`. (They do 
+user request is invalid, opting for a nested `request.body.status` that must be parsed instead of `request.status`. (They do
 this to avoid try\catch in their client SDK's when using standard HTTP client libs that throw for non-200 status responses.)
 
 Finally, the new approach simplifies the process of setting up Swagger API documentation for the auth routes.
 
 ## 83
+
 In this PR, we integrate Supertokens with our core user management system.
 
 ## 82
+
 In this PR, we support durable persistence for survey reviews.
 
 ## 80
+
 In this PR, we support durable persistence for communities.
 
 ## 79
+
 In this PR, we support durable persistence for group programs.
 
 ## 78
+
 In this PR, we support durable persistence for flags.
 
 ## 77
+
 In this PR, we clean up our implementation of durable persistence for surveys, survey responses, and clients. This ensures
 that we can move even faster when implementing durable persistence for remaining entities.
 
 ## 76
+
 In this PR, we support durable persistence for clients.
 
 ## 75
+
 In this PR, we support durable persistence for surveys. This was done for survey responses in PR #73.
 
 ## 74
+
 In this PR, we clean up existing code to improve velocity when adding upcoming features.
 
 ## 73
+
 In this PR, we support persistent storage of survey responses.
 
 ## 54
-In this PR, we implement persistent storage using [PostgreSQL](https://www.postgresql.org/). 
+
+In this PR, we implement persistent storage using [PostgreSQL](https://www.postgresql.org/).
 
 ## 72
+
 In this PR, we simplify the user experience for survey completion, removing unnecessary intermediate links.
 
 ## 71
+
 In this PR, we tighten up the restrictions on a user's role. The current list of allowed values includes:
+
 - 'system admin'
 - 'team admin'
 - 'employee'
 
 ## 70
+
 In this PR, we add user-specific protection to pages and interactions on the web-client. This is not a matter of security, as the server will never send data in a query or process a form if the user lacks the authority to read or write the given data. But it is very annoying to the user to see empty pages or forms that are certain to fail.
 
 ## 68
+
 In this PR, we add a script that generates a `ReleaseNotes.md` document from `CHANGELOG.md`, linking PRs to GitHub.
 
 ## 67
+
 This minor PR removes some irrelevant data from the server that was never presented to the user.
 
 ## 66
+
 In this PR, we provide a user interface for viewing generated reports about submitted surveys starting with a list of recently submitted surveys. At this point, the report presentation is generic, i.e., it is not aware of which report is being presented. In the future we will introduce customized presentation for important report types.
 
 ## 64
+
 In this PR, we return survey responses in client queries. We also support querying only submitted survey responses, which include reports.
 
 ## 63
+
 In this PR, we expose reports on survey responses by introducing machinery to accumulate values
-for categories across responses to questions for a single survey attempt. 
+for categories across responses to questions for a single survey attempt.
 
 ## 62
-In this PR, we support flags for survey imports. Existing flags may be specified by label, while flags to be created must include
-a description. 
 
-## 61 
+In this PR, we support flags for survey imports. Existing flags may be specified by label, while flags to be created must include
+a description.
+
+## 61
+
 In this PR, we add enhanced validation for edge cases when openning a survey to the public. This validation was missed initially.
 
 ## 60
+
 In this PR, we change the language to refer to survey finalization instead of survey pubication. Going forward, "publishing" a survey refers to making it available for completion by some target audience (e.g., general public, a known client), while "finalizing" a survey refers to freezing its questions and options
 indicating that it is ready for publication. Note that this step is required to ensure that a survey isn't changed while in the process of being completed by a participant. While we could implicitly finalize the survey when the survey is published to some target participant(s), we opted to make the freezing behaviour explicit with a finalization step.
 
 ## 58
+
 UX end-to-end tests were not originally a gate for merging PRs and we only set them to run on push to integration. At some point the configuration became broken and the e2e tests were failing, but because they weren't a gate to integration, we missed this. The UX e2e tests were passing locally, however, so it wasn't a real regression. In this PR, we fix the Docker and GitHub actions (ux-e2e) configurations so that UX e2e tests again pass in the CI.
 
 ## 57
+
 In this PR, we tighten up our validation of literal values.
 
 ## 56
+
 In this PR, we support importing an entire survey with a single request.
 
 ## 55
+
 In this PR, we begin to add support for public surveys. We introduce a "keystone" flag that allows us to disable this feature in the UI. We still need to sort out the interplay between private (passcode protected) and public surveys and introduce supplementary security features for public responses. We also introduce a QR code for survey links.
 
 ## 53
+
 In this PR, we remove an explicit port in the client origin when configuring CORS on port 443 (staging and production environments, for example).
 
 ## 52
+
 In this PR, we add a more robust approach to configuring the web client. The new approach allows us to swap out the configuration (e.g. API endpoints) without
 running a new build.
 
 ## 50
-In this PR, we automate deployments to a staging environment. 
+
+In this PR, we automate deployments to a staging environment.
 
 ## 49
-In this PR, we run circular dependency checks in the CI. 
+
+In this PR, we run circular dependency checks in the CI.
 
 ## 42
+
 In this PR, we configure dependabot to automatically open requests to update dependencies when patches become available.
 
 ## 41
+
 In this PR, we include several security scans in the CI pipeline.
 
 ## 40
+
 In this PR, we run the UI e2e tests in the CI as a gate that prevents moving from `integration` to `staging`.
 
 ## 39
+
 In this PR, we build the admin web-client in the CI step and publish the artifacts. Note that for the web-client, lint is part of the build. Also note that this is redundant with the Docker Compose build that is used for e2e tests. When automating deployments, we will address which build is the source of truth.
 
 ## 38
+
 In this PR, we introduce a Continuous Integration (software quality) pipeline. The CI step runs
+
 - server
-    - lint
-    - build
-    - unit test
-    - server e2e test (tests the build artifact)
+  - lint
+  - build
+  - unit test
+  - server e2e test (tests the build artifact)
 - client
-    - lint
-    - build (via Docker Compose)
+  - lint
+  - build (via Docker Compose)
 
 ### Future Scoped
+
 We do not yet run the UI e2e (WebDriver.io) tests. We will gate `staging` with these as they will soon become to slow to gate `integration` for rapid iteration.
 
 We do not automate deployments in this PR.
 
 ## 37
+
 In this PR, we support the group program observation work flow on the server. This allows facilitators to record observations of a group program session by type or by notes which can later be classified by type. This is crucial for qualitative analysis of programs.
 
 ## 36
+
 In this PR, we introduce the ability to schedule a group program session.
 
 ## 35
+
 In this PR, we enable strict allow-list property validation when validating data against schemas. This
 ensures that no unknown properties can be injected on user requests, for example. We also reinstate the scenario test for completing a survey as a client.
 
 ## 32
+
 In this PR, we introduce group programs, including a command to create a group program. Eventually, we will support specifying a group program as the subject of a survey.
 
 ## 33
+
 This PR is a refactor that changes the way the server and client interact without changing the overall behaviour. With this PR, the
 entire survey completion workflow has been secured.
 
 ## 31
+
 Securing anonymous survey responses proved sufficiently novel to make using our originally intended drop-in auth solution (Supertokens)
 a fight against the platform. As such, we have implemented our own auth solution. In this PR, we remove the Supertokens container as well
 as its required PostgreSQL container from the Docker build and remove all (now unused) remenants of Supertokens from the server and web-client.
 
 ## 30
+
 In this commit, we add role based access control (RBAC) to all command and query endpoints. We
 introduce several server integration test utilities to deal with tracking auth state in the test
 http client and seeding test users. Securing the web sockets (real-time update channels) is future-scoped.
 
 ## 29
+
 In this commit, we introduce a user management work flow and sessions for authenticated system users.
 
 ## 28
+
 This commit reorganizes core project dependencies.
 
 ## 26
+
 In this commit, we introduce one-time access codes for anonymous survey completion.
 
 ## 25
+
 In this commit, we update the project documentation, introducing separate README.md files for each component of the system.
 
 ## 24
+
 In this commit, we add automated UI tests of the survey completion workflow.
 
 ## 23
+
 In this commit, we introduce an independent web client for survey completion. At first pass, this client supports anonymous
 completion of open surveys. In the future, pass codes will be used to allow one-time completion or non-anonymous surveys.
 
 ## 22
-In this commit, we updated the CHANGELOG to reflect the previous several commits. We will aim to 
+
+In this commit, we updated the CHANGELOG to reflect the previous several commits. We will aim to
 update the CHANGELOG with every commit going forward.
 
 ## 20
+
 In this commit, we introduce an admin UX for building flat surveys.
 
 ## 19
+
 In this commit, we implement an e2e (automated browser) testing framework with webdriver.io and use this to test the login workflow.
 
 ## 18
+
 In this commit, we introduce a navbar and login functionality for the web client.
 
 ## 17
+
 In this commit, we expose command schemas in our API documentation.
 
 ## 16

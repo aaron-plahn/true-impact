@@ -90,9 +90,11 @@ export class PostgresModule implements OnModuleDestroy {
           throw e;
         });
 
-        // TODO use a lib to get static analysis \ type safety on SQL queries
-        // not null constraints?
-
+        /**
+         * Ideally, we would declare `stream_id` as `NOT NULL` when creating the `events` table in Postgres.
+         * For some yet undiagnosed reason, doing so causes the CI to hang when awaiting the server health check,
+         * presumably due to the Postgres container hanging, even though there is no problem locally.
+         */
         const createTableQuery = `
       CREATE TABLE IF NOT EXISTS events (
         stream_id TEXT,

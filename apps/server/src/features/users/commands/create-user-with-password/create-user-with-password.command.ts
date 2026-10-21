@@ -1,7 +1,7 @@
 import {
   NonEmptyString,
   TrueImpactDataExample,
-} from '../../../libs/data-types';
+} from '../../../../libs/data-types';
 
 @TrueImpactDataExample<CreateUserWithPassword>({
   example: {
@@ -13,7 +13,7 @@ import {
   },
 })
 export class CreateUserWithPassword {
-  static readonly type = 'CREATE_USER_WITH_PASSWORD';
+  static readonly type = 'CREATE_USER';
 
   @NonEmptyString({
     label: 'username',
