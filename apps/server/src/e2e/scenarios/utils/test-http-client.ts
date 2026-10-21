@@ -79,14 +79,20 @@ export class TestHttpClient implements Omit<
     url: string,
     config?: axios.AxiosRequestConfig<D>,
   ): Promise<R> {
-    return this.axiosInstance.get(url, this.configWithCredentials(config));
+    return this.axiosInstance.get(
+      url,
+      this.configWithCredentials(config),
+    ) as Promise<R>;
   }
 
   delete<T = any, R = axios.AxiosResponse<T, any, Headers>, D = any>(
     url: string,
     config?: axios.AxiosRequestConfig<D>,
   ): Promise<R> {
-    return this.axiosInstance.delete(url, this.configWithCredentials(config));
+    return this.axiosInstance.delete(
+      url,
+      this.configWithCredentials(config),
+    ) as Promise<R>;
   }
 
   head<T = any, R = axios.AxiosResponse<T, any, Headers>, D = any>(
@@ -112,7 +118,13 @@ export class TestHttpClient implements Omit<
       url,
       data,
       this.configWithCredentials(config),
-    );
+      /**
+       * The casts in this file side-step covariance violation. This is not a problem
+       * anywhere in this file, because the generic is really just being used
+       * to assert the type of a dynamic HTTP response and not to correlated inputs
+       * and outputs.
+       */
+    ) as Promise<R>;
   }
 
   put<T = any, R = axios.AxiosResponse<T, any, Headers>, D = any>(
@@ -124,7 +136,7 @@ export class TestHttpClient implements Omit<
       url,
       data,
       this.configWithCredentials(config),
-    );
+    ) as Promise<R>;
   }
 
   patch<T = any, R = axios.AxiosResponse<T, any, Headers>, D = any>(
@@ -136,7 +148,7 @@ export class TestHttpClient implements Omit<
       url,
       data,
       this.configWithCredentials(config),
-    );
+    ) as Promise<R>;
   }
 
   postForm<T = any, R = axios.AxiosResponse<T, any, Headers>, D = any>(
