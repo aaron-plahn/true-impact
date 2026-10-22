@@ -58,6 +58,7 @@ export class ClientViewModelClientDto {
     label: 'full name',
     description: `the client's full name`,
   })
+  // TODO we want to have first name, last name, and middle initials separately
   fullName: FullNameDto;
 
   @EnumeratedType(
