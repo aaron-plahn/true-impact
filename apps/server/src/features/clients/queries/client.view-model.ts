@@ -8,6 +8,7 @@ import {
   EnumeratedType,
   NestedDataType,
   NonEmptyString,
+  NonNegativeInteger,
   TrueImpactDataExample,
 } from '../../../libs/data-types';
 import { LookupTable } from '../../../libs/data-types/schema-management/decorators/lookup-table.decorator';
@@ -17,6 +18,7 @@ import { Client } from '../client.aggregate-root';
   example: {
     id: '1',
     dateOfBirth: '10-11-2012',
+    createdAt: 1793737061316,
     revision: '7',
     fullName: {
       firstName: 'John',
@@ -53,6 +55,13 @@ export class ClientViewModelClientDto {
     description: 'tracks historical edits to this client',
   })
   revision: string;
+
+  @NonNegativeInteger({
+    label: 'created at',
+    description:
+      'UNIX timestamp for the date this client was first added to the database',
+  })
+  createdAt: number;
 
   @NestedDataType(() => FullNameDto, {
     label: 'full name',
@@ -101,6 +110,10 @@ export class ClientViewModel {
 
   revision: string;
 
+  createdAt: number;
+
+  // modifiedAt
+
   fullName: FullName;
 
   isIndigenous: YesNoOrUnknown;
@@ -117,6 +130,7 @@ export class ClientViewModel {
   constructor({
     id,
     revision,
+    createdAt,
     fullName,
     isIndigenous,
     community,
@@ -124,6 +138,7 @@ export class ClientViewModel {
     surveyResponses,
   }: {
     id: string;
+    createdAt: number;
     dateOfBirth: string;
     revision: string;
     fullName: FullName;
@@ -133,6 +148,8 @@ export class ClientViewModel {
     surveyResponses: SurveyResponseRecordViewModelClientDto[];
   }) {
     this.id = id;
+
+    this.createdAt = createdAt;
 
     this.revision = revision;
 
@@ -150,6 +167,7 @@ export class ClientViewModel {
   toClientDto(): ClientViewModelClientDto {
     return {
       id: this.id,
+      createdAt: this.createdAt,
       dateOfBirth: this.dateOfBirth,
       revision: this.revision,
       fullName: this.fullName.toDto(),
@@ -179,6 +197,7 @@ export class ClientViewModel {
       communityId,
       dateOfBirth,
       flagIds,
+      eventHistory,
     } = client;
 
     let community: CommunityViewModelClientDto | undefined;
@@ -207,6 +226,9 @@ export class ClientViewModel {
 
     return new ClientViewModel({
       id,
+      createdAt: (
+        eventHistory[0] as unknown as { metadata: { dateEffective: number } }
+      ).metadata.dateEffective,
       revision: revision.toString(),
       /**
        * In the long run, we probably want a `DateView` object.

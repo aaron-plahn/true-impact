@@ -191,29 +191,225 @@ describe(`Client index endpoint (POST /clients)`, () => {
     });
 
     describe(`when pagination is provided without any filters`, () => {
+      /**
+       * TODO validate pagination defaults are set (e.g., if there are 500 results, we don't actually get 500 responses)
+       * We may want a helper to directly write the views we want to the query DB once we have implemented this.
+       */
+
       describe(`when there are no clients in the database`, () => {
-        it(`should return the expected empty response`, () => {});
+        it(`should return the expected empty response`, async () => {
+          await asssertQueryResponseHasExpectedEntities(
+            adminHttpClient,
+            {
+              pagination: {
+                page: 1,
+                pageSize: 10,
+              },
+            },
+            // no results expected as the DB is empty
+            new Set(),
+          );
+        });
       });
 
       describe(`when there is less than a full page of clients`, () => {
-        it.todo(`should return the expected response`);
+        const expectedClientIds = new Set<string>();
+
+        beforeEach(async () => {
+          // client 1
+          await assertCommandScenarioSuccess({
+            httpClient: adminHttpClient,
+            endpoint: commandsEndpointForClients,
+            stream: TestCommandStream.first(CreateClient, {
+              firstName: 'Clienta',
+              middleNames: [],
+              lastName: 'McClienta',
+            }),
+            // todo rename this onSuccess?
+            assertSuccess: (acks) => {
+              expectedClientIds.add(acks[0].id);
+            },
+          });
+
+          // client 2
+          await assertCommandScenarioSuccess({
+            httpClient: adminHttpClient,
+            endpoint: commandsEndpointForClients,
+            stream: TestCommandStream.first(CreateClient, {
+              firstName: 'Clientwithonemiddlename',
+              middleNames: ['onlymid'],
+              lastName: 'McClientb',
+            }),
+            // todo rename this onSuccess?
+            assertSuccess: (acks) => {
+              expectedClientIds.add(acks[0].id);
+            },
+          });
+
+          // client 3
+          await assertCommandScenarioSuccess({
+            httpClient: adminHttpClient,
+            endpoint: commandsEndpointForClients,
+            stream: TestCommandStream.first(CreateClient, {
+              firstName: 'Clientwithmanymiddlenames',
+              middleNames: ['midone', 'midtwo', 'midthree'],
+              lastName: 'McClientc',
+            }),
+            // todo rename this onSuccess?
+            assertSuccess: (acks) => {
+              expectedClientIds.add(acks[0].id);
+            },
+          });
+        });
+
+        it(`should return the expected response`, async () => {
+          await asssertQueryResponseHasExpectedEntities(
+            adminHttpClient,
+            {
+              pagination: {
+                page: 1,
+                pageSize: 5,
+              },
+            },
+            expectedClientIds,
+          );
+        });
       });
 
       describe(`when there is exactly a full page of clients`, () => {
-        it.todo(`should return the expected response`);
+        const expectedClientIds = new Set<string>();
+
+        const pageSize = 5;
+
+        const clientNames = Array(pageSize)
+          .fill(null)
+          .map((_, index) => [`Clientfirst${index}`, `Clientlast${index}`]);
+
+        beforeEach(async () => {
+          for (const [firstName, lastName] of clientNames) {
+            await assertCommandScenarioSuccess({
+              httpClient: adminHttpClient,
+              endpoint: commandsEndpointForClients,
+              stream: TestCommandStream.first(CreateClient, {
+                firstName,
+                lastName,
+              }),
+              assertSuccess: (acks) => {
+                expectedClientIds.add(acks[0].id);
+              },
+            });
+          }
+        });
+
+        it(`should return the expected response`, async () => {
+          await asssertQueryResponseHasExpectedEntities(
+            adminHttpClient,
+            {
+              pagination: {
+                page: 1,
+                pageSize,
+              },
+            },
+            expectedClientIds,
+          );
+        });
       });
 
       describe(`when there is more than one page of clients`, () => {
-        describe(`when the second page is requested`, () => {
-          it.todo(`should return the expected response`);
+        let page1ClientIds: Set<string>;
+        let page2ClientIds: Set<string>;
+        let page3ClientIds: Set<string>;
+
+        const pageSize = 5;
+
+        const clientsOnFirstPage = Array(pageSize)
+          .fill(null)
+          .map((_, index) => `P1client${index}`);
+
+        const clientsOnSecondPage = Array(pageSize)
+          .fill(null)
+          .map((_, index) => `P2client${index}`);
+
+        const clientsOnThirdPage = Array(pageSize - 2)
+          .fill(null)
+          .map((_, index) => `P3client${index}`);
+
+        beforeEach(async () => {
+          page1ClientIds = new Set<string>();
+          page2ClientIds = new Set<string>();
+          page3ClientIds = new Set<string>();
+
+          for (const firstName of clientsOnFirstPage) {
+            await assertCommandScenarioSuccess({
+              httpClient: adminHttpClient,
+              endpoint: commandsEndpointForClients,
+              stream: TestCommandStream.first(CreateClient, { firstName }),
+              assertSuccess: (acks) => {
+                page1ClientIds.add(acks[0].id);
+              },
+            });
+          }
+
+          for (const firstName of clientsOnSecondPage) {
+            await assertCommandScenarioSuccess({
+              httpClient: adminHttpClient,
+              endpoint: commandsEndpointForClients,
+              stream: TestCommandStream.first(CreateClient, { firstName }),
+              assertSuccess: (acks) => {
+                page2ClientIds.add(acks[0].id);
+              },
+            });
+          }
+
+          for (const firstName of clientsOnThirdPage) {
+            await assertCommandScenarioSuccess({
+              httpClient: adminHttpClient,
+              endpoint: commandsEndpointForClients,
+              stream: TestCommandStream.first(CreateClient, { firstName }),
+              assertSuccess: (acks) => {
+                page3ClientIds.add(acks[0].id);
+              },
+            });
+          }
         });
 
+        describe(`when the second page is requested`, () => {
+          const targetPage = 2;
+
+          it(`should return the expected response`, async () => {
+            await asssertQueryResponseHasExpectedEntities(
+              adminHttpClient,
+              {
+                pagination: {
+                  pageSize,
+                  page: targetPage,
+                },
+              },
+              page2ClientIds,
+            );
+          });
+        });
+
+        // we need to add a 4th page of test data for this case
         describe(`when the next-to-last page is requested`, () => {
           it.todo(`should return the expected response`);
         });
 
         describe(`when the last page is requested`, () => {
-          it.todo(`should return the expected response`);
+          const targetPage = 3;
+
+          it(`should return the expected response`, async () => {
+            await asssertQueryResponseHasExpectedEntities(
+              adminHttpClient,
+              {
+                pagination: {
+                  pageSize,
+                  page: targetPage,
+                },
+              },
+              page3ClientIds,
+            );
+          });
         });
       });
     });

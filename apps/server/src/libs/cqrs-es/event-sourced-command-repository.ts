@@ -156,6 +156,14 @@ export class EventSourcedCommandRepository<
       );
     }
 
+    eventHistory.forEach((e) => {
+      Object.assign(e, {
+        metadata: {
+          dateEffective: Date.now(),
+        },
+      });
+    });
+
     const result = await this.eventRepository.appendAt(0, ...eventHistory);
 
     if (result instanceof Error) {

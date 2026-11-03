@@ -98,7 +98,9 @@ export class ClientController implements OnModuleInit {
       ? compileJsQuery<ClientViewModelClientDto>(filter)
       : () => true;
 
-    const filteredClients = clients.filter(filterToUse);
+    const filteredClients = clients
+      .sort((a, b) => a.createdAt - b.createdAt)
+      .filter(filterToUse);
 
     const paginationToUse = pagination
       ? pagination
