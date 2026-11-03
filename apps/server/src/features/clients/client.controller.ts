@@ -11,6 +11,7 @@ import {
   TrueImpactRuntimeException,
 } from '../../libs/data-types';
 import {
+  ApiBody,
   ApiOkResponse,
   BadUserInputFilter,
   Body,
@@ -37,6 +38,9 @@ const schema = convertToOpenApiSchema(
 
 const example = buildTestInstance(ClientViewModelClientDto);
 
+const queryOptionsExample = buildTestInstance(QueryOptions);
+
+// TODO Move this to a shared directory unless we intend to make the options dynamic (based on current results size)
 const PAGE_SIZES = [5, 10, 50, 100];
 
 @UseFilters(ResourceNotFoundFilter, BadUserInputFilter)
@@ -62,6 +66,14 @@ export class ClientController implements OnModuleInit {
 
   @UseGuards(AdminRbacAuthGuard)
   // @IndexQueryEndpoint()
+  @ApiBody({
+    examples: {
+      'pagination and an and filter': {
+        value: queryOptionsExample,
+      },
+    },
+    schema: convertToOpenApiSchema(getDataSchemaFromClassCtor(QueryOptions)),
+  })
   @Post('')
   @ApiOkResponse({
     isArray: true,
@@ -111,9 +123,15 @@ export class ClientController implements OnModuleInit {
       endIndexExclusive,
     );
 
+    currentPageOfClients.forEach((c) => {
+      Object.assign(c, {
+        link: `clients/${c.id}`,
+      });
+    });
+
     // division by 0 scares me almost as much as `Infinity` showing up on the screen
     const totalNumberOfPages =
-      pageSize === 0 ? 1 : Math.floor(clients.length / pageSize);
+      pageSize === 0 ? 1 : Math.ceil(clients.length / pageSize);
 
     const result: IndexTable<ClientViewModelClientDto> = {
       layout: {
@@ -124,6 +142,13 @@ export class ClientController implements OnModuleInit {
           //   key: 'id',
           //   label: '',
           // },
+          {
+            // @ts-expect-error TODO type this properly before merging. Where should we introduce calculated fields?
+            key: 'link',
+            label: 'View',
+            type: 'LINK',
+            // search
+          },
           {
             key: 'isIndigenous',
             label: 'Is Indigenous?',
@@ -153,8 +178,8 @@ export class ClientController implements OnModuleInit {
       navigationPanel: {
         currentPage: page,
         totalNumberOfPages, // should this be a string label?
-        nextPage: (page + 1) % totalNumberOfPages, // e.g., if you are on page 20 / 20, (20+1)%20 -> 1
-        previousPage: page === 0 ? totalNumberOfPages : page - 1,
+        nextPage: (page % totalNumberOfPages) + 1, // e.g., if you are on page 20 / 20, (20 % 20) + 1 -> 1, on page 19, (19 % 20) + 1 = 20
+        previousPage: page === 1 ? totalNumberOfPages : page - 1,
         pageSize: pageSize,
         // no point of changing to the current page size
         availablePageSizes: PAGE_SIZES.filter((ps) => ps !== pageSize),

@@ -19,7 +19,8 @@ import { LogicalOperator } from 'src/libs/query-language';
 
 export type TableSearchFieldType = 'TEXT' | 'CHECKBOX' | 'SELECT';
 
-export type ColumnDataType = 'TEXT' | 'DATE' | 'NUMBER' | 'BOOLEAN' | 'ENUM';
+export type ColumnDataType =
+  'TEXT' | 'DATE' | 'NUMBER' | 'BOOLEAN' | 'ENUM' | 'LINK';
 
 type LabelAndValue = {
   label: string;

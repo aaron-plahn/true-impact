@@ -50,6 +50,55 @@ const compileSimpleQuery = <T>(
     };
   }
 
+  // Should this be TEXT_EQUALS?
+  if (operator === LogicalOperator.EQUALS) {
+    return (input: T) => {
+      if (!isObject(input)) {
+        return false;
+      }
+
+      if (!(field in input)) {
+        return false;
+      }
+
+      const target = input[field as keyof T];
+
+      if (isObject(target)) {
+        /**
+         * We do not support deep equality comparisons for objects as we don't provide a way
+         * for the user to build objects in the client. For now, we just return false. The intended
+         * use of the `EQUALS` operator is to compare primitives to a value determined by the query string.
+         */
+        return false;
+      }
+
+      if (typeof target === 'string') {
+        return target === searchTerms;
+      }
+
+      if (typeof target === 'boolean') {
+        if (target === true) {
+          return searchTerms === 'true';
+        }
+
+        return searchTerms === 'false';
+      }
+
+      if (typeof target === 'undefined' || target === null) {
+        return false;
+      }
+
+      // we have a number
+      try {
+        const parsedNumericValueFromUserQuery = parseInt(searchTerms);
+
+        return parsedNumericValueFromUserQuery === target;
+      } catch (_error) {
+        return false;
+      }
+    };
+  }
+
   const exhastiveCheck: never = operator;
 
   throw new TrueImpactRuntimeException([
