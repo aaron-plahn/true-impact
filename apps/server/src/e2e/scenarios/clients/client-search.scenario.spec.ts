@@ -184,6 +184,8 @@ describe(`Client index endpoint (POST /clients)`, () => {
             {},
             expectedClientIds,
           );
+
+          // TODO would this be a good response to snapshot as a contract test?
         });
       });
     });
