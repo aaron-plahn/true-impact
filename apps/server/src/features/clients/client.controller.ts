@@ -142,7 +142,35 @@ export class ClientController implements OnModuleInit {
             key: 'link',
             label: 'View',
             type: 'LINK',
-            // search
+            // not searchable
+          },
+          {
+            key: 'firstName',
+            label: 'First Name',
+            type: 'TEXT',
+            search: {
+              type: 'TEXT',
+              operator: LogicalOperator.TEXT_INCLUDES,
+            },
+          },
+          // TODO add search scenario test cases for this property
+          {
+            key: 'lastName',
+            label: 'Last Name',
+            type: 'TEXT',
+            search: {
+              type: 'TEXT',
+              operator: LogicalOperator.TEXT_INCLUDES,
+            },
+          },
+          {
+            key: 'community',
+            label: 'Community',
+            type: 'TEXT',
+            search: {
+              type: 'TEXT',
+              operator: LogicalOperator.TEXT_INCLUDES,
+            },
           },
           {
             key: 'isIndigenous',
