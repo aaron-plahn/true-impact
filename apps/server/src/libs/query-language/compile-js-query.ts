@@ -46,7 +46,9 @@ const compileSimpleQuery = <T>(
         return false;
       }
 
-      return target.includes(searchTerms);
+      const result = target.includes(searchTerms);
+
+      return result;
     };
   }
 
@@ -123,6 +125,10 @@ export const compileJsQuery = <T>(
     const { conditions } = filter;
 
     return (input: T) => {
+      console.log({
+        AND_INPUT: input,
+      });
+
       return conditions.every((condition) => {
         return compileJsQuery(condition)(input);
       });

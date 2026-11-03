@@ -29,7 +29,7 @@ import {
   UseInterceptors,
 } from '../../libs/framework';
 import { CLIENT_AGGREGATE_TYPE } from './client.composite-identifier';
-import { ClientViewModelClientDto } from './queries';
+import { ClientIndexListRowViewDto, ClientViewModelClientDto } from './queries';
 import { ClientQueryService } from './services/client-query.service';
 
 const schema = convertToOpenApiSchema(
@@ -85,7 +85,7 @@ export class ClientController implements OnModuleInit {
     // TODO limit the depth of a query
     @Body()
     { filter, pagination }: QueryOptions,
-  ): Promise<IndexTable<ClientViewModelClientDto> | TrueImpactError> {
+  ): Promise<IndexTable<ClientIndexListRowViewDto> | TrueImpactError> {
     // TODO pass the filter to the query service
     const clients = await this.clientsService.fetchMany();
 
@@ -95,7 +95,7 @@ export class ClientController implements OnModuleInit {
 
     // TODO We need to filter and paginate in the database
     const filterToUse = filter
-      ? compileJsQuery<ClientViewModelClientDto>(filter)
+      ? compileJsQuery<ClientIndexListRowViewDto>(filter)
       : () => true;
 
     const filteredClients = clients
@@ -125,18 +125,11 @@ export class ClientController implements OnModuleInit {
       endIndexExclusive,
     );
 
-    // TODO move this to the `ClientViewModelClientDto` and calculate it in `ClientViewModel.toClientDto()`.
-    currentPageOfClients.forEach((c) => {
-      Object.assign(c, {
-        link: `clients/${c.id}`,
-      });
-    });
-
     // division by 0 scares me almost as much as `Infinity` showing up on the screen
     const totalNumberOfPages =
       pageSize === 0 ? 1 : Math.ceil(clients.length / pageSize);
 
-    const result: IndexTable<ClientViewModelClientDto> = {
+    const result: IndexTable<ClientIndexListRowViewDto> = {
       layout: {
         isSearchable: true,
         columns: [
@@ -146,7 +139,6 @@ export class ClientController implements OnModuleInit {
           //   label: '',
           // },
           {
-            // @ts-expect-error TODO type this properly before merging. Where should we introduce calculated fields?
             key: 'link',
             label: 'View',
             type: 'LINK',

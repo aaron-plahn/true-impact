@@ -14,6 +14,27 @@ import {
 import { LookupTable } from '../../../libs/data-types/schema-management/decorators/lookup-table.decorator';
 import { Client } from '../client.aggregate-root';
 
+export class ClientIndexListRowViewDto {
+  // this is meant to be a "hidden" field
+  id: string;
+
+  // this should be an object with a route, label, and tooltip
+  link: string;
+
+  createdAt: number;
+
+  isIndigenous: YesNoOrUnknown;
+
+  // should this be a link?
+  community?: string;
+
+  firstName: string;
+
+  middleInitials: string;
+
+  lastName: string;
+}
+
 @TrueImpactDataExample<ClientViewModelClientDto>({
   example: {
     id: '1',
@@ -175,6 +196,28 @@ export class ClientViewModel {
       community: this.community,
       flagsById: deepConvertMapToObject(this.flags),
       surveyResponses: this.surveyResponses,
+    };
+  }
+
+  toIndexTableRow(): ClientIndexListRowViewDto {
+    return {
+      id: this.id,
+      link: `clients/${this.id}`,
+      createdAt: this.createdAt,
+      isIndigenous: this.isIndigenous,
+      firstName: this.fullName.firstName,
+      /**
+       * While not that important a use case, this is interesting from a technical point of view in that
+       * we may want to allow search of the underlying data independent of the rendered text. So we probably
+       * want to search full middle names, but only show initials. We don't want to match a generated ".". We
+       * might want to match a minimum number of middle names, such as "length(middleNames)> 0" or "length(middleNames) === 1".
+       */
+      middleInitials:
+        this.fullName.middleNames.length > 0
+          ? this.fullName.middleNames.join('.')
+          : // '-' ?
+            '',
+      lastName: this.fullName.lastName,
     };
   }
 

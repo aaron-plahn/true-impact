@@ -4,6 +4,11 @@ import { ClientViewModelClientDto } from '../../../features/clients/queries';
 import { CreateUserWithPassword } from '../../../features/users/commands';
 import { TestCommandStream } from '../../../libs/cqrs-es';
 import { QueryOptions } from '../../../libs/framework';
+import {
+  AndQueryFilterCondition,
+  ConditionalBlockType,
+  LogicalOperator,
+} from '../../../libs/query-language';
 import { IndexTable } from '../../../libs/server-driven-ui';
 import { assertCommandScenarioSuccess } from '../utils';
 import { signIn, signInAsAdmin } from '../utils/sign-in';
@@ -90,6 +95,37 @@ describe(`Client index endpoint (POST /clients)`, () => {
   beforeEach(async () => {
     await adminHttpClient.patch(clientTestSetupEndpoint);
   });
+
+  const isIndigenousYesFilter: QueryOptions['filter'] = {
+    type: ConditionalBlockType.AND,
+    conditions: [
+      {
+        type: ConditionalBlockType.SIMPLE,
+        field: 'isIndigenous',
+        operator: LogicalOperator.EQUALS,
+        params: ['Yes'],
+      },
+    ],
+  } as const;
+
+  const firstNameTextToMatch = 'Jo';
+
+  const firstNameIncludesJoFilter: QueryOptions['filter'] = {
+    type: ConditionalBlockType.AND,
+    conditions: [
+      {
+        type: ConditionalBlockType.SIMPLE,
+        field: 'firstName',
+        operator: LogicalOperator.TEXT_INCLUDES,
+        params: [firstNameTextToMatch],
+      },
+    ],
+  };
+
+  const paginationOptionsForFirstPageOfTen: QueryOptions['pagination'] = {
+    page: 1,
+    pageSize: 10,
+  };
 
   describe(`when the user has permission to execute the query`, () => {
     describe(`when no filters or pagination have been provided`, () => {
@@ -390,11 +426,6 @@ describe(`Client index endpoint (POST /clients)`, () => {
           });
         });
 
-        // we need to add a 4th page of test data for this case
-        describe(`when the next-to-last page is requested`, () => {
-          it.todo(`should return the expected response`);
-        });
-
         describe(`when the last page is requested`, () => {
           const targetPage = 3;
 
@@ -417,36 +448,340 @@ describe(`Client index endpoint (POST /clients)`, () => {
     // we comprehensively test filtering here
     describe(`when filters are provided without any pagination`, () => {
       describe(`when an AND filter with one condition is provided`, () => {
+        const expectedClientIds = new Set<string>();
+
         describe(`when it matches some of the clients`, () => {
-          it.todo(`should return the correct number of results`);
+          beforeEach(async () => {
+            await assertCommandScenarioSuccess({
+              httpClient: adminHttpClient,
+              endpoint: commandsEndpointForClients,
+              // Can one stream encompass multiple aggregate roots?
+              stream: TestCommandStream.first(CreateClient, {
+                firstName: 'Matchingclient1',
+                lastName: 'McTestclient',
+                isIndigenous: 'Yes',
+              }),
+              assertSuccess: (acks) => {
+                expectedClientIds.add(acks[0].id);
+              },
+            });
+
+            await assertCommandScenarioSuccess({
+              httpClient: adminHttpClient,
+              endpoint: commandsEndpointForClients,
+              stream: TestCommandStream.first(CreateClient, {
+                firstName: 'Nonmatchingclient1',
+                lastName: 'McTestClient',
+                isIndigenous: 'No',
+              }),
+            });
+          });
+
+          it(`should return the correct number of results`, async () => {
+            await asssertQueryResponseHasExpectedEntities(
+              adminHttpClient,
+              {
+                filter: isIndigenousYesFilter,
+              },
+              expectedClientIds,
+            );
+          });
         });
       });
     });
 
     describe(`when filters and pagination are provided`, () => {
       describe(`when there are no clients in the database`, () => {
-        it(`should return the expected empty response`, () => {});
+        it(`should return the expected empty response`, async () => {
+          await asssertQueryResponseHasExpectedEntities(
+            adminHttpClient,
+            {
+              filter: isIndigenousYesFilter,
+              pagination: paginationOptionsForFirstPageOfTen,
+            },
+            // i.e., empty result set is expected
+            new Set(),
+          );
+        });
       });
 
       describe(`when there is less than a full page of clients`, () => {
-        it.todo(`should return the expected response`);
+        const expectedClientIds = new Set<string>();
+
+        beforeEach(async () => {
+          await assertCommandScenarioSuccess({
+            httpClient: adminHttpClient,
+            endpoint: commandsEndpointForClients,
+            stream: TestCommandStream.first(CreateClient, {
+              firstName: 'Client1',
+              isIndigenous: 'Yes',
+            }),
+            assertSuccess: (acks) => {
+              expectedClientIds.add(acks[0].id);
+            },
+          });
+
+          await assertCommandScenarioSuccess({
+            httpClient: adminHttpClient,
+            endpoint: commandsEndpointForClients,
+            stream: TestCommandStream.first(CreateClient, {
+              firstName: 'Client2',
+              isIndigenous: 'No',
+            }),
+          });
+
+          await assertCommandScenarioSuccess({
+            httpClient: adminHttpClient,
+            endpoint: commandsEndpointForClients,
+            stream: TestCommandStream.first(CreateClient, {
+              firstName: 'Client3',
+              isIndigenous: 'Yes',
+            }),
+            assertSuccess: (acks) => {
+              expectedClientIds.add(acks[0].id);
+            },
+          });
+
+          await assertCommandScenarioSuccess({
+            httpClient: adminHttpClient,
+            endpoint: commandsEndpointForClients,
+            stream: TestCommandStream.first(CreateClient, {
+              firstName: 'Client4',
+              isIndigenous: 'Unknown',
+            }),
+          });
+        });
+
+        it(`should return the expected response`, async () => {
+          await asssertQueryResponseHasExpectedEntities(
+            adminHttpClient,
+            {
+              filter: isIndigenousYesFilter,
+              pagination: paginationOptionsForFirstPageOfTen,
+            },
+            expectedClientIds,
+          );
+        });
       });
 
       describe(`when there is exactly a full page of clients`, () => {
-        it.todo(`should return the expected response`);
+        const expectedClientIds = new Set<string>();
+
+        const pageSize = 20;
+
+        const firstNamesOfMatchingClients = Array(pageSize)
+          .fill(null)
+          .map((_, index) => `${firstNameTextToMatch}${index + 1}`);
+
+        const firstNamesOfNonMatchingClients = Array(pageSize * 2 + 1)
+          .fill(null)
+          .map((_, index) => `Nomatch${index + 1}`);
+
+        beforeEach(async () => {
+          for (const firstName of firstNamesOfMatchingClients) {
+            await assertCommandScenarioSuccess({
+              httpClient: adminHttpClient,
+              endpoint: commandsEndpointForClients,
+              stream: TestCommandStream.first(CreateClient, {
+                firstName,
+              }),
+              assertSuccess: (acks) => {
+                expectedClientIds.add(acks[0].id);
+              },
+            });
+          }
+
+          for (const firstName of firstNamesOfNonMatchingClients) {
+            await assertCommandScenarioSuccess({
+              httpClient: adminHttpClient,
+              endpoint: commandsEndpointForClients,
+              stream: TestCommandStream.first(CreateClient, { firstName }),
+            });
+          }
+        });
+
+        it(`should return the expected response`, async () => {
+          await asssertQueryResponseHasExpectedEntities(
+            adminHttpClient,
+            {
+              pagination: {
+                pageSize,
+                page: 1,
+              },
+              filter: firstNameIncludesJoFilter,
+            },
+            expectedClientIds,
+          );
+        });
       });
 
       describe(`when there is more than one page of clients`, () => {
-        describe(`when the second page is requested`, () => {
-          it.todo(`should return the expected response`);
+        const pageSize = 5;
+
+        const nameContainsJoAndIsIndigenousFilter: AndQueryFilterCondition = {
+          type: ConditionalBlockType.AND,
+          conditions: [
+            firstNameIncludesJoFilter.conditions[0],
+            isIndigenousYesFilter.conditions[0],
+          ],
+        };
+
+        let firstPageClientIds: Set<string>;
+
+        let secondPageClientIds: Set<string>;
+
+        let thirdPageClientIds: Set<string>;
+
+        beforeEach(async () => {
+          firstPageClientIds = new Set<string>();
+
+          const page1Names = Array(pageSize)
+            .fill(null)
+            .map((_, index) => {
+              return `Page1client${firstNameTextToMatch}${index + 1}`;
+            });
+
+          for (const firstName of page1Names) {
+            await assertCommandScenarioSuccess({
+              httpClient: adminHttpClient,
+              endpoint: commandsEndpointForClients,
+              stream: TestCommandStream.first(CreateClient, {
+                firstName,
+                isIndigenous: 'Yes',
+              }),
+              assertSuccess: (acks) => {
+                firstPageClientIds.add(acks[0].id);
+              },
+            });
+          }
+
+          await assertCommandScenarioSuccess({
+            httpClient: adminHttpClient,
+            endpoint: commandsEndpointForClients,
+            stream: TestCommandStream.first(CreateClient, {
+              firstName: `${firstNameTextToMatch}butnotindigenous`,
+              isIndigenous: 'No',
+            }),
+          });
+
+          secondPageClientIds = new Set();
+
+          const page2Names = Array(pageSize)
+            .fill(null)
+            .map((_, index) => {
+              return `Page2client${firstNameTextToMatch}${index + 1}`;
+            });
+
+          for (const firstName of page2Names) {
+            await assertCommandScenarioSuccess({
+              httpClient: adminHttpClient,
+              endpoint: commandsEndpointForClients,
+              stream: TestCommandStream.first(CreateClient, {
+                firstName,
+                isIndigenous: 'Yes',
+              }),
+              assertSuccess: (acks) => {
+                secondPageClientIds.add(acks[0].id);
+              },
+            });
+          }
+
+          await assertCommandScenarioSuccess({
+            httpClient: adminHttpClient,
+            endpoint: commandsEndpointForClients,
+            stream: TestCommandStream.first(CreateClient, {
+              firstName: `${firstNameTextToMatch}butindigeneityunknown`,
+              isIndigenous: 'Unknown',
+            }),
+          });
+
+          thirdPageClientIds = new Set();
+
+          const page3Names = Array(pageSize - 2)
+            .fill(null)
+            .map((_, index) => {
+              return `Page3client${firstNameTextToMatch}${index + 1}`;
+            });
+
+          for (const firstName of page3Names) {
+            await assertCommandScenarioSuccess({
+              httpClient: adminHttpClient,
+              endpoint: commandsEndpointForClients,
+              stream: TestCommandStream.first(CreateClient, {
+                firstName,
+                isIndigenous: 'Yes',
+              }),
+              assertSuccess: (acks) => {
+                thirdPageClientIds.add(acks[0].id);
+              },
+            });
+          }
+
+          await assertCommandScenarioSuccess({
+            httpClient: adminHttpClient,
+            endpoint: commandsEndpointForClients,
+            stream: TestCommandStream.first(CreateClient, {
+              firstName: 'Mynamedoesntmatchbutiamindigenous',
+              isIndigenous: 'Yes',
+            }),
+          });
+
+          await assertCommandScenarioSuccess({
+            httpClient: adminHttpClient,
+            endpoint: commandsEndpointForClients,
+            stream: TestCommandStream.first(CreateClient, {
+              firstName: 'Nomatchatall',
+              isIndigenous: 'No',
+            }),
+          });
         });
 
-        describe(`when the next-to-last page is requested`, () => {
-          it.todo(`should return the expected response`);
+        describe(`when the first page is requested`, () => {
+          it(`should return the expected result set`, async () => {
+            await asssertQueryResponseHasExpectedEntities(
+              adminHttpClient,
+              {
+                pagination: {
+                  pageSize,
+                  page: 1,
+                },
+                filter: nameContainsJoAndIsIndigenousFilter,
+              },
+              firstPageClientIds,
+            );
+          });
+        });
+
+        describe(`when the second page is requested`, () => {
+          it(`should return the expected response`, async () => {
+            await asssertQueryResponseHasExpectedEntities(
+              adminHttpClient,
+              {
+                pagination: {
+                  pageSize,
+                  page: 2,
+                },
+                filter: nameContainsJoAndIsIndigenousFilter,
+              },
+              secondPageClientIds,
+            );
+          });
         });
 
         describe(`when the last page is requested`, () => {
-          it.todo(`should return the expected response`);
+          it(`should return the expected response`, async () => {
+            await asssertQueryResponseHasExpectedEntities(
+              adminHttpClient,
+              {
+                pagination: {
+                  pageSize,
+                  page: 3,
+                },
+                filter: nameContainsJoAndIsIndigenousFilter,
+              },
+              thirdPageClientIds,
+            );
+          });
         });
       });
     });
