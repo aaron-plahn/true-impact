@@ -129,7 +129,62 @@ describe(`Client index endpoint (POST /clients)`, () => {
       });
 
       describe(`when there are several clients`, () => {
-        it.todo(`should return the expected response`);
+        const expectedClientIds = new Set<string>();
+
+        beforeEach(async () => {
+          // client 1
+          await assertCommandScenarioSuccess({
+            httpClient: adminHttpClient,
+            endpoint: commandsEndpointForClients,
+            stream: TestCommandStream.first(CreateClient, {
+              firstName: 'Clienta',
+              middleNames: [],
+              lastName: 'McClienta',
+            }),
+            // todo rename this onSuccess?
+            assertSuccess: (acks) => {
+              expectedClientIds.add(acks[0].id);
+            },
+          });
+
+          // client 2
+          await assertCommandScenarioSuccess({
+            httpClient: adminHttpClient,
+            endpoint: commandsEndpointForClients,
+            stream: TestCommandStream.first(CreateClient, {
+              firstName: 'Clientwithonemiddlename',
+              middleNames: ['onlymid'],
+              lastName: 'McClientb',
+            }),
+            // todo rename this onSuccess?
+            assertSuccess: (acks) => {
+              expectedClientIds.add(acks[0].id);
+            },
+          });
+
+          // client 3
+          await assertCommandScenarioSuccess({
+            httpClient: adminHttpClient,
+            endpoint: commandsEndpointForClients,
+            stream: TestCommandStream.first(CreateClient, {
+              firstName: 'Clientwithmanymiddlenames',
+              middleNames: ['midone', 'midtwo', 'midthree'],
+              lastName: 'McClientc',
+            }),
+            // todo rename this onSuccess?
+            assertSuccess: (acks) => {
+              expectedClientIds.add(acks[0].id);
+            },
+          });
+        });
+
+        it(`should return the expected response`, async () => {
+          await asssertQueryResponseHasExpectedEntities(
+            adminHttpClient,
+            {},
+            expectedClientIds,
+          );
+        });
       });
     });
 
