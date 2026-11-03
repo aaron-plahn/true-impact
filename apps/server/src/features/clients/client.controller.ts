@@ -123,6 +123,7 @@ export class ClientController implements OnModuleInit {
       endIndexExclusive,
     );
 
+    // TODO move this to the `ClientViewModelClientDto` and calculate it in `ClientViewModel.toClientDto()`.
     currentPageOfClients.forEach((c) => {
       Object.assign(c, {
         link: `clients/${c.id}`,

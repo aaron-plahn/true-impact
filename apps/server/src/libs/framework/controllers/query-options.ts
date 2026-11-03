@@ -1,10 +1,13 @@
-import { NestedDataType, TrueImpactDataExample } from 'src/libs/data-types';
+import {
+  NestedDataType,
+  TrueImpactDataExample,
+} from '../../../libs/data-types';
 import {
   AndQueryFilterCondition,
   ConditionalBlockType,
   LogicalOperator,
   PaginationOptions,
-} from 'src/libs/query-language';
+} from '../../../libs/query-language';
 
 @TrueImpactDataExample<QueryOptions>({
   example: {
@@ -38,7 +41,7 @@ export class QueryOptions {
     description:
       'allows the user to specify how many results should be returned per page and which page should be returned',
   })
-  pagination: PaginationOptions;
+  pagination?: PaginationOptions;
 
   @NestedDataType(() => AndQueryFilterCondition, {
     label: 'filter',
