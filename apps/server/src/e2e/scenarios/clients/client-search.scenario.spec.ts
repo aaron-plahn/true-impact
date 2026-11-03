@@ -1,4 +1,5 @@
 import { HttpStatusCode } from 'axios';
+import { CreateClient } from '../../../features/clients/commands';
 import { ClientViewModelClientDto } from '../../../features/clients/queries';
 import { CreateUserWithPassword } from '../../../features/users/commands';
 import { TestCommandStream } from '../../../libs/cqrs-es';
@@ -14,7 +15,9 @@ const baseEndpoint = `http://localhost:${port}`;
 
 const clientIndexEndpoint = `${baseEndpoint}/clients`;
 
-// const clientTestSetupEndpoint = `${clientIndexEndpoint}/test-setup`;
+const commandsEndpointForClients = `${clientIndexEndpoint}/commands`;
+
+const clientTestSetupEndpoint = `${clientIndexEndpoint}/test-setup`;
 
 const userTestSetupEndpoint = `${baseEndpoint}/users/test-setup`;
 
@@ -40,9 +43,11 @@ const asssertQueryResponseHasExpectedEntities = async (
 
   expect(response.rows).toHaveLength(expectedIds.size);
 
-  const missingIds = response.rows.filter((row) => !(row.id in expectedIds));
+  const unexpectedRows = response.rows.filter(
+    (row) => !expectedIds.has(row.id),
+  );
 
-  expect(missingIds).toEqual([]);
+  expect(unexpectedRows).toEqual([]);
 };
 
 /**
@@ -75,11 +80,15 @@ const asssertQueryResponseHasExpectedEntities = async (
  * We test filtering exhaustively here so we can focus on only UX concerns in our UX e2e (wdio) tests.
  */
 describe(`Client index endpoint (POST /clients)`, () => {
-  const adminClient = new TestHttpClient('http://localhost:4200');
+  const adminHttpClient = new TestHttpClient('http://localhost:4200');
 
   beforeAll(async () => {
     // TODO test that an ordinary user with role `employee` can see the clients
-    await signInAsAdmin(adminClient);
+    await signInAsAdmin(adminHttpClient);
+  });
+
+  beforeEach(async () => {
+    await adminHttpClient.patch(clientTestSetupEndpoint);
   });
 
   describe(`when the user has permission to execute the query`, () => {
@@ -87,7 +96,7 @@ describe(`Client index endpoint (POST /clients)`, () => {
       describe(`when there is no data in the database`, () => {
         it(`should return the expected empty response`, async () => {
           await asssertQueryResponseHasExpectedEntities(
-            adminClient,
+            adminHttpClient,
             {},
             new Set(),
           );
@@ -97,7 +106,26 @@ describe(`Client index endpoint (POST /clients)`, () => {
       });
 
       describe(`when there is only one client in the database`, () => {
-        it.todo(`should return the expected result`);
+        const expectedClientIds = new Set<string>();
+
+        beforeEach(async () => {
+          await assertCommandScenarioSuccess({
+            endpoint: commandsEndpointForClients,
+            stream: TestCommandStream.first(CreateClient, {}),
+            assertSuccess: (acks) => {
+              expectedClientIds.add(acks[0].id);
+            },
+            httpClient: adminHttpClient,
+          });
+        });
+
+        it(`should return the expected result`, async () => {
+          await asssertQueryResponseHasExpectedEntities(
+            adminHttpClient,
+            {},
+            expectedClientIds,
+          );
+        });
       });
 
       describe(`when there are several clients`, () => {
@@ -173,7 +201,7 @@ describe(`Client index endpoint (POST /clients)`, () => {
 
   describe(`when the user does not have permission to execute the query`, () => {
     beforeEach(async () => {
-      await adminClient.patch(userTestSetupEndpoint);
+      await adminHttpClient.patch(userTestSetupEndpoint);
     });
 
     describe(`when the user is not authenticated (public request)`, () => {
@@ -209,7 +237,7 @@ describe(`Client index endpoint (POST /clients)`, () => {
           //   .andThen(GrantUserRole, {
           //     role: 'employee',
           //   }),
-          httpClient: adminClient,
+          httpClient: adminHttpClient,
         });
 
         await signIn(
