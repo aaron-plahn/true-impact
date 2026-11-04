@@ -17,6 +17,8 @@ import {
   AddCommunityAffiliationForClient,
   AddCommunityAffiliationForClientCommandHandler,
   ClientCreated,
+  ClientFlagged,
+  CommunityAffiliationAddedForClient,
   CreateClient,
   CreateClientCommandHandler,
   FlagClient,
@@ -51,6 +53,21 @@ import { ClientQueryService } from './services/client-query.service';
         eventFactory.register('CLIENT_CREATED', (doc) => {
           return ClientCreated.fromPersistenceDto(
             doc as unknown as ClientCreated,
+          );
+        });
+
+        eventFactory.register(
+          'COMMUNITY_AFFILIATION_ADDED_FOR_CLIENT',
+          (doc) => {
+            return CommunityAffiliationAddedForClient.fromPersistenceDto(
+              doc as unknown as CommunityAffiliationAddedForClient,
+            );
+          },
+        );
+
+        eventFactory.register('CLIENT_FLAGGED', (doc) => {
+          return ClientFlagged.fromPersistenceDto(
+            doc as unknown as ClientFlagged,
           );
         });
 
