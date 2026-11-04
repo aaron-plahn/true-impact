@@ -133,13 +133,25 @@ describe(`Client index endpoint (POST /clients)`, () => {
       describe(`when no filters or pagination have been provided`, () => {
         describe(`when there is no data in the database`, () => {
           it(`should return the expected empty response`, async () => {
-            await asssertQueryResponseHasExpectedEntities(
-              adminHttpClient,
+            const rawResponse = await adminHttpClient.post(
+              clientIndexEndpoint,
+              // default pagination, no filters \ sorting
               {},
-              new Set(),
             );
 
-            // TODO check or snapshot the entire response to ensure the contract is maintained with the client
+            expect(rawResponse.status).toBe(HttpStatusCode.Created);
+
+            const response =
+              rawResponse.data as IndexTable<ClientViewModelClientDto>;
+
+            expect(response.rows).toHaveLength(0);
+
+            /**
+             * This single snapshot serves as a test of the contract with the client. If this snapshot changes,
+             * the client will likely need to be updated to support the new API. This gives us more immediate and useable feedback
+             * than a UX e2e (wdio) test suddenly failing.
+             */
+            expect(response).toMatchSnapshot();
           });
         });
 
