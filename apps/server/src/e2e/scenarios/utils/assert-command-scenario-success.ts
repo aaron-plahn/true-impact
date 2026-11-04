@@ -11,13 +11,13 @@ export const assertCommandScenarioSuccess = async ({
   endpoint,
   stream,
   // name,
-  assertSuccess: assertSuccessResponse,
+  onSuccess: assertSuccessResponse,
   httpClient,
 }: {
   endpoint: string;
   stream: TestCommandStream;
   // name: string;
-  assertSuccess?: (acks: PersistenceAcknowledgement[]) => void | Promise<void>;
+  onSuccess?: (acks: PersistenceAcknowledgement[]) => void | Promise<void>;
   httpClient?: TestHttpClient;
 }) => {
   const results: PersistenceAcknowledgement[] = [];

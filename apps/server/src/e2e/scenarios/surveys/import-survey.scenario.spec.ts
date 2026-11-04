@@ -260,7 +260,7 @@ describe(`Survey Import Scenarios`, () => {
             httpClient,
             endpoint: surveyCommandsEndpoint,
             stream: validImport,
-            assertSuccess: async (acks) => {
+            onSuccess: async (acks) => {
               const { id } = acks[0];
 
               /**

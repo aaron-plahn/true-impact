@@ -67,7 +67,7 @@ describe(`Flag Management Scenarios`, () => {
             httpClient,
             endpoint: flagCommandsEndpoint,
             stream: createFlag,
-            assertSuccess: async (acks) => {
+            onSuccess: async (acks) => {
               const searchResponse = await httpClient.get(
                 `${flagIndexEndpoint}/${acks[0].id}`,
               );
@@ -179,7 +179,7 @@ describe(`Flag Management Scenarios`, () => {
               httpClient,
               endpoint: flagCommandsEndpoint,
               stream: relabelFlag,
-              assertSuccess: async (acks) => {
+              onSuccess: async (acks) => {
                 const updated = (
                   await httpClient.get(`${flagIndexEndpoint}/${acks[0].id}`)
                 ).data as FlagViewModel;

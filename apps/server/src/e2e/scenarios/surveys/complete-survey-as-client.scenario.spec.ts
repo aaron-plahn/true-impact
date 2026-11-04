@@ -160,7 +160,7 @@ describe(`Survey Completion Scenarios`, () => {
       stream: finalizeSurvey.andThen(OpenSurveyToClient, {
         clientId,
       }),
-      assertSuccess: (acks) => {
+      onSuccess: (acks) => {
         accessCode = acks.at(-1)?.accessCode || '';
       },
     });
@@ -174,7 +174,7 @@ describe(`Survey Completion Scenarios`, () => {
       endpoint: clientCommandsEndpoint,
       stream: TestCommandStream.first(CreateClient, { communityId }),
       // onSuccess?
-      assertSuccess: (acks) => {
+      onSuccess: (acks) => {
         expect(acks).toHaveLength(1);
 
         clientId = acks[0].id;
@@ -261,7 +261,7 @@ describe(`Survey Completion Scenarios`, () => {
                 chosenOptionLabel: 'b',
               })
               .andThen(SubmitSurvey, {}),
-            assertSuccess: async (acks) => {
+            onSuccess: async (acks) => {
               await assertQueryResponse({
                 httpClient: adminHttpClient,
                 endpoint: `${surveyResponseRecordIndexEndpoint}/${acks[0].id}`,
@@ -321,7 +321,7 @@ describe(`Survey Completion Scenarios`, () => {
                 },
                 clientId,
               }),
-              assertSuccess: (acks) => {
+              onSuccess: (acks) => {
                 secondAccessCode = acks[0].accessCode as string;
               },
             });
@@ -392,7 +392,7 @@ describe(`Survey Completion Scenarios`, () => {
                   chosenOptionLabel: 'b',
                 })
                 .andThen(SubmitSurvey, {}),
-              assertSuccess: async (acks) => {
+              onSuccess: async (acks) => {
                 await assertQueryResponse({
                   httpClient: adminHttpClient,
                   endpoint: `${surveyResponseRecordIndexEndpoint}/${acks[0].id}`,
@@ -442,7 +442,7 @@ describe(`Survey Completion Scenarios`, () => {
                   chosenOptionLabel: 'c',
                 })
                 .andThen(SubmitSurvey, {}),
-              assertSuccess: async (acks) => {
+              onSuccess: async (acks) => {
                 await assertQueryResponse({
                   httpClient: adminHttpClient,
                   endpoint: `${surveyResponseRecordIndexEndpoint}/${acks[0].id}`,

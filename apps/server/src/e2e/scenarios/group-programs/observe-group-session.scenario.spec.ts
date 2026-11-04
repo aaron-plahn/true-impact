@@ -109,7 +109,7 @@ describe(`Group Program Observation Scenarios`, () => {
                 languageCode: noteLanguageCode,
               },
             }),
-          assertSuccess: async (acks) => {
+          onSuccess: async (acks) => {
             const updatedView = (
               await adminHttpClient.get(
                 `${groupProgramQueryEndpoint}/${acks[0].id}`,

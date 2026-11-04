@@ -61,7 +61,7 @@ describe('User Management Scenarios', () => {
                 firstName: testUserFirstName,
                 lastName: testUserLastName,
               }),
-              assertSuccess: async (acks) => {
+              onSuccess: async (acks) => {
                 const { id } = acks[0];
 
                 const queryResult = await httpClient.get(
@@ -102,7 +102,7 @@ describe('User Management Scenarios', () => {
                 ).andThen(GrantUserRole, {
                   role: newRole,
                 }),
-                assertSuccess: async (acks) => {
+                onSuccess: async (acks) => {
                   const { id } = acks[0];
 
                   const updatedUserView = (

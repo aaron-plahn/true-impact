@@ -70,7 +70,7 @@ describe(`Community Management Scenarios`, () => {
               httpClient,
               endpoint: commandsEndpointForCommunities,
               stream: createCommunity,
-              assertSuccess: async (acks) => {
+              onSuccess: async (acks) => {
                 const searchResult = await httpClient.get(
                   `${communityBaseEndpoint}/${acks[0].id}`,
                 );
@@ -180,7 +180,7 @@ describe(`Community Management Scenarios`, () => {
                 httpClient,
                 endpoint: commandsEndpointForCommunities,
                 stream: translateCommunityName,
-                assertSuccess: async (acks) => {
+                onSuccess: async (acks) => {
                   const { name } = (
                     await httpClient.get(
                       `${communityBaseEndpoint}/${acks[0].id}`,

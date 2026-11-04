@@ -51,7 +51,7 @@ describe(`Group Program Scheduling Scenarios`, () => {
             stream: TestCommandStream.first(CreateGroupProgram, {
               name: programName,
             }),
-            assertSuccess: async (acks) => {
+            onSuccess: async (acks) => {
               const { id } = acks[0];
 
               const result = await adminHttpClient.get(
@@ -134,7 +134,7 @@ describe(`Group Program Scheduling Scenarios`, () => {
                 location: sessionLocation,
               },
             ),
-            assertSuccess: async (acks) => {
+            onSuccess: async (acks) => {
               const { id } = acks[0];
 
               const searchResult = (

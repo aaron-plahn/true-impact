@@ -146,7 +146,7 @@ describe(`Survey Completion Scenarios: Anonymous Individual Participant`, () => 
         stream: buildAndFinalizeSurveyPriorToOpenning.andThen(
           OpenSurveyToAnonymousIndividual,
         ),
-        assertSuccess: (acks) => {
+        onSuccess: (acks) => {
           const last = acks.at(-1);
 
           expect(last?.accessCode).toBeTruthy();

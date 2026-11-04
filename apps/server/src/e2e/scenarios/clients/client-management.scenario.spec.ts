@@ -160,7 +160,7 @@ describe(`Client Management Scenarios`, () => {
                   firstName: clientFirstName,
                   lastName: clientLastName,
                 }),
-                assertSuccess: async (acks) => {
+                onSuccess: async (acks) => {
                   const newClient = (
                     await httpClient.get(`${clientIndexEndpoint}/${acks[0].id}`)
                   ).data as ClientViewModelClientDto;
@@ -398,7 +398,7 @@ describe(`Client Management Scenarios`, () => {
               }).andThen(AddCommunityAffiliationForClient, {
                 communityId,
               }),
-              assertSuccess: async (acks) => {
+              onSuccess: async (acks) => {
                 const updated = (
                   await httpClient.get(`${clientIndexEndpoint}/${acks[0].id}`)
                 ).data as ClientViewModelClientDto;
@@ -424,7 +424,7 @@ describe(`Client Management Scenarios`, () => {
               }).andThen(AddCommunityAffiliationForClient, {
                 communityId,
               }),
-              assertSuccess: async (acks) => {
+              onSuccess: async (acks) => {
                 const updated = (
                   await httpClient.get(`${clientIndexEndpoint}/${acks[0].id}`)
                 ).data as ClientViewModelClientDto;
@@ -476,7 +476,7 @@ describe(`Client Management Scenarios`, () => {
                 }).andThen(FlagClient, {
                   flagId,
                 }),
-                assertSuccess: async (acks) => {
+                onSuccess: async (acks) => {
                   const updated = (
                     await httpClient.get(`${clientIndexEndpoint}/${acks[0].id}`)
                   ).data as ClientViewModelClientDto;

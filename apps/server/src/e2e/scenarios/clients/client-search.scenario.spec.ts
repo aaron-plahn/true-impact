@@ -148,7 +148,7 @@ describe(`Client index endpoint (POST /clients)`, () => {
           await assertCommandScenarioSuccess({
             endpoint: commandsEndpointForClients,
             stream: TestCommandStream.first(CreateClient, {}),
-            assertSuccess: (acks) => {
+            onSuccess: (acks) => {
               expectedClientIds.add(acks[0].id);
             },
             httpClient: adminHttpClient,
@@ -177,8 +177,7 @@ describe(`Client index endpoint (POST /clients)`, () => {
               middleNames: [],
               lastName: 'McClienta',
             }),
-            // todo rename this onSuccess?
-            assertSuccess: (acks) => {
+            onSuccess: (acks) => {
               expectedClientIds.add(acks[0].id);
             },
           });
@@ -192,8 +191,7 @@ describe(`Client index endpoint (POST /clients)`, () => {
               middleNames: ['onlymid'],
               lastName: 'McClientb',
             }),
-            // todo rename this onSuccess?
-            assertSuccess: (acks) => {
+            onSuccess: (acks) => {
               expectedClientIds.add(acks[0].id);
             },
           });
@@ -207,8 +205,7 @@ describe(`Client index endpoint (POST /clients)`, () => {
               middleNames: ['midone', 'midtwo', 'midthree'],
               lastName: 'McClientc',
             }),
-            // todo rename this onSuccess?
-            assertSuccess: (acks) => {
+            onSuccess: (acks) => {
               expectedClientIds.add(acks[0].id);
             },
           });
@@ -261,8 +258,7 @@ describe(`Client index endpoint (POST /clients)`, () => {
               middleNames: [],
               lastName: 'McClienta',
             }),
-            // todo rename this onSuccess?
-            assertSuccess: (acks) => {
+            onSuccess: (acks) => {
               expectedClientIds.add(acks[0].id);
             },
           });
@@ -276,8 +272,7 @@ describe(`Client index endpoint (POST /clients)`, () => {
               middleNames: ['onlymid'],
               lastName: 'McClientb',
             }),
-            // todo rename this onSuccess?
-            assertSuccess: (acks) => {
+            onSuccess: (acks) => {
               expectedClientIds.add(acks[0].id);
             },
           });
@@ -291,8 +286,7 @@ describe(`Client index endpoint (POST /clients)`, () => {
               middleNames: ['midone', 'midtwo', 'midthree'],
               lastName: 'McClientc',
             }),
-            // todo rename this onSuccess?
-            assertSuccess: (acks) => {
+            onSuccess: (acks) => {
               expectedClientIds.add(acks[0].id);
             },
           });
@@ -330,7 +324,7 @@ describe(`Client index endpoint (POST /clients)`, () => {
                 firstName,
                 lastName,
               }),
-              assertSuccess: (acks) => {
+              onSuccess: (acks) => {
                 expectedClientIds.add(acks[0].id);
               },
             });
@@ -380,7 +374,7 @@ describe(`Client index endpoint (POST /clients)`, () => {
               httpClient: adminHttpClient,
               endpoint: commandsEndpointForClients,
               stream: TestCommandStream.first(CreateClient, { firstName }),
-              assertSuccess: (acks) => {
+              onSuccess: (acks) => {
                 page1ClientIds.add(acks[0].id);
               },
             });
@@ -391,7 +385,7 @@ describe(`Client index endpoint (POST /clients)`, () => {
               httpClient: adminHttpClient,
               endpoint: commandsEndpointForClients,
               stream: TestCommandStream.first(CreateClient, { firstName }),
-              assertSuccess: (acks) => {
+              onSuccess: (acks) => {
                 page2ClientIds.add(acks[0].id);
               },
             });
@@ -402,7 +396,7 @@ describe(`Client index endpoint (POST /clients)`, () => {
               httpClient: adminHttpClient,
               endpoint: commandsEndpointForClients,
               stream: TestCommandStream.first(CreateClient, { firstName }),
-              assertSuccess: (acks) => {
+              onSuccess: (acks) => {
                 page3ClientIds.add(acks[0].id);
               },
             });
@@ -461,7 +455,7 @@ describe(`Client index endpoint (POST /clients)`, () => {
                 lastName: 'McTestclient',
                 isIndigenous: 'Yes',
               }),
-              assertSuccess: (acks) => {
+              onSuccess: (acks) => {
                 expectedClientIds.add(acks[0].id);
               },
             });
@@ -516,7 +510,7 @@ describe(`Client index endpoint (POST /clients)`, () => {
               firstName: 'Client1',
               isIndigenous: 'Yes',
             }),
-            assertSuccess: (acks) => {
+            onSuccess: (acks) => {
               expectedClientIds.add(acks[0].id);
             },
           });
@@ -537,7 +531,7 @@ describe(`Client index endpoint (POST /clients)`, () => {
               firstName: 'Client3',
               isIndigenous: 'Yes',
             }),
-            assertSuccess: (acks) => {
+            onSuccess: (acks) => {
               expectedClientIds.add(acks[0].id);
             },
           });
@@ -585,7 +579,7 @@ describe(`Client index endpoint (POST /clients)`, () => {
               stream: TestCommandStream.first(CreateClient, {
                 firstName,
               }),
-              assertSuccess: (acks) => {
+              onSuccess: (acks) => {
                 expectedClientIds.add(acks[0].id);
               },
             });
@@ -649,7 +643,7 @@ describe(`Client index endpoint (POST /clients)`, () => {
                 firstName,
                 isIndigenous: 'Yes',
               }),
-              assertSuccess: (acks) => {
+              onSuccess: (acks) => {
                 firstPageClientIds.add(acks[0].id);
               },
             });
@@ -680,7 +674,7 @@ describe(`Client index endpoint (POST /clients)`, () => {
                 firstName,
                 isIndigenous: 'Yes',
               }),
-              assertSuccess: (acks) => {
+              onSuccess: (acks) => {
                 secondPageClientIds.add(acks[0].id);
               },
             });
@@ -711,7 +705,7 @@ describe(`Client index endpoint (POST /clients)`, () => {
                 firstName,
                 isIndigenous: 'Yes',
               }),
-              assertSuccess: (acks) => {
+              onSuccess: (acks) => {
                 thirdPageClientIds.add(acks[0].id);
               },
             });
