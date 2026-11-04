@@ -44,9 +44,7 @@ export const assertCommandAccessDeniedToUser = async (
   const httpClientForUserRequests = new TestHttpClient();
 
   if (user) {
-    const httpClientForAdminRequests = new TestHttpClient(
-      'http://localhost:4200',
-    );
+    const httpClientForAdminRequests = new TestHttpClient();
 
     await signInAsAdmin(httpClientForAdminRequests);
 

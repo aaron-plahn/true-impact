@@ -223,12 +223,6 @@ export class Community extends EventSourcedAggregateRoot {
   static fromEventHistory(
     eventHistory: Iterable<DomainEvent>,
   ): EventSourcedAggregateRoot | TrueImpactError | null {
-    console.log(`COMMUNITY EVENT HISTORY -----------------`);
-
-    for (const e of eventHistory) {
-      console.log(`\n${JSON.stringify(e)}`);
-    }
-
     return EventSourcedAggregateRoot.fromEventHistory.call(
       Community,
       eventHistory,

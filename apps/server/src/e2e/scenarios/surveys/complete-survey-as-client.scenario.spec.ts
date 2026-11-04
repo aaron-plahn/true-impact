@@ -139,7 +139,7 @@ const finalizeSurvey = buildFullSurveyBeforeFinalizing.andThen(FinalizeSurvey);
 const communityName = 'Big Community';
 
 describe(`Survey Completion Scenarios`, () => {
-  const adminHttpClient = new TestHttpClient('http://localhost:3234');
+  const adminHttpClient = new TestHttpClient();
 
   const fetchAllClients = async () => {
     const rawResponse = await adminHttpClient.post<{
@@ -182,9 +182,7 @@ describe(`Survey Completion Scenarios`, () => {
     });
   };
 
-  const anonymousParticipantHttpClient = new TestHttpClient(
-    'http://localhost:3234',
-  );
+  const anonymousParticipantHttpClient = new TestHttpClient();
 
   beforeAll(async () => {
     await signInAsAdmin(adminHttpClient);

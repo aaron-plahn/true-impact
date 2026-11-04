@@ -159,7 +159,7 @@ const medicineWheelSurvey: ImportSurvey = {
 };
 
 describe(`Medicine wheel survey completion`, () => {
-  const adminHttpClient = new TestHttpClient('localhost:4200');
+  const adminHttpClient = new TestHttpClient();
 
   let surveyId: string;
   let communityId: string;
@@ -246,7 +246,7 @@ describe(`Medicine wheel survey completion`, () => {
 
   // TODO add several completion scenarios to gain confidence in the calculation (once using the full survey as a fixture)
   describe(`Scenario 1`, () => {
-    const participantHttpClient = new TestHttpClient('localhost:4200');
+    const participantHttpClient = new TestHttpClient();
 
     it(`should return the expected report`, async () => {
       await assertCommandScenarioSuccess({

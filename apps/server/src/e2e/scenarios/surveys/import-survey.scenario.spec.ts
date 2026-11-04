@@ -1038,7 +1038,7 @@ describe(`Survey Import Scenarios`, () => {
     describe(`when the user is not signed in`, () => {
       it(`should return not authorized`, async () => {
         await assertCommandScenarioError({
-          httpClient: new TestHttpClient('localhost:4200'),
+          httpClient: new TestHttpClient(),
           endpoint: surveyCommandsEndpoint,
           stream: TestCommandStream.first(ImportSurvey),
           assertErrorMessageAsExpected: (message) => {
