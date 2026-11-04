@@ -253,7 +253,7 @@ describe(`Client Management Scenarios`, () => {
 
       describe(`when the client's indigenous identity is unknown`, () => {
         describe(`when no community is provided`, () => {
-          it.only(`should create the client`, async () => {
+          it(`should create the client`, async () => {
             await assertCommandSuccess({
               httpClient,
               endpoint: commandsEndpointForClients,
