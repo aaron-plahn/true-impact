@@ -230,11 +230,12 @@ export class Community extends EventSourcedAggregateRoot {
   }
 
   static fromUserRequest({
+    id,
     bandNumber,
     name,
     languageCodeForName,
     // nation,
-  }: CreateCommunity): Community | TrueImpactError {
+  }: CreateCommunity & { id: string }): Community | TrueImpactError {
     if (languageCodeForName !== 'en') {
       return new TrueImpactBadUserInputError([
         new TrueImpactError(
@@ -259,7 +260,7 @@ export class Community extends EventSourcedAggregateRoot {
 
     const instance = new Community({
       // id will be generated on persistence
-      id: undefined as unknown as string,
+      id,
       revision: 0, // incremented on persistence
       // nation,
       name: nameBuildResult,

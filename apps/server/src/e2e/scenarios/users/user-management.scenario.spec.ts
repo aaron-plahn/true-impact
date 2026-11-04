@@ -37,7 +37,7 @@ const testUserLastName = 'Boy';
 
 const missingUserId = 'MissingUserId';
 
-const httpClient = new TestHttpClient('http://localhost:4200');
+const httpClient = new TestHttpClient();
 
 describe('User Management Scenarios', () => {
   beforeAll(async () => {
@@ -61,7 +61,7 @@ describe('User Management Scenarios', () => {
                 firstName: testUserFirstName,
                 lastName: testUserLastName,
               }),
-              assertSuccess: async (acks) => {
+              onSuccess: async (acks) => {
                 const { id } = acks[0];
 
                 const queryResult = await httpClient.get(
@@ -102,7 +102,7 @@ describe('User Management Scenarios', () => {
                 ).andThen(GrantUserRole, {
                   role: newRole,
                 }),
-                assertSuccess: async (acks) => {
+                onSuccess: async (acks) => {
                   const { id } = acks[0];
 
                   const updatedUserView = (

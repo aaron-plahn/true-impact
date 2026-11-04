@@ -8,15 +8,80 @@ import {
   EnumeratedType,
   NestedDataType,
   NonEmptyString,
+  NonNegativeInteger,
   TrueImpactDataExample,
 } from '../../../libs/data-types';
 import { LookupTable } from '../../../libs/data-types/schema-management/decorators/lookup-table.decorator';
 import { Client } from '../client.aggregate-root';
 
+export class ClientIndexListRowViewDto {
+  // do we want to mark this field as "hidden"?
+  @NonEmptyString({
+    label: 'ID',
+    description: 'unique identifier for the client represented by this row',
+  })
+  id: string;
+
+  // this should be an object with a route, label, and tooltip
+  @NonEmptyString({
+    label: 'link',
+    description: 'relative link to the detail view for this client',
+  })
+  link: string;
+
+  @NonNegativeInteger({
+    label: 'created at',
+    description:
+      'UNIX timestamp representing the time at which this client was added to the system',
+  })
+  createdAt: number;
+
+  @EnumeratedType(
+    {
+      Yes: 'yes',
+      No: 'no',
+      Unknown: 'unknown',
+    },
+    {
+      label: 'is Indigenous?',
+      description: 'Is this client Indigenous (if known)?',
+    },
+  )
+  isIndigenous: YesNoOrUnknown;
+
+  // should this be a link?
+  @NonEmptyString({
+    label: 'community',
+    description:
+      'the Indigenous community to which this client is registered (if known and applicable)',
+    isOptional: true,
+  })
+  community?: string;
+
+  @NonEmptyString({
+    label: 'First Name',
+    description: `the client's first name`,
+  })
+  firstName: string;
+
+  @NonEmptyString({
+    label: 'Middle Initials',
+    description: `the client's middle initials (if applicable), useful for distinguishing clients with the same first and last name`,
+  })
+  middleInitials?: string;
+
+  @NonEmptyString({
+    label: 'Last Name',
+    description: `the client's last name`,
+  })
+  lastName: string;
+}
+
 @TrueImpactDataExample<ClientViewModelClientDto>({
   example: {
     id: '1',
     dateOfBirth: '10-11-2012',
+    createdAt: 1793737061316,
     revision: '7',
     fullName: {
       firstName: 'John',
@@ -54,10 +119,21 @@ export class ClientViewModelClientDto {
   })
   revision: string;
 
+  @NonNegativeInteger({
+    label: 'created at',
+    description:
+      'UNIX timestamp for the date this client was first added to the database',
+  })
+  createdAt: number;
+
   @NestedDataType(() => FullNameDto, {
     label: 'full name',
     description: `the client's full name`,
   })
+  /**
+   * Note that this is an object so we can leverage consistent presentation for full names across all entitites
+   * in detail views. We split the fields into individual columns in the index table.
+   */
   fullName: FullNameDto;
 
   @EnumeratedType(
@@ -100,6 +176,10 @@ export class ClientViewModel {
 
   revision: string;
 
+  createdAt: number;
+
+  // modifiedAt
+
   fullName: FullName;
 
   isIndigenous: YesNoOrUnknown;
@@ -116,6 +196,7 @@ export class ClientViewModel {
   constructor({
     id,
     revision,
+    createdAt,
     fullName,
     isIndigenous,
     community,
@@ -123,6 +204,7 @@ export class ClientViewModel {
     surveyResponses,
   }: {
     id: string;
+    createdAt: number;
     dateOfBirth: string;
     revision: string;
     fullName: FullName;
@@ -132,6 +214,8 @@ export class ClientViewModel {
     surveyResponses: SurveyResponseRecordViewModelClientDto[];
   }) {
     this.id = id;
+
+    this.createdAt = createdAt;
 
     this.revision = revision;
 
@@ -149,6 +233,7 @@ export class ClientViewModel {
   toClientDto(): ClientViewModelClientDto {
     return {
       id: this.id,
+      createdAt: this.createdAt,
       dateOfBirth: this.dateOfBirth,
       revision: this.revision,
       fullName: this.fullName.toDto(),
@@ -156,6 +241,28 @@ export class ClientViewModel {
       community: this.community,
       flagsById: deepConvertMapToObject(this.flags),
       surveyResponses: this.surveyResponses,
+    };
+  }
+
+  toIndexTableRow(): ClientIndexListRowViewDto {
+    return {
+      id: this.id,
+      link: `clients/${this.id}`,
+      createdAt: this.createdAt,
+      isIndigenous: this.isIndigenous,
+      firstName: this.fullName.firstName,
+      /**
+       * While not that important a use case, this is interesting from a technical point of view in that
+       * we may want to allow search of the underlying data independent of the rendered text. So we probably
+       * want to search full middle names, but only show initials. We don't want to match a generated ".". We
+       * might want to match a minimum number of middle names, such as "length(middleNames)> 0" or "length(middleNames) === 1".
+       */
+      middleInitials:
+        this.fullName.middleNames.length > 0
+          ? this.fullName.middleNames.join('.')
+          : // '-' ?
+            '',
+      lastName: this.fullName.lastName,
     };
   }
 
@@ -178,6 +285,7 @@ export class ClientViewModel {
       communityId,
       dateOfBirth,
       flagIds,
+      eventHistory,
     } = client;
 
     let community: CommunityViewModelClientDto | undefined;
@@ -206,6 +314,9 @@ export class ClientViewModel {
 
     return new ClientViewModel({
       id,
+      createdAt: (
+        eventHistory[0] as unknown as { metadata: { dateEffective: number } }
+      ).metadata.dateEffective,
       revision: revision.toString(),
       /**
        * In the long run, we probably want a `DateView` object.

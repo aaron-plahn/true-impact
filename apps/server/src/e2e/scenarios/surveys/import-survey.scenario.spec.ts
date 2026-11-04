@@ -32,7 +32,7 @@ const surveyName = 'Evaluation 1.B';
 
 const shouldError = 'should return the expected error';
 
-const httpClient = new TestHttpClient('http://localhost:4200');
+const httpClient = new TestHttpClient();
 
 const RED = 'red';
 const WHITE = 'white';
@@ -260,7 +260,7 @@ describe(`Survey Import Scenarios`, () => {
             httpClient,
             endpoint: surveyCommandsEndpoint,
             stream: validImport,
-            assertSuccess: async (acks) => {
+            onSuccess: async (acks) => {
               const { id } = acks[0];
 
               /**
@@ -1038,7 +1038,7 @@ describe(`Survey Import Scenarios`, () => {
     describe(`when the user is not signed in`, () => {
       it(`should return not authorized`, async () => {
         await assertCommandScenarioError({
-          httpClient: new TestHttpClient('localhost:4200'),
+          httpClient: new TestHttpClient(),
           endpoint: surveyCommandsEndpoint,
           stream: TestCommandStream.first(ImportSurvey),
           assertErrorMessageAsExpected: (message) => {

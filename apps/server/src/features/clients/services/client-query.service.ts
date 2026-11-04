@@ -14,7 +14,11 @@ import { Inject } from '../../../libs/framework';
 import { Client } from '../client.aggregate-root';
 import { CLIENT_AGGREGATE_TYPE } from '../client.composite-identifier';
 import { CLIENT_COMMAND_REPOSITORY_INJECTION_TOKEN } from '../constants';
-import { ClientViewModel, ClientViewModelClientDto } from '../queries';
+import {
+  ClientIndexListRowViewDto,
+  ClientViewModel,
+  ClientViewModelClientDto,
+} from '../queries';
 
 export class ClientQueryService {
   // For now, we project off the domain (command) models. In the future, we may have a query DB separate from our operational DB.
@@ -88,11 +92,12 @@ export class ClientQueryService {
       surveyResponsesByClientId: reportsByClientId,
     });
 
-    return view;
+    // TODO rename this `toDetailViewDto`
+    return view.toClientDto();
   }
 
   // TODO inject `user` and user filter \ pagination options
-  async fetchMany(): Promise<ClientViewModelClientDto[] | TrueImpactError> {
+  async fetchMany(): Promise<ClientIndexListRowViewDto[] | TrueImpactError> {
     const domainModels = await this.repository.fetchMany();
 
     const communitiesById = new Map<string, CommunityViewModelClientDto>();
@@ -121,7 +126,7 @@ export class ClientQueryService {
         flags: flagsById,
         // We don't currently need reports in client index views.
         surveyResponsesByClientId: new Map(),
-      }),
+      }).toIndexTableRow(),
     );
 
     return viewModels;
@@ -137,9 +142,9 @@ export class ClientQueryService {
         SurveyResponseRecordViewModelClientDto[]
       >;
     },
-  ): ClientViewModelClientDto {
+  ): ClientViewModel {
     const result = ClientViewModel.fromDomainModel(domainModel, context);
 
-    return result.toClientDto();
+    return result;
   }
 }

@@ -159,7 +159,7 @@ const medicineWheelSurvey: ImportSurvey = {
 };
 
 describe(`Medicine wheel survey completion`, () => {
-  const adminHttpClient = new TestHttpClient('localhost:4200');
+  const adminHttpClient = new TestHttpClient();
 
   let surveyId: string;
   let communityId: string;
@@ -180,7 +180,7 @@ describe(`Medicine wheel survey completion`, () => {
       httpClient: adminHttpClient,
       endpoint: communityCommandEndpoint,
       stream: TestCommandStream.first(CreateCommunity),
-      assertSuccess: (acks) => {
+      onSuccess: (acks) => {
         communityId = acks[0].id;
       },
     });
@@ -192,7 +192,7 @@ describe(`Medicine wheel survey completion`, () => {
         communityId,
       }),
       // note that the client's community is to be provided on the creation command, if known
-      assertSuccess: (acks) => {
+      onSuccess: (acks) => {
         clientId = acks[0].id;
       },
     });
@@ -206,7 +206,7 @@ describe(`Medicine wheel survey completion`, () => {
       ).andThen(OpenSurveyToClient, {
         clientId,
       }),
-      assertSuccess: (acks) => {
+      onSuccess: (acks) => {
         surveyId = acks[0].id;
 
         accessCode = acks[1].accessCode as string;
@@ -246,7 +246,7 @@ describe(`Medicine wheel survey completion`, () => {
 
   // TODO add several completion scenarios to gain confidence in the calculation (once using the full survey as a fixture)
   describe(`Scenario 1`, () => {
-    const participantHttpClient = new TestHttpClient('localhost:4200');
+    const participantHttpClient = new TestHttpClient();
 
     it(`should return the expected report`, async () => {
       await assertCommandScenarioSuccess({
@@ -270,7 +270,7 @@ describe(`Medicine wheel survey completion`, () => {
             chosenOptionLabel: 'b',
           })
           .andThen(SubmitSurvey),
-        assertSuccess: async (acks) => {
+        onSuccess: async (acks) => {
           const expectedValuesByCategory = {
             red: 2,
             black: 1,

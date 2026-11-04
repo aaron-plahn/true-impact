@@ -108,8 +108,6 @@ const buildSurveyWithoutFinalizing = TestCommandStream.first(CreateSurvey, {
 const buildAndFinalizeSurveyPriorToOpenning =
   buildSurveyWithoutFinalizing.andThen(FinalizeSurvey);
 
-const clientOrigin = 'http://localhost:4200';
-
 /**
  * We need to support cookie management with axios \ RestCommandExecutor in order
  * to test this via direct HTTP requests to the server without a browser. We do have
@@ -118,7 +116,7 @@ const clientOrigin = 'http://localhost:4200';
 describe(`Survey Completion Scenarios: Public Participant (no access code required)`, () => {
   let surveyId: string;
 
-  const adminHttpClient = new TestHttpClient(clientOrigin);
+  const adminHttpClient = new TestHttpClient();
 
   beforeAll(async () => {
     await signInAsAdmin(adminHttpClient);
@@ -216,7 +214,7 @@ describe(`Survey Completion Scenarios: Public Participant (no access code requir
     describe(`when the survey is available for public completion`, () => {
       it(`should begin the survey`, async () => {
         await assertCommandScenarioSuccess({
-          httpClient: new TestHttpClient(clientOrigin),
+          httpClient: new TestHttpClient(),
           endpoint: surveyCompletionCommandsEndpoint,
           // Do we want a separate `BeginPublicSurvey` command for easy debugging?
           stream: TestCommandStream.first(BeginPublicSurvey, {
@@ -227,7 +225,7 @@ describe(`Survey Completion Scenarios: Public Participant (no access code requir
     });
 
     describe(`when the survey has already been started`, () => {
-      const publicUserHttpClient = new TestHttpClient(clientOrigin);
+      const publicUserHttpClient = new TestHttpClient();
 
       beforeEach(async () => {
         await assertCommandScenarioSuccess({
@@ -268,7 +266,7 @@ describe(`Survey Completion Scenarios: Public Participant (no access code requir
 
     it(`should return not found (for obscurity)`, async () => {
       await assertCommandScenarioError({
-        httpClient: new TestHttpClient(clientOrigin),
+        httpClient: new TestHttpClient(),
         endpoint: surveyCompletionCommandsEndpoint,
         stream: TestCommandStream.first(BeginPublicSurvey, {
           surveyId,

@@ -97,6 +97,8 @@ jobs:
           NODE_ENV: ${{ vars.NODE_ENV }}
           SYSTEM_ADMIN_USERNAME: ${{ secrets.SYSTEM_ADMIN_USERNAME }}
           INITIAL_ADMIN_PASSWORD: ${{ secrets.INITIAL_ADMIN_PASSWORD }}
+          CLIENT_PORT: ${{ vars.CLIENT_PORT }}
+          CLIENT_DOMAIN: ${{ vars.CLIENT_DOMAIN }}
         run: |
           yarn run jest --runInBand
       # is --runInBand still necessary?

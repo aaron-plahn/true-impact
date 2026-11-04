@@ -1,4 +1,5 @@
 import { Inject } from '@nestjs/common';
+import { randomUUID } from 'node:crypto';
 import { CommandResult, ICommandHandler } from '../../../../libs/cqrs-es';
 import {
   TrueImpactBadUserInputError,
@@ -60,7 +61,13 @@ export class CreateCommunityCommandHandler implements ICommandHandler<CreateComm
       return new TrueImpactBadUserInputError(duplicateNamesErrors);
     }
 
-    const newInstance = Community.fromUserRequest(clientRequestDto);
+    const generatedId = randomUUID();
+
+    Object.assign(clientRequestDto, { id: generatedId });
+
+    const newInstance = Community.fromUserRequest(
+      clientRequestDto as CreateCommunity & { id: string },
+    );
 
     if (newInstance instanceof TrueImpactError) {
       return newInstance;

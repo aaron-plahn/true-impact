@@ -1,0 +1,80 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`Client index endpoint (POST /clients) when the user has permission to execute the query when the query request is well-formed when no filters or pagination have been provided when there is no data in the database should return the expected empty response 1`] = `
+{
+  "layout": {
+    "columns": [
+      {
+        "key": "link",
+        "label": "View",
+        "type": "LINK",
+      },
+      {
+        "key": "firstName",
+        "label": "First Name",
+        "search": {
+          "operator": "TEXT_INCLUDES",
+          "type": "TEXT",
+        },
+        "type": "TEXT",
+      },
+      {
+        "key": "lastName",
+        "label": "Last Name",
+        "search": {
+          "operator": "TEXT_INCLUDES",
+          "type": "TEXT",
+        },
+        "type": "TEXT",
+      },
+      {
+        "key": "community",
+        "label": "Community",
+        "search": {
+          "operator": "TEXT_INCLUDES",
+          "type": "TEXT",
+        },
+        "type": "TEXT",
+      },
+      {
+        "key": "isIndigenous",
+        "label": "Is Indigenous?",
+        "search": {
+          "operator": "EQUALS",
+          "options": [
+            {
+              "label": "yes",
+              "value": "Yes",
+            },
+            {
+              "label": "no",
+              "value": "No",
+            },
+            {
+              "label": "unknown",
+              "value": "Unknown",
+            },
+          ],
+          "type": "SELECT",
+        },
+        "type": "TEXT",
+      },
+    ],
+    "isSearchable": true,
+  },
+  "navigationPanel": {
+    "availablePageSizes": [
+      5,
+      50,
+      100,
+    ],
+    "currentPage": 1,
+    "nextPage": null,
+    "pageSize": 10,
+    "previousPage": 0,
+    "totalNumberOfPages": 0,
+    "totalNumberOfResults": 0,
+  },
+  "rows": [],
+}
+`;

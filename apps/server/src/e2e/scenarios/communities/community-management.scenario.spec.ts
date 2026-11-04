@@ -50,7 +50,7 @@ const translateCommunityName = createCommunity.andThen(TranslateCommunityName, {
   languageCode: translationLanguageCodeForName,
 });
 
-const httpClient = new TestHttpClient('http://localhost:4200');
+const httpClient = new TestHttpClient();
 
 describe(`Community Management Scenarios`, () => {
   describe(`when the user is authenticated as an admin`, () => {
@@ -70,7 +70,7 @@ describe(`Community Management Scenarios`, () => {
               httpClient,
               endpoint: commandsEndpointForCommunities,
               stream: createCommunity,
-              assertSuccess: async (acks) => {
+              onSuccess: async (acks) => {
                 const searchResult = await httpClient.get(
                   `${communityBaseEndpoint}/${acks[0].id}`,
                 );
@@ -180,7 +180,7 @@ describe(`Community Management Scenarios`, () => {
                 httpClient,
                 endpoint: commandsEndpointForCommunities,
                 stream: translateCommunityName,
-                assertSuccess: async (acks) => {
+                onSuccess: async (acks) => {
                   const { name } = (
                     await httpClient.get(
                       `${communityBaseEndpoint}/${acks[0].id}`,

@@ -92,7 +92,7 @@ const addValueForOption = addCategoryForAnalyzer.andThen(
   },
 );
 
-const httpClient = new TestHttpClient('http://localhost:4200');
+const httpClient = new TestHttpClient();
 
 describe(`Build Survey Analyzer Scenarios`, () => {
   describe(`when the user is authenticated as an admin`, () => {
@@ -137,7 +137,7 @@ describe(`Build Survey Analyzer Scenarios`, () => {
                 stream: createAnalyzer.andThen(CreateSurveyAnalyzer, {
                   name: uniqueName,
                 }),
-                assertSuccess: async (acks) => {
+                onSuccess: async (acks) => {
                   const { id } = acks[0];
 
                   const updated = (
@@ -157,7 +157,7 @@ describe(`Build Survey Analyzer Scenarios`, () => {
               httpClient,
               endpoint: surveyCommandsEndpoint,
               stream: createAnalyzer,
-              assertSuccess: async (acks) => {
+              onSuccess: async (acks) => {
                 const updated = (
                   await httpClient.get(`${surveyIndexEndpoint}/${acks[0].id}`)
                 ).data as SurveyViewModelClientDto;
@@ -202,7 +202,7 @@ describe(`Build Survey Analyzer Scenarios`, () => {
                   analyzerName,
                   category,
                 }),
-                assertSuccess: async (acks) => {
+                onSuccess: async (acks) => {
                   const { analyzersByName } = (
                     await httpClient.get(`${surveyIndexEndpoint}/${acks[0].id}`)
                   ).data as SurveyViewModelClientDto;
@@ -236,7 +236,7 @@ describe(`Build Survey Analyzer Scenarios`, () => {
                       category: secondCategory,
                     },
                   ),
-                  assertSuccess: async (acks) => {
+                  onSuccess: async (acks) => {
                     const { analyzersByName } = (
                       await httpClient.get(
                         `${surveyIndexEndpoint}/${acks[0].id}`,
@@ -347,7 +347,7 @@ describe(`Build Survey Analyzer Scenarios`, () => {
                       httpClient,
                       endpoint: surveyCommandsEndpoint,
                       stream: addValueForOption,
-                      assertSuccess: async (acks) => {
+                      onSuccess: async (acks) => {
                         const { id: surveyId } = acks[0];
 
                         const fetchResult = (

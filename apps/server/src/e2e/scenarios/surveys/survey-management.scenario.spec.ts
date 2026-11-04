@@ -150,7 +150,7 @@ const labelOfTopLevelOptionToFlag = 'a';
 const labelOfFollowUpQuestionToFlag = '1.a.FU-1';
 const labelOfFollowUpOptionToFlag = 'FUOa';
 
-const httpClient = new TestHttpClient('http://localhost:4200');
+const httpClient = new TestHttpClient();
 
 describe(`Survey Management Scenarios`, () => {
   describe(`when the user is authenticated as an admin`, () => {
@@ -245,7 +245,7 @@ describe(`Survey Management Scenarios`, () => {
               httpClient,
               endpoint: commandEndpoint,
               stream: addFirstQuestionToSurvey,
-              assertSuccess: async (acks) => {
+              onSuccess: async (acks) => {
                 await assertQueryResponse({
                   httpClient,
                   endpoint: buildSurveyDetailEndpoint(acks[0].id),
@@ -354,7 +354,7 @@ describe(`Survey Management Scenarios`, () => {
                 httpClient,
                 endpoint: commandEndpoint,
                 stream: addOptionToSurveyQuestion,
-                assertSuccess: async (acks) => {
+                onSuccess: async (acks) => {
                   const { id } = acks[0];
 
                   await assertQueryResponse({
@@ -516,7 +516,7 @@ describe(`Survey Management Scenarios`, () => {
               httpClient,
               endpoint: commandEndpoint,
               stream: addFollowUpQuestionForOption,
-              assertSuccess: async (acks) => {
+              onSuccess: async (acks) => {
                 const { id } = acks[0];
 
                 await assertQueryResponse({
@@ -701,7 +701,7 @@ describe(`Survey Management Scenarios`, () => {
               httpClient,
               endpoint: commandEndpoint,
               stream: finalizeSurvey,
-              assertSuccess: async (acks) => {
+              onSuccess: async (acks) => {
                 await assertQueryResponse({
                   httpClient,
                   endpoint: buildSurveyDetailEndpoint(acks[0].id),
@@ -794,7 +794,7 @@ describe(`Survey Management Scenarios`, () => {
                           questionLabel: labelOfTopLevelQuestionToFlag,
                           optionLabel: labelOfTopLevelOptionToFlag,
                         }),
-                        assertSuccess: async (acks) => {
+                        onSuccess: async (acks) => {
                           const result = (
                             await httpClient.get(
                               `${surveyIndexEndpoint}/${acks[0].id}`,
@@ -920,7 +920,7 @@ describe(`Survey Management Scenarios`, () => {
                           questionLabel: labelOfFollowUpQuestionToFlag,
                           optionLabel: labelOfFollowUpOptionToFlag,
                         }),
-                        assertSuccess: async (acks) => {
+                        onSuccess: async (acks) => {
                           const { questions } = (
                             await httpClient.get(
                               `${surveyIndexEndpoint}/${acks[0].id}`,

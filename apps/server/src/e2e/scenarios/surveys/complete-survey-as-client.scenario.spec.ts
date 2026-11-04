@@ -1,5 +1,5 @@
+import { ClientIndexListRowViewDto } from 'src/features/clients/queries';
 import { isDeepStrictEqual } from 'util';
-import { Client } from '../../../features/clients/client.aggregate-root';
 import { CLIENT_AGGREGATE_TYPE } from '../../../features/clients/client.composite-identifier';
 import { CreateClient } from '../../../features/clients/commands';
 import { CreateCommunity } from '../../../features/communities/commands';
@@ -139,7 +139,18 @@ const finalizeSurvey = buildFullSurveyBeforeFinalizing.andThen(FinalizeSurvey);
 const communityName = 'Big Community';
 
 describe(`Survey Completion Scenarios`, () => {
-  const adminHttpClient = new TestHttpClient('http://localhost:3234');
+  const adminHttpClient = new TestHttpClient();
+
+  /**
+   * TODO We should consider using `fetchById` (detail query endpoint) instead.
+   */
+  const fetchAllClients = async () => {
+    const rawResponse = await adminHttpClient.post<{
+      rows: ClientIndexListRowViewDto[];
+    }>(clientBaseEndpoint);
+
+    return rawResponse.data.rows[0];
+  };
 
   const seedFinalizedSurvey = async (
     clientId: string,
@@ -152,7 +163,7 @@ describe(`Survey Completion Scenarios`, () => {
       stream: finalizeSurvey.andThen(OpenSurveyToClient, {
         clientId,
       }),
-      assertSuccess: (acks) => {
+      onSuccess: (acks) => {
         accessCode = acks.at(-1)?.accessCode || '';
       },
     });
@@ -166,7 +177,7 @@ describe(`Survey Completion Scenarios`, () => {
       endpoint: clientCommandsEndpoint,
       stream: TestCommandStream.first(CreateClient, { communityId }),
       // onSuccess?
-      assertSuccess: (acks) => {
+      onSuccess: (acks) => {
         expect(acks).toHaveLength(1);
 
         clientId = acks[0].id;
@@ -174,9 +185,7 @@ describe(`Survey Completion Scenarios`, () => {
     });
   };
 
-  const anonymousParticipantHttpClient = new TestHttpClient(
-    'http://localhost:3234',
-  );
+  const anonymousParticipantHttpClient = new TestHttpClient();
 
   beforeAll(async () => {
     await signInAsAdmin(adminHttpClient);
@@ -216,9 +225,7 @@ describe(`Survey Completion Scenarios`, () => {
     describe(`when the scenario is valid`, () => {
       describe(`when completing the survey for the first time`, () => {
         beforeEach(async () => {
-          const { id: clientId } = (
-            (await adminHttpClient.get(clientBaseEndpoint)).data as Client[]
-          )[0];
+          const { id: clientId } = await fetchAllClients();
 
           const surveySeedResult = await seedFinalizedSurvey(clientId);
 
@@ -255,7 +262,7 @@ describe(`Survey Completion Scenarios`, () => {
                 chosenOptionLabel: 'b',
               })
               .andThen(SubmitSurvey, {}),
-            assertSuccess: async (acks) => {
+            onSuccess: async (acks) => {
               await assertQueryResponse({
                 httpClient: adminHttpClient,
                 endpoint: `${surveyResponseRecordIndexEndpoint}/${acks[0].id}`,
@@ -278,9 +285,7 @@ describe(`Survey Completion Scenarios`, () => {
          */
         describe.skip(`when the participant already has attempt in progress for this survey`, () => {
           beforeEach(async () => {
-            const { id: clientId } = (
-              (await adminHttpClient.get(clientBaseEndpoint)).data as Client[]
-            )[0];
+            const { id: clientId } = await fetchAllClients();
 
             const seedResult = await seedFinalizedSurvey(clientId);
 
@@ -317,7 +322,7 @@ describe(`Survey Completion Scenarios`, () => {
                 },
                 clientId,
               }),
-              assertSuccess: (acks) => {
+              onSuccess: (acks) => {
                 secondAccessCode = acks[0].accessCode as string;
               },
             });
@@ -351,9 +356,7 @@ describe(`Survey Completion Scenarios`, () => {
 
         describe('when the existing attempt has been submitted', () => {
           beforeEach(async () => {
-            const { id: clientId } = (
-              (await adminHttpClient.get(clientBaseEndpoint)).data as Client[]
-            )[0];
+            const { id: clientId } = await fetchAllClients();
 
             const seedResult = await seedFinalizedSurvey(clientId);
 
@@ -390,7 +393,7 @@ describe(`Survey Completion Scenarios`, () => {
                   chosenOptionLabel: 'b',
                 })
                 .andThen(SubmitSurvey, {}),
-              assertSuccess: async (acks) => {
+              onSuccess: async (acks) => {
                 await assertQueryResponse({
                   httpClient: adminHttpClient,
                   endpoint: `${surveyResponseRecordIndexEndpoint}/${acks[0].id}`,
@@ -440,7 +443,7 @@ describe(`Survey Completion Scenarios`, () => {
                   chosenOptionLabel: 'c',
                 })
                 .andThen(SubmitSurvey, {}),
-              assertSuccess: async (acks) => {
+              onSuccess: async (acks) => {
                 await assertQueryResponse({
                   httpClient: adminHttpClient,
                   endpoint: `${surveyResponseRecordIndexEndpoint}/${acks[0].id}`,
@@ -459,9 +462,7 @@ describe(`Survey Completion Scenarios`, () => {
       describe(`when beginning a survey`, () => {
         describe(`when an explicit client composite identifier is included in the request`, () => {
           beforeEach(async () => {
-            const { id: clientId } = (
-              (await adminHttpClient.get(clientBaseEndpoint)).data as Client[]
-            )[0];
+            const { id: clientId } = await fetchAllClients();
 
             const surveySeedResult = await seedFinalizedSurvey(clientId);
 
@@ -475,7 +476,7 @@ describe(`Survey Completion Scenarios`, () => {
             )[0];
 
             await assertCommandError({
-              httpClient: new TestHttpClient('http://localhost:4200'),
+              httpClient: new TestHttpClient(),
               endpoint: surveyCompletionCommandsEndpoint,
               commandFsa: TestCommandStream.buildOne(BeginSurvey, {
                 surveyId,
@@ -635,9 +636,7 @@ describe(`Survey Completion Scenarios`, () => {
 
         describe(`when there is no question with the given label`, () => {
           beforeEach(async () => {
-            const { id: clientId } = (
-              (await adminHttpClient.get(clientBaseEndpoint)).data as Client[]
-            )[0];
+            const { id: clientId } = await fetchAllClients();
 
             const seedResult = await seedFinalizedSurvey(clientId);
 
@@ -674,9 +673,7 @@ describe(`Survey Completion Scenarios`, () => {
 
         describe(`when the question already has a response`, () => {
           beforeEach(async () => {
-            const { id: clientId } = (
-              (await adminHttpClient.get(clientBaseEndpoint)).data as Client[]
-            )[0];
+            const { id: clientId } = await fetchAllClients();
 
             const seedResult = await seedFinalizedSurvey(clientId);
 
@@ -720,9 +717,7 @@ describe(`Survey Completion Scenarios`, () => {
 
         describe(`when the question is not next in line`, () => {
           beforeEach(async () => {
-            const { id: clientId } = (
-              (await adminHttpClient.get(clientBaseEndpoint)).data as Client[]
-            )[0];
+            const { id: clientId } = await fetchAllClients();
 
             const seedResult = await seedFinalizedSurvey(clientId);
 
@@ -753,9 +748,7 @@ describe(`Survey Completion Scenarios`, () => {
       describe(`when responding to a follow-up survey question`, () => {
         describe(`when there is no question with the given label`, () => {
           beforeEach(async () => {
-            const { id: clientId } = (
-              (await adminHttpClient.get(clientBaseEndpoint)).data as Client[]
-            )[0];
+            const { id: clientId } = await fetchAllClients();
 
             const seedResult = await seedFinalizedSurvey(clientId);
 
@@ -793,9 +786,7 @@ describe(`Survey Completion Scenarios`, () => {
 
         describe(`when the question already has a response`, () => {
           beforeEach(async () => {
-            const { id: clientId } = (
-              (await adminHttpClient.get(clientBaseEndpoint)).data as Client[]
-            )[0];
+            const { id: clientId } = await fetchAllClients();
 
             const seedResult = await seedFinalizedSurvey(clientId);
 
@@ -847,9 +838,7 @@ describe(`Survey Completion Scenarios`, () => {
 
         describe(`when the follow-up question should not have been asked based on the parent question's response`, () => {
           beforeEach(async () => {
-            const { id: clientId } = (
-              (await adminHttpClient.get(clientBaseEndpoint)).data as Client[]
-            )[0];
+            const { id: clientId } = await fetchAllClients();
 
             const seedResult = await seedFinalizedSurvey(clientId);
 
@@ -920,9 +909,7 @@ describe(`Survey Completion Scenarios`, () => {
         // TODO survey response instead of completion record?
         describe(`when the draft survey completion record has already been abandoned`, () => {
           beforeEach(async () => {
-            const { id: clientId } = (
-              (await adminHttpClient.get(clientBaseEndpoint)).data as Client[]
-            )[0];
+            const { id: clientId } = await fetchAllClients();
 
             const seedResult = await seedFinalizedSurvey(clientId);
 
@@ -959,9 +946,7 @@ describe(`Survey Completion Scenarios`, () => {
 
         describe(`when the survey completion record has already been submitted`, () => {
           beforeEach(async () => {
-            const { id: clientId } = (
-              (await adminHttpClient.get(clientBaseEndpoint)).data as Client[]
-            )[0];
+            const { id: clientId } = await fetchAllClients();
 
             const seedResult = await seedFinalizedSurvey(clientId);
 
@@ -1046,9 +1031,7 @@ describe(`Survey Completion Scenarios`, () => {
 
         describe(`when the survey attempt is incomplete`, () => {
           beforeEach(async () => {
-            const { id: clientId } = (
-              (await adminHttpClient.get(clientBaseEndpoint)).data as Client[]
-            )[0];
+            const { id: clientId } = await fetchAllClients();
 
             const seedResult = await seedFinalizedSurvey(clientId);
 

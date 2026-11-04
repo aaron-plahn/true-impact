@@ -13,8 +13,8 @@ import type { YesNoOrUnknown } from '../../../../libs/data-types';
     lastName: 'Jones',
     dateOfBirth: '2010-11-04',
     isIndigenous: 'Yes',
-    // TODO validate this in the command handler against known communities
-    communityId: '55506',
+    // you need to add this optional property if you need it on your test instance
+    // communityId: '55506',
   },
 })
 export class CreateClient {

@@ -63,7 +63,7 @@ const indexEndpoints = {
   flags: `${baseEndpoint}/flags`,
 };
 
-const adminHttpClient = new TestHttpClient('http://localhost:4200');
+const adminHttpClient = new TestHttpClient();
 
 const buildCommandEndpoint = (indexEndpoint: string) =>
   `${indexEndpoint}/commands`;
@@ -172,7 +172,7 @@ const seedRequiredState = async ({
     httpClient: httpClient || adminHttpClient,
     endpoint: commandEndpoint,
     stream,
-    assertSuccess: (acks) => {
+    onSuccess: (acks) => {
       id = acks[0].id;
 
       accessCode = acks.at(-1)?.accessCode;
@@ -302,7 +302,7 @@ describe(`when reviewing a survey (e.g. when a clinician reviews a client's resp
          * the survey particpant (which is a client in the domain not in the networking sense)
          * must redeem the access code for a short-lived survey response session.
          */
-        httpClient: new TestHttpClient('http://localhost:4200'),
+        httpClient: new TestHttpClient(),
         indexEndpoint: indexEndpoints.responses,
         commandEndpoint: buildCommandEndpoint(indexEndpoints.surveys),
         stream: completeSurveyAsClient,
@@ -353,7 +353,7 @@ describe(`when reviewing a survey (e.g. when a clinician reviews a client's resp
               stream: TestCommandStream.first(BeginReviewOfSurvey, {
                 surveyResponseRecordId,
               }),
-              assertSuccess: async (acks) => {
+              onSuccess: async (acks) => {
                 const newReviewRecord = (
                   await adminHttpClient.get(
                     buildDetailQueryEndpoint(
@@ -392,7 +392,7 @@ describe(`when reviewing a survey (e.g. when a clinician reviews a client's resp
               stream: TestCommandStream.first(BeginReviewOfSurvey, {
                 surveyResponseRecordId,
               }),
-              assertSuccess: async (_acks) => {
+              onSuccess: async (_acks) => {
                 const allReviews = (
                   await adminHttpClient.get(indexEndpoints.reviews)
                 ).data as SurveyReviewViewModelClientDto[];
@@ -416,13 +416,13 @@ describe(`when reviewing a survey (e.g. when a clinician reviews a client's resp
                 id: surveyId,
               },
             }),
-            assertSuccess: (acks) => {
+            onSuccess: (acks) => {
               newAccessCode = acks[0].accessCode as string;
             },
           });
 
           await assertCommandScenarioSuccess({
-            httpClient: new TestHttpClient('http://localhost:4200'),
+            httpClient: new TestHttpClient(),
             endpoint: commandEndpointForSurveyReviews,
             stream: TestCommandStream.first(BeginSurvey, {
               surveyId,
@@ -515,7 +515,7 @@ describe(`when reviewing a survey (e.g. when a clinician reviews a client's resp
               }).andThen(AcknowledgeResponseToSurveyQuestionHasBeenViewed, {
                 questionLabel: '1',
               }),
-              assertSuccess: async (acks) => {
+              onSuccess: async (acks) => {
                 const updatedReviewRecord = (
                   await adminHttpClient.get(
                     buildDetailQueryEndpoint(
@@ -599,7 +599,7 @@ describe(`when reviewing a survey (e.g. when a clinician reviews a client's resp
             }).andThen(AddNoteAboutQuestionResponse, {
               questionLabel: targetQuestionLabel,
             }),
-            assertSuccess: async (acks) => {
+            onSuccess: async (acks) => {
               const updatedReviewRecord = (
                 await adminHttpClient.get(
                   buildDetailQueryEndpoint(indexEndpoints.reviews, acks[0].id),
@@ -646,7 +646,7 @@ describe(`when reviewing a survey (e.g. when a clinician reviews a client's resp
                 note: secondNoteText,
                 languageCode: secondNoteLanguageCode,
               }),
-            assertSuccess: async (acks) => {
+            onSuccess: async (acks) => {
               const updatedReviewRecord = (
                 await adminHttpClient.get(
                   buildDetailQueryEndpoint(indexEndpoints.reviews, acks[0].id),
@@ -774,7 +774,7 @@ describe(`when reviewing a survey (e.g. when a clinician reviews a client's resp
               languageCode: firstNoteLanguageCode,
               note: firstNoteText,
             }),
-            assertSuccess: async (acks) => {
+            onSuccess: async (acks) => {
               const updatedReviewRecord = (
                 await adminHttpClient.get(
                   buildDetailQueryEndpoint(indexEndpoints.reviews, acks[0].id),
@@ -814,7 +814,7 @@ describe(`when reviewing a survey (e.g. when a clinician reviews a client's resp
                 note: secondNoteText,
                 languageCode: secondNoteLanguageCode,
               }),
-            assertSuccess: async (acks) => {
+            onSuccess: async (acks) => {
               const updatedReviewRecord =
                 // TODO review or review record in the name here?
                 (
@@ -952,7 +952,7 @@ describe(`when reviewing a survey (e.g. when a clinician reviews a client's resp
                       questionLabel: targetQuestionLabel,
                       flagId: secondFlagId,
                     }),
-                  assertSuccess: async (acks) => {
+                  onSuccess: async (acks) => {
                     const updatedReviewRecord = (
                       await adminHttpClient.get(
                         buildDetailQueryEndpoint(
@@ -1120,7 +1120,7 @@ describe(`when reviewing a survey (e.g. when a clinician reviews a client's resp
                 SubmitPartialSurveyReview,
                 {},
               ),
-              assertSuccess: async (acks) => {
+              onSuccess: async (acks) => {
                 const updatedReviewRecord = (
                   await adminHttpClient.get(
                     buildDetailQueryEndpoint(
@@ -1203,7 +1203,7 @@ describe(`when reviewing a survey (e.g. when a clinician reviews a client's resp
               httpClient: adminHttpClient,
               endpoint: commandEndpointForSurveyReviews,
               stream: reviewAllQuestions.andThen(SubmitCompleteSurveyReview),
-              assertSuccess: async (acks) => {
+              onSuccess: async (acks) => {
                 const updatedReviewRecord = (
                   await adminHttpClient.get(
                     buildDetailQueryEndpoint(

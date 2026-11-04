@@ -58,7 +58,7 @@ const missingClientId = 'cl-404';
 
 const missingCommunityId = 'comm-404';
 
-const httpClient = new TestHttpClient('http://localhost:4200');
+const httpClient = new TestHttpClient();
 
 describe(`Client Management Scenarios`, () => {
   describe('when the user is authenticated as an admin', () => {
@@ -160,7 +160,7 @@ describe(`Client Management Scenarios`, () => {
                   firstName: clientFirstName,
                   lastName: clientLastName,
                 }),
-                assertSuccess: async (acks) => {
+                onSuccess: async (acks) => {
                   const newClient = (
                     await httpClient.get(`${clientIndexEndpoint}/${acks[0].id}`)
                   ).data as ClientViewModelClientDto;
@@ -253,7 +253,7 @@ describe(`Client Management Scenarios`, () => {
 
       describe(`when the client's indigenous identity is unknown`, () => {
         describe(`when no community is provided`, () => {
-          it.only(`should create the client`, async () => {
+          it(`should create the client`, async () => {
             await assertCommandSuccess({
               httpClient,
               endpoint: commandsEndpointForClients,
@@ -398,7 +398,7 @@ describe(`Client Management Scenarios`, () => {
               }).andThen(AddCommunityAffiliationForClient, {
                 communityId,
               }),
-              assertSuccess: async (acks) => {
+              onSuccess: async (acks) => {
                 const updated = (
                   await httpClient.get(`${clientIndexEndpoint}/${acks[0].id}`)
                 ).data as ClientViewModelClientDto;
@@ -424,7 +424,7 @@ describe(`Client Management Scenarios`, () => {
               }).andThen(AddCommunityAffiliationForClient, {
                 communityId,
               }),
-              assertSuccess: async (acks) => {
+              onSuccess: async (acks) => {
                 const updated = (
                   await httpClient.get(`${clientIndexEndpoint}/${acks[0].id}`)
                 ).data as ClientViewModelClientDto;
@@ -476,7 +476,7 @@ describe(`Client Management Scenarios`, () => {
                 }).andThen(FlagClient, {
                   flagId,
                 }),
-                assertSuccess: async (acks) => {
+                onSuccess: async (acks) => {
                   const updated = (
                     await httpClient.get(`${clientIndexEndpoint}/${acks[0].id}`)
                   ).data as ClientViewModelClientDto;
