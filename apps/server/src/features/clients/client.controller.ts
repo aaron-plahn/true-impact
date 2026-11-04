@@ -1,4 +1,10 @@
-import { compileJsQuery, LogicalOperator } from 'src/libs/query-language';
+import {
+  AndQueryFilterCondition,
+  compileJsQuery,
+  ConditionalBlockType,
+  LogicalOperator,
+  SimpleQueryFilterCondition,
+} from 'src/libs/query-language';
 import { IndexTable } from 'src/libs/server-driven-ui';
 import { AdminRbacAuthGuard } from '../../auth/guards';
 import type { CommandResult, ICommandFsa } from '../../libs/cqrs-es';
@@ -7,6 +13,7 @@ import {
   buildTestInstance,
   convertToOpenApiSchema,
   getDataSchemaFromClassCtor,
+  TrueImpactBadUserInputError,
   TrueImpactError,
   TrueImpactRuntimeException,
 } from '../../libs/data-types';
@@ -40,8 +47,49 @@ const example = buildTestInstance(ClientViewModelClientDto);
 
 const queryOptionsExample = buildTestInstance(QueryOptions);
 
+const DEFAULT_PAGE_SIZE = 10;
+
+const DEFAULT_PAGE = 1;
+
 // TODO Move this to a shared directory unless we intend to make the options dynamic (based on current results size)
-const PAGE_SIZES = [5, 10, 50, 100];
+const PAGE_SIZES = [5, DEFAULT_PAGE_SIZE, 50, 100];
+
+const validateFieldReferencesInFilter = (
+  filter: AndQueryFilterCondition | SimpleQueryFilterCondition,
+  errors: TrueImpactError[] = [],
+): TrueImpactError[] => {
+  const { type: filterBlockType } = filter;
+
+  if (filterBlockType === ConditionalBlockType.SIMPLE) {
+    if (filter.field.includes('.')) {
+      errors.push(
+        new TrueImpactError(
+          `Searching nested fields [${filter.field}] is not yet supported.`,
+        ),
+      );
+    }
+
+    return errors;
+  }
+
+  if (filterBlockType === ConditionalBlockType.AND) {
+    filter.conditions
+      .flatMap((condition) => validateFieldReferencesInFilter(condition))
+      .forEach((e) => errors.push(e));
+
+    return errors;
+  }
+
+  const exhaustiveCheck: never = filterBlockType;
+
+  errors.push(
+    new TrueImpactError(
+      `Failed to compile filter condition block of unknown type [${exhaustiveCheck as string}]`,
+    ),
+  );
+
+  return errors;
+};
 
 @UseFilters(ResourceNotFoundFilter, BadUserInputFilter)
 @UseInterceptors(QueryResponseInterceptor)
@@ -93,6 +141,17 @@ export class ClientController implements OnModuleInit {
       return clients;
     }
 
+    if (filter) {
+      const filterValidationResult = validateFieldReferencesInFilter(filter);
+
+      if (filterValidationResult.length > 0) {
+        return new TrueImpactBadUserInputError([
+          new TrueImpactError(`Invalid filter provided by user.`),
+          ...filterValidationResult,
+        ]);
+      }
+    }
+
     // TODO We need to filter and paginate in the database
     const filterToUse = filter
       ? compileJsQuery<ClientIndexListRowViewDto>(filter)
@@ -106,9 +165,8 @@ export class ClientController implements OnModuleInit {
       ? pagination
       : // TODO We should set these defaults in middleware so we don't have to do this in every controller
         {
-          // TODO no magic constants
-          page: 1,
-          pageSize: 10,
+          page: DEFAULT_PAGE,
+          pageSize: DEFAULT_PAGE_SIZE,
         };
 
     const { page, pageSize } = paginationToUse;
@@ -131,7 +189,7 @@ export class ClientController implements OnModuleInit {
 
     const result: IndexTable<ClientIndexListRowViewDto> = {
       layout: {
-        isSearchable: true,
+        isSearchable: true, // i.e. one of the columns has a `search` configuration
         columns: [
           // hidden
           // {

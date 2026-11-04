@@ -28,8 +28,7 @@ import {
           type: ConditionalBlockType.SIMPLE,
           field: 'age',
           operator: LogicalOperator.EQUALS,
-          // can't the user provide a true number?
-          params: ['72'],
+          params: [72],
         },
       ],
     },
@@ -47,7 +46,7 @@ export class QueryOptions {
     label: 'filter',
     /**
      * Currently we only support sending `AND` filters, but in the future, we should support
-     * any filter our query langauge supports.
+     * any filter our query langauge supports (OR, NOT, and SIMPLE).
      */
     description: `a user defined filter for the target list (for active search)`,
     isOptional: true,

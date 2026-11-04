@@ -16,22 +16,64 @@ import { Client } from '../client.aggregate-root';
 
 export class ClientIndexListRowViewDto {
   // this is meant to be a "hidden" field
+  @NonEmptyString({
+    label: 'ID',
+    description: 'unique identifier for the client represented by this row',
+  })
   id: string;
 
   // this should be an object with a route, label, and tooltip
+  @NonEmptyString({
+    label: 'link',
+    description: 'relative link to the detail view for this client',
+  })
   link: string;
 
+  @NonNegativeInteger({
+    label: 'created at',
+    description:
+      'UNIX timestamp representing the time at which this client was added to the system',
+  })
   createdAt: number;
 
+  @EnumeratedType(
+    {
+      Yes: 'yes',
+      No: 'no',
+      Unknown: 'unknown',
+    },
+    {
+      label: 'is Indigenous?',
+      description: 'Is this client Indigenous (if known)?',
+    },
+  )
   isIndigenous: YesNoOrUnknown;
 
   // should this be a link?
+  @NonEmptyString({
+    label: 'community',
+    description:
+      'the Indigenous community to which this client is registered (if known and applicable)',
+    isOptional: true,
+  })
   community?: string;
 
+  @NonEmptyString({
+    label: 'First Name',
+    description: `the client's first name`,
+  })
   firstName: string;
 
-  middleInitials: string;
+  @NonEmptyString({
+    label: 'Middle Initials',
+    description: `the client's middle initials (if applicable), useful for distinguishing clients with the same first and last name`,
+  })
+  middleInitials?: string;
 
+  @NonEmptyString({
+    label: 'Last Name',
+    description: `the client's last name`,
+  })
   lastName: string;
 }
 

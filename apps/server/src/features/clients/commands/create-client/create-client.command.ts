@@ -13,8 +13,7 @@ import type { YesNoOrUnknown } from '../../../../libs/data-types';
     lastName: 'Jones',
     dateOfBirth: '2010-11-04',
     isIndigenous: 'Yes',
-    // It looks like we are already doing this. Is the comment stale?
-    // TODO validate this in the command handler against known communities
+    // you need to add this optional property
     // communityId: '55506',
   },
 })

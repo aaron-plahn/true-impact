@@ -10,6 +10,7 @@ import {
   LogicalOperator,
 } from '../../../libs/query-language';
 import { IndexTable } from '../../../libs/server-driven-ui';
+import { assertTextMatchesAll } from '../../../libs/test-utils';
 import { assertCommandScenarioSuccess } from '../utils';
 import { signIn, signInAsAdmin } from '../utils/sign-in';
 import { TestHttpClient } from '../utils/test-http-client';
@@ -855,6 +856,59 @@ describe(`Client index endpoint (POST /clients)`, () => {
     });
 
     describe(`when the query request is ill-formed`, () => {
+      const invalidFieldPath = 'fullName.firstName';
+
+      const invalidFilter: AndQueryFilterCondition = {
+        type: ConditionalBlockType.AND,
+        conditions: [
+          {
+            type: ConditionalBlockType.SIMPLE,
+            field: invalidFieldPath,
+            operator: LogicalOperator.TEXT_INCLUDES,
+            params: ['ill'],
+          },
+        ],
+      };
+
+      // TODO support such queries
+      describe(`when a deep reference to a nested field is provided (a '.' is included)`, () => {
+        beforeEach(async () => {
+          await assertCommandScenarioSuccess({
+            httpClient: adminHttpClient,
+            endpoint: commandsEndpointForClients,
+            /**
+             * We need at least one client in the database in order for the field path to be validated at present.
+             * We need to decide if we eagerly validate the user provided filter instead of lazily evaluating it as we
+             * compile the query. Should we comile the query even if there is no data?
+             */
+            stream: TestCommandStream.first(CreateClient),
+          });
+        });
+
+        it(`should return the expected error`, async () => {
+          const rawResposne = await adminHttpClient
+            .post(clientIndexEndpoint, {
+              filter: invalidFilter,
+            })
+            .catch((r) => {
+              return (
+                r as { response: { data: { message: string }; status: number } }
+              ).response;
+            });
+
+          expect(rawResposne.status).toBe(HttpStatusCode.BadRequest);
+
+          const { message } = rawResposne.data as { message: string };
+
+          assertTextMatchesAll(
+            message,
+            'nested fields',
+            invalidFieldPath,
+            'not yet supported',
+          );
+        });
+      });
+
       describe(`when a non-searchable field is provided`, () => {
         it.todo(`should return the expected error response`);
       });

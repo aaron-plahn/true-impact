@@ -77,7 +77,8 @@ export class ColumnProperties<TKey> {
   // sortable?: boolean; // TODO suport sorting on the server as well
   /**
    * If present, the client should wire up a search bar under the heading cell.
-   * `onChange` the state of this form field should be bound to
+   * `onChange` the state of this form field should be bound to the list of `conditions`
+   * of an `AND` block to produce the new filter.
    */
   search?: ColumnSearchControl;
 }

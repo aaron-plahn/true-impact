@@ -52,7 +52,6 @@ const compileSimpleQuery = <T>(
     };
   }
 
-  // Should this be TEXT_EQUALS?
   if (operator === LogicalOperator.EQUALS) {
     return (input: T) => {
       if (!isObject(input)) {
@@ -90,14 +89,7 @@ const compileSimpleQuery = <T>(
         return false;
       }
 
-      // we have a number
-      try {
-        const parsedNumericValueFromUserQuery = parseInt(searchTerms);
-
-        return parsedNumericValueFromUserQuery === target;
-      } catch (_error) {
-        return false;
-      }
+      return target === target;
     };
   }
 
@@ -125,10 +117,6 @@ export const compileJsQuery = <T>(
     const { conditions } = filter;
 
     return (input: T) => {
-      console.log({
-        AND_INPUT: input,
-      });
-
       return conditions.every((condition) => {
         return compileJsQuery(condition)(input);
       });
