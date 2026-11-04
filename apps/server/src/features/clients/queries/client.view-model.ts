@@ -130,7 +130,10 @@ export class ClientViewModelClientDto {
     label: 'full name',
     description: `the client's full name`,
   })
-  // TODO we want to have first name, last name, and middle initials separately
+  /**
+   * Note that this is an object so we can leverage consistent presentation for full names across all entitites
+   * in detail views. We split the fields into individual columns in the index table.
+   */
   fullName: FullNameDto;
 
   @EnumeratedType(

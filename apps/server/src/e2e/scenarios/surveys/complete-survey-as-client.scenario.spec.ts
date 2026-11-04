@@ -141,6 +141,9 @@ const communityName = 'Big Community';
 describe(`Survey Completion Scenarios`, () => {
   const adminHttpClient = new TestHttpClient();
 
+  /**
+   * TODO We should consider using `fetchById` (detail query endpoint) instead.
+   */
   const fetchAllClients = async () => {
     const rawResponse = await adminHttpClient.post<{
       rows: ClientIndexListRowViewDto[];

@@ -13,7 +13,7 @@ import type { YesNoOrUnknown } from '../../../../libs/data-types';
     lastName: 'Jones',
     dateOfBirth: '2010-11-04',
     isIndigenous: 'Yes',
-    // you need to add this optional property
+    // you need to add this optional property if you need it on your test instance
     // communityId: '55506',
   },
 })

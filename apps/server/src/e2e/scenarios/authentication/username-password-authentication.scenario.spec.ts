@@ -283,9 +283,7 @@ describe(`When loging in with a username and password (without Multi-factor Auth
 
   describe(`when the user has been deactivated`, () => {
     beforeEach(async () => {
-      const httpClientForDataSeeding = new TestHttpClient(
-        'http://localhost:4200',
-      );
+      const httpClientForDataSeeding = new TestHttpClient();
 
       await signInAsAdmin(httpClientForDataSeeding);
 
