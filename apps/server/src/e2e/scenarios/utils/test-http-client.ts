@@ -1,4 +1,9 @@
 import axios from 'axios';
+import {
+  isNonEmptyString,
+  TrueImpactError,
+  TrueImpactRuntimeException,
+} from 'src/libs/data-types';
 
 export interface Headers {
   Cookie: string[];
@@ -20,7 +25,31 @@ export class TestHttpClient implements Omit<
 
   private authHeaders = new Map<string, string>();
 
-  constructor(clientOrigin: string) {
+  // TODO remove the formal param here once we have established that all tests are still passing when using the values from the environment
+  constructor(_deprecatedClientOrigin: string) {
+    const clientDomain = process.env.CLIENT_DOMAIN;
+
+    if (!isNonEmptyString(clientDomain)) {
+      throw new TrueImpactRuntimeException([
+        new TrueImpactError(
+          `You need to set CLIENT_DOMAIN in your test environment.`,
+        ),
+      ]);
+    }
+
+    const clientPort = process.env.CLIENT_PORT;
+
+    // We don't need strong validation as this is only a test helper. We are just providing a convenience for the test suite author.
+    if (!clientPort) {
+      throw new TrueImpactRuntimeException([
+        new TrueImpactError(
+          `You need to set CLIENT_PORT in your test environment.`,
+        ),
+      ]);
+    }
+
+    const clientOrigin = `${clientDomain}:${clientPort}`;
+
     this.axiosInstance = axios.create({
       withCredentials: true,
       headers: {
