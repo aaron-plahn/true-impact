@@ -85,7 +85,7 @@ const asssertQueryResponseHasExpectedEntities = async (
  * We test filtering exhaustively here so we can focus on only UX concerns in our UX e2e (wdio) tests.
  */
 describe(`Client index endpoint (POST /clients)`, () => {
-  const adminHttpClient = new TestHttpClient('http://localhost:4200');
+  const adminHttpClient = new TestHttpClient();
 
   beforeAll(async () => {
     // TODO test that an ordinary user with role `employee` can see the clients
@@ -788,7 +788,7 @@ describe(`Client index endpoint (POST /clients)`, () => {
 
     describe(`when the user is not authenticated (public request)`, () => {
       it(`should return not authoirized`, async () => {
-        const publicClient = new TestHttpClient('http://localhost:4200');
+        const publicClient = new TestHttpClient();
 
         const result = await publicClient
           .post(clientIndexEndpoint, {})
@@ -806,7 +806,7 @@ describe(`Client index endpoint (POST /clients)`, () => {
       const password = 'impossibleTOGUESSpassword123';
 
       // TODO can't the client origin be pulled from the environment in the `TestHttpClient` constructor?
-      const httpClientForEmployee = new TestHttpClient('http://localhost:4200');
+      const httpClientForEmployee = new TestHttpClient();
 
       beforeAll(async () => {
         await assertCommandScenarioSuccess({

@@ -475,7 +475,7 @@ describe(`Survey Completion Scenarios`, () => {
             )[0];
 
             await assertCommandError({
-              httpClient: new TestHttpClient('http://localhost:4200'),
+              httpClient: new TestHttpClient(),
               endpoint: surveyCompletionCommandsEndpoint,
               commandFsa: TestCommandStream.buildOne(BeginSurvey, {
                 surveyId,

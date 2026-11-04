@@ -58,7 +58,7 @@ const missingClientId = 'cl-404';
 
 const missingCommunityId = 'comm-404';
 
-const httpClient = new TestHttpClient('http://localhost:4200');
+const httpClient = new TestHttpClient();
 
 describe(`Client Management Scenarios`, () => {
   describe('when the user is authenticated as an admin', () => {

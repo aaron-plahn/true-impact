@@ -92,7 +92,7 @@ const addValueForOption = addCategoryForAnalyzer.andThen(
   },
 );
 
-const httpClient = new TestHttpClient('http://localhost:4200');
+const httpClient = new TestHttpClient();
 
 describe(`Build Survey Analyzer Scenarios`, () => {
   describe(`when the user is authenticated as an admin`, () => {

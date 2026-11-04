@@ -37,7 +37,7 @@ const testUserLastName = 'Boy';
 
 const missingUserId = 'MissingUserId';
 
-const httpClient = new TestHttpClient('http://localhost:4200');
+const httpClient = new TestHttpClient();
 
 describe('User Management Scenarios', () => {
   beforeAll(async () => {

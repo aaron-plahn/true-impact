@@ -50,7 +50,7 @@ const translateCommunityName = createCommunity.andThen(TranslateCommunityName, {
   languageCode: translationLanguageCodeForName,
 });
 
-const httpClient = new TestHttpClient('http://localhost:4200');
+const httpClient = new TestHttpClient();
 
 describe(`Community Management Scenarios`, () => {
   describe(`when the user is authenticated as an admin`, () => {

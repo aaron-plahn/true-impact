@@ -32,7 +32,7 @@ const surveyName = 'Evaluation 1.B';
 
 const shouldError = 'should return the expected error';
 
-const httpClient = new TestHttpClient('http://localhost:4200');
+const httpClient = new TestHttpClient();
 
 const RED = 'red';
 const WHITE = 'white';

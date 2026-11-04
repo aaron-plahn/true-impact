@@ -7,7 +7,7 @@ export class RestCommandStreamExecutor {
   constructor(
     private readonly endpoint: string,
     // TODO pull this from .env \ config
-    private readonly httpClient = new TestHttpClient('http://localhost:4200'),
+    private readonly httpClient = new TestHttpClient(),
   ) {}
 
   async execute(fsa: ICommandFsa) {

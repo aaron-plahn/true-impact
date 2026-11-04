@@ -38,7 +38,7 @@ const relabelFlag = createFlag.andThen(RelabelFlag, {
 
 const repeatedFlagLabel = 'I did it again';
 
-const httpClient = new TestHttpClient('http://localhost:4200');
+const httpClient = new TestHttpClient();
 
 /**
  * TODO Add test cases for

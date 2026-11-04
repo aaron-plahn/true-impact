@@ -41,7 +41,7 @@ export const assertCommandAccessDeniedToUser = async (
 ) => {
   const { user, endpoint } = testCase;
 
-  const httpClientForUserRequests = new TestHttpClient('http://localhost:4200');
+  const httpClientForUserRequests = new TestHttpClient();
 
   if (user) {
     const httpClientForAdminRequests = new TestHttpClient(

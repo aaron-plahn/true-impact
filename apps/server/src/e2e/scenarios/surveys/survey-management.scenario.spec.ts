@@ -150,7 +150,7 @@ const labelOfTopLevelOptionToFlag = 'a';
 const labelOfFollowUpQuestionToFlag = '1.a.FU-1';
 const labelOfFollowUpOptionToFlag = 'FUOa';
 
-const httpClient = new TestHttpClient('http://localhost:4200');
+const httpClient = new TestHttpClient();
 
 describe(`Survey Management Scenarios`, () => {
   describe(`when the user is authenticated as an admin`, () => {

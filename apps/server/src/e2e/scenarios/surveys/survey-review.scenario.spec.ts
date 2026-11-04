@@ -63,7 +63,7 @@ const indexEndpoints = {
   flags: `${baseEndpoint}/flags`,
 };
 
-const adminHttpClient = new TestHttpClient('http://localhost:4200');
+const adminHttpClient = new TestHttpClient();
 
 const buildCommandEndpoint = (indexEndpoint: string) =>
   `${indexEndpoint}/commands`;
@@ -302,7 +302,7 @@ describe(`when reviewing a survey (e.g. when a clinician reviews a client's resp
          * the survey particpant (which is a client in the domain not in the networking sense)
          * must redeem the access code for a short-lived survey response session.
          */
-        httpClient: new TestHttpClient('http://localhost:4200'),
+        httpClient: new TestHttpClient(),
         indexEndpoint: indexEndpoints.responses,
         commandEndpoint: buildCommandEndpoint(indexEndpoints.surveys),
         stream: completeSurveyAsClient,
@@ -422,7 +422,7 @@ describe(`when reviewing a survey (e.g. when a clinician reviews a client's resp
           });
 
           await assertCommandScenarioSuccess({
-            httpClient: new TestHttpClient('http://localhost:4200'),
+            httpClient: new TestHttpClient(),
             endpoint: commandEndpointForSurveyReviews,
             stream: TestCommandStream.first(BeginSurvey, {
               surveyId,

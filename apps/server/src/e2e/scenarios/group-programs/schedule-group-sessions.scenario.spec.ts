@@ -31,7 +31,7 @@ const programName = "Wreckin' Rollerbladez";
 const missingId = 'group-program-id-404';
 
 describe(`Group Program Scheduling Scenarios`, () => {
-  const adminHttpClient = new TestHttpClient('http://localhost:4200');
+  const adminHttpClient = new TestHttpClient();
 
   beforeAll(async () => {
     await signInAsAdmin(adminHttpClient);
@@ -255,7 +255,7 @@ describe(`Group Program Scheduling Scenarios`, () => {
   });
 
   describe(`when the user is authenticated as an ordinary user (no RBAC to execute commands)`, () => {
-    const userHttpClient = new TestHttpClient('http://localhost:4200');
+    const userHttpClient = new TestHttpClient();
 
     const ordinaryUsername = 'duser';
 

@@ -64,7 +64,7 @@ const noteLanguageCode = 'en';
 const interactionTypeForNoteThatIsClassifiedLater = 'shock';
 
 describe(`Group Program Observation Scenarios`, () => {
-  const adminHttpClient = new TestHttpClient('http://localhost:4200');
+  const adminHttpClient = new TestHttpClient();
 
   beforeAll(async () => {
     await signInAsAdmin(adminHttpClient);

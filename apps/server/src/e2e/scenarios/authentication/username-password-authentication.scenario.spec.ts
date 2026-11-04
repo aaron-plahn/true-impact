@@ -46,7 +46,7 @@ const buildSigninDto = ({
   password,
 });
 
-const httpClientForTestRuns = new TestHttpClient('http://localhost:4200');
+const httpClientForTestRuns = new TestHttpClient();
 
 describe(`When loging in with a username and password (without Multi-factor Authentication enabled)`, () => {
   beforeAll(async () => {
@@ -82,7 +82,7 @@ describe(`When loging in with a username and password (without Multi-factor Auth
     });
 
     describe(`when the credentials are correct`, () => {
-      const client = new TestHttpClient('http://localhost:4200');
+      const client = new TestHttpClient();
 
       /**
        * We might verify this at the `e2e` level by providing an addtional

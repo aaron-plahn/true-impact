@@ -3,7 +3,7 @@ import {
   isNonEmptyString,
   TrueImpactError,
   TrueImpactRuntimeException,
-} from 'src/libs/data-types';
+} from '../../../libs/data-types';
 
 export interface Headers {
   Cookie: string[];
@@ -25,8 +25,7 @@ export class TestHttpClient implements Omit<
 
   private authHeaders = new Map<string, string>();
 
-  // TODO remove the formal param here once we have established that all tests are still passing when using the values from the environment
-  constructor(_deprecatedClientOrigin: string) {
+  constructor() {
     const clientDomain = process.env.CLIENT_DOMAIN;
 
     if (!isNonEmptyString(clientDomain)) {
