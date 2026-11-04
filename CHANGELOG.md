@@ -2,10 +2,17 @@
 
 This first release of the True Impact platform introduces a working model for user management, client management, and survey creation and completion.
 
+
+## 88
+
+In this PR, we introduce active search for client index queries.
+
 ## 87 
+
 In this PR, we update NodeJS to 24.22.1.
 
 ## 86
+
 In this PR, we upgrade external libraries to their most recent version.
 
 ## 81
