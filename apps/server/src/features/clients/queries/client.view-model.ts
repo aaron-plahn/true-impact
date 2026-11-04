@@ -15,7 +15,7 @@ import { LookupTable } from '../../../libs/data-types/schema-management/decorato
 import { Client } from '../client.aggregate-root';
 
 export class ClientIndexListRowViewDto {
-  // this is meant to be a "hidden" field
+  // do we want to mark this field as "hidden"?
   @NonEmptyString({
     label: 'ID',
     description: 'unique identifier for the client represented by this row',
