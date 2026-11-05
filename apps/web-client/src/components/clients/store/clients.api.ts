@@ -71,7 +71,7 @@ export const clientsApi = createApi({
   endpoints: (builder) => ({
     fetchClients: builder.query<IndexTable, QueryOptions>({
       query: (options: QueryOptions) => ({
-        url: "surveys/responses/submitted",
+        url: "clients",
         method: "POST",
         body: options,
         credentials: "include",
