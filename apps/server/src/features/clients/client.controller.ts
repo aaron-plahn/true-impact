@@ -295,6 +295,7 @@ export class ClientController implements OnModuleInit {
   async executeCommand(@Body() fsa: ICommandFsa): Promise<CommandResult> {
     const result = await this.commandHandlerService.execute(fsa);
 
+    // TODO remove this
     if (result instanceof Error) {
       console.log({
         oooopssssssssssssssssssssSSS: result.toString(),

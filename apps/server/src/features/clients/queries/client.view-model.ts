@@ -247,7 +247,8 @@ export class ClientViewModel {
   toIndexTableRow(): ClientIndexListRowViewDto {
     return {
       id: this.id,
-      link: `clients/${this.id}`,
+      // note that this must be relative
+      link: `/clients/${this.id}`,
       createdAt: this.createdAt,
       isIndigenous: this.isIndigenous,
       firstName: this.fullName.firstName,

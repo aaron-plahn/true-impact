@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { Link } from "react-router-dom";
 import { JSX } from "react/jsx-runtime";
 import { useDebounce } from "../../shared";
 import { RootState } from "../../store";
@@ -114,9 +115,18 @@ export const ClientIndexPage = (): JSX.Element => {
           const row = r as Record<string, string>;
           return (
             <tr>
-              {layout.columns.map(({ key }) => {
+              {layout.columns.map(({ type, key }) => {
                 if (key in row) {
-                  return <td key={`row-${key}-${rowIndex}`}>{row[key]}</td>;
+                  const rawValue = row[key];
+
+                  const renderedCell =
+                    type === "LINK" ? (
+                      <Link to={rawValue}>Link</Link>
+                    ) : (
+                      rawValue
+                    );
+
+                  return <td key={`row-${key}-${rowIndex}`}>{renderedCell}</td>;
                 }
 
                 /**
