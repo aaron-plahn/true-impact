@@ -35,19 +35,6 @@ export const ClientIndexPage = (): JSX.Element => {
     // skip: JSON.stringify(debouncedFilterValues) === "{}",
   });
 
-  // useEffect(() => {
-  //   if (focusedField) {
-  //     const element = document.getElementById(`search-${focusedField}`);
-
-  //     console.log({
-  //       focusinggggggggggggggggggggggggggggggggggggggggggg: element || "NADA",
-  //       focusedField,
-  //     });
-
-  //     element?.focus();
-  //   }
-  // }, [indexResponse, focusedField]);
-
   if (isFetching || !indexResponse) {
     return <Loading />;
   }
