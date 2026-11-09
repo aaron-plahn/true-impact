@@ -110,8 +110,8 @@ export const clientsApi = createApi({
   endpoints: (builder) => ({
     getOptions: builder.query<IndexTable["layout"], undefined>({
       query: () => ({
-        url: "clients",
-        method: "OPTIONS",
+        url: "clients/index-table-options",
+        method: "GET",
         credentials: "include",
       }),
     }),
@@ -122,9 +122,17 @@ export const clientsApi = createApi({
           clientsApi.endpoints.getOptions.initiate(undefined),
         );
 
+        console.log({
+          ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ: tableLayout,
+        });
+
         const state = queryApi.getState() as {
           clientSearch: ClientSearchSliceState;
         };
+
+        console.log("2222222222222222222222222222");
+
+        console.log({ stateZZZZZZZZZZZZZZZZZZZZZZZZZZZ: state });
 
         const {
           clientSearch: { searchTerms, pagination },
@@ -134,16 +142,25 @@ export const clientsApi = createApi({
           pagination,
         };
 
-        if (
-          JSON.stringify(searchTerms) !== "{}" &&
-          tableLayout.data?.isSearchable
-        ) {
+        console.log("33333333333333333333333333333333333");
+
+        const hasSearchTerms = JSON.stringify(searchTerms || {}) !== "{}";
+
+        console.log("4444444444444444444444444444444444444444444444");
+
+        const isSearchAvailableForThisTable = tableLayout?.data?.isSearchable;
+
+        console.log({ hasSearchTerms, isSearchAvailableForThisTable });
+
+        if (hasSearchTerms && isSearchAvailableForThisTable) {
           const filter: AndQueryCondition = {
             type: "AND",
             conditions: [],
           };
 
           Object.entries(searchTerms).forEach(([key, value]) => {
+            console.log("44444444444444444444444444444444");
+
             // linear search is not expensive because we only ever have ~10 columns in a table
             const targetCell = tableLayout.data?.columns.find(
               (column) => column.key === key,
@@ -169,21 +186,23 @@ export const clientsApi = createApi({
             });
           }
 
-          const result = await baseQuery({
-            url: "clients",
-            method: "POST",
-            body: options,
-            credentials: "include",
-          });
-
-          if (result.data) {
-            return { data: result.data };
-          }
-
-          return {
-            error: result.error,
-          };
+          console.log("555555555555555555555555555555555555555");
         }
+
+        const result = await baseQuery({
+          url: "clients",
+          method: "POST",
+          body: options,
+          credentials: "include",
+        });
+
+        if (result.data) {
+          return { data: result.data };
+        }
+
+        return {
+          error: result?.error || JSON.stringify(result),
+        };
       },
     }),
     // fetchClientById: builder.query<unknown, string>({

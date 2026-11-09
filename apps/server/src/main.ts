@@ -44,7 +44,6 @@ async function bootstrap() {
      * This allows us to declare custom `Options` endpoints, which we currently use
      * for server-driven index table layout \ configuration.
      */
-    preflightContinue: true,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   });

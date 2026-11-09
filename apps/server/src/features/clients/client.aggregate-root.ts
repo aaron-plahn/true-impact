@@ -400,6 +400,7 @@ export class Client
     }
 
     if (MM < 0 || MM > 11) {
+      // TODO where do we shift this to 1-indexed, user facing values?
       return new TrueImpactError(`Invalid month [${MM}] encountered in date.`);
     }
 

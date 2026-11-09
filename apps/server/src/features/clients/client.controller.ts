@@ -1,5 +1,4 @@
 // TODO move this to `framework`
-import { Options } from '@nestjs/common';
 import {
   AndQueryFilterCondition,
   compileJsQuery,
@@ -26,6 +25,7 @@ import {
   Body,
   Controller,
   DetailQueryEndpoint,
+  Get,
   IdParam,
   OnModuleInit,
   Post,
@@ -61,7 +61,6 @@ const validateFieldReferencesInFilter = (
   errors: TrueImpactError[] = [],
 ): TrueImpactError[] => {
   const { type: filterBlockType } = filter;
-
   if (filterBlockType === ConditionalBlockType.SIMPLE) {
     if (filter.field.includes('.')) {
       errors.push(
@@ -170,6 +169,22 @@ export class ClientController implements OnModuleInit {
     private readonly commandHandlerService: CommandHandlerService,
   ) {}
 
+  /**
+   * We use a REST inspired approach here to return the table structure prior to the first request
+   * for data.
+   *
+   * Note that we would prefer to make this an `OPTIONS` endpoint to stay closer to REST. We avoid this
+   * because for most endpoints we'd like to let NestJS handle the corresponding `OPTIONS` and corresponding
+   * CORS issues. We don't want additional complex middleware to handle the exceptional cases.
+   * This is a bit of a leaky abstraction.
+   */
+  @Get('index-table-options')
+  async fetchManyOptions(): Promise<
+    TableLayout<keyof ClientIndexListRowViewDto>
+  > {
+    return Promise.resolve(layout);
+  }
+
   @UseGuards(AdminRbacAuthGuard)
   @DetailQueryEndpoint()
   @ApiOkResponse({
@@ -180,17 +195,6 @@ export class ClientController implements OnModuleInit {
     const result = await this.clientsService.fetchById(id);
 
     return result;
-  }
-
-  /**
-   * We use a REST inspired approach here to return the table structure prior to the first request
-   * for data.
-   */
-  @Options('')
-  async fetchManyOptions(): Promise<
-    TableLayout<keyof ClientIndexListRowViewDto>
-  > {
-    return Promise.resolve(layout);
   }
 
   @UseGuards(AdminRbacAuthGuard)
@@ -291,6 +295,13 @@ export class ClientController implements OnModuleInit {
   async executeCommand(@Body() fsa: ICommandFsa): Promise<CommandResult> {
     const result = await this.commandHandlerService.execute(fsa);
 
+    if (result instanceof Error) {
+      console.log({
+        oooopssssssssssssssssssssSSS: result.toString(),
+      });
+    }
+
+    // TODO ensure the error {message} is returned properly on the response body, right now we get `{ innerErrors: [] }`
     return result;
   }
 
