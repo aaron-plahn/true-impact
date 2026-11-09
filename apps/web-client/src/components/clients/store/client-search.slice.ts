@@ -43,6 +43,14 @@ export const clientSearchSlice = createSlice({
       // overwrite the search value for this field and leave the others as is
       state.searchTerms[field] = value;
     },
+    clearClientSearchField: (
+      state: ClientSearchSliceState,
+      { payload: { field } }: { payload: { field: string } },
+    ) => {
+      if (field in state.searchTerms) {
+        delete state.searchTerms[field];
+      }
+    },
     clearClientSearchTerms: (state: ClientSearchSliceState) => {
       // we leave the pagination options alone
       state.searchTerms = {};
@@ -55,6 +63,7 @@ export const {
   setClientListPageSize,
   setClientSearchTermsForField,
   clearClientSearchTerms,
+  clearClientSearchField,
 } = clientSearchSlice.actions;
 
 export const clientSearchSliceReducer = clientSearchSlice.reducer;

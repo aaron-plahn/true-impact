@@ -1,17 +1,19 @@
 import { JSX } from "react/jsx-runtime";
 import { ColumnSearchControl } from "../store";
 import { TableSelectOneSearchControl } from "./select-one.search-control";
+import { TableTextSearchControl } from "./text.search-control";
 
 export const TableColumnSearchControl = (
   props: ColumnSearchControl & {
     onChange: (newValue: string | number) => void;
     name: string;
+    value: string | number | boolean;
   },
 ): JSX.Element => {
   const { type, name } = props;
 
   if (type === "TEXT") {
-    return <div>TODO Checkbox search</div>;
+    return <TableTextSearchControl name={name} onChange={props.onChange} />;
   }
 
   if (type === "CHECKBOX") {
@@ -23,7 +25,6 @@ export const TableColumnSearchControl = (
 
     return (
       <TableSelectOneSearchControl
-        key={`search-${name}`}
         data-testid={`search-${name}`}
         name={name}
         options={options}

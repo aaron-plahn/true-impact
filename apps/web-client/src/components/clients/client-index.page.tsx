@@ -4,7 +4,11 @@ import { useDebounce } from "../../shared";
 import { RootState } from "../../store";
 import { Loading } from "../loading";
 import { TableColumnSearchControl } from "./column-search-control";
-import { setClientSearchTermsForField, useFetchClientsQuery } from "./store";
+import {
+  clearClientSearchField,
+  setClientSearchTermsForField,
+  useFetchClientsQuery,
+} from "./store";
 
 const DEBOUNCE_DELAY_MS = 500;
 
@@ -63,8 +67,23 @@ export const ClientIndexPage = (): JSX.Element => {
                   <TableColumnSearchControl
                     {...search}
                     name={key}
+                    value={filterValues[key] || ""}
                     onChange={(newValue) => {
                       console.log(`value changed for: ${key} to ${newValue}`);
+
+                      if (
+                        newValue === null ||
+                        newValue === "" ||
+                        typeof newValue === "undefined"
+                      ) {
+                        dispatch(
+                          clearClientSearchField({
+                            field: key,
+                          }),
+                        );
+
+                        return;
+                      }
 
                       dispatch(
                         setClientSearchTermsForField({

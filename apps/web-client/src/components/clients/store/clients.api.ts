@@ -62,16 +62,18 @@ export type ColumnSearchControl =
   | SelectColumnSearchControl
   | CheckboxColumnSearchControl;
 
-interface IndexTable<TRow = unknown> {
-  layout: {
-    isSearchable: boolean;
-    columns: {
-      key: string;
-      label: string;
-      type: ColumnDataType;
-      search?: ColumnSearchControl;
-    }[];
-  };
+export interface IndexTableLayout {
+  isSearchable: boolean;
+  columns: {
+    key: string;
+    label: string;
+    type: ColumnDataType;
+    search?: ColumnSearchControl;
+  }[];
+}
+
+export interface IndexTable<TRow = unknown> {
+  layout: IndexTableLayout;
   rows: TRow[];
   navigationPanel: NavigationPanel;
 }
