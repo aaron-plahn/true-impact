@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { JSX } from "react/jsx-runtime";
 import { useDebounce } from "../../shared";
@@ -17,6 +18,8 @@ const PLACEHOLDER_FOR_EMPTY_CELL = "-";
 export const ClientIndexPage = (): JSX.Element => {
   const dispatch = useDispatch();
 
+  const [focusedField, setFocusedField] = useState<null | string>(null);
+
   const filterValues = useSelector(
     (state: RootState) => state.clientSearch.searchTerms,
   );
@@ -31,6 +34,19 @@ export const ClientIndexPage = (): JSX.Element => {
     // This is an alternative to polyfilling `isDeepStrictEqual`. Is there a better way to check for an empty object?
     // skip: JSON.stringify(debouncedFilterValues) === "{}",
   });
+
+  // useEffect(() => {
+  //   if (focusedField) {
+  //     const element = document.getElementById(`search-${focusedField}`);
+
+  //     console.log({
+  //       focusinggggggggggggggggggggggggggggggggggggggggggg: element || "NADA",
+  //       focusedField,
+  //     });
+
+  //     element?.focus();
+  //   }
+  // }, [indexResponse, focusedField]);
 
   if (isFetching || !indexResponse) {
     return <Loading />;
@@ -68,6 +84,10 @@ export const ClientIndexPage = (): JSX.Element => {
                     {...search}
                     name={key}
                     value={filterValues[key] || ""}
+                    onFocus={(id: string) => {
+                      setFocusedField(id);
+                    }}
+                    isFocused={focusedField === `search-${key}`}
                     onChange={(newValue) => {
                       console.log(`value changed for: ${key} to ${newValue}`);
 

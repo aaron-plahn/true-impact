@@ -6,6 +6,8 @@ import { TableTextSearchControl } from "./text.search-control";
 export const TableColumnSearchControl = (
   props: ColumnSearchControl & {
     onChange: (newValue: string | number) => void;
+    onFocus: (id: string) => void;
+    isFocused: boolean;
     name: string;
     value: string | number | boolean;
   },
@@ -13,7 +15,14 @@ export const TableColumnSearchControl = (
   const { type, name } = props;
 
   if (type === "TEXT") {
-    return <TableTextSearchControl name={name} onChange={props.onChange} />;
+    return (
+      <TableTextSearchControl
+        name={name}
+        onChange={props.onChange}
+        onFocus={props.onFocus}
+        isFocused={props.isFocused}
+      />
+    );
   }
 
   if (type === "CHECKBOX") {
@@ -29,6 +38,8 @@ export const TableColumnSearchControl = (
         name={name}
         options={options}
         onChange={props.onChange}
+        onFocus={props.onFocus}
+        isFocused={props.isFocused}
       />
     );
   }
