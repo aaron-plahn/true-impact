@@ -5,12 +5,12 @@ type PaginationOptions = {
   pageSize: number;
 };
 
-type SearchSliceState = {
+export type ClientSearchSliceState = {
   searchTerms: Record<string, string | number | boolean>;
   pagination: PaginationOptions;
 };
 
-const buildEmptySearchState = (): SearchSliceState => ({
+const buildEmptySearchState = (): ClientSearchSliceState => ({
   searchTerms: {},
   pagination: {
     page: 1,
@@ -23,19 +23,19 @@ export const clientSearchSlice = createSlice({
   initialState: buildEmptySearchState(),
   reducers: {
     setClientListPage: (
-      state: SearchSliceState,
+      state: ClientSearchSliceState,
       action: { payload: { page: number } },
     ) => {
       state.pagination.page = action.payload.page;
     },
     setClientListPageSize: (
-      state: SearchSliceState,
+      state: ClientSearchSliceState,
       action: { payload: { pageSize: number } },
     ) => {
       state.pagination.pageSize = action.payload.pageSize;
     },
     setClientSearchTermsForField: (
-      state: SearchSliceState,
+      state: ClientSearchSliceState,
       {
         payload: { field, value },
       }: { payload: { field: string; value: string | number | boolean } },
@@ -43,7 +43,7 @@ export const clientSearchSlice = createSlice({
       // overwrite the search value for this field and leave the others as is
       state.searchTerms[field] = value;
     },
-    clearClientSearchTerms: (state: SearchSliceState) => {
+    clearClientSearchTerms: (state: ClientSearchSliceState) => {
       // we leave the pagination options alone
       state.searchTerms = {};
     },

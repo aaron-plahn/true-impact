@@ -1,3 +1,5 @@
+// TODO move this to `framework`
+import { Options } from '@nestjs/common';
 import {
   AndQueryFilterCondition,
   compileJsQuery,
@@ -5,7 +7,7 @@ import {
   LogicalOperator,
   SimpleQueryFilterCondition,
 } from 'src/libs/query-language';
-import { IndexTable } from 'src/libs/server-driven-ui';
+import { IndexTable, TableLayout } from 'src/libs/server-driven-ui';
 import { AdminRbacAuthGuard } from '../../auth/guards';
 import type { CommandResult, ICommandFsa } from '../../libs/cqrs-es';
 import { CommandHandlerService } from '../../libs/cqrs-es';
@@ -91,6 +93,74 @@ const validateFieldReferencesInFilter = (
   return errors;
 };
 
+const layout: TableLayout<keyof ClientIndexListRowViewDto> = {
+  isSearchable: true, // i.e. one of the columns has a `search` configuration
+  columns: [
+    // hidden
+    // {
+    //   key: 'id',
+    //   label: '',
+    // },
+    {
+      key: 'link',
+      label: 'View',
+      type: 'LINK',
+      // not searchable
+    },
+    {
+      key: 'firstName',
+      label: 'First Name',
+      type: 'TEXT',
+      search: {
+        type: 'TEXT',
+        operator: LogicalOperator.TEXT_INCLUDES,
+      },
+    },
+    // TODO add search scenario test cases for this property
+    {
+      key: 'lastName',
+      label: 'Last Name',
+      type: 'TEXT',
+      search: {
+        type: 'TEXT',
+        operator: LogicalOperator.TEXT_INCLUDES,
+      },
+    },
+    {
+      key: 'community',
+      label: 'Community',
+      type: 'TEXT',
+      search: {
+        type: 'TEXT',
+        operator: LogicalOperator.TEXT_INCLUDES,
+      },
+    },
+    {
+      key: 'isIndigenous',
+      label: 'Is Indigenous?',
+      type: 'TEXT',
+      search: {
+        type: 'SELECT',
+        operator: LogicalOperator.EQUALS,
+        options: [
+          {
+            value: 'Yes',
+            label: 'yes',
+          },
+          {
+            value: 'No',
+            label: 'no',
+          },
+          {
+            value: 'Unknown',
+            label: 'unknown',
+          },
+        ],
+      },
+    },
+  ],
+};
+
 @UseFilters(ResourceNotFoundFilter, BadUserInputFilter)
 @UseInterceptors(QueryResponseInterceptor)
 @Controller('clients')
@@ -110,6 +180,17 @@ export class ClientController implements OnModuleInit {
     const result = await this.clientsService.fetchById(id);
 
     return result;
+  }
+
+  /**
+   * We use a REST inspired approach here to return the table structure prior to the first request
+   * for data.
+   */
+  @Options('')
+  async fetchManyOptions(): Promise<
+    TableLayout<keyof ClientIndexListRowViewDto>
+  > {
+    return Promise.resolve(layout);
   }
 
   @UseGuards(AdminRbacAuthGuard)
@@ -188,73 +269,7 @@ export class ClientController implements OnModuleInit {
       pageSize === 0 ? 1 : Math.ceil(clients.length / pageSize);
 
     const result: IndexTable<ClientIndexListRowViewDto> = {
-      layout: {
-        isSearchable: true, // i.e. one of the columns has a `search` configuration
-        columns: [
-          // hidden
-          // {
-          //   key: 'id',
-          //   label: '',
-          // },
-          {
-            key: 'link',
-            label: 'View',
-            type: 'LINK',
-            // not searchable
-          },
-          {
-            key: 'firstName',
-            label: 'First Name',
-            type: 'TEXT',
-            search: {
-              type: 'TEXT',
-              operator: LogicalOperator.TEXT_INCLUDES,
-            },
-          },
-          // TODO add search scenario test cases for this property
-          {
-            key: 'lastName',
-            label: 'Last Name',
-            type: 'TEXT',
-            search: {
-              type: 'TEXT',
-              operator: LogicalOperator.TEXT_INCLUDES,
-            },
-          },
-          {
-            key: 'community',
-            label: 'Community',
-            type: 'TEXT',
-            search: {
-              type: 'TEXT',
-              operator: LogicalOperator.TEXT_INCLUDES,
-            },
-          },
-          {
-            key: 'isIndigenous',
-            label: 'Is Indigenous?',
-            type: 'TEXT',
-            search: {
-              type: 'SELECT',
-              operator: LogicalOperator.EQUALS,
-              options: [
-                {
-                  value: 'Yes',
-                  label: 'yes',
-                },
-                {
-                  value: 'No',
-                  label: 'no',
-                },
-                {
-                  value: 'Unknown',
-                  label: 'unknown',
-                },
-              ],
-            },
-          },
-        ],
-      },
+      layout,
       rows: currentPageOfClients,
       navigationPanel: {
         currentPage: page,

@@ -40,7 +40,11 @@ async function bootstrap() {
       ...supertokens.getAllCORSHeaders(),
     ],
     optionSuccessStatus: 204,
-    preflightContinue: false,
+    /**
+     * This allows us to declare custom `Options` endpoints, which we currently use
+     * for server-driven index table layout \ configuration.
+     */
+    preflightContinue: true,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   });

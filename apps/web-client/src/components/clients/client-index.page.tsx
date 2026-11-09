@@ -1,16 +1,17 @@
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { JSX } from "react/jsx-runtime";
 import { useDebounce } from "../../shared";
 import { RootState } from "../../store";
 import { Loading } from "../loading";
-import { useFetchClientsQuery } from "./store";
+import { TableColumnSearchControl } from "./column-search-control";
+import { setClientSearchTermsForField, useFetchClientsQuery } from "./store";
 
 const DEBOUNCE_DELAY_MS = 500;
 
 const PLACEHOLDER_FOR_EMPTY_CELL = "-";
 
 export const ClientIndexPage = (): JSX.Element => {
-  //   const dispatch = useDispatch();
+  const dispatch = useDispatch();
 
   const filterValues = useSelector(
     (state: RootState) => state.clientSearch.searchTerms,
@@ -54,6 +55,34 @@ export const ClientIndexPage = (): JSX.Element => {
             <th key={key}>{label}</th>
           ))}
         </tr>
+        {layout.isSearchable ? (
+          <tr>
+            {layout.columns.map(({ search, key }) =>
+              search ? (
+                <td>
+                  <TableColumnSearchControl
+                    {...search}
+                    name={key}
+                    onChange={(newValue) => {
+                      console.log(`value changed for: ${key} to ${newValue}`);
+
+                      dispatch(
+                        setClientSearchTermsForField({
+                          field: key,
+                          value: newValue,
+                        }),
+                      );
+                    }}
+                  />
+                </td>
+              ) : (
+                <td>
+                  <div>{PLACEHOLDER_FOR_EMPTY_CELL}</div>
+                </td>
+              ),
+            )}
+          </tr>
+        ) : null}
         {rows.map((r, rowIndex) => {
           // TODO tighten the type up in the shared interface
           const row = r as Record<string, string>;
