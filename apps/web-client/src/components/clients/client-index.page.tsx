@@ -31,10 +31,7 @@ export const ClientIndexPage = (): JSX.Element => {
     data: indexResponse,
     isFetching,
     error,
-  } = useFetchClientsQuery(debouncedFilterValues, {
-    // This is an alternative to polyfilling `isDeepStrictEqual`. Is there a better way to check for an empty object?
-    // skip: JSON.stringify(debouncedFilterValues) === "{}",
-  });
+  } = useFetchClientsQuery(debouncedFilterValues, {});
 
   if (isFetching || !indexResponse) {
     return <Loading />;
