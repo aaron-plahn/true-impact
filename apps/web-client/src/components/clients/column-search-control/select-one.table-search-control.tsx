@@ -46,7 +46,6 @@ export const SelectOneTableSearchControl = ({
           </option>
         ))}
       </select>
-      ;
     </>
   );
 };

@@ -7,6 +7,31 @@ import {
   SimpleQueryCondition,
 } from "../../../shared";
 import { ClientSearchSliceState } from "./client-search.slice";
+import { CommandFsa, CommandResponse } from "../../surveys/store";
+
+// BEGIN copied from server
+export interface ClientViewModel{
+  id: string;
+  dateOfBirth: string;
+  revision: string;
+  createdAt: number;
+  fullName: {
+    firstName: string;
+    lastName: string;
+    middleName: string[];
+  },
+  isIndigenous: 'Yes' | 'No' | 'Unknown';
+  community?: {
+    id: string;
+    bandNumber: string;
+    revision: string;
+    // languageCode -> translationType(role) -> text item
+    name: {
+      items: Record<string,Record<string,{text: string}>>
+    }
+  }
+}
+// END copied from server
 
 export const clientsApi = createApi({
   reducerPath: "clients",
@@ -95,7 +120,41 @@ export const clientsApi = createApi({
         };
       },
     }),
+    fetchClientById: builder.query<ClientViewModel,string>({
+      query: (id: string) => `clients/${id}`,
+      merge: (currentData, next) =>{
+        return {
+          ...currentData,
+          ...next
+        }
+      },
+      providesTags: (_result, _error, id) =>{
+        const tag = {type: 'clients', id} as const;
+
+        return [tag]
+      }
+    }),
+    // TODO consider one mutation per command as an alternative pattern
+    executeClientCommand: builder.mutation<CommandResponse, CommandFsa, unknown>({
+      query: (commandFsa) =>({
+        url: `clients/commands`,
+        method: 'POST',
+        body: commandFsa,
+        credentials: "include"
+      }),
+      invalidatesTags: (result) =>{
+        if(!result){
+          return [];
+        }
+
+        // TODO isn't this on the result?
+        const tag = {type: 'clients', id: result.id} as const;
+
+        return [tag];
+      }
+      // onQueryStarted?
+    })
   }),
 });
 
-export const { useFetchClientsQuery } = clientsApi;
+export const { useFetchClientsQuery, useFetchClientByIdQuery, useExecuteClientCommandMutation } = clientsApi;

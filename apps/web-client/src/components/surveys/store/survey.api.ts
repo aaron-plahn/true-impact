@@ -20,6 +20,8 @@ export interface SurveyQuestion {
   options: Record<string, SurveyOption>;
 }
 
+
+// TODO move to shared
 export interface CommandResponse {
   type: string;
   id: string;
@@ -37,6 +39,7 @@ export interface SurveyDetailResponse {
   accessCode?: string;
 }
 
+// TODO move to shared
 export interface CommandFsa {
   type: string;
   payload: unknown;
