@@ -1,5 +1,3 @@
-import { JSX } from "react";
-
-export const ClientIndex = (): JSX.Element => {
-  return <div>Client Index Works!</div>;
-};
+export * from "./client-detail.page";
+export * from "./client-index.page";
+export * from "./store";

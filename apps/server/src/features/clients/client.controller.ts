@@ -1,3 +1,4 @@
+// TODO move this to `framework`
 import {
   AndQueryFilterCondition,
   compileJsQuery,
@@ -5,7 +6,7 @@ import {
   LogicalOperator,
   SimpleQueryFilterCondition,
 } from 'src/libs/query-language';
-import { IndexTable } from 'src/libs/server-driven-ui';
+import { IndexTable, TableLayout } from 'src/libs/server-driven-ui';
 import { AdminRbacAuthGuard } from '../../auth/guards';
 import type { CommandResult, ICommandFsa } from '../../libs/cqrs-es';
 import { CommandHandlerService } from '../../libs/cqrs-es';
@@ -24,6 +25,7 @@ import {
   Body,
   Controller,
   DetailQueryEndpoint,
+  Get,
   IdParam,
   OnModuleInit,
   Post,
@@ -59,7 +61,6 @@ const validateFieldReferencesInFilter = (
   errors: TrueImpactError[] = [],
 ): TrueImpactError[] => {
   const { type: filterBlockType } = filter;
-
   if (filterBlockType === ConditionalBlockType.SIMPLE) {
     if (filter.field.includes('.')) {
       errors.push(
@@ -91,6 +92,74 @@ const validateFieldReferencesInFilter = (
   return errors;
 };
 
+const layout: TableLayout<keyof ClientIndexListRowViewDto> = {
+  isSearchable: true, // i.e. one of the columns has a `search` configuration
+  columns: [
+    // hidden
+    // {
+    //   key: 'id',
+    //   label: '',
+    // },
+    {
+      key: 'link',
+      label: 'View',
+      type: 'LINK',
+      // not searchable
+    },
+    {
+      key: 'firstName',
+      label: 'First Name',
+      type: 'TEXT',
+      search: {
+        type: 'TEXT',
+        operator: LogicalOperator.TEXT_INCLUDES,
+      },
+    },
+    // TODO add search scenario test cases for this property
+    {
+      key: 'lastName',
+      label: 'Last Name',
+      type: 'TEXT',
+      search: {
+        type: 'TEXT',
+        operator: LogicalOperator.TEXT_INCLUDES,
+      },
+    },
+    {
+      key: 'community',
+      label: 'Community',
+      type: 'TEXT',
+      search: {
+        type: 'TEXT',
+        operator: LogicalOperator.TEXT_INCLUDES,
+      },
+    },
+    {
+      key: 'isIndigenous',
+      label: 'Is Indigenous?',
+      type: 'TEXT',
+      search: {
+        type: 'SELECT',
+        operator: LogicalOperator.EQUALS,
+        options: [
+          {
+            value: 'Yes',
+            label: 'yes',
+          },
+          {
+            value: 'No',
+            label: 'no',
+          },
+          {
+            value: 'Unknown',
+            label: 'unknown',
+          },
+        ],
+      },
+    },
+  ],
+};
+
 @UseFilters(ResourceNotFoundFilter, BadUserInputFilter)
 @UseInterceptors(QueryResponseInterceptor)
 @Controller('clients')
@@ -99,6 +168,23 @@ export class ClientController implements OnModuleInit {
     private readonly clientsService: ClientQueryService,
     private readonly commandHandlerService: CommandHandlerService,
   ) {}
+
+  /**
+   * We use a REST inspired approach here to return the table structure prior to the first request
+   * for data.
+   *
+   * Note that we would prefer to make this an `OPTIONS` endpoint to stay closer to REST. We avoid this
+   * because for most endpoints we'd like to let NestJS handle the corresponding `OPTIONS` and corresponding
+   * CORS issues. We don't want additional complex middleware to handle the exceptional cases.
+   * This is a bit of a leaky abstraction.
+   */
+  @UseGuards(AdminRbacAuthGuard)
+  @Get('index-table-options')
+  async fetchManyOptions(): Promise<
+    TableLayout<keyof ClientIndexListRowViewDto>
+  > {
+    return Promise.resolve(layout);
+  }
 
   @UseGuards(AdminRbacAuthGuard)
   @DetailQueryEndpoint()
@@ -188,73 +274,8 @@ export class ClientController implements OnModuleInit {
       pageSize === 0 ? 1 : Math.ceil(clients.length / pageSize);
 
     const result: IndexTable<ClientIndexListRowViewDto> = {
-      layout: {
-        isSearchable: true, // i.e. one of the columns has a `search` configuration
-        columns: [
-          // hidden
-          // {
-          //   key: 'id',
-          //   label: '',
-          // },
-          {
-            key: 'link',
-            label: 'View',
-            type: 'LINK',
-            // not searchable
-          },
-          {
-            key: 'firstName',
-            label: 'First Name',
-            type: 'TEXT',
-            search: {
-              type: 'TEXT',
-              operator: LogicalOperator.TEXT_INCLUDES,
-            },
-          },
-          // TODO add search scenario test cases for this property
-          {
-            key: 'lastName',
-            label: 'Last Name',
-            type: 'TEXT',
-            search: {
-              type: 'TEXT',
-              operator: LogicalOperator.TEXT_INCLUDES,
-            },
-          },
-          {
-            key: 'community',
-            label: 'Community',
-            type: 'TEXT',
-            search: {
-              type: 'TEXT',
-              operator: LogicalOperator.TEXT_INCLUDES,
-            },
-          },
-          {
-            key: 'isIndigenous',
-            label: 'Is Indigenous?',
-            type: 'TEXT',
-            search: {
-              type: 'SELECT',
-              operator: LogicalOperator.EQUALS,
-              options: [
-                {
-                  value: 'Yes',
-                  label: 'yes',
-                },
-                {
-                  value: 'No',
-                  label: 'no',
-                },
-                {
-                  value: 'Unknown',
-                  label: 'unknown',
-                },
-              ],
-            },
-          },
-        ],
-      },
+      title: 'Clients',
+      layout,
       rows: currentPageOfClients,
       navigationPanel: {
         currentPage: page,
@@ -276,6 +297,7 @@ export class ClientController implements OnModuleInit {
   async executeCommand(@Body() fsa: ICommandFsa): Promise<CommandResult> {
     const result = await this.commandHandlerService.execute(fsa);
 
+    // TODO ensure the error {message} is returned properly on the response body, right now we get `{ innerErrors: [] }`
     return result;
   }
 

@@ -61,18 +61,13 @@ const fullSurveyMenu: NavMenuSection = {
       route: "/surveys/manage",
       canUser: isAdmin,
     },
+    {
+      label: "Manage Clients",
+      route: "/clients",
+      canUser: isAdmin,
+    },
   ],
 };
-
-// const _clientMenu: NavMenuSection = {
-//   label: "Clients",
-//   items: [
-//     {
-//       label: "Clients",
-//       route: "/clients",
-//     },
-//   ],
-// };
 
 const publicSettings: NavMenuSection = {
   label: "Sign In",

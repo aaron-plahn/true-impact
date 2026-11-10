@@ -40,7 +40,6 @@ async function bootstrap() {
       ...supertokens.getAllCORSHeaders(),
     ],
     optionSuccessStatus: 204,
-    preflightContinue: false,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   });

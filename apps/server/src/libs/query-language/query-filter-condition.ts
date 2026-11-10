@@ -3,6 +3,7 @@ export enum ConditionalBlockType {
   SIMPLE = 'SIMPLE', // base condition
 }
 
+// why an enum not a type?
 export enum LogicalOperator {
   TEXT_INCLUDES = 'TEXT_INCLUDES',
   EQUALS = 'EQUALS',

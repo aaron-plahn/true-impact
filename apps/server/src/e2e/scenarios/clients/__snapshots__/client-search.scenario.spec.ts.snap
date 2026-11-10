@@ -76,5 +76,6 @@ exports[`Client index endpoint (POST /clients) when the user has permission to e
     "totalNumberOfResults": 0,
   },
   "rows": [],
+  "title": "Clients",
 }
 `;
