@@ -1,106 +1,12 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { config } from "../../../config";
+import {
+  AndQueryCondition,
+  IndexTable,
+  QueryOptions,
+  SimpleQueryCondition,
+} from "../../../shared";
 import { ClientSearchSliceState } from "./client-search.slice";
-
-/**
- * COPIED FROM BACK-END
- * TODO (now) move this to a shared directory
- * TODO find an approach to syncronize these interfaces on change
- */
-export type TableSearchFieldType = "TEXT" | "CHECKBOX" | "SELECT";
-
-export type ColumnDataType =
-  | "TEXT"
-  | "DATE"
-  | "NUMBER"
-  | "BOOLEAN"
-  | "ENUM"
-  | "LINK";
-
-export type LogicalOperator = "TEXT_INCLUDES" | "EQUALS";
-
-type NavigationPanel = {
-  currentPage: number;
-  totalNumberOfPages: number;
-  nextPage: number;
-  previousPage: number;
-  pageSize: number;
-  availablePageSizes: number[];
-  totalNumberOfResults: number;
-};
-
-export type CheckboxColumnSearchControl = {
-  type: "CHECKBOX";
-  operator: LogicalOperator;
-  labelsAndValues: [
-    {
-      label: string;
-      value: true;
-    },
-    {
-      label: string;
-      value: false;
-    },
-  ];
-};
-
-export type TextColumnSearchControl = {
-  type: "TEXT";
-  operator: LogicalOperator;
-};
-
-export type SelectColumnSearchControl = {
-  type: "SELECT";
-  // TODO TS exposes a similar type. Should we stack our interfaces and use JS symbols instead of all-caps strings for these?
-  // TODO allow-list these in validation
-  operator: LogicalOperator;
-  options: { label: string; value: string }[];
-};
-
-export type ColumnSearchControl =
-  | TextColumnSearchControl
-  | SelectColumnSearchControl
-  | CheckboxColumnSearchControl;
-
-export interface IndexTableLayout {
-  isSearchable: boolean;
-  columns: {
-    key: string;
-    label: string;
-    type: ColumnDataType;
-    search?: ColumnSearchControl;
-  }[];
-}
-
-export interface IndexTable<TRow = unknown> {
-  layout: IndexTableLayout;
-  rows: TRow[];
-  navigationPanel: NavigationPanel;
-}
-
-interface SimpleQueryCondition {
-  type: "SIMPLE";
-  field: string;
-  operator: string;
-  params: (string | number | boolean)[];
-}
-
-interface AndQueryCondition {
-  type: "AND";
-  conditions: SimpleQueryCondition[];
-}
-
-interface QueryOptions {
-  pagination?: {
-    page: number;
-    pageSize: number;
-  };
-  filter?: AndQueryCondition;
-}
-
-/**
- * END Interfaces copied from server
- */
 
 export const clientsApi = createApi({
   reducerPath: "clients",
@@ -124,17 +30,9 @@ export const clientsApi = createApi({
           clientsApi.endpoints.getOptions.initiate(undefined),
         );
 
-        console.log({
-          ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ: tableLayout,
-        });
-
         const state = queryApi.getState() as {
           clientSearch: ClientSearchSliceState;
         };
-
-        console.log("2222222222222222222222222222");
-
-        console.log({ stateZZZZZZZZZZZZZZZZZZZZZZZZZZZ: state });
 
         const {
           clientSearch: { searchTerms, pagination },
@@ -144,15 +42,9 @@ export const clientsApi = createApi({
           pagination,
         };
 
-        console.log("33333333333333333333333333333333333");
-
         const hasSearchTerms = JSON.stringify(searchTerms || {}) !== "{}";
 
-        console.log("4444444444444444444444444444444444444444444444");
-
         const isSearchAvailableForThisTable = tableLayout?.data?.isSearchable;
-
-        console.log({ hasSearchTerms, isSearchAvailableForThisTable });
 
         if (hasSearchTerms && isSearchAvailableForThisTable) {
           const filter: AndQueryCondition = {
@@ -161,8 +53,6 @@ export const clientsApi = createApi({
           };
 
           Object.entries(searchTerms).forEach(([key, value]) => {
-            console.log("44444444444444444444444444444444");
-
             // linear search is not expensive because we only ever have ~10 columns in a table
             const targetCell = tableLayout.data?.columns.find(
               (column) => column.key === key,
@@ -187,8 +77,6 @@ export const clientsApi = createApi({
               filter,
             });
           }
-
-          console.log("555555555555555555555555555555555555555");
         }
 
         const result = await baseQuery({
@@ -207,15 +95,6 @@ export const clientsApi = createApi({
         };
       },
     }),
-    // fetchClientById: builder.query<unknown, string>({
-    //   query: (id: string) => `surveys/responses/${id}`,
-    //   providesTags: (_result, _error, id) => {
-    //     const tag = { type: "clients", id } as const;
-
-    //     return [tag];
-    //   },
-    //   //   merge
-    // }),
   }),
 });
 

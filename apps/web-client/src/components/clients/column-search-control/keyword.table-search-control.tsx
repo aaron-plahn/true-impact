@@ -1,22 +1,20 @@
 import { useSelector } from "react-redux";
 import { RootState } from "../../../store";
 
-interface TableTextSearchControlProps {
+interface KeywordTableSearchControlsProps {
   name: string;
   onChange: (newValue: string) => void;
   onFocus: (id: string) => void;
   isFocused: boolean;
 }
 
-export const TableTextSearchControl = ({
+export const KeywordTableSearchControl = ({
   name,
   onChange,
   onFocus,
   isFocused,
-}: TableTextSearchControlProps) => {
+}: KeywordTableSearchControlsProps) => {
   const value = useSelector((state: RootState) => {
-    console.log({ state });
-
     return ((state?.clientSearch?.searchTerms || {})[name] || "") as string;
   });
 
@@ -37,7 +35,7 @@ export const TableTextSearchControl = ({
         onFocus(id);
       }}
       onChange={(e) => {
-        // TODO how do we handle '' (empty search)?
+        // Note that we check for falsey values at top level and dispatch `clearField` instead of `setField` in that case
         onChange(e?.target?.value);
       }}
     ></input>

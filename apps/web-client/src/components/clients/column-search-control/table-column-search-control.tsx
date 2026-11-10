@@ -1,7 +1,7 @@
 import { JSX } from "react/jsx-runtime";
 import { ColumnSearchControl } from "../store";
-import { TableSelectOneSearchControl } from "./select-one.search-control";
-import { TableTextSearchControl } from "./text.search-control";
+import { KeywordTableSearchControl } from "./keyword.table-search-control";
+import { SelectOneTableSearchControl } from "./select-one.table-search-control";
 
 export const TableColumnSearchControl = (
   props: ColumnSearchControl & {
@@ -16,7 +16,7 @@ export const TableColumnSearchControl = (
 
   if (type === "TEXT") {
     return (
-      <TableTextSearchControl
+      <KeywordTableSearchControl
         name={name}
         onChange={props.onChange}
         onFocus={props.onFocus}
@@ -25,15 +25,11 @@ export const TableColumnSearchControl = (
     );
   }
 
-  if (type === "CHECKBOX") {
-    return <div>TODO Checkbox search</div>;
-  }
-
   if (type === "SELECT") {
     const { options } = props;
 
     return (
-      <TableSelectOneSearchControl
+      <SelectOneTableSearchControl
         data-testid={`search-${name}`}
         name={name}
         options={options}

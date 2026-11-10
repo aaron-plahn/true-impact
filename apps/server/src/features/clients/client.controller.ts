@@ -178,6 +178,7 @@ export class ClientController implements OnModuleInit {
    * CORS issues. We don't want additional complex middleware to handle the exceptional cases.
    * This is a bit of a leaky abstraction.
    */
+  @UseGuards(AdminRbacAuthGuard)
   @Get('index-table-options')
   async fetchManyOptions(): Promise<
     TableLayout<keyof ClientIndexListRowViewDto>
@@ -273,6 +274,7 @@ export class ClientController implements OnModuleInit {
       pageSize === 0 ? 1 : Math.ceil(clients.length / pageSize);
 
     const result: IndexTable<ClientIndexListRowViewDto> = {
+      title: 'Clients',
       layout,
       rows: currentPageOfClients,
       navigationPanel: {
@@ -294,13 +296,6 @@ export class ClientController implements OnModuleInit {
   @Post('commands')
   async executeCommand(@Body() fsa: ICommandFsa): Promise<CommandResult> {
     const result = await this.commandHandlerService.execute(fsa);
-
-    // TODO remove this
-    if (result instanceof Error) {
-      console.log({
-        oooopssssssssssssssssssssSSS: result.toString(),
-      });
-    }
 
     // TODO ensure the error {message} is returned properly on the response body, right now we get `{ innerErrors: [] }`
     return result;

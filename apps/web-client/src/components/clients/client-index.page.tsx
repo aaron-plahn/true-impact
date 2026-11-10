@@ -45,18 +45,12 @@ export const ClientIndexPage = (): JSX.Element => {
     return <div>{JSON.stringify(error)}</div>;
   }
 
-  const { rows, layout } = indexResponse;
+  const { rows, layout, title } = indexResponse;
 
-  /**
-   * TODO
-   * - Table Title (h2?)
-   * - table headings
-   * - table cells (using keys specified in headings)
-   */
   return (
     <div data-testid="client-index-page">
       {/* TODO Typography */}
-      <h2>Clients</h2>
+      <h2>{title}</h2>
       <table>
         <tr>
           {layout.columns.map(({ label, key }) => (

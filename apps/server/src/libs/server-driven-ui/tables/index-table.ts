@@ -89,6 +89,7 @@ export class TableLayout<TKey> {
 }
 
 export class IndexTable<T> {
+  title: string;
   layout: TableLayout<keyof T>;
   rows: T[];
   navigationPanel: NavigationPanel;
