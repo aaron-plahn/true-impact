@@ -1,5 +1,5 @@
 import { JSX } from "react/jsx-runtime";
-import { ColumnSearchControl } from "../store";
+import { ColumnSearchControl } from "../../../shared";
 import { KeywordTableSearchControl } from "./keyword.table-search-control";
 import { SelectOneTableSearchControl } from "./select-one.table-search-control";
 

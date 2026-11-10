@@ -70,7 +70,9 @@ export const ClientIndexPage = (): JSX.Element => {
                       setFocusedField(id);
                     }}
                     isFocused={focusedField === `search-${key}`}
-                    onChange={(newValue) => {
+                    onChange={(
+                      newValue: string | number | boolean | null | undefined,
+                    ) => {
                       console.log(`value changed for: ${key} to ${newValue}`);
 
                       if (
