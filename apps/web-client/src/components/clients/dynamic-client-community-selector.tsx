@@ -1,4 +1,4 @@
-import { MenuItem, Select, Stack } from "@mui/material";
+import { Stack } from "@mui/material";
 import { useEffect, useState } from "react";
 import { JSX } from "react/jsx-runtime";
 import { config } from "../../config";
@@ -60,43 +60,45 @@ export const DynamicClientCommunitySelector = (): JSX.Element => {
   return (
     <div>
       <Stack>
-        <input
-          id="community-dynamic-select-input"
-          type="text"
-          value={searchText}
-          onChange={(e) => {
-            setSearchText(e.target.value);
-          }}
-        />
-        <Select
-          open={isListOpen}
-          onChange={(e) => {
-            if (e.target.value === "") {
+        <label htmlFor="community-dynamic-select-input">
+          <input
+            id="community-dynamic-select-input"
+            type="text"
+            value={searchText}
+            onChange={(e) => {
+              // clear selection
               setCommunityId(undefined);
-            }
 
-            // @ts-expect-error TODO Fix the types here
-            setCommunityId(e.target.value);
+              setSearchText(e.target.value);
+            }}
+          />
+        </label>
+        <ul>
+          <li
+            key={"unknown-community"}
+            onClick={() => {
+              setCommunityId(undefined);
 
-            setIsListOpen(false);
-          }}
-        >
-          <MenuItem
-            key={`community-dynamic-select-option-UNKNOWN`}
-            value={""}
-            selected
+              setSearchText("");
+            }}
           >
-            Unknown or N/A
-          </MenuItem>
-          {results.map((r) => (
-            <MenuItem
-              key={`community-dynamic-select-option-${r.id}`}
-              value={r.id}
-            >
-              {r.label}
-            </MenuItem>
-          ))}
-        </Select>
+            Unknown
+          </li>
+          {!communityId
+            ? (results || []).map((r) => (
+                <li
+                  key={r.id}
+                  onClick={() => {
+                    setCommunityId(r.id);
+
+                    setSearchText(r.label);
+                  }}
+                >
+                  {r.label}
+                </li>
+              ))
+            : null}
+        </ul>
       </Stack>
     </div>
   );
