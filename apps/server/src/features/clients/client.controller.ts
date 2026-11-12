@@ -126,6 +126,14 @@ const layout: TableLayout<keyof ClientIndexListRowViewDto> = {
       },
     },
     {
+      key: 'dateOfBirth',
+      label: 'DOB',
+      type: 'TEXT',
+      /**
+       * We want to make this searchable by date range or exact date match in the future.
+       */
+    },
+    {
       key: 'community',
       label: 'Community',
       type: 'TEXT',

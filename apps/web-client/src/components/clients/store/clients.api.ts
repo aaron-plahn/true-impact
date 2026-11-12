@@ -2,15 +2,16 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { config } from "../../../config";
 import {
   AndQueryCondition,
+  CommandFsa,
+  CommandResponse,
   IndexTable,
   QueryOptions,
   SimpleQueryCondition,
 } from "../../../shared";
 import { ClientSearchSliceState } from "./client-search.slice";
-import { CommandFsa, CommandResponse } from "../../surveys/store";
 
 // BEGIN copied from server
-export interface ClientViewModel{
+export interface ClientViewModel {
   id: string;
   dateOfBirth: string;
   revision: string;
@@ -19,17 +20,17 @@ export interface ClientViewModel{
     firstName: string;
     lastName: string;
     middleName: string[];
-  },
-  isIndigenous: 'Yes' | 'No' | 'Unknown';
+  };
+  isIndigenous: "Yes" | "No" | "Unknown";
   community?: {
     id: string;
     bandNumber: string;
     revision: string;
     // languageCode -> translationType(role) -> text item
     name: {
-      items: Record<string,Record<string,{text: string}>>
-    }
-  }
+      items: Record<string, Record<string, { text: string }>>;
+    };
+  };
 }
 // END copied from server
 
@@ -120,41 +121,49 @@ export const clientsApi = createApi({
         };
       },
     }),
-    fetchClientById: builder.query<ClientViewModel,string>({
+    fetchClientById: builder.query<ClientViewModel, string>({
       query: (id: string) => `clients/${id}`,
-      merge: (currentData, next) =>{
+      merge: (currentData, next) => {
         return {
           ...currentData,
-          ...next
-        }
+          ...next,
+        };
       },
-      providesTags: (_result, _error, id) =>{
-        const tag = {type: 'clients', id} as const;
+      providesTags: (_result, _error, id) => {
+        const tag = { type: "clients", id } as const;
 
-        return [tag]
-      }
+        return [tag];
+      },
     }),
     // TODO consider one mutation per command as an alternative pattern
-    executeClientCommand: builder.mutation<CommandResponse, CommandFsa, unknown>({
-      query: (commandFsa) =>({
+    executeClientCommand: builder.mutation<
+      CommandResponse,
+      CommandFsa,
+      unknown
+    >({
+      query: (commandFsa) => ({
         url: `clients/commands`,
-        method: 'POST',
+        method: "POST",
         body: commandFsa,
-        credentials: "include"
+        credentials: "include",
       }),
-      invalidatesTags: (result) =>{
-        if(!result){
+      invalidatesTags: (result) => {
+        if (!result) {
           return [];
         }
 
-        // TODO isn't this on the result?
-        const tag = {type: 'clients', id: result.id} as const;
+        // Note that the cache key ('clients') is only coincidentally equal to the "aggregate type" \ "view type" from the server.
+        const tag = { type: "clients", id: result.id } as const;
 
         return [tag];
-      }
+      },
       // onQueryStarted?
-    })
+    }),
   }),
 });
 
-export const { useFetchClientsQuery, useFetchClientByIdQuery, useExecuteClientCommandMutation } = clientsApi;
+export const {
+  useFetchClientsQuery,
+  useFetchClientByIdQuery,
+  useExecuteClientCommandMutation,
+} = clientsApi;
