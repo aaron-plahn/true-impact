@@ -1,5 +1,6 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { config } from "../../../config";
+import { CommandFsa, CommandResponse } from "../../../shared";
 
 interface Flag {
   id: string;
@@ -20,13 +21,6 @@ export interface SurveyQuestion {
   options: Record<string, SurveyOption>;
 }
 
-export interface CommandResponse {
-  type: string;
-  id: string;
-  revision: string;
-  accessCode?: string;
-}
-
 export interface SurveyDetailResponse {
   id: string;
   name: string;
@@ -35,11 +29,6 @@ export interface SurveyDetailResponse {
   isOpenToPublic: boolean;
   questions: SurveyQuestion[];
   accessCode?: string;
-}
-
-export interface CommandFsa {
-  type: string;
-  payload: unknown;
 }
 
 export const surveyApi = createApi({

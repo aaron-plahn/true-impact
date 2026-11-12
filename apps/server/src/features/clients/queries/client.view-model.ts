@@ -29,6 +29,17 @@ export class ClientIndexListRowViewDto {
   })
   link: string;
 
+  /**
+   * We need to make dates sortable \ searchable. We also need to be able to filter
+   * by date ranges. For now, we won't make date searchable to avoid awkward text
+   * search of dates, which are just text as far as the client (UI) is concerned right now.
+   */
+  @NonEmptyString({
+    label: 'DOB',
+    description: `the client's date of birth (helpful if two clients have the same name)`,
+  })
+  dateOfBirth: string;
+
   @NonNegativeInteger({
     label: 'created at',
     description:
@@ -195,6 +206,7 @@ export class ClientViewModel {
 
   constructor({
     id,
+    dateOfBirth,
     revision,
     createdAt,
     fullName,
@@ -228,6 +240,8 @@ export class ClientViewModel {
     this.flags = flags;
 
     this.surveyResponses = surveyResponses;
+
+    this.dateOfBirth = dateOfBirth;
   }
 
   toClientDto(): ClientViewModelClientDto {
@@ -247,10 +261,12 @@ export class ClientViewModel {
   toIndexTableRow(): ClientIndexListRowViewDto {
     return {
       id: this.id,
+      dateOfBirth: this.dateOfBirth,
       // note that this must be relative
       link: `/clients/${this.id}`,
       createdAt: this.createdAt,
       isIndigenous: this.isIndigenous,
+      community: this.community?.name?.items?.['en']?.['original']?.text,
       firstName: this.fullName.firstName,
       /**
        * While not that important a use case, this is interesting from a technical point of view in that
