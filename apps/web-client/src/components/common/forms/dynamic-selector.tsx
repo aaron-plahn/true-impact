@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { JSX } from "react/jsx-runtime";
-import { config } from "../../config";
-import { useDebounce } from "../../shared";
-import { Loading } from "../loading";
+import { config } from "../../../config";
+import { useDebounce } from "../../../shared";
+import { Loading } from "../../loading";
 
 export interface DynamicSelectorProps {
   onChange: (newValue: string | undefined) => void;

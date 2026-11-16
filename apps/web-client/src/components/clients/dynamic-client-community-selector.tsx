@@ -1,7 +1,7 @@
 import { Stack, Switch } from "@mui/material";
 import { useState } from "react";
 import { JSX } from "react/jsx-runtime";
-import { DynamicSelector } from "../common/dynamic-selector";
+import { DynamicSelector } from "../common";
 
 export interface DynamicClientCommunitySelectorProps {
   onChange: (newValue: string | undefined) => void;

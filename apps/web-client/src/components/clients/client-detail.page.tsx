@@ -29,6 +29,8 @@ export const ClientDetailPage = (): JSX.Element => {
    */
   const { fullName, isIndigenous, community, dateOfBirth } = data;
 
+  const middleInitials = (fullName.middleName || []).join(".");
+
   const communityName = community
     ? community.name.items?.["en"]?.["original"]?.text
     : null;
@@ -45,7 +47,7 @@ export const ClientDetailPage = (): JSX.Element => {
     <div>
       <h1>Client</h1>
       <h2>
-        {fullName.firstName} {fullName.lastName}
+        {fullName.firstName} {middleInitials} {fullName.lastName}
       </h2>
       <p>DOB: {dateOfBirth}</p>
       {communityName ? <p>Community: {communityName}</p> : null}

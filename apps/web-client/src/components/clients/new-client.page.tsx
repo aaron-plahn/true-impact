@@ -1,5 +1,7 @@
 import { Stack } from "@mui/material";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { MultiTextInput } from "../common";
 import { ApiResponseErrorInfo } from "../error-handling";
 import { Loading } from "../loading";
 import { DynamicClientCommunitySelector } from "./dynamic-client-community-selector";
@@ -7,6 +9,8 @@ import { useExecuteClientCommandMutation } from "./store";
 
 export const NewClientPage = () => {
   const [firstName, setFirstName] = useState("");
+
+  const [middleNames, setMiddleNames] = useState<string[]>([]);
 
   const [lastName, setLastName] = useState("");
 
@@ -20,6 +24,8 @@ export const NewClientPage = () => {
 
   const [executeCommand, { isLoading: isRequestInProgress, error }] =
     useExecuteClientCommandMutation();
+
+  const navigate = useNavigate();
 
   if (isRequestInProgress) {
     return <Loading />;
@@ -39,14 +45,21 @@ export const NewClientPage = () => {
             type: "CREATE_CLIENT",
             payload: {
               firstName,
-              // TODO We need to support middle names
-              middleNames: [],
+              middleNames,
               lastName,
               dateOfBirth,
               isIndigenous,
               communityId,
             },
           });
+
+          /**
+           * This is not quite right. What we want to do is to wait until the command
+           * response comes back and then
+           * - on error -> display the error and let the user correct the form
+           * - on success -> navigate to the detail page for the new client
+           */
+          navigate("/clients");
         }}
       >
         <Stack>
@@ -61,7 +74,14 @@ export const NewClientPage = () => {
               }}
             />
           </label>
-          {/* TODO Middle Name */}
+          <label>Middle Names</label>
+          <MultiTextInput
+            onChange={(newValue) => {
+              setMiddleNames(newValue);
+            }}
+            name={"middleNames"}
+            values={middleNames}
+          />
           <label htmlFor="lastName-input">
             Last Name
             <input

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { DynamicSelector } from "../../common/dynamic-selector";
+import { DynamicSelector } from "../../common";
 import { ApiResponseErrorInfo } from "../../error-handling";
 import { Loading } from "../../loading";
 import { useExecuteClientCommandMutation } from "../store";
