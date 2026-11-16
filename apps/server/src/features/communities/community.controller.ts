@@ -70,11 +70,6 @@ export class CommunityController implements OnModuleInit {
   ): Promise<DynamicSelectorResponse> {
     const searchText = body?.searchText;
 
-    console.log({
-      searchTextZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ: searchText,
-      body,
-    });
-
     /**
      * Ideally, we would filter in the DB. But we will never have > ~10 communities
      * in a single DB, so there's really no performance to be gained.

@@ -39,7 +39,7 @@ export const NewClientPage = () => {
             type: "CREATE_CLIENT",
             payload: {
               firstName,
-              // TODO add form element for this
+              // TODO We need to support middle names
               middleNames: [],
               lastName,
               dateOfBirth,

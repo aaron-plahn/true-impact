@@ -71,8 +71,6 @@ export const ClientIndexPage = (): JSX.Element => {
                     onChange={(
                       newValue: string | number | boolean | null | undefined,
                     ) => {
-                      console.log(`value changed for: ${key} to ${newValue}`);
-
                       if (
                         newValue === null ||
                         newValue === "" ||
