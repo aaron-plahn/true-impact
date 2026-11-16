@@ -51,8 +51,6 @@ export const DynamicSelector = ({
         setIsLoading(false);
       })
       .catch((_e) => {
-        console.log({ eForSuree: _e });
-
         setError(
           new Error(`Failed to load community selection from the server.`),
         );
@@ -66,8 +64,6 @@ export const DynamicSelector = ({
   }
 
   if (error) {
-    console.log({ errorzzzzzzzzzzzzzzzzzzzzzZZZ: error });
-
     return (
       <div>
         Failed to load dynamic selection menu [{name}] from the server. Refresh

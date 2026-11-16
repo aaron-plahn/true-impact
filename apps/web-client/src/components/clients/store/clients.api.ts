@@ -11,6 +11,13 @@ import {
 import { ClientSearchSliceState } from "./client-search.slice";
 
 // BEGIN copied from server
+export interface ClientSurveyResponseRecord {
+  id: string;
+  name: string;
+  hasBeenSubmitted?: string;
+  submissionTime?: string;
+}
+
 export interface ClientViewModel {
   id: string;
   dateOfBirth: string;
@@ -31,6 +38,7 @@ export interface ClientViewModel {
       items: Record<string, Record<string, { text: string }>>;
     };
   };
+  surveyResponses: ClientSurveyResponseRecord[];
 }
 // END copied from server
 

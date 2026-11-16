@@ -520,6 +520,8 @@ export class SurveyResponseRecordViewModel {
       name: this.name,
       revision: this.revision,
       hasBeenSubmitted: this.hasBeenSubmitted,
+      // TODO Shouldn't we send this as a date string to the client?
+      submissionTime: this.submissionTime ? this.submissionTime : undefined,
       hasBeenCancelled: this.hasBeenCancelled,
       participantCompositeIdentifier: this.participantCompositeIdentifier,
       responses: this.responses.map((response) => response.toClientDto()),
@@ -559,6 +561,18 @@ export class SurveyResponseRecordViewModel {
       }
     }
 
+    let submissionTime: number | undefined;
+
+    if (domainModel.hasBeenSubmitted) {
+      const submissionEvent = domainModel.eventHistory.find(
+        (e) => e.type === 'SURVEY_SUBMITTED',
+      ) as SurveySubmitted | undefined;
+
+      if (submissionEvent) {
+        submissionTime = submissionEvent.metadata.dateEffective;
+      }
+    }
+
     const draft = new SurveyResponseRecordViewModel({
       id: domainModel.id,
       size: domainModel.survey.size(),
@@ -566,6 +580,7 @@ export class SurveyResponseRecordViewModel {
       name: `${domainModel.survey.getName()}`, // TODO - participant name - attempt # or date started
       participantCompositeIdentifier: domainModel.participant || null,
       hasBeenSubmitted: domainModel.hasBeenSubmitted,
+      submissionTime,
       hasBeenCancelled: domainModel.hasBeenCancelled,
       nextQuestion: nextQuestionViewModel,
       responses: domainModel.responses.map((r) => {
