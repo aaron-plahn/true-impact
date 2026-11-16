@@ -2,6 +2,12 @@
 
 This first release of the True Impact platform introduces a working model for user management, client management, and survey creation and completion.
 
+## 91
+In this PR, we support creating a new client in the web client. We also update the
+client detail view to allow the user to select a community for a client whose community
+is currently unknown. To support this, we have introduced an active search pattern for
+dynamic selection of communities in a command form that requires a community ID.
+
 ## 90
 In this PR, we implement a detail page for client management.
 
