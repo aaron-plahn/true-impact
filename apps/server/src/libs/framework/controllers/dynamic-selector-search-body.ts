@@ -1,4 +1,4 @@
-import { NonEmptyString } from 'src/libs/data-types';
+import { NonEmptyString } from '../../../libs/data-types';
 
 // TODO is there a better place for this?
 export class DynamicSelectorSearchBody {
