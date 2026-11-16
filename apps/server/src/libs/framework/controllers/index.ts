@@ -1,6 +1,7 @@
 export * from './body.decorator';
 export * from './controller.decorator';
 export * from './detail-query-endpoint';
+export * from './dynamic-selector-search-body';
 export * from './get.decorator';
 export * from './index-query-endpoint';
 export * from './inject.decorator';

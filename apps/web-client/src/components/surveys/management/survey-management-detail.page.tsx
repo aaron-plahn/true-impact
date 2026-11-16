@@ -9,6 +9,7 @@ import {
   CommandExecutor,
   FinalizeSurveyCommandForm,
   OpenSurveyToAnonymousIndividualForm,
+  OpenSurveyToClientForm,
   OpenSurveyToPublicForm,
 } from "../../command-execution";
 import { ApiResponseErrorInfo } from "../../error-handling";
@@ -67,6 +68,8 @@ export const SurveyManagementDetailPage = (): JSX.Element => {
     isFinal &&
     !isOpenToPublic &&
     !config.KEYSTONE_EXCLUDES.has("PUBLIC_SURVEY_COMPLETION");
+
+  const shouldShowOpenToClientButton = shouldShowOpenAccessButton;
 
   return (
     <div data-testid="survey-management-detail-page">
@@ -157,6 +160,19 @@ export const SurveyManagementDetailPage = (): JSX.Element => {
                 id: id || "",
               }}
               onClose={onClose}
+            />
+          )}
+        />
+      ) : null}
+      {shouldShowOpenToClientButton ? (
+        <CommandExecutor
+          type="OPEN_SURVEY_TO_CLIENT"
+          label="Open to Client"
+          description="Invite a client to complete this survey"
+          form={({ onClose }) => (
+            <OpenSurveyToClientForm
+              onClose={onClose}
+              context={{ id: id || "" }}
             />
           )}
         />

@@ -18,11 +18,28 @@ export const SurveyResponseRecordDetailPage = (): JSX.Element => {
     return <Loading />;
   }
 
-  const { name, reportsByName } = data;
+  const { name, reportsByName, responses } = data;
+
+  // TODO Join a view of the participant onto the response record if applicable
 
   return (
     <div data-testid={`survey-response-detail-page/${id}`}>
       <Typography variant="h2">{name}</Typography>
+      <Typography variant="body2">(attempt ID: {id})</Typography>
+      <Typography variant="h3">Responses</Typography>
+      {responses.map((r) => {
+        const chosenOption = Object.values(r.options).find((o) => o.wasChosen);
+
+        return (
+          <div key={`surveyResponseRecord/${id}/questions/${r.questionLabel}`}>
+            <Typography variant="body1">
+              {r.questionLabel} {r.prompt}
+            </Typography>
+            {/* TODO should we show the other options here? */}
+            {chosenOption ? <Typography>{chosenOption.text}</Typography> : null}
+          </div>
+        );
+      })}
       <Typography variant="h3">Reports</Typography>
       {Object.entries(reportsByName).map(([reportName, report]) => (
         <Link to={`/surveys/responses/${id}/reports/${reportName}`}>

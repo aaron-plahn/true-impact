@@ -2,7 +2,6 @@ import { AdminRbacAuthGuard } from '../../auth/guards';
 import type { ICommandFsa } from '../../libs/cqrs-es';
 import { CommandHandlerService, CommandResult } from '../../libs/cqrs-es';
 import {
-  NonEmptyString,
   TrueImpactError,
   TrueImpactRuntimeException,
 } from '../../libs/data-types';
@@ -11,6 +10,8 @@ import {
   Body,
   Controller,
   DetailQueryEndpoint,
+  DynamicSelectorResponse,
+  DynamicSelectorSearchBody,
   IdParam,
   IndexQueryEndpoint,
   OnModuleInit,
@@ -24,24 +25,6 @@ import {
 } from '../../libs/framework';
 import { COMMUNITY_AGGREGATE_TYPE } from './constants';
 import { CommunityQueryService, CommunityViewModelClientDto } from './queries';
-
-class DynamicSelectorSearchBody {
-  @NonEmptyString({
-    label: 'search text',
-    description:
-      'text to search for across all searchable properties for this resource',
-  })
-  searchText: string;
-}
-
-class LabelAndId {
-  id: string;
-  label: string;
-}
-
-class DynamicSelectorResponse {
-  results: LabelAndId[];
-}
 
 @UseFilters(ResourceNotFoundFilter, BadUserInputFilter)
 @UseInterceptors(QueryResponseInterceptor)

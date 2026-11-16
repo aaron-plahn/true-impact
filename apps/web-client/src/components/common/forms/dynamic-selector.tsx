@@ -5,12 +5,14 @@ import { useDebounce } from "../../../shared";
 import { Loading } from "../../loading";
 
 export interface DynamicSelectorProps {
+  name: string;
   onChange: (newValue: string | undefined) => void;
   // the API endpoint for active search
   searchUrl: string;
 }
 
 export const DynamicSelector = ({
+  name,
   searchUrl,
   onChange,
 }: DynamicSelectorProps): JSX.Element => {
@@ -49,6 +51,8 @@ export const DynamicSelector = ({
         setIsLoading(false);
       })
       .catch((_e) => {
+        console.log({ eForSuree: _e });
+
         setError(
           new Error(`Failed to load community selection from the server.`),
         );
@@ -62,10 +66,12 @@ export const DynamicSelector = ({
   }
 
   if (error) {
+    console.log({ errorzzzzzzzzzzzzzzzzzzzzzZZZ: error });
+
     return (
       <div>
-        Failed to load community selection menu from the server. Refresh the
-        page to try again.
+        Failed to load dynamic selection menu [{name}] from the server. Refresh
+        the page to try again.
       </div>
     );
   }
@@ -73,7 +79,7 @@ export const DynamicSelector = ({
   return (
     <>
       <input
-        id="community-dynamic-select-input"
+        id={`dynamic-select-input-${name}`}
         type="text"
         value={searchText}
         onChange={(e) => {

@@ -2,6 +2,22 @@ import { createSelector } from "@reduxjs/toolkit";
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { config } from "../../../config";
 
+export interface SurveyOptionResponse {
+  text: string;
+
+  wasChosen: string;
+}
+
+export interface SurveyQuestionResponse {
+  questionLabel: string;
+
+  prompt: string;
+
+  options: Record<string, SurveyOptionResponse>;
+
+  chosenOptionLabel: string;
+}
+
 export interface ReportForSurveyResponse {
   name: string; // the report name, not the survey name
   categories: string[];
@@ -17,6 +33,7 @@ export interface SurveyResponseRecord {
   reportsByName: Record<string, ReportForSurveyResponse>;
   submissionTime: number;
   hasBeenSubmitted: boolean;
+  responses: SurveyQuestionResponse[];
 }
 
 export const surveyResponsesApi = createApi({

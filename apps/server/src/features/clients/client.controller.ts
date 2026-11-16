@@ -25,6 +25,7 @@ import {
   Body,
   Controller,
   DetailQueryEndpoint,
+  DynamicSelectorSearchBody,
   Get,
   IdParam,
   OnModuleInit,
@@ -176,6 +177,51 @@ export class ClientController implements OnModuleInit {
     private readonly clientsService: ClientQueryService,
     private readonly commandHandlerService: CommandHandlerService,
   ) {}
+
+  @Post('select')
+  @UseGuards(AdminRbacAuthGuard)
+  async dynamicSelector(
+    @Body()
+    body?: DynamicSelectorSearchBody,
+  ) {
+    const searchText = body?.searchText;
+
+    // TODO send filters to the DB
+    const list = await this.fetchMany({});
+
+    if (list instanceof Error) {
+      return list;
+    }
+
+    const matchingClients = list.rows.filter((c) => {
+      if (!searchText) {
+        return true;
+      }
+
+      const caseInsensitiveSearchTerms = searchText.toLowerCase();
+
+      return `${c.firstName}${c.middleInitials || ''}${c.lastName}`
+        .toLowerCase()
+        .includes(caseInsensitiveSearchTerms);
+    });
+
+    const results = matchingClients.map((c) => {
+      let label = c.firstName;
+
+      if (c.middleInitials) {
+        label += ` ${c.middleInitials}`;
+      }
+
+      label += ` ${c.lastName}`;
+
+      return {
+        id: c.id,
+        label,
+      };
+    });
+
+    return { results };
+  }
 
   /**
    * We use a REST inspired approach here to return the table structure prior to the first request
