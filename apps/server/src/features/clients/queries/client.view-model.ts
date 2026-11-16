@@ -179,6 +179,7 @@ export class ClientViewModelClientDto {
     isArray: true,
     isOptional: true, // i.e., can be empty
   })
+  // should this be a map?
   surveyResponses: SurveyResponseRecordViewModelClientDto[];
 }
 

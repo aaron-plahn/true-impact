@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { JSX } from "react/jsx-runtime";
 import { CommandExecutor } from "../command-execution";
 import { ApiResponseErrorInfo } from "../error-handling";
@@ -27,7 +27,8 @@ export const ClientDetailPage = (): JSX.Element => {
    * is more like a true view (no domain knowledge). Instead of knowing about the logic, it should only know about
    * our design system, actions, and UX elements with text values.
    */
-  const { fullName, isIndigenous, community, dateOfBirth } = data;
+  const { fullName, isIndigenous, community, dateOfBirth, surveyResponses } =
+    data;
 
   const middleInitials = (fullName.middleName || []).join(".");
 
@@ -70,6 +71,34 @@ export const ClientDetailPage = (): JSX.Element => {
         />
       ) : null}
       <p>Is Indigenous? {isIndigenous}</p>
+      {surveyResponses.length > 0 ? (
+        <div data-testid={`client/${id}/survey-response-list`}>
+          <h3>Survey Responses</h3>
+          <ul>
+            {surveyResponses.map((sr) => {
+              const key = `client/${id}/survey-responses/${sr.id}`;
+
+              if (!sr.hasBeenSubmitted) {
+                return <li key={key}>{sr.name} (in progress)</li>;
+              }
+
+              // TODO even though we know this should exist, let's be more defensive here
+              const submissionDate = new Date(
+                parseInt(sr.submissionTime as string),
+              );
+
+              return (
+                <li key={key}>
+                  <Link to={`/surveys/responses/${sr.id}`}>
+                    {sr.name} ({submissionDate.toDateString()} @{" "}
+                    {submissionDate.toTimeString()})
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ) : null}
     </div>
   );
 };
