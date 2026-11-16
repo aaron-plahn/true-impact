@@ -1,6 +1,10 @@
 import { useRoutes } from "react-router-dom";
 import { AuthPage } from "../auth";
-import { ClientDetailPage, ClientIndexPage } from "../components/clients";
+import {
+  ClientDetailPage,
+  ClientIndexPage,
+  NewClientPage,
+} from "../components/clients";
 import { Home } from "../components/pages";
 import { SurveyCompletionIndex } from "../components/surveys/completion";
 import { SurveyManagementIndex } from "../components/surveys/management";
@@ -78,6 +82,10 @@ export const AppRoutes = () => {
     {
       path: "/clients/:id",
       element: <ClientDetailPage />,
+    },
+    {
+      path: "/clients/new",
+      element: <NewClientPage />,
     },
   ]);
 

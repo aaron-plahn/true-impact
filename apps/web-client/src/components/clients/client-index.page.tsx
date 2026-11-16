@@ -1,3 +1,4 @@
+import { Button } from "@mui/material";
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
@@ -70,8 +71,6 @@ export const ClientIndexPage = (): JSX.Element => {
                     onChange={(
                       newValue: string | number | boolean | null | undefined,
                     ) => {
-                      console.log(`value changed for: ${key} to ${newValue}`);
-
                       if (
                         newValue === null ||
                         newValue === "" ||
@@ -134,6 +133,9 @@ export const ClientIndexPage = (): JSX.Element => {
             </tr>
           );
         })}
+        <Button data-testid="new-client-button">
+          <Link to="/clients/new">New</Link>
+        </Button>
       </table>
     </div>
   );

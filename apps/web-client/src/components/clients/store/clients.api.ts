@@ -36,7 +36,7 @@ export interface ClientViewModel {
 
 export const clientsApi = createApi({
   reducerPath: "clients",
-  tagTypes: ["clients"],
+  tagTypes: ["clients", "clients/list"],
   baseQuery: fetchBaseQuery({
     baseUrl: config.API_URL,
     credentials: "include",
@@ -120,6 +120,7 @@ export const clientsApi = createApi({
           error: result?.error || JSON.stringify(result),
         };
       },
+      providesTags: ["clients/list"],
     }),
     fetchClientById: builder.query<ClientViewModel, string>({
       query: (id: string) => `clients/${id}`,
@@ -155,7 +156,7 @@ export const clientsApi = createApi({
         // Note that the cache key ('clients') is only coincidentally equal to the "aggregate type" \ "view type" from the server.
         const tag = { type: "clients", id: result.id } as const;
 
-        return [tag];
+        return [tag, "clients/list"];
       },
       // onQueryStarted?
     }),

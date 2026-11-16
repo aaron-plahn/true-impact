@@ -343,6 +343,7 @@ export class Client
       id,
       firstName,
       lastName,
+      middleNames,
       dateOfBirth: dateOfBirthFromRequest,
       isIndigenous,
       communityId,
@@ -359,7 +360,7 @@ export class Client
 
     const unverifiedInstance = new Client({
       id,
-      fullName: { firstName, lastName, middleNames: [] },
+      fullName: { firstName, lastName, middleNames },
       dateOfBirth,
       isIndigenous,
       communityId,
@@ -380,7 +381,7 @@ export class Client
           fullName: FullName.fromDto({
             firstName,
             lastName,
-            middleNames: [],
+            middleNames,
           }),
           dateOfBirth: dateOfBirth.toDateString(),
           isIndigenous: isNonEmptyString(isIndigenous)

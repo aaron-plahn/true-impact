@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { DynamicSelector } from "../../common";
 import { ApiResponseErrorInfo } from "../../error-handling";
 import { Loading } from "../../loading";
 import { useExecuteClientCommandMutation } from "../store";
@@ -47,22 +48,17 @@ export const AddCommunityAffiliationForClientCommandForm = ({
         onClose();
       }}
     >
-      <label htmlFor="communityId-input">Add Community</label>
-      <select
-        value={communityId || ""}
-        onChange={(e) => {
-          const value = e?.target?.value;
-
-          if (value) {
-            setCommunityId(value);
+      Add Community
+      <DynamicSelector
+        onChange={(newValue) => {
+          if (newValue) {
+            setCommunityId(newValue);
+          } else {
+            setCommunityId(null);
           }
         }}
-      >
-        <option value="7d11b1df-4d34-476f-9da7-fd77de375d35">
-          Big River People
-        </option>
-        <option value="124">Some Other Community</option>
-      </select>
+        searchUrl={"/communities/select"}
+      />
       <button type="submit">Add Community</button>
     </form>
   );
