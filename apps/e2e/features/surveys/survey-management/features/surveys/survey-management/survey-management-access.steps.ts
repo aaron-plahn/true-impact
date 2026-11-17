@@ -1,5 +1,5 @@
 import { Given, Then, When } from "@wdio/cucumber-framework";
-import { clearSurveys } from "../../../../../../utils/clear-surveys";
+import { clearTestData } from "../../../../../../utils/clear-surveys";
 import { importSurvey } from "../../../../../../utils/import-survey";
 import loginPage from "../../../../../login/login.page";
 import Page from "../../../../../login/page";
@@ -22,7 +22,10 @@ Given("I have cleared all existing surveys", async () => {
     .map((cookie) => `${cookie.name}=${cookie.value}`)
     .join("; ");
 
-  await clearSurveys(cookieHeader);
+  await clearTestData(cookieHeader, [
+    "surveys/test-setup",
+    "surveys/responses/test-setup",
+  ]);
 });
 
 When(
