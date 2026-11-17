@@ -17,6 +17,7 @@ export const DynamicClientCommunitySelector = ({
       <Stack>
         Client's Community
         <Switch
+          data-testid="isCommunityKnown-input"
           checked={isCommunityKnown}
           onChange={() => {
             const isCommunityKnownNow = !isCommunityKnown;
@@ -31,7 +32,7 @@ export const DynamicClientCommunitySelector = ({
         {isCommunityKnown ? "I will choose below" : "I don't know"}
         {isCommunityKnown ? (
           <DynamicSelector
-            name="clients"
+            name="communityId"
             onChange={onChange}
             searchUrl="/communities/select"
           />

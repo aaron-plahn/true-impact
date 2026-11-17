@@ -42,6 +42,11 @@ export class CommunityController implements OnModuleInit {
   async executeCommand(@Body() fsa: ICommandFsa): Promise<CommandResult> {
     const result = await this.commandHandlerService.execute(fsa);
 
+    console.log({
+      fsa: JSON.stringify(fsa),
+      result,
+    });
+
     return result;
   }
 

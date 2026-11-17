@@ -38,10 +38,10 @@ export const NewClientPage = () => {
   return (
     <div data-testid="new-client-page">
       <form
-        onSubmit={(e) => {
+        onSubmit={async (e) => {
           e.preventDefault();
 
-          executeCommand({
+          const result = await executeCommand({
             type: "CREATE_CLIENT",
             payload: {
               firstName,
@@ -53,13 +53,9 @@ export const NewClientPage = () => {
             },
           });
 
-          /**
-           * This is not quite right. What we want to do is to wait until the command
-           * response comes back and then
-           * - on error -> display the error and let the user correct the form
-           * - on success -> navigate to the detail page for the new client
-           */
-          navigate("/clients");
+          if (!result.error) {
+            navigate("/clients");
+          }
         }}
       >
         <Stack>
