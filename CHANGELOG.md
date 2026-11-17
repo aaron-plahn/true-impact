@@ -2,6 +2,9 @@
 
 This first release of the True Impact platform introduces a working model for user management, client management, and survey creation and completion.
 
+## 93
+In this PR, we pin our container for running our autmoated browser ("UI e2e") tests in the CI system to Ubuntu 24.04. We previously used the "latest" tag which spontaneously broke our job without warning. We intend to diagnose and fix the difference with 26.04 that breaks the `ui-e2e` job in the CI in the near future.
+
 ## 92
 In this PR, we include a client's survey responses in their detail view.
 
