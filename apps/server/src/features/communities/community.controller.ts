@@ -61,39 +61,70 @@ export class CommunityController implements OnModuleInit {
     /**
      * Ideally, we would filter in the DB. But we will never have > ~10 communities
      * in a single DB, so there's really no performance to be gained.
+     *
+     * Also, we should eagerly process the multilingual text and include
+     * - bilingual text
+     * - primary item
+     * - secondary item
+     * based on the language code in the tenant's config
      */
-    const result = await this.communityQueryService.fetchMany();
+    const allCommunities = await this.communityQueryService.fetchMany();
 
-    const matchingCommunitites = result.filter((c) => {
-      if (!searchText) return true;
-
-      return JSON.stringify(c.name)
-        .toLowerCase()
-        .includes(searchText.toLowerCase());
-    });
-
-    const results = matchingCommunitites.map((c) => {
-      const english = c.name.items['en']['original']?.text;
-
-      const translationItems = Array.from(Object.entries(c.name.items)).find(
-        ([languageCode, _translations]) => languageCode !== 'en',
+    const results = allCommunities.flatMap((c) => {
+      const searchForOriginalItem = Object.entries(c.name.items).find(
+        ([_originalLanguageCode, item]) => 'original' in item,
       );
 
-      const translation = translationItems?.[1]?.['original']?.text;
+      if (!searchForOriginalItem) {
+        return [];
+      }
 
-      /**
-       * TODO we should assume nothing about the existence of text for a specific language.
-       * The view model should persist the `original` and `translation` in an easily accessible place
-       * and maybe a `bilingual` representation like what we build below.
-       */
-      const label = translation
-        ? `${translation} (${english})`
-        : (english as string);
+      const [originalLanguageCode, itemForOriginalLanguage] =
+        searchForOriginalItem;
 
-      return {
-        id: c.id,
-        label,
-      };
+      const originalText = itemForOriginalLanguage['original']?.text;
+
+      if (!originalText) {
+        return [];
+      }
+
+      const searchForTranslationItem = Object.entries(c.name.items).find(
+        ([languageCode, item]) =>
+          languageCode !== originalLanguageCode && 'free translation' in item,
+      );
+
+      const translationText =
+        searchForTranslationItem?.[1]?.['free translation']?.text;
+
+      const bilingualText = translationText
+        ? `${originalText} (${translationText})`
+        : originalText;
+
+      if (!searchText) {
+        return [
+          {
+            id: c.id,
+            label: bilingualText,
+          },
+        ];
+      }
+
+      const matchesOriginalText =
+        originalText && originalText.toLowerCase().includes(searchText);
+
+      const matchesTranslationText =
+        translationText && translationText.toLowerCase().includes(searchText);
+
+      if (matchesOriginalText || matchesTranslationText) {
+        return [
+          {
+            id: c.id,
+            label: bilingualText,
+          },
+        ];
+      }
+
+      return [];
     });
 
     return { results };
