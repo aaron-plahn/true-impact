@@ -1,5 +1,5 @@
 import { Given, Then, When } from "@wdio/cucumber-framework";
-import { clearTestData } from "../../../../../../utils/clear-surveys";
+import { clearTestData } from "../../../../../../utils/clear-test-data";
 import { importSurvey } from "../../../../../../utils/import-survey";
 import loginPage from "../../../../../login/login.page";
 import Page from "../../../../../login/page";

@@ -1,11 +1,12 @@
 import { Given, Then, When } from "@wdio/cucumber-framework";
 import { expect } from "@wdio/globals";
-import { clearTestData } from "../../../utils/clear-surveys";
+import { clearTestData } from "../../../utils/clear-test-data";
+import { importCommunities } from "../../../utils/import-communities";
 import loginPage from "../../login/login.page";
 import Page from "../../login/page";
 import { newClientPage } from "./new-client.page";
 
-Given("I have cleared all existing clients", async () => {
+Given("I have cleared all existing clients and communities", async () => {
   await new Page().open("");
 
   await browser.deleteCookies();
@@ -22,8 +23,38 @@ Given("I have cleared all existing clients", async () => {
     .map((cookie) => `${cookie.name}=${cookie.value}`)
     .join("; ");
 
-  await clearTestData(cookieHeader, ["clients/test-setup"]);
+  await clearTestData(cookieHeader, [
+    "clients/test-setup",
+    "communities/test-setup",
+  ]);
 });
+
+Given(
+  "The communities in the fixture file {string} has been imported",
+  async (relativePath) => {
+    // TODO share the login \ logout logic with other helpers
+    await new Page().open("");
+
+    await browser.deleteCookies();
+
+    await loginPage.open();
+
+    await loginPage.logInAsAdmin();
+
+    // avoid a race-condition by waiting for the login response to load
+    await expect(loginPage.avatarMenuControl).toBeExisting();
+
+    const browserCookies = await browser.getCookies();
+
+    const cookieHeader = browserCookies
+      .map((cookie) => `${cookie.name}=${cookie.value}`)
+      .join("; ");
+
+    await importCommunities(relativePath, cookieHeader);
+
+    await loginPage.logOut();
+  },
+);
 
 When("I open the new client page", async () => {
   await newClientPage.open();
@@ -51,12 +82,6 @@ When(
   "I complete the date picker field {string} with the value {string}",
   // Note that this is not the same order as a date string (YYYY-MM-DD)
   async (fieldName, MMDDYYYY) => {
-    console.log({
-      type: "date picker",
-      fieldName,
-      valueAsFieldString: MMDDYYYY,
-    });
-
     const targetFormField = $(`[data-testid="${fieldName}-input"]`);
 
     /**
@@ -74,12 +99,6 @@ When(
 When(
   "I complete the select field {string} by chosing the option with label {string}",
   async (fieldName, chosenOptionLabel) => {
-    console.log({
-      type: "single select",
-      fieldName,
-      chosenOptionValue: chosenOptionLabel,
-    });
-
     const targetFormField = $(`[data-testid="${fieldName}-input"]`);
 
     await targetFormField.selectByVisibleText(chosenOptionLabel);
@@ -89,6 +108,34 @@ When(
 When("I submit the command {string}", async (commandLabel) => {
   await $(`button=${commandLabel}`).click();
 });
+
+When(
+  "I complete the switch field {string} by switching it",
+  async (fieldName) => {
+    const targetFormField = $(`[data-testid="${fieldName}-input"]`);
+
+    await targetFormField.click();
+  },
+);
+
+When(
+  "I complete the dynamic seletor field {string} by typing {string} and choosing the result {string}",
+  async (fieldName, searchText, resultingLabel) => {
+    const targetFormField = $(
+      `[data-testid="${fieldName}-dynamic-select-searchbar"]`,
+    );
+
+    await targetFormField.click();
+
+    await targetFormField.setValue(searchText);
+
+    const selectList = $(`[data-testid="${fieldName}-input"]`);
+
+    const chosenOption = await selectList.$(`*=${resultingLabel}`);
+
+    chosenOption.click();
+  },
+);
 
 Then("I should see the text {string} on the screen", async (expectedText) => {
   const elementWithText = $(`*=${expectedText}`);
