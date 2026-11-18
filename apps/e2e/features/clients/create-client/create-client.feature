@@ -6,7 +6,6 @@ Feature: Client management: create a new Client
         Given I am logged in as an admin
         When I open the new client page
         And I complete the text input field "firstName" with the value "Rob"
-        # TODO - omit middleName, multiple middleNames (spaces in input)
         And I complete the multitext input field "middleNames" with the value "James"
         And I complete the text input field "lastName" with the value "McGee"
         And I complete the date picker field "dateOfBirth" with the value "04-13-2008"
@@ -21,7 +20,6 @@ Feature: Client management: create a new Client
         Given I am logged in as an admin
         When I open the new client page
         And I complete the text input field "firstName" with the value "Susie"
-        # TODO - omit middleName, multiple middleNames (spaces in input)
         And I complete the multitext input field "middleNames" with the value "Sarah"
         And I complete the text input field "lastName" with the value "Simpson"
         And I complete the date picker field "dateOfBirth" with the value "12-31-2020"
@@ -33,7 +31,6 @@ Feature: Client management: create a new Client
         Given I am logged in as an admin
         When I open the new client page
         And I complete the text input field "firstName" with the value "Amy"
-        # TODO - omit middleName, multiple middleNames (spaces in input)
         And I complete the multitext input field "middleNames" with the value "Jamie"
         And I complete the text input field "lastName" with the value "Jones"
         And I complete the date picker field "dateOfBirth" with the value "01-01-1999"
@@ -47,7 +44,6 @@ Feature: Client management: create a new Client
         Given I am logged in as an admin
         When I open the new client page
         And I complete the text input field "firstName" with the value "Frank"
-        # TODO - omit middleName, multiple middleNames (spaces in input)
         # no middle name
         # And I complete the multitext input field "middleNames" with the value ""
         And I complete the text input field "lastName" with the value "Parkins"
