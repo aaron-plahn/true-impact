@@ -1,13 +1,23 @@
 import axios from "axios";
+import loginPage from "../features/login/login.page";
+import Page from "../features/login/page";
 
-export const clearTestData = async (
-  cookieHeader: string,
-  testSetupEndpoints: string[],
-) => {
-  // const testSetupEndpoints: string[] = [
-  //   "surveys/test-setup",
-  //   "surveys/responses/test-setup",
-  // ];
+export const clearTestData = async (testSetupEndpoints: string[]) => {
+  await new Page().open("");
+
+  await browser.deleteCookies();
+
+  await loginPage.open();
+
+  await loginPage.logInAsAdmin();
+
+  await expect(loginPage.avatarMenuControl).toBeExisting();
+
+  const browserCookies = await browser.getCookies();
+
+  const cookieHeader = browserCookies
+    .map((cookie) => `${cookie.name}=${cookie.value}`)
+    .join("; ");
 
   try {
     // TODO use a config for this?

@@ -7,26 +7,7 @@ import Page from "../../login/page";
 import { newClientPage } from "./new-client.page";
 
 Given("I have cleared all existing clients and communities", async () => {
-  await new Page().open("");
-
-  await browser.deleteCookies();
-
-  await loginPage.open();
-
-  await loginPage.logInAsAdmin();
-
-  await expect(loginPage.avatarMenuControl).toBeExisting();
-
-  const browserCookies = await browser.getCookies();
-
-  const cookieHeader = browserCookies
-    .map((cookie) => `${cookie.name}=${cookie.value}`)
-    .join("; ");
-
-  await clearTestData(cookieHeader, [
-    "clients/test-setup",
-    "communities/test-setup",
-  ]);
+  await clearTestData(["clients/test-setup", "communities/test-setup"]);
 });
 
 Given(

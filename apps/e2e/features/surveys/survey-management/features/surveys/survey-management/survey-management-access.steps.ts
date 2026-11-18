@@ -6,26 +6,7 @@ import Page from "../../../../../login/page";
 import { menuPage } from "../../../../common/menu.page";
 
 Given("I have cleared all existing surveys", async () => {
-  await new Page().open("");
-
-  await browser.deleteCookies();
-
-  await loginPage.open();
-
-  await loginPage.logInAsAdmin();
-
-  await expect(loginPage.avatarMenuControl).toBeExisting();
-
-  const browserCookies = await browser.getCookies();
-
-  const cookieHeader = browserCookies
-    .map((cookie) => `${cookie.name}=${cookie.value}`)
-    .join("; ");
-
-  await clearTestData(cookieHeader, [
-    "surveys/test-setup",
-    "surveys/responses/test-setup",
-  ]);
+  await clearTestData(["surveys/test-setup", "surveys/responses/test-setup"]);
 });
 
 When(
