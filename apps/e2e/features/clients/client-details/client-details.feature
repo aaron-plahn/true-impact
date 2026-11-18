@@ -19,8 +19,8 @@ Feature: Client Details page
         And I complete the dynamic seletor field "communityId" by typing "Big" and choosing the result "Big Creek"
         # TODO Shouldn't this be "Add Client's Community"?
         And I submit the command "Add Community"
-        Then The client's community should appear as "Big Creek"
-        And The client's isIndigenous should appear as "Yes"
+        Then The client's "community" should appear as "Big Creek"
+        And The client's "isIndigenous" should appear as "Yes"
         # TODO Suside S. Simpson
         And The client's "name" should appear as "Susie Simpson"
         And The client's "dob" should appear as "2020-12-31"
@@ -38,7 +38,7 @@ Feature: Client Details page
         And I complete the dynamic seletor field "communityId" by typing "Big" and choosing the result "Big Creek"
         And I submit the command "Create Client"
         # Now on the client detail page
-        Then The client's community should appear as "Big Creek"
+        Then The client's "community" should appear as "Big Creek"
 
     Scenario: When it is not known whether the client is isIndigenous
         Given I am logged in as an admin
