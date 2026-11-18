@@ -24,3 +24,40 @@ Feature: Client Details page
         # TODO Suside S. Simpson
         And The client's "name" should appear as "Susie Simpson"
         And The client's "dob" should appear as "2020-12-31"
+
+    # TODO when the field is incomplete
+    Scenario: When viewing a client whose community was added at creation time
+        Given I am logged in as an admin
+        When I open the new client page
+        And I complete the text input field "firstName" with the value "Susie"
+        And I complete the multitext input field "middleNames" with the value "Sarah"
+        And I complete the text input field "lastName" with the value "Simpson"
+        And I complete the date picker field "dateOfBirth" with the value "12-31-2020"
+        And I complete the select field "isIndigenous" by chosing the option with label "yes"
+        # TODO check that the submit button is disabled until the form field has been completed
+        And I complete the dynamic seletor field "communityId" by typing "Big" and choosing the result "Big Creek"
+        And I submit the command "Create Client"
+        # Now on the client detail page
+        Then The client's community should appear as "Big Creek"
+
+    Scenario: When it is not known whether the client is isIndigenous
+        Given I am logged in as an admin
+        When I open the new client page
+        And I complete the text input field "firstName" with the value "Susie"
+        And I complete the multitext input field "middleNames" with the value "Sarah"
+        And I complete the text input field "lastName" with the value "Simpson"
+        And I complete the date picker field "dateOfBirth" with the value "12-31-2020"
+        And I complete the select field "isIndigenous" by chosing the option with label "unknown"
+        And I submit the command "Create Client"
+        Then The client's "isIndigenous" should appear as "Unknown"
+
+    Scenario: When the client is not isIndigenous
+        Given I am logged in as an admin
+        When I open the new client page
+        And I complete the text input field "firstName" with the value "Susie"
+        And I complete the multitext input field "middleNames" with the value "Sarah"
+        And I complete the text input field "lastName" with the value "Simpson"
+        And I complete the date picker field "dateOfBirth" with the value "12-31-2020"
+        And I complete the select field "isIndigenous" by chosing the option with label "no"
+        And I submit the command "Create Client"
+        Then The client's "isIndigenous" should appear as "No"
