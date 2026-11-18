@@ -20,3 +20,7 @@ Feature: Client Details page
         # TODO Shouldn't this be "Add Client's Community"?
         And I submit the command "Add Community"
         Then The client's community should appear as "Big Creek"
+        And The client's isIndigenous should appear as "Yes"
+        # TODO Suside S. Simpson
+        And The client's "name" should appear as "Susie Simpson"
+        And The client's "dob" should appear as "2020-12-31"

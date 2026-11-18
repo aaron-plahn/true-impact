@@ -47,10 +47,10 @@ export const ClientDetailPage = (): JSX.Element => {
   return (
     <div>
       <h1>Client</h1>
-      <h2>
+      <h2 data-testid="client-details-name">
         {fullName.firstName} {middleInitials} {fullName.lastName}
       </h2>
-      <p>DOB: {dateOfBirth}</p>
+      <p data-testid="client-details-dob">DOB: {dateOfBirth}</p>
       {communityName ? (
         <p data-testid="client-details-community">Community: {communityName}</p>
       ) : null}
@@ -72,7 +72,9 @@ export const ClientDetailPage = (): JSX.Element => {
           )}
         />
       ) : null}
-      <p>Is Indigenous? {isIndigenous}</p>
+      <p data-testid="client-details-isIndigenous">
+        Is Indigenous? {isIndigenous}
+      </p>
       {surveyResponses.length > 0 ? (
         <div data-testid={`client/${id}/survey-response-list`}>
           <h3>Survey Responses</h3>

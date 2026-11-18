@@ -15,3 +15,22 @@ Then(
     await expect(targetEl).toHaveText(communityName, { containing: true });
   },
 );
+
+Then(
+  "The client's isIndigenous should appear as {string}",
+  async (isIndigenousLabel) => {
+    const targetEl = $(`[data-testid="client-details-isIndigenous"]`);
+
+    await expect(targetEl).toHaveText(isIndigenousLabel, { containing: true });
+  },
+);
+
+Then(
+  "The client's {string} should appear as {string}",
+  async (propertyLabel, expectedText) => {
+    const targetEl = $(`[data-testid="client-details-${propertyLabel}"]`);
+
+    // i.e. expect(targetEl).toContainText(communityName)
+    await expect(targetEl).toHaveText(expectedText, { containing: true });
+  },
+);
