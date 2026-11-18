@@ -51,7 +51,9 @@ export const ClientDetailPage = (): JSX.Element => {
         {fullName.firstName} {middleInitials} {fullName.lastName}
       </h2>
       <p>DOB: {dateOfBirth}</p>
-      {communityName ? <p>Community: {communityName}</p> : null}
+      {communityName ? (
+        <p data-testid="client-details-community">Community: {communityName}</p>
+      ) : null}
       {shouldEnableAddCommunity ? (
         <CommandExecutor
           type={"ADD_COMMUNITY_AFFILIATION_FOR_CLIENT"}
