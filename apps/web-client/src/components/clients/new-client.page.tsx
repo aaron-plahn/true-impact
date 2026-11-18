@@ -54,7 +54,7 @@ export const NewClientPage = () => {
           });
 
           if (!result.error) {
-            navigate("/clients");
+            navigate(`/clients/${result.data.id}`);
           }
         }}
       >
