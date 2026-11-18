@@ -2,6 +2,11 @@
 
 This first release of the True Impact platform introduces a working model for user management, client management, and survey creation and completion.
 
+## 95
+In this PR, we add an automated browser test of the client detail page. We ensure that all properties are displayed correctly
+for clients with and without communities and of unknown Indigenous identities. We also test an admin's ability to add
+a community for an existing client when said client's community affiliation was previously unknown.
+
 ## 94
 In this PR, we add an automated browser test of the client creation workflow. We focus on the happy paths (valid test cases)
 and will circle back to edge cases when making the behaviour more robust to error states.
