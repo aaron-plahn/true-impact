@@ -1,6 +1,24 @@
 import axios from "axios";
+import loginPage from "../features/login/login.page";
+import Page from "../features/login/page";
 
-export const clearSurveys = async (cookieHeader?: string) => {
+export const clearTestData = async (testSetupEndpoints: string[]) => {
+  await new Page().open("");
+
+  await browser.deleteCookies();
+
+  await loginPage.open();
+
+  await loginPage.logInAsAdmin();
+
+  await expect(loginPage.avatarMenuControl).toBeExisting();
+
+  const browserCookies = await browser.getCookies();
+
+  const cookieHeader = browserCookies
+    .map((cookie) => `${cookie.name}=${cookie.value}`)
+    .join("; ");
+
   try {
     // TODO use a config for this?
     const apiDomain = process.env.API_DOMAIN;
@@ -33,39 +51,25 @@ export const clearSurveys = async (cookieHeader?: string) => {
 
     const baseApiUrl = `${apiDomain}:${apiServerPort}`;
 
-    const headers = {
-      "Content-Type": "application/json",
-      Origin: clientOrigin,
-      ...(cookieHeader && { Cookie: cookieHeader }),
-    };
-
     const patchHeaders = {
+      // "Content-Type": "application/json",
       "Content-Type": "application/x-www-form-urlencoded",
       Origin: clientOrigin,
       ...(cookieHeader && { Cookie: cookieHeader }),
     };
 
-    const surveyClearResult = await axios.patch(
-      `${baseApiUrl}/surveys/test-setup`,
-      undefined,
-      {
-        withCredentials: true,
-        headers: patchHeaders,
-      },
-    );
+    for (const testSetupEndpointForCollection of testSetupEndpoints) {
+      const collectionClearResult = await axios.patch(
+        `${baseApiUrl}/${testSetupEndpointForCollection}`,
+        undefined,
+        {
+          withCredentials: true,
+          headers: patchHeaders,
+        },
+      );
 
-    expect(surveyClearResult.status).toBe(200);
-
-    const responseClearResult = await axios.patch(
-      `${baseApiUrl}/surveys/responses/test-setup`,
-      undefined,
-      {
-        withCredentials: true,
-        headers,
-      },
-    );
-
-    expect(responseClearResult.status).toBe(200);
+      expect(collectionClearResult.status).toBe(200);
+    }
   } catch (error) {
     const exception = new Error(
       `Failed to clear test surveys in the database.\n${error}`,

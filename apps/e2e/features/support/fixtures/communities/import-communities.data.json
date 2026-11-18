@@ -1,0 +1,29 @@
+[
+    {
+        "type": "CREATE_COMMUNITY",
+        "payload": {
+            "bandNumber": "123",
+            "name": "Big Creek",
+            "languageCodeForName": "en",
+            "nation": "The People of the Creeks"
+        }
+    },
+    {
+        "type": "CREATE_COMMUNITY",
+        "payload": {
+            "bandNumber": "124",
+            "name": "Medium-Sized Creek",
+            "languageCodeForName": "en",
+            "nation": "The People of the Creeks"
+        }
+    },
+    {
+        "type": "CREATE_COMMUNITY",
+        "payload": {
+            "bandNumber": "125",
+            "name": "Little Creek",
+            "languageCodeForName": "en",
+            "nation": "The People of the Creeks"
+        }
+    }
+]

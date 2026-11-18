@@ -38,10 +38,10 @@ export const NewClientPage = () => {
   return (
     <div data-testid="new-client-page">
       <form
-        onSubmit={(e) => {
+        onSubmit={async (e) => {
           e.preventDefault();
 
-          executeCommand({
+          const result = await executeCommand({
             type: "CREATE_CLIENT",
             payload: {
               firstName,
@@ -53,13 +53,9 @@ export const NewClientPage = () => {
             },
           });
 
-          /**
-           * This is not quite right. What we want to do is to wait until the command
-           * response comes back and then
-           * - on error -> display the error and let the user correct the form
-           * - on success -> navigate to the detail page for the new client
-           */
-          navigate("/clients");
+          if (!result.error) {
+            navigate("/clients");
+          }
         }}
       >
         <Stack>
@@ -67,6 +63,8 @@ export const NewClientPage = () => {
             First Name
             <input
               id="firstName-input"
+              // firstName-input-text ? Should the test ID track the field type?
+              data-testid="firstName-input"
               type="text"
               value={firstName}
               onChange={(e) => {
@@ -86,6 +84,7 @@ export const NewClientPage = () => {
             Last Name
             <input
               id="lastName-input"
+              data-testid="lastName-input"
               type="text"
               value={lastName}
               onChange={(e) => {
@@ -98,6 +97,7 @@ export const NewClientPage = () => {
             {/* TODO tool tips */}
             <input
               id="dateOfBirth-input"
+              data-testid="dateOfBirth-input"
               type="date"
               value={dateOfBirth}
               onChange={(e) => {
@@ -109,6 +109,7 @@ export const NewClientPage = () => {
             Is Indigenous?
             <select
               id="isIndigenous-input"
+              data-testid="isIndigenous-input"
               onChange={(e) => {
                 setIsIndigenous(e.target.value as "Yes" | "No" | "Unknown");
               }}
@@ -131,7 +132,7 @@ export const NewClientPage = () => {
               }}
             />
           ) : null}
-          <button type="submit">Submit</button>
+          <button type="submit">Create Client</button>
         </Stack>
       </form>
     </div>

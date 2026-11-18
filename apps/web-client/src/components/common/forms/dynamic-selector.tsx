@@ -73,9 +73,10 @@ export const DynamicSelector = ({
   }
 
   return (
-    <>
+    <div data-testid={`${name}-input`}>
       <input
-        id={`dynamic-select-input-${name}`}
+        id={`dynamic-select-searchbar-${name}`}
+        data-testid={`${name}-dynamic-select-searchbar`}
         type="text"
         value={searchText}
         onChange={(e) => {
@@ -105,6 +106,6 @@ export const DynamicSelector = ({
             ))
           : null}
       </ul>
-    </>
+    </div>
   );
 };

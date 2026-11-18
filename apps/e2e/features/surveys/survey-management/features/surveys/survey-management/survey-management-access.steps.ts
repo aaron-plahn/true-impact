@@ -1,28 +1,12 @@
 import { Given, Then, When } from "@wdio/cucumber-framework";
-import { clearSurveys } from "../../../../../../utils/clear-surveys";
+import { clearTestData } from "../../../../../../utils/clear-test-data";
 import { importSurvey } from "../../../../../../utils/import-survey";
 import loginPage from "../../../../../login/login.page";
 import Page from "../../../../../login/page";
 import { menuPage } from "../../../../common/menu.page";
 
 Given("I have cleared all existing surveys", async () => {
-  await new Page().open("");
-
-  await browser.deleteCookies();
-
-  await loginPage.open();
-
-  await loginPage.logInAsAdmin();
-
-  await expect(loginPage.avatarMenuControl).toBeExisting();
-
-  const browserCookies = await browser.getCookies();
-
-  const cookieHeader = browserCookies
-    .map((cookie) => `${cookie.name}=${cookie.value}`)
-    .join("; ");
-
-  await clearSurveys(cookieHeader);
+  await clearTestData(["surveys/test-setup", "surveys/responses/test-setup"]);
 });
 
 When(

@@ -15,6 +15,7 @@ export const MultiTextInput = ({
   return (
     <input
       key={`${name}-multi-text-input`}
+      data-testid={`${name}-input`}
       type="text"
       onChange={(e) => {
         const newValues = (e.target.value || "").split(WORD_SEPARATOR);
