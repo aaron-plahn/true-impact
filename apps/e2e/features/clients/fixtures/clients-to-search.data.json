@@ -1,0 +1,99 @@
+[
+    {
+        "type": "CREATE_COMMUNITY",
+        "payload": {
+            "bandNumber": "123",
+            "name": "Big Creek",
+            "languageCodeForName": "en",
+            "nation": "The People of the Creeks"
+        }
+    },
+    {
+        "type": "CREATE_COMMUNITY",
+        "payload": {
+            "bandNumber": "124",
+            "name": "Medium-Sized Creek",
+            "languageCodeForName": "en",
+            "nation": "The People of the Creeks"
+        }
+    },
+    {
+        "type": "CREATE_COMMUNITY",
+        "payload": {
+            "bandNumber": "125",
+            "name": "Little Creek",
+            "languageCodeForName": "en",
+            "nation": "The People of the Creeks"
+        }
+    },
+    {
+        "type": "CREATE_CLIENT",
+        "payload": {
+            "firstName": "Igotta",
+            "middleNames": [
+                "Great"
+            ],
+            "lastName": "Middlenameman",
+            "dateOfBirth": "2002-03-06",
+            "isIndigenous": "Yes",
+            "communityId": "$acks[0].id"
+        }
+    },
+    {
+        "type": "CREATE_CLIENT",
+        "payload": {
+            "firstName": "Iveno",
+            "middleNames": [],
+            "lastName": "Middlenameatall",
+            "dateOfBirth": "2004-12-21",
+            "isIndigenous": "Yes",
+            "communityId": "$acks[1].id"
+        }
+    },
+    {
+        "type": "CREATE_CLIENT",
+        "payload": {
+            "firstName": "Minnie",
+            "middleNames": [
+                "Molly",
+                "Mary",
+                "Melonie"
+            ],
+            "lastName": "Midhaver",
+            "dateOfBirth": "2016-02-29",
+            "isIndigenous": "No"
+        }
+    },
+    {
+        "type": "CREATE_CLIENT",
+        "payload": {
+            "firstName": "Marcus",
+            "middleNames": [],
+            "lastName": "Jones",
+            "dateOfBirth": "1999-05-16",
+            "isIndigenous": "Unknown"
+        }
+    },
+    {
+        "type": "CREATE_CLIENT",
+        "payload": {
+            "firstName": "Jeffry",
+            "middleNames": [
+                "Robbin"
+            ],
+            "lastName": "Commaddedsecond",
+            "dateOfBirth": "2001-03-11",
+            "isIndigenous": "Unknown"
+        }
+    },
+    {
+        "type": "ADD_COMMUNITY_AFFILIATION_FOR_CLIENT",
+        "payload": {
+            "aggregateCompositeIdentifier": {
+                "type": "client",
+                "id": "$acks[7].id"
+            },
+            "communityId": "$acks[2].id"
+        }
+    }
+]

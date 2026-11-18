@@ -10,7 +10,5 @@ import { Module } from '../../libs/framework';
      */
     // CommandsController
   ],
-  providers: [],
-  exports: [],
 })
 export class CommandsModule {}

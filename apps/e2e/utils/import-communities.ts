@@ -13,6 +13,7 @@ import * as path from "path";
 export const importCommunities = async (
   relativePath: string,
   cookieHeader?: string,
+  // should this be a `CommandAcknowledgement[]`
 ): Promise<string[]> => {
   const acks: string[] = [];
 
