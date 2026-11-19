@@ -49,90 +49,93 @@ export const ClientIndexPage = (): JSX.Element => {
     <div data-testid="client-index-page">
       {/* TODO Typography */}
       <h2>{title}</h2>
-      <table>
-        <tr>
-          {layout.columns.map(({ label, key }) => (
-            <th key={key}>{label}</th>
-          ))}
-        </tr>
-        {layout.isSearchable ? (
+      <table data-testid="client-index-list">
+        <thead>
           <tr>
-            {layout.columns.map(({ search, key }) =>
-              search ? (
-                <td>
-                  <TableColumnSearchControl
-                    {...search}
-                    name={key}
-                    value={filterValues[key] || ""}
-                    onFocus={(id: string) => {
-                      setFocusedField(id);
-                    }}
-                    isFocused={focusedField === `search-${key}`}
-                    onChange={(
-                      newValue: string | number | boolean | null | undefined,
-                    ) => {
-                      if (
-                        newValue === null ||
-                        newValue === "" ||
-                        typeof newValue === "undefined"
-                      ) {
+            {layout.columns.map(({ label, key }) => (
+              <th key={key}>{label}</th>
+            ))}
+          </tr>
+          {layout.isSearchable ? (
+            <tr>
+              {layout.columns.map(({ search, key }) =>
+                search ? (
+                  <td>
+                    <TableColumnSearchControl
+                      {...search}
+                      name={key}
+                      value={filterValues[key] || ""}
+                      onFocus={(id: string) => {
+                        setFocusedField(id);
+                      }}
+                      isFocused={focusedField === `search-${key}`}
+                      onChange={(
+                        newValue: string | number | boolean | null | undefined,
+                      ) => {
+                        if (
+                          newValue === null ||
+                          newValue === "" ||
+                          typeof newValue === "undefined"
+                        ) {
+                          dispatch(
+                            clearClientSearchField({
+                              field: key,
+                            }),
+                          );
+
+                          return;
+                        }
+
                         dispatch(
-                          clearClientSearchField({
+                          setClientSearchTermsForField({
                             field: key,
+                            value: newValue,
                           }),
                         );
-
-                        return;
-                      }
-
-                      dispatch(
-                        setClientSearchTermsForField({
-                          field: key,
-                          value: newValue,
-                        }),
-                      );
-                    }}
-                  />
-                </td>
-              ) : (
-                <td>
-                  <div>{PLACEHOLDER_FOR_EMPTY_CELL}</div>
-                </td>
-              ),
-            )}
-          </tr>
-        ) : null}
-        {rows.map((r, rowIndex) => {
-          // TODO tighten the type up in the shared interface
-          const row = r as Record<string, string>;
-          return (
-            <tr>
-              {layout.columns.map(({ type, key }) => {
-                if (key in row) {
-                  const rawValue = row[key];
-
-                  const renderedCell =
-                    type === "LINK" ? (
-                      <Link to={rawValue}>Link</Link>
-                    ) : (
-                      rawValue
-                    );
-
-                  return <td key={`row-${key}-${rowIndex}`}>{renderedCell}</td>;
-                }
-
-                /**
-                 * TODO it might be better to emit an error state if s
-                 */
-                return (
-                  <td key={`row-${key}-${rowIndex}`}>
-                    {PLACEHOLDER_FOR_EMPTY_CELL}
+                      }}
+                    />
                   </td>
-                );
-              })}
+                ) : (
+                  <td>
+                    <div>{PLACEHOLDER_FOR_EMPTY_CELL}</div>
+                  </td>
+                ),
+              )}
             </tr>
-          );
-        })}
+          ) : null}
+        </thead>
+        <tbody data-testid="client-index-search-results">
+          {rows.map((r, rowIndex) => {
+            // TODO tighten the type up in the shared interface
+            const row = r as Record<string, string>;
+            return (
+              <tr>
+                {layout.columns.map(({ type, key }) => {
+                  if (key in row) {
+                    const rawValue = row[key];
+
+                    const renderedCell =
+                      type === "LINK" ? (
+                        <Link to={rawValue}>Link</Link>
+                      ) : (
+                        rawValue
+                      );
+
+                    return (
+                      <td key={`row-${key}-${rowIndex}`}>{renderedCell}</td>
+                    );
+                  }
+
+                  return (
+                    <td key={`row-${key}-${rowIndex}`}>
+                      {PLACEHOLDER_FOR_EMPTY_CELL}
+                    </td>
+                  );
+                })}
+              </tr>
+            );
+          })}
+        </tbody>
         <Button data-testid="new-client-button">
           <Link to="/clients/new">New</Link>
         </Button>

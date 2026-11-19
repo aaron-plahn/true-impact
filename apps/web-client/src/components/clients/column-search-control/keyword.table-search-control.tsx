@@ -28,6 +28,7 @@ export const KeywordTableSearchControl = ({
         }
       }}
       id={id}
+      data-testid={id}
       type="text"
       placeholder={`search ${name}`}
       value={value}
