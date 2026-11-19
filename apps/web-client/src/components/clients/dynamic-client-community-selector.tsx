@@ -32,6 +32,8 @@ export const DynamicClientCommunitySelector = ({
         {isCommunityKnown ? "I will choose below" : "I don't know"}
         {isCommunityKnown ? (
           <DynamicSelector
+            // Required if visible
+            isRequired={true}
             name="communityId"
             onChange={onChange}
             searchUrl="/communities/select"
