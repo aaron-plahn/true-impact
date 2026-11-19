@@ -126,9 +126,6 @@ export const ClientIndexPage = (): JSX.Element => {
                     );
                   }
 
-                  /**
-                   * TODO it might be better to emit an error state if s
-                   */
                   return (
                     <td key={`row-${key}-${rowIndex}`}>
                       {PLACEHOLDER_FOR_EMPTY_CELL}
