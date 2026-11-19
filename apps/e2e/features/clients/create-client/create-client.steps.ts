@@ -102,9 +102,7 @@ When(
 When(
   "I complete the dynamic seletor field {string} by typing {string} and choosing the result {string}",
   async (fieldName, searchText, resultingLabel) => {
-    const targetFormField = $(
-      `[data-testid="${fieldName}-dynamic-select-searchbar"]`,
-    );
+    const targetFormField = $(`[data-testid="${fieldName}-input"]`);
 
     await targetFormField.click();
 
@@ -112,9 +110,12 @@ When(
 
     const selectList = $(`[data-testid="${fieldName}-input"]`);
 
-    const chosenOption = await selectList.$(`*=${resultingLabel}`);
+    // TODO let's not assume this is a list item
+    const chosenOption = selectList.$(
+      `[data-testid="${fieldName}-option-${resultingLabel}"]`,
+    );
 
-    chosenOption.click();
+    await chosenOption.click();
   },
 );
 
@@ -123,3 +124,23 @@ Then("I should see the text {string} on the screen", async (expectedText) => {
 
   await expect(elementWithText).toBeDisplayed();
 });
+
+Then("The {string} button should be disabled", async (label) => {
+  const button = await $(`button=${label}`);
+
+  await expect(button).toBeDisabled();
+});
+
+Then(
+  "The field {string} should have the validation message {string}",
+  async (fieldName, validationMessage) => {
+    const input = $(`[data-testid=${fieldName}-input]`);
+
+    await input.waitForExist({ timeout: 500 }); // ms
+
+    await expect(input).toHaveElementProperty(
+      "validationMessage",
+      validationMessage,
+    );
+  },
+);

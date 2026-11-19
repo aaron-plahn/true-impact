@@ -9,12 +9,14 @@ export interface DynamicSelectorProps {
   onChange: (newValue: string | undefined) => void;
   // the API endpoint for active search
   searchUrl: string;
+  isRequired?: boolean;
 }
 
 export const DynamicSelector = ({
   name,
   searchUrl,
   onChange,
+  isRequired,
 }: DynamicSelectorProps): JSX.Element => {
   const [searchText, setSearchText] = useState<string>("");
 
@@ -73,10 +75,11 @@ export const DynamicSelector = ({
   }
 
   return (
-    <div data-testid={`${name}-input`}>
+    <div>
       <input
-        id={`dynamic-select-searchbar-${name}`}
-        data-testid={`${name}-dynamic-select-searchbar`}
+        required={Boolean(isRequired)}
+        id={`${name}-input`}
+        data-testid={`${name}-input`}
         type="text"
         value={searchText}
         onChange={(e) => {
@@ -88,10 +91,11 @@ export const DynamicSelector = ({
           setSearchText(e.target.value);
         }}
       />
-      <ul>
+      <ul data-testid={`${name}-selection-menu`}>
         {!communityId
           ? (results || []).map((r) => (
               <li
+                data-testid={`${name}-option-${r.label}`}
                 key={r.id}
                 onClick={() => {
                   setCommunityId(r.id);
