@@ -22,6 +22,8 @@ export const SelectOneTableSearchControl = ({
     return ((state?.clientSearch?.searchTerms || {})[name] || "") as string;
   });
 
+  const id = `search-${name}`;
+
   return (
     <>
       <select
@@ -30,7 +32,8 @@ export const SelectOneTableSearchControl = ({
             node.focus();
           }
         }}
-        id={`search-${name}`}
+        id={id}
+        data-testid={id}
         name={name}
         value={value}
         onChange={(e) => {
