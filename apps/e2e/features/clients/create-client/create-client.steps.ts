@@ -123,3 +123,20 @@ Then("I should see the text {string} on the screen", async (expectedText) => {
 
   await expect(elementWithText).toBeDisplayed();
 });
+
+Then("The {string} button should be disabled", async (label) => {
+  const button = await $(`button=${label}`);
+
+  await expect(button).toBeDisabled();
+});
+
+Then(
+  "The field {string} should have the validation message {string}",
+  async (fieldName, validationMessage) => {
+    const input = $(`[data-testid=${fieldName}-input]`);
+
+    const message = await input.getProperty("validationMessage");
+
+    expect(message).toContain(validationMessage);
+  },
+);

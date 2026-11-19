@@ -2,6 +2,18 @@ Feature: Client management: create a new Client
     Background:
         Given I have cleared all existing clients and communities
 
+    @only
+    Scenario: When omitting the required field firstName
+        Given I am logged in as an admin
+        When I open the new client page
+        # And I complete the text input field "firstName" with the value "Rob"
+        And I complete the multitext input field "middleNames" with the value "James"
+        And I complete the text input field "lastName" with the value "McGee"
+        And I complete the date picker field "dateOfBirth" with the value "04-13-2008"
+        And I complete the select field "isIndigenous" by chosing the option with label "unknown"
+        And I submit the command "Create Client"
+        Then The field "firstName" should have the validation message "Please fill out this field"
+
     Scenario: When creating a client whose Indigenous community is unknown
         Given I am logged in as an admin
         When I open the new client page

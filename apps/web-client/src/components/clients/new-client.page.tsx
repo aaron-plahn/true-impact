@@ -62,6 +62,7 @@ export const NewClientPage = () => {
           <label htmlFor="firstName-input">
             First Name
             <input
+              required
               id="firstName-input"
               // firstName-input-text ? Should the test ID track the field type?
               data-testid="firstName-input"
