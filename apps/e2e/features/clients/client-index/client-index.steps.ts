@@ -46,6 +46,15 @@ When(
   },
 );
 
+When(
+  "I complete the select search field {string} with the value labeled {string}",
+  async (fieldName, labelForTargetValue) => {
+    const targetField = $(`[data-testid="search-${fieldName}"]`);
+
+    await targetField.selectByVisibleText(labelForTargetValue);
+  },
+);
+
 /**
  * TODO Ideally, we would check the contents of the rows we find.
  * We need to update our test helpers so we can seed data with known contents

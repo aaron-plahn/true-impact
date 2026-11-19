@@ -8,6 +8,7 @@ Feature: Client index page- a searchable list of clients
         When I visit the client index page
         Then 5 results should be visible in the "client-index" table
 
+    # TODO add scenarios that involve changing the text input, e.g. by backspacing extra characters that cause the search to return nothing and finding the desired results
     Scenario: Searching the field First Name with the text "Zq" should find 0 results
         Given I am logged in as an admin
         When I visit the client index page
@@ -52,4 +53,31 @@ Feature: Client index page- a searchable list of clients
         And I complete the text search field "community" with the value "Creek"
         Then 3 results should be visible in the "client-index" table
 
-# TODO Allow users to filter clients without a community
+    # TODO Allow users to filter clients without a community
+
+    Scenario: Searching the field Is Indigenous with the value yes should find 3 results (Igotta, Iveno and Jeffry)
+        Given I am logged in as an admin
+        When I visit the client index page
+        And I complete the select search field "isIndigenous" with the value labeled "yes"
+        Then 3 results should be visible in the "client-index" table
+
+    Scenario: Searching the field Is Indigenous with the value no should find 1 result (Minnie)
+        Given I am logged in as an admin
+        When I visit the client index page
+        And I complete the select search field "isIndigenous" with the value labeled "no"
+        Then 1 results should be visible in the "client-index" table
+
+    Scenario: Searching the field Is Indigenous with the value "unknown" should return
+        Given I am logged in as an admin
+        When I visit the client index page
+        And I complete the select search field "isIndigenous" with the value labeled "unknown"
+        Then 1 results should be visible in the "client-index" table
+
+    Scenario: Searching the field Is Indigenous with the value "yes" and then clearing the selection
+        Given I am logged in as an admin
+        When I visit the client index page
+        And I complete the select search field "isIndigenous" with the value labeled "yes"
+        And I complete the select search field "isIndigenous" with the value labeled "Choose One"
+        Then 5 results should be visible in the "client-index" table
+
+# TODO In a separate test, modify the user's community and check that the index table is updated
