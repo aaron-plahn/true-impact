@@ -16,6 +16,7 @@ Feature: Adding a question to an existing survey
         Given I am on the survey management index page
         And I start a new survey named "Foobar or Not?"
         When I begin the command with label "Add Question"
+        # TODO scope the following to the target command form?
         And I complete the text input field "prompt" with the value "Do you like my test question?"
         Then The field "label" should have the validation message "Please fill out this field."
 
