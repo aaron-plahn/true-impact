@@ -62,6 +62,7 @@ export const NewClientPage = () => {
           <label htmlFor="firstName-input">
             First Name
             <input
+              required
               id="firstName-input"
               // firstName-input-text ? Should the test ID track the field type?
               data-testid="firstName-input"
@@ -83,6 +84,7 @@ export const NewClientPage = () => {
           <label htmlFor="lastName-input">
             Last Name
             <input
+              required
               id="lastName-input"
               data-testid="lastName-input"
               type="text"
@@ -97,6 +99,7 @@ export const NewClientPage = () => {
             {/* TODO tool tips */}
             <input
               id="dateOfBirth-input"
+              required
               data-testid="dateOfBirth-input"
               type="date"
               value={dateOfBirth}

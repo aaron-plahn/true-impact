@@ -102,19 +102,21 @@ When(
 When(
   "I complete the dynamic seletor field {string} by typing {string} and choosing the result {string}",
   async (fieldName, searchText, resultingLabel) => {
-    const targetFormField = $(
-      `[data-testid="${fieldName}-dynamic-select-searchbar"]`,
-    );
+    const targetFormField = $(`[data-testid="${fieldName}-input"]`);
 
     await targetFormField.click();
 
     await targetFormField.setValue(searchText);
 
-    const selectList = $(`[data-testid="${fieldName}-input"]`);
+    const textElem = $(`*=${resultingLabel}`);
 
-    const chosenOption = await selectList.$(`*=${resultingLabel}`);
+    await textElem.waitForDisplayed({ timeout: 5000 }); // ms
 
-    chosenOption.click();
+    const chosenOption = $(
+      `[data-testid="${fieldName}-option-${resultingLabel}"]`,
+    );
+
+    await chosenOption.click();
   },
 );
 
@@ -123,3 +125,23 @@ Then("I should see the text {string} on the screen", async (expectedText) => {
 
   await expect(elementWithText).toBeDisplayed();
 });
+
+Then("The {string} button should be disabled", async (label) => {
+  const button = await $(`button=${label}`);
+
+  await expect(button).toBeDisabled();
+});
+
+Then(
+  "The field {string} should have the validation message {string}",
+  async (fieldName, validationMessage) => {
+    const input = $(`[data-testid=${fieldName}-input]`);
+
+    await input.waitForExist({ timeout: 500 }); // ms
+
+    await expect(input).toHaveElementProperty(
+      "validationMessage",
+      validationMessage,
+    );
+  },
+);

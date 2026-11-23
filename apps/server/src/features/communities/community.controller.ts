@@ -105,10 +105,13 @@ export class CommunityController implements OnModuleInit {
       }
 
       const matchesOriginalText =
-        originalText && originalText.toLowerCase().includes(searchText);
+        originalText &&
+        // TODO support `shouldIgnoreCase` option
+        originalText.toLowerCase().includes(searchText.toLowerCase());
 
       const matchesTranslationText =
-        translationText && translationText.toLowerCase().includes(searchText);
+        translationText &&
+        translationText.toLowerCase().includes(searchText.toLowerCase());
 
       if (matchesOriginalText || matchesTranslationText) {
         return [
