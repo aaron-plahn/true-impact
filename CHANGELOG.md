@@ -2,6 +2,9 @@
 
 This first release of the True Impact platform introduces a working model for user management, client management, and survey creation and completion.
 
+## 97
+In this PR, we improve the UX for CREATE_CLIENT by validating required fields client-side.
+
 ## 96
 In this PR, we test the search experience in the client index page.
 
