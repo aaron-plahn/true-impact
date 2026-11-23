@@ -50,6 +50,7 @@ export const AddCommunityAffiliationForClientCommandForm = ({
     >
       Add Community
       <DynamicSelector
+        isRequired={true}
         name="communityId"
         onChange={(newValue) => {
           if (newValue) {
