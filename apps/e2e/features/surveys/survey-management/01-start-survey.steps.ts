@@ -30,6 +30,10 @@ Given("I am on the survey management index page", async () => {
   await surveyManagementIndexPage.open();
 });
 
+Given("I go to the new survey page", async () => {
+  await surveyManagementIndexPage.goToNewSurveyPage();
+});
+
 /**
  * TODO Should this step require the <surveyName>?
  *
