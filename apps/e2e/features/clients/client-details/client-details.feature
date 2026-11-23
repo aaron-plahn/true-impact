@@ -51,6 +51,39 @@ Feature: Client Details page
         And I submit the command "Create Client"
         Then The client's "isIndigenous" should appear as "Unknown"
 
+    Scenario: When adding the client's community in the client detail view
+        # TODO Seed this with a command
+        Given I am logged in as an admin
+        When I open the new client page
+        And I complete the text input field "firstName" with the value "Susie"
+        And I complete the multitext input field "middleNames" with the value "Sarah"
+        And I complete the text input field "lastName" with the value "Simpson"
+        And I complete the date picker field "dateOfBirth" with the value "12-31-2020"
+        And I complete the select field "isIndigenous" by chosing the option with label "unknown"
+        And I submit the command "Create Client"
+        Then The client's "isIndigenous" should appear as "Unknown"
+        # Now on the client detail page
+        When I begin the command with label "Add"
+        # This is not an exhaustive search, but we just want to add some variety here
+        And I complete the dynamic seletor field "communityId" by typing "Creek" and choosing the result "Little Creek"
+        And I submit the command "Add Community"
+        Then The client's "community" should appear as "Little Creek"
+
+    Scenario: When adding the client's community in the client detail view
+        Given I am logged in as an admin
+        When I open the new client page
+        And I complete the text input field "firstName" with the value "Susie"
+        And I complete the multitext input field "middleNames" with the value "Sarah"
+        And I complete the text input field "lastName" with the value "Simpson"
+        And I complete the date picker field "dateOfBirth" with the value "12-31-2020"
+        And I complete the select field "isIndigenous" by chosing the option with label "unknown"
+        And I submit the command "Create Client"
+        Then The client's "isIndigenous" should appear as "Unknown"
+        # Now on the client detail page
+        When I begin the command with label "Add"
+        And I submit the command "Add Community"
+        Then The field "communityId" should have the validation message "Please fill out this field."
+
     Scenario: When the client is not isIndigenous
         Given I am logged in as an admin
         When I open the new client page
