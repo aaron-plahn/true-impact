@@ -304,7 +304,7 @@ export const config: WebdriverIO.Config = {
 
     if (error) {
       // Pauses the test and keeps the browser open for inspection
-      await browser.debug();
+      // await browser.debug();
     }
   },
   /**

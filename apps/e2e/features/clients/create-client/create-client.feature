@@ -93,7 +93,6 @@ Feature: Client management: create a new Client
         And I submit the command "Create Client"
         Then I should see the text "Jones" on the screen
 
-    @only
     Scenario: When creating an Indigenous client whose community is known
         Given The communities in the fixture file "import-communities.data.json" has been imported
         Given I am logged in as an admin
