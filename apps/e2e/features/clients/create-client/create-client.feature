@@ -70,6 +70,21 @@ Feature: Client management: create a new Client
         And I should see the text "2008-04-13" on the screen
         And I should see the text "Unknown" on the screen
 
+    Scenario: When creating a client whose community is unknown and leaving the default "unknown" option selected
+        Given I am logged in as an admin
+        When I open the new client page
+        And I complete the text input field "firstName" with the value "Rob"
+        And I complete the multitext input field "middleNames" with the value "James"
+        And I complete the text input field "lastName" with the value "McGee"
+        And I complete the date picker field "dateOfBirth" with the value "04-13-2008"
+        # This test case proves that `Unknown` is the default value
+        # And I complete the select field "isIndigenous" by chosing the option with label "unknown"
+        And I submit the command "Create Client"
+        Then I should see the text "McGee" on the screen
+        And I should see the text "Rob" on the screen
+        And I should see the text "2008-04-13" on the screen
+        And I should see the text "Unknown" on the screen
+
     Scenario: When creating a non-Indigenous client
         Given I am logged in as an admin
         When I open the new client page
