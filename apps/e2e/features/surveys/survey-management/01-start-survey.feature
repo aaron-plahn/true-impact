@@ -14,6 +14,5 @@ Feature: Start a new Survey template
         Given I am logged in as an admin
         And I am on the survey management index page
         And I go to the new survey page
-        # TODO change this
-        When I submit the command "Submit"
+        When I submit the command "Create Survey"
         Then The field "name" should have the validation message "Please fill out this field."
