@@ -108,10 +108,11 @@ When(
 
     await targetFormField.setValue(searchText);
 
-    const selectList = $(`[data-testid="${fieldName}-input"]`);
+    const textElem = $(`*=${resultingLabel}`);
 
-    // TODO let's not assume this is a list item
-    const chosenOption = selectList.$(
+    await textElem.waitForDisplayed({ timeout: 5000 }); // ms
+
+    const chosenOption = $(
       `[data-testid="${fieldName}-option-${resultingLabel}"]`,
     );
 
