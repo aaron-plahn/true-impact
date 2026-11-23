@@ -32,6 +32,9 @@ Given("I go to the new survey page", async () => {
   await surveyManagementIndexPage.goToNewSurveyPage();
 });
 
+/**
+ * We should deprecate this in favor of our fixtures \ survey import utils.
+ */
 When("I build a complete survey named {string}", async (testSurveyName) => {
   await surveyManagementIndexPage.beginNewSurvey(testSurveyName);
 
@@ -69,14 +72,6 @@ When("I build a complete survey named {string}", async (testSurveyName) => {
   await surveyManagementIndexPage.openToAnonymousParticipant();
 });
 
-/**
- * TODO Should this step require the <surveyName>?
- *
- * Note that ideally we would test this at a more granular level.
- *
- * Do we want to parametrize this step so that we can reuse local
- * fixtures in other tests?
- */
 When("I start a new survey named {string}", async (testSurveyName) => {
   await surveyManagementIndexPage.beginNewSurvey(testSurveyName);
 });
