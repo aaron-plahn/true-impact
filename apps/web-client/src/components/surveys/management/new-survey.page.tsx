@@ -56,7 +56,7 @@ export const NewSurveyPage = () => {
               setSurveyName(e.target.value);
             }}
           />
-          <button type="submit">Submit</button>
+          <button type="submit">Create Survey</button>
         </label>
       </form>
     </div>
