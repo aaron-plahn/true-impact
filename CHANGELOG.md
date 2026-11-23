@@ -2,6 +2,9 @@
 
 This first release of the True Impact platform introduces a working model for user management, client management, and survey creation and completion.
 
+## 99
+In this PR, we introduce client-side form validation to all command forms in the survey detail page.
+
 ## 98
 In this PR, we introduce client-side form validation to the "ADD_COMMUNITY_AFFILIATION_FOR_CLIENT"
 form in the client-detail view.
