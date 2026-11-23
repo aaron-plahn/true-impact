@@ -53,7 +53,9 @@ export const AddQuestionCommandForm = ({
       <label htmlFor="label-input">
         Label:
         <input
+          required
           id="label-input"
+          data-testid="label-input"
           type="text"
           value={questionLabel}
           onChange={(e) => {
@@ -63,7 +65,9 @@ export const AddQuestionCommandForm = ({
       </label>
       <label htmlFor="prompt-input">
         <input
+          required
           id="prompt-input"
+          data-testid="prompt-input"
           type="text"
           value={prompt}
           onChange={(e) => {

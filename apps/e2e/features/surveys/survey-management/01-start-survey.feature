@@ -6,7 +6,7 @@ Feature: Start a new Survey template
 
         Given I am logged in as an admin
         And I am on the survey management index page
-        When I start a new survey
+        When I build a complete survey named "Weekly Questionairre"
         Then It should display the newly created survey
 
     @only

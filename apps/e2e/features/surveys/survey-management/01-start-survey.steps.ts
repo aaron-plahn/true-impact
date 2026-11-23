@@ -5,8 +5,6 @@ import loginPage from "../../login/login.page";
 import Page from "../../login/page";
 import { surveyManagementIndexPage } from "./survey-builder.page";
 
-const testSurveyName = "Weekly Questionnaire";
-
 const question1 = "What is your favorite programming language?";
 
 const option1a = "JavaScript";
@@ -34,15 +32,7 @@ Given("I go to the new survey page", async () => {
   await surveyManagementIndexPage.goToNewSurveyPage();
 });
 
-/**
- * TODO Should this step require the <surveyName>?
- *
- * Note that ideally we would test this at a more granular level.
- *
- * Do we want to parametrize this step so that we can reuse local
- * fixtures in other tests?
- */
-When("I start a new survey", async () => {
+When("I build a complete survey named {string}", async (testSurveyName) => {
   await surveyManagementIndexPage.beginNewSurvey(testSurveyName);
 
   await surveyManagementIndexPage.addQuestion({
@@ -77,6 +67,18 @@ When("I start a new survey", async () => {
   await surveyManagementIndexPage.finalize();
 
   await surveyManagementIndexPage.openToAnonymousParticipant();
+});
+
+/**
+ * TODO Should this step require the <surveyName>?
+ *
+ * Note that ideally we would test this at a more granular level.
+ *
+ * Do we want to parametrize this step so that we can reuse local
+ * fixtures in other tests?
+ */
+When("I start a new survey named {string}", async (testSurveyName) => {
+  await surveyManagementIndexPage.beginNewSurvey(testSurveyName);
 });
 
 Then("It should display the newly created survey", async () => {
