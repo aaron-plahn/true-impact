@@ -56,7 +56,9 @@ export const AddOptionToSurveyQuestionCommandForm = ({
       <label htmlFor="option-label-input">
         Option Label:
         <input
+          required
           id="optionLabel-input"
+          data-testid="label-input"
           type="text"
           value={optionLabel}
           onChange={(e) => {
@@ -67,7 +69,9 @@ export const AddOptionToSurveyQuestionCommandForm = ({
       <label htmlFor="text-input">
         Text to Display for this Option:
         <input
+          required
           id="text-input"
+          data-testid="text-input"
           type="text"
           value={text}
           onChange={(e) => {

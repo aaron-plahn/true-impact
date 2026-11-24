@@ -66,6 +66,10 @@ class SurveyManagementIndexPage extends Page {
     await $("*=Open for Anonymous Individual").click();
   }
 
+  public async goToNewSurveyPage() {
+    await $("*=NEW").click();
+  }
+
   public async goToResponsePage() {
     await $("#copyAccessCode").click();
 

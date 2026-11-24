@@ -47,14 +47,16 @@ export const NewSurveyPage = () => {
         <label htmlFor="name-input">
           Name:
           <input
+            required
             id="name-input"
+            data-testid="name-input"
             type="text"
             value={surveyName}
             onChange={(e) => {
               setSurveyName(e.target.value);
             }}
           />
-          <button type="submit">Submit</button>
+          <button type="submit">Create Survey</button>
         </label>
       </form>
     </div>
