@@ -27,7 +27,9 @@ export const DefaultSurveyReportPresenter = ({
           {rows.map((row) => (
             <tr key={row.category}>
               <td>{row.category}</td>
-              <td>{row.value}</td>
+              <td data-testid={`report-category-${row.category}-value`}>
+                {row.value}
+              </td>
             </tr>
           ))}
         </tbody>

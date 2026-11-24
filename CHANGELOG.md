@@ -2,6 +2,9 @@
 
 This first release of the True Impact platform introduces a working model for user management, client management, and survey creation and completion.
 
+## 100
+In this PR, we add a UI e2e test for completing a survey as a client and reviewing the results and custom reports as an admin.
+
 ## 99
 In this PR, we introduce client-side form validation to all command forms in the survey detail page.
 

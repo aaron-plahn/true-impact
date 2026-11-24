@@ -1,4 +1,4 @@
-Feature: Completing a survey
+Feature: Completing a survey anonymously
     Background:
         Given I have cleared all existing surveys
 
@@ -18,7 +18,7 @@ Feature: Completing a survey
     #     Then It should display the an acknowledgement that the submission was received
 
     Scenario: As an anonymous participant completing all questions in an open survey and submitting the survey
-
+        # This step logs in as an admin as a side-effect
         Given There is a survey named "Staff Evaluation"
         And It has a question "i": "How hard do you work"
         And Question "i" has an option "a": "Barely at all"

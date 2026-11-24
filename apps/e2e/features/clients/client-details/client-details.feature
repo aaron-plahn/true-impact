@@ -16,7 +16,7 @@ Feature: Client Details page
         And I submit the command "Create Client"
         # It is assumed that the app redirects to the client detail page for the new client at this point
         And I begin the command with label "Add Client's Community"
-        And I complete the dynamic seletor field "communityId" by typing "Big" and choosing the result "Big Creek"
+        And I complete the dynamic selector field "communityId" by typing "Big" and choosing the result "Big Creek"
         # TODO Shouldn't this be "Add Client's Community"?
         And I submit the command "Add Community"
         Then The client's "community" should appear as "Big Creek"
@@ -35,7 +35,7 @@ Feature: Client Details page
         And I complete the date picker field "dateOfBirth" with the value "12-31-2020"
         And I complete the select field "isIndigenous" by chosing the option with label "yes"
         # TODO check that the submit button is disabled until the form field has been completed
-        And I complete the dynamic seletor field "communityId" by typing "Big" and choosing the result "Big Creek"
+        And I complete the dynamic selector field "communityId" by typing "Big" and choosing the result "Big Creek"
         And I submit the command "Create Client"
         # Now on the client detail page
         Then The client's "community" should appear as "Big Creek"
@@ -65,7 +65,7 @@ Feature: Client Details page
         # Now on the client detail page
         When I begin the command with label "Add"
         # This is not an exhaustive search, but we just want to add some variety here
-        And I complete the dynamic seletor field "communityId" by typing "Creek" and choosing the result "Little Creek"
+        And I complete the dynamic selector field "communityId" by typing "Creek" and choosing the result "Little Creek"
         And I submit the command "Add Community"
         Then The client's "community" should appear as "Little Creek"
 

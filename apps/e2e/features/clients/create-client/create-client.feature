@@ -52,7 +52,7 @@ Feature: Client management: create a new Client
         # we don't switch this, because it is `true` by default
         # And I complete the switch field "isCommunityKnown" by switching it
         # Omitted
-        # And I complete the dynamic seletor field "communityId" by typing "Big" and choosing the result "Big Creek"
+        # And I complete the dynamic selector field "communityId" by typing "Big" and choosing the result "Big Creek"
         And I submit the command "Create Client"
         Then The field "communityId" should have the validation message "Please fill out this field."
 
@@ -120,7 +120,7 @@ Feature: Client management: create a new Client
         And I complete the select field "isIndigenous" by chosing the option with label "yes"
         # The community is known
         # And I complete the switch field "isCommunityKnown" by switching it
-        And I complete the dynamic seletor field "communityId" by typing "Big" and choosing the result "Big Creek"
+        And I complete the dynamic selector field "communityId" by typing "Big" and choosing the result "Big Creek"
         And I submit the command "Create Client"
         Then I should see the text "Parkins" on the screen
 

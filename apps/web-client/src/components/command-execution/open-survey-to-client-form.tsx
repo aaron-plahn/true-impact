@@ -53,7 +53,7 @@ export const OpenSurveyToClientForm = ({
     >
       <DynamicSelector
         //   clients for surveys?
-        name="clients"
+        name="clientId"
         // TODO should we have the leading '/' here?
         searchUrl="/clients/select"
         onChange={(newValue) => {
