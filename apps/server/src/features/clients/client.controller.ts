@@ -7,6 +7,7 @@ import {
   SimpleQueryFilterCondition,
 } from 'src/libs/query-language';
 import { IndexTable, TableLayout } from 'src/libs/server-driven-ui';
+import { createClientTISduiCommand } from 'src/libs/server-driven-ui/commands';
 import { AdminRbacAuthGuard } from '../../auth/guards';
 import type { CommandResult, ICommandFsa } from '../../libs/cqrs-es';
 import { CommandHandlerService } from '../../libs/cqrs-es';
@@ -340,6 +341,12 @@ export class ClientController implements OnModuleInit {
         // no point of changing to the current page size
         availablePageSizes: PAGE_SIZES.filter((ps) => ps !== pageSize),
         totalNumberOfResults: clients.length,
+      },
+      actions: {
+        /**
+         * TODO Dynamically build this from the command Schema.
+         */
+        CREATE_CLIENT: createClientTISduiCommand,
       },
     };
 
