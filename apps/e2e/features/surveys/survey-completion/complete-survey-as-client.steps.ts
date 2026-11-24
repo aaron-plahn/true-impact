@@ -28,7 +28,6 @@ Given(
 );
 
 Given("I navigate to the survey report named {string}", async (reportName) => {
-  // TODO group the survey responses by survey name in this view
   const link = $(`a*=${reportName}`);
 
   await link.click();

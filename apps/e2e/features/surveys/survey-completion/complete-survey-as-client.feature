@@ -1,4 +1,3 @@
-# TODO name anonymous test consistently
 Feature: Completing a survey as a client
     Background:
         Given I have cleared all existing surveys
