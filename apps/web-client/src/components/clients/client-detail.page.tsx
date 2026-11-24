@@ -76,7 +76,7 @@ export const ClientDetailPage = (): JSX.Element => {
         Is Indigenous? {isIndigenous}
       </p>
       {surveyResponses.length > 0 ? (
-        <div data-testid={`client/${id}/survey-response-list`}>
+        <div data-testid={`client/survey-response-list`}>
           <h3>Survey Responses</h3>
           <ul>
             {surveyResponses.map((sr) => {

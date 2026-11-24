@@ -100,7 +100,7 @@ When(
 );
 
 When(
-  "I complete the dynamic seletor field {string} by typing {string} and choosing the result {string}",
+  "I complete the dynamic selector field {string} by typing {string} and choosing the result {string}",
   async (fieldName, searchText, resultingLabel) => {
     const targetFormField = $(`[data-testid="${fieldName}-input"]`);
 

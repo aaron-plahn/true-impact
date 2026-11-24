@@ -9,7 +9,6 @@ Feature: Start a new Survey template
         When I build a complete survey named "Weekly Questionairre"
         Then It should display the newly created survey
 
-    @only
     Scenario: When omitting the required "name" field
         Given I am logged in as an admin
         And I am on the survey management index page
