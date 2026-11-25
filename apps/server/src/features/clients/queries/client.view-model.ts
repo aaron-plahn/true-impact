@@ -278,12 +278,12 @@ export class ClientViewModel {
       revision: this.revision,
       fullName: this.fullName.toDto(),
       isIndigenous: this.isIndigenous,
-      // TODO use the schema to generate the command form
       community:
         this.community ||
         buildCommandForm(
           AddCommunityAffiliationForClient,
           'clients/commands',
+          // context
           {
             aggregateCompositeIdentifier: {
               type: CLIENT_AGGREGATE_TYPE,
