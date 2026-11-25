@@ -42,8 +42,6 @@ const CommunityPresenter = ({
       <CommandExecutor
         form={({ onClose }) => (
           <DynamicForm
-            method={community.method}
-            path={community.path}
             label={community.label}
             fields={community.fields}
             context={community.context}
@@ -53,13 +51,6 @@ const CommunityPresenter = ({
                 payload,
               });
             }}
-            onClose={onClose}
-            // here we convert the request to a CommandFSA
-            // TODO can't we bind the context here?
-            buildRequestBody={(payload) => ({
-              type: community.commandType,
-              payload,
-            })}
           />
         )}
         type={community.type}

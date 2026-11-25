@@ -1,4 +1,7 @@
-import { TISduiCommand } from 'src/libs/server-driven-ui/commands';
+import {
+  buildCommandForm,
+  TISduiCommand,
+} from 'src/libs/server-driven-ui/commands';
 import { FullName, FullNameDto } from '../../../common/full-name';
 import { CommunityViewModelClientDto } from '../../../features/communities/queries';
 import { FlagViewModelClientDto } from '../../../features/flags/queries';
@@ -15,6 +18,7 @@ import {
 import { LookupTable } from '../../../libs/data-types/schema-management/decorators/lookup-table.decorator';
 import { Client } from '../client.aggregate-root';
 import { CLIENT_AGGREGATE_TYPE } from '../client.composite-identifier';
+import { AddCommunityAffiliationForClient } from '../commands';
 
 export class ClientIndexListRowViewDto {
   // do we want to mark this field as "hidden"?
@@ -275,29 +279,48 @@ export class ClientViewModel {
       fullName: this.fullName.toDto(),
       isIndigenous: this.isIndigenous,
       // TODO use the schema to generate the command form
-      community: this.community || {
-        type: 'COMMAND',
-        commandType: 'ADD_COMMUNITY_AFFILIATION_FOR_CLIENT',
-        method: 'POST',
-        path: '/clients/commands',
-        label: 'Add Community',
-        tooltip: 'Add community to which this client is officially registered',
-        context: {
-          // this.getCompositeIdentifier()
-          aggregateCompositeIdentifier: {
-            type: CLIENT_AGGREGATE_TYPE,
-            id: this.id,
-          },
-        },
-        fields: [
+      community:
+        this.community ||
+        buildCommandForm(
+          AddCommunityAffiliationForClient,
+          'clients/commands',
           {
-            type: 'DYNAMIC_SELECTOR',
-            name: 'communityId',
-            label: 'Community',
-            path: '/communities/select',
+            aggregateCompositeIdentifier: {
+              type: CLIENT_AGGREGATE_TYPE,
+              id: this.id,
+            },
           },
-        ],
-      },
+          // TODO this should come from an annotation `@Command({label,description})`
+          {
+            label: 'ADD_COMMUNITY_AFFILIATION_FOR_CLIENT',
+            description:
+              'add the community to which this client is officially registered',
+          },
+        ),
+
+      // {
+      //   type: 'COMMAND',
+      //   commandType: 'ADD_COMMUNITY_AFFILIATION_FOR_CLIENT',
+      //   method: 'POST',
+      //   path: '/clients/commands',
+      //   label: 'Add Community',
+      //   tooltip: 'Add community to which this client is officially registered',
+      //   context: {
+      //     // this.getCompositeIdentifier()
+      //     aggregateCompositeIdentifier: {
+      //       type: CLIENT_AGGREGATE_TYPE,
+      //       id: this.id,
+      //     },
+      //   },
+      //   fields: [
+      //     {
+      //       type: 'DYNAMIC_SELECTOR',
+      //       name: 'communityId',
+      //       label: 'Community',
+      //       path: '/communities/select',
+      //     },
+      //   ],
+      // },
       flagsById: deepConvertMapToObject(this.flags),
       surveyResponses: this.surveyResponses,
     };

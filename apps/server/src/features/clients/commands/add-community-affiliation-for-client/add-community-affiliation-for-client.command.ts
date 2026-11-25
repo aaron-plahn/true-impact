@@ -1,3 +1,4 @@
+import { DynamicallySelected } from 'src/libs/server-driven-ui/commands/decorators';
 import {
   NestedDataType,
   NonEmptyString,
@@ -24,9 +25,13 @@ export class AddCommunityAffiliationForClient {
   aggregateCompositeIdentifier: ClientCompositeIdentifier;
 
   @NonEmptyString({
-    label: 'community ID',
+    label: 'community',
     description:
       'a reference to the community to which this client is registered',
+  })
+  @DynamicallySelected({
+    // method?
+    path: '/communities/select',
   })
   communityId: string;
 }
