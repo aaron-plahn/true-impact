@@ -17,6 +17,8 @@ export interface DynamicFormProps {
   method: "POST";
   path: string;
   onClose: () => void;
+  // this is all we need
+  onSubmit: (formState: Record<string, unknown>) => void;
   // can't we use this as a mechanism to bind the context instead?
   buildRequestBody?: (
     formState: Record<string, unknown>,
@@ -30,6 +32,7 @@ export const DynamicForm = ({
   context,
   path,
   method,
+  onSubmit,
   buildRequestBody = (body) => body,
 }: DynamicFormProps): JSX.Element => {
   const [formState, setFormState] = useState<Record<string, unknown>>(context);
@@ -39,13 +42,7 @@ export const DynamicForm = ({
       onSubmit={(e) => {
         e.preventDefault();
 
-        const requestBody = buildRequestBody(formState);
-
-        console.log({
-          submitting: requestBody,
-          to: path,
-          with: method,
-        });
+        onSubmit(formState);
       }}
     >
       {/* stack? */}

@@ -5,7 +5,11 @@ import { CommandExecutor } from "../command-execution";
 import { DynamicForm } from "../common";
 import { ApiResponseErrorInfo } from "../error-handling";
 import { Loading } from "../loading";
-import { ClientViewModel, useFetchClientByIdQuery } from "./store";
+import {
+  ClientViewModel,
+  useExecuteClientCommandMutation,
+  useFetchClientByIdQuery,
+} from "./store";
 
 const isCommandAction = (input: unknown): input is TISduiCommand => {
   return (input as TISduiCommand)?.type === "COMMAND";
@@ -16,11 +20,22 @@ const CommunityPresenter = ({
 }: {
   community: ClientViewModel["community"] | TISduiCommand | null;
 }): JSX.Element | null => {
+  const [executeCommand, { isLoading: isRequestInProgress, error }] =
+    useExecuteClientCommandMutation();
+
   if (!community) {
     return null;
   }
 
   if (isCommandAction(community)) {
+    if (isRequestInProgress) {
+      return <Loading />;
+    }
+
+    if (error) {
+      return <ApiResponseErrorInfo error={error} />;
+    }
+
     console.log({ communityForm: JSON.stringify(community) });
 
     return (
@@ -32,6 +47,12 @@ const CommunityPresenter = ({
             label={community.label}
             fields={community.fields}
             context={community.context}
+            onSubmit={(payload) => {
+              executeCommand({
+                type: community.commandType,
+                payload,
+              });
+            }}
             onClose={onClose}
             // here we convert the request to a CommandFSA
             // TODO can't we bind the context here?
