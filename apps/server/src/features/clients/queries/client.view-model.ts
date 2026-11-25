@@ -1,3 +1,4 @@
+import { TISduiCommand } from 'src/libs/server-driven-ui/commands';
 import { FullName, FullNameDto } from '../../../common/full-name';
 import { CommunityViewModelClientDto } from '../../../features/communities/queries';
 import { FlagViewModelClientDto } from '../../../features/flags/queries';
@@ -13,6 +14,7 @@ import {
 } from '../../../libs/data-types';
 import { LookupTable } from '../../../libs/data-types/schema-management/decorators/lookup-table.decorator';
 import { Client } from '../client.aggregate-root';
+import { CLIENT_AGGREGATE_TYPE } from '../client.composite-identifier';
 
 export class ClientIndexListRowViewDto {
   // do we want to mark this field as "hidden"?
@@ -99,6 +101,20 @@ export class ClientIndexListRowViewDto {
       middleNames: ['Bob'],
       lastName: 'Deer',
     },
+    community: {
+      id: '123',
+      revision: '1',
+      name: {
+        items: {
+          en: {
+            original: {
+              text: 'The Band',
+            },
+          },
+        },
+      },
+      bandNumber: '3234',
+    },
     isIndigenous: 'No',
     flagsById: {
       f123: {
@@ -164,8 +180,10 @@ export class ClientViewModelClientDto {
     label: 'community',
     description: 'the community to which the client is registered',
   })
-  community?: CommunityViewModelClientDto;
+  // or an `Action` if not defined
+  community: CommunityViewModelClientDto | TISduiCommand;
 
+  // flag client action
   @LookupTable(() => FlagViewModelClientDto, {
     label: 'flags by ID',
     description:
@@ -180,6 +198,9 @@ export class ClientViewModelClientDto {
     isOptional: true, // i.e., can be empty
   })
   // should this be a map?
+  /**
+   * TODO Group by survey and sort by attempt #
+   */
   surveyResponses: SurveyResponseRecordViewModelClientDto[];
 }
 
@@ -246,17 +267,42 @@ export class ClientViewModel {
   }
 
   toClientDto(): ClientViewModelClientDto {
-    return {
+    const result: ClientViewModelClientDto = {
       id: this.id,
       createdAt: this.createdAt,
       dateOfBirth: this.dateOfBirth,
       revision: this.revision,
       fullName: this.fullName.toDto(),
       isIndigenous: this.isIndigenous,
-      community: this.community,
+      // TODO use the schema to generate the command form
+      community: this.community || {
+        type: 'COMMAND',
+        commandType: 'ADD_COMMUNITY_AFFILIATION_FOR_CLIENT',
+        method: 'POST',
+        path: '/clients/commands',
+        label: 'Add Community',
+        tooltip: 'Add community to which this client is officially registered',
+        context: {
+          // this.getCompositeIdentifier()
+          aggregateCompositeIdentifier: {
+            type: CLIENT_AGGREGATE_TYPE,
+            id: this.id,
+          },
+        },
+        fields: [
+          {
+            type: 'DYNAMIC_SELECTOR',
+            name: 'communityId',
+            label: 'Community',
+            path: '/communities/select',
+          },
+        ],
+      },
       flagsById: deepConvertMapToObject(this.flags),
       surveyResponses: this.surveyResponses,
     };
+
+    return result;
   }
 
   toIndexTableRow(): ClientIndexListRowViewDto {

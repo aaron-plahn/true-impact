@@ -5,8 +5,12 @@ import { DynamicSelector } from "./dynamic-selector";
 import { MultiTextInput } from "./multi-text-input";
 import { TextInputField } from "./text-input";
 
-export const DynamicFormField = (field: TISduiFormField): JSX.Element => {
-  const { type: fieldType } = field;
+type DynamicFormFieldProps<TValue = unknown> = TISduiFormField & {
+  onChange: (newValue: TValue) => void;
+};
+
+export const DynamicFormField = (field: DynamicFormFieldProps): JSX.Element => {
+  const { type: fieldType, onChange } = field;
 
   if (fieldType === "DATE_PICKER") {
     const { name, label, isRequired } = field;
@@ -17,9 +21,7 @@ export const DynamicFormField = (field: TISduiFormField): JSX.Element => {
         label={label}
         isRequired={Boolean(isRequired)}
         value={""}
-        onChange={function (newValue: string | undefined): void {
-          throw new Error("Function not implemented.");
-        }}
+        onChange={onChange}
       />
     );
   }
@@ -27,15 +29,7 @@ export const DynamicFormField = (field: TISduiFormField): JSX.Element => {
   if (fieldType === "DYNAMIC_SELECTOR") {
     const { name, path } = field;
 
-    return (
-      <DynamicSelector
-        name={name}
-        onChange={function (newValue: string | undefined): void {
-          throw new Error("Function not implemented.");
-        }}
-        searchUrl={path}
-      />
-    );
+    return <DynamicSelector name={name} onChange={onChange} searchUrl={path} />;
   }
 
   if (fieldType === "TEXT_INPUT") {
@@ -48,9 +42,7 @@ export const DynamicFormField = (field: TISduiFormField): JSX.Element => {
         isRequired={Boolean(isRequired)}
         // TODO bind to the form state
         value={""}
-        onChange={function (newValue: string | undefined): void {
-          throw new Error("Function not implemented.");
-        }}
+        onChange={onChange}
       />
     );
   }
@@ -64,8 +56,8 @@ export const DynamicFormField = (field: TISduiFormField): JSX.Element => {
       <MultiTextInput
         name={name}
         label={label}
-        onChange={function (newValues: string[]): void {
-          throw new Error("Function not implemented.");
+        onChange={(newValue) => {
+          onChange(newValue);
         }}
         values={[]}
       />

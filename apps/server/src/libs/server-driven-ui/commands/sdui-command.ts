@@ -2,14 +2,22 @@ import { ClientViewModel } from 'src/features/clients/queries';
 import { TISduiFormField } from '../forms';
 
 export interface TISduiCommand<T = unknown> {
+  type: 'COMMAND';
+  commandType: string;
   label: string;
   tooltip: string;
   // Deep Partial?
   context: Record<string, Partial<T>>;
   fields: TISduiFormField[];
+  method: 'POST';
+  path: string; // relative to base
 }
 
 export const createClientTISduiCommand: TISduiCommand<ClientViewModel> = {
+  type: 'COMMAND',
+  commandType: 'CREATE_CLIENT',
+  method: 'POST',
+  path: '/clients/commands',
   label: 'CREATE_CLIENT',
   tooltip: 'Add a new client to the system',
   context: {},
