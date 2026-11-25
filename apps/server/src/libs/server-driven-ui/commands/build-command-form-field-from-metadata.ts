@@ -40,6 +40,7 @@ export const buildCommandFormFieldFromMetadata = (
   if (metadataForProperty.type === NON_EMPTY_STRING) {
     const field: TISduiTextInput = {
       type: 'TEXT_INPUT',
+      isRequired: !metadataForProperty.isOptional,
       label: metadataForProperty.label,
       name: propertyKey,
     };

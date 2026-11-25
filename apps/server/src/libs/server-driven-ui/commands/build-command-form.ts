@@ -53,6 +53,8 @@ export const buildCommandForm = <TPayload extends ICommandPayload>(
 
         const field: TISduiDynamicSelector = {
           type: 'DYNAMIC_SELECTOR',
+          // TODO sort out the interaction of this with the property metadata
+          isRequired: true,
           // TODO constrain the @DynamicallySelected decorator to only target fields with appropriate data types
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
           label: propertyMetadata.label,

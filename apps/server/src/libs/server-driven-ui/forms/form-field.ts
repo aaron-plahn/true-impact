@@ -2,14 +2,14 @@ export interface TISduiDatePicker {
   type: 'DATE_PICKER';
   label: string;
   name: string;
-  isRequired?: boolean;
+  isRequired: boolean;
 }
 
 export interface TISduiTextInput {
   type: 'TEXT_INPUT';
   label: string;
   name: string;
-  isRequired?: boolean;
+  isRequired: boolean;
 }
 
 // Input for a `string[]` valued prop
@@ -17,14 +17,14 @@ export interface TISduiMultipleTextInput {
   type: 'MULTIPLE_TEXT_INPUT';
   label: string;
   name: string;
-  isRequired?: boolean;
+  isRequired: boolean;
 }
 
 export interface TISduiSingleSelectInput {
   type: 'SINGLE_SELECT_INPUT';
   label: string;
   name: string;
-  isRequired?: boolean;
+  isRequired: boolean;
   options: {
     label: string;
     value: string;
@@ -36,7 +36,7 @@ export interface TISduiDynamicSelector {
   type: 'DYNAMIC_SELECTOR';
   label: string;
   name: string;
-  isRequired?: boolean;
+  isRequired: boolean;
   /**
    * Note that the alternative is to have a `targetResourceType`
    * and make this a "primitive" from the client's point of view. This

@@ -28,6 +28,7 @@ export class BeginSurveyPage {
 
     const accessCodeTextInputField: TISduiTextInput = {
       type: 'TEXT_INPUT',
+      isRequired: true,
       label: 'Access Code',
       name: 'accessCode',
     };

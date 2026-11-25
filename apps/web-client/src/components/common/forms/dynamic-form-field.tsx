@@ -27,9 +27,16 @@ export const DynamicFormField = (field: DynamicFormFieldProps): JSX.Element => {
   }
 
   if (fieldType === "DYNAMIC_SELECTOR") {
-    const { name, path } = field;
+    const { name, path, isRequired } = field;
 
-    return <DynamicSelector name={name} onChange={onChange} searchUrl={path} />;
+    return (
+      <DynamicSelector
+        name={name}
+        onChange={onChange}
+        searchUrl={path}
+        isRequired={isRequired}
+      />
+    );
   }
 
   if (fieldType === "TEXT_INPUT") {
