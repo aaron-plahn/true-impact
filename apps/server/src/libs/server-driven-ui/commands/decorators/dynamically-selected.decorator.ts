@@ -1,4 +1,4 @@
-import { Ctor } from 'src/libs/data-types';
+import { Ctor } from '../../../../libs/data-types';
 
 export interface DynamicSelectionMetadata {
   path: string; // relative to base

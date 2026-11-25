@@ -3,7 +3,7 @@ import {
   Ctor,
   getDataSchemaFromClassCtor,
   SchemaPropertyMetadata,
-} from 'src/libs/data-types';
+} from '../../../libs/data-types';
 import { TISduiDynamicSelector, TISduiFormField } from '../forms';
 import { buildCommandFormFieldFromMetadata } from './build-command-form-field-from-metadata';
 import { getDynamicSelectionMetadata } from './decorators';

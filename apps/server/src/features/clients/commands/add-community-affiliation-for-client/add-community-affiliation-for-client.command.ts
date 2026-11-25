@@ -1,9 +1,9 @@
-import { DynamicallySelected } from 'src/libs/server-driven-ui/commands/decorators';
 import {
   NestedDataType,
   NonEmptyString,
   TrueImpactDataExample,
 } from '../../../../libs/data-types';
+import { DynamicallySelected } from '../../../../libs/server-driven-ui';
 import { ClientCompositeIdentifier } from '../../client.composite-identifier';
 
 @TrueImpactDataExample<AddCommunityAffiliationForClient>({

@@ -4,6 +4,7 @@ exports[`Client index endpoint (POST /clients) when the user has permission to e
 {
   "actions": {
     "CREATE_CLIENT": {
+      "commandType": "CREATE_CLIENT",
       "context": {},
       "fields": [
         {
@@ -59,7 +60,10 @@ exports[`Client index endpoint (POST /clients) when the user has permission to e
         },
       ],
       "label": "CREATE_CLIENT",
+      "method": "POST",
+      "path": "/clients/commands",
       "tooltip": "Add a new client to the system",
+      "type": "COMMAND",
     },
   },
   "layout": {

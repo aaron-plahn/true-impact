@@ -8,7 +8,7 @@ import {
   NON_EMPTY_STRING,
   SchemaPropertyMetadata,
   SimpleSchemaPropertyMetadata,
-} from 'src/libs/data-types';
+} from '../../../libs/data-types';
 import { TISduiFormField, TISduiTextInput } from '../forms';
 
 export const buildCommandFormFieldFromMetadata = (
