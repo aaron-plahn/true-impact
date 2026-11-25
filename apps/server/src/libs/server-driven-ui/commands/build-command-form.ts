@@ -30,11 +30,6 @@ export const buildCommandForm = <TPayload extends ICommandPayload>(
 
   const dynamicSelectionMetadata = getDynamicSelectionMetadata(ctor);
 
-  console.log({
-    schema,
-    dynamicSelectionMetadata,
-  });
-
   // TODO getCommandMetadata -> label, description
 
   const fields: TISduiFormField[] = [];

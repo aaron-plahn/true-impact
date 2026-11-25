@@ -292,7 +292,7 @@ export class ClientViewModel {
           },
           // TODO this should come from an annotation `@Command({label,description})`
           {
-            label: 'ADD_COMMUNITY_AFFILIATION_FOR_CLIENT',
+            label: `Add Community`,
             description:
               'add the community to which this client is officially registered',
           },
