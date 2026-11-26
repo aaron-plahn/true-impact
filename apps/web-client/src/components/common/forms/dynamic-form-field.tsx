@@ -48,6 +48,7 @@ export const DynamicFormField = (field: DynamicFormFieldProps): JSX.Element => {
         label={label}
         isRequired={Boolean(isRequired)}
         // TODO bind to the form state
+        // Note that we need to use a dynamic form with a text field to hit this
         value={""}
         onChange={onChange}
       />
@@ -66,6 +67,7 @@ export const DynamicFormField = (field: DynamicFormFieldProps): JSX.Element => {
         onChange={(newValue) => {
           onChange(newValue);
         }}
+        // TODO use this (See comment for TextInputField)
         values={[]}
       />
     );
