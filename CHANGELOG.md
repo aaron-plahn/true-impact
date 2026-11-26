@@ -7,6 +7,9 @@ In this PR, we update our test of the client detail's admin UX to ensure that th
 client is known to be non-indigenous. We also tweak some details of this test to avoid the need to modify any tests in
 refactor PR #101.
 
+## 101
+This PR involves a big refactor in which we generate command forms for the client detail view on the server from the command schema using our internal `Server Driven UI` API. This will allow us to move significantly faster for all future admin UX features. We relied heavily on our recently enhanced UI e2e test suite for confidence in getting this refactor right.
+
 ## 100
 In this PR, we add a UI e2e test for completing a survey as a client and reviewing the results and custom reports as an admin.
 
