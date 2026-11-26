@@ -96,7 +96,7 @@ export const SurveyManagementDetailPage = (): JSX.Element => {
                 key={`ADD_OPTION_TO_SURVEY_QUESTION_${questionLabel}`}
                 customId={`ADD_OPTION_TO_SURVEY_QUESTION_${questionLabel}`}
                 label={"Add Option"}
-                description={"Add a new option for the target question"}
+                tooltip={"Add a new option for the target question"}
                 form={({ onClose }) => (
                   <AddOptionToSurveyQuestionCommandForm
                     context={{
@@ -117,7 +117,7 @@ export const SurveyManagementDetailPage = (): JSX.Element => {
         <CommandExecutor
           type={"ADD_QUESTION_TO_SURVEY"}
           label={"Add Question"}
-          description={"Add a question to an existing survey."}
+          tooltip={"Add a question to an existing survey."}
           form={({ onClose }) => (
             <AddQuestionCommandForm
               context={{
@@ -137,7 +137,7 @@ export const SurveyManagementDetailPage = (): JSX.Element => {
           <CommandExecutor
             type={"OPEN_SURVEY_TO_ANONYMOUS_INDIVIDUAL"}
             label={"Open to Anonymous Participant"}
-            description={"Generate a one-time access code for a participant"}
+            tooltip={"Generate a one-time access code for a participant"}
             form={({ onClose }) => (
               <OpenSurveyToAnonymousIndividualForm
                 context={{
@@ -153,7 +153,7 @@ export const SurveyManagementDetailPage = (): JSX.Element => {
         <CommandExecutor
           type="OPEN_SURVEY_TO_PUBLIC"
           label="Open to the General Public"
-          description="Allow public users to complete this survey"
+          tooltip="Allow public users to complete this survey"
           form={({ onClose }) => (
             <OpenSurveyToPublicForm
               context={{
@@ -168,7 +168,7 @@ export const SurveyManagementDetailPage = (): JSX.Element => {
         <CommandExecutor
           type="OPEN_SURVEY_TO_CLIENT"
           label="Open to Client"
-          description="Invite a client to complete this survey"
+          tooltip="Invite a client to complete this survey"
           form={({ onClose }) => (
             <OpenSurveyToClientForm
               onClose={onClose}
@@ -191,7 +191,7 @@ export const SurveyManagementDetailPage = (): JSX.Element => {
           // why does this appear twice?
           type={"FINALIZE_SURVEY"}
           label={"Finalize Survey"}
-          description={"Finalize this Survey for use"}
+          tooltip={"Finalize this Survey for use"}
           form={({ onClose }) => (
             <FinalizeSurveyCommandForm
               context={{

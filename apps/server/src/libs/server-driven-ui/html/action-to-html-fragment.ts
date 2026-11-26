@@ -58,7 +58,10 @@ export const actionToHtmlFragment = ({
         </fieldset>`;
       }
 
-      const exhaustiveCheck: never = field;
+      // const exhaustiveCheck: never = field;
+
+      // TODO re-instate the above. We need to decide if we want to support vanilla HTML renderers for these or just React
+      const exhaustiveCheck = field;
 
       return `<div>Unsupported type for form field: ${JSON.stringify(exhaustiveCheck)}</div>`;
     })

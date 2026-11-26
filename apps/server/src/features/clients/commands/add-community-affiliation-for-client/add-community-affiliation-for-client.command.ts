@@ -3,6 +3,7 @@ import {
   NonEmptyString,
   TrueImpactDataExample,
 } from '../../../../libs/data-types';
+import { DynamicallySelected } from '../../../../libs/server-driven-ui';
 import { ClientCompositeIdentifier } from '../../client.composite-identifier';
 
 @TrueImpactDataExample<AddCommunityAffiliationForClient>({
@@ -24,9 +25,13 @@ export class AddCommunityAffiliationForClient {
   aggregateCompositeIdentifier: ClientCompositeIdentifier;
 
   @NonEmptyString({
-    label: 'community ID',
+    label: 'community',
     description:
       'a reference to the community to which this client is registered',
+  })
+  @DynamicallySelected({
+    // method?
+    path: '/communities/select',
   })
   communityId: string;
 }

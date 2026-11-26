@@ -1,10 +1,78 @@
 import { Link, useParams } from "react-router-dom";
 import { JSX } from "react/jsx-runtime";
+import { TISduiCommand } from "../../shared/command-action.interface";
 import { CommandExecutor } from "../command-execution";
+import { DynamicForm } from "../common";
 import { ApiResponseErrorInfo } from "../error-handling";
 import { Loading } from "../loading";
-import { AddCommunityAffiliationForClientCommandForm } from "./command-execution";
-import { useFetchClientByIdQuery } from "./store";
+import {
+  ClientViewModel,
+  useExecuteClientCommandMutation,
+  useFetchClientByIdQuery,
+} from "./store";
+
+const isCommandAction = (input: unknown): input is TISduiCommand => {
+  return (input as TISduiCommand)?.type === "COMMAND";
+};
+
+const CommunityPresenter = ({
+  community,
+}: {
+  community: ClientViewModel["community"] | TISduiCommand | null;
+}): JSX.Element | null => {
+  const [executeCommand, { isLoading: isRequestInProgress, error }] =
+    useExecuteClientCommandMutation();
+
+  if (!community) {
+    return null;
+  }
+
+  if (isCommandAction(community)) {
+    if (isRequestInProgress) {
+      return <Loading />;
+    }
+
+    if (error) {
+      return <ApiResponseErrorInfo error={error} />;
+    }
+
+    return (
+      <CommandExecutor
+        form={({ onClose }) => (
+          <DynamicForm
+            label={community.label}
+            fields={community.fields}
+            context={community.context}
+            onSubmit={(payload) => {
+              executeCommand({
+                type: community.commandType,
+                payload,
+              });
+
+              onClose();
+            }}
+          />
+        )}
+        type={community.type}
+        label={community.label}
+        // TODO should we rename this on the executor?
+        tooltip={community.tooltip}
+      />
+    );
+  }
+
+  // TODO move this logic to the server
+  const communityName = community.name.items?.["en"]?.["original"]?.text;
+
+  if (communityName) {
+    return (
+      <p data-testid="client-details-community">Community: {communityName}</p>
+    );
+  }
+
+  // This is a system error and should never happen
+  return <div>Missing text for the property: community name</div>;
+};
 
 export const ClientDetailPage = (): JSX.Element => {
   const { id } = useParams();
@@ -32,18 +100,6 @@ export const ClientDetailPage = (): JSX.Element => {
 
   const middleInitials = (fullName.middleName || []).join(".");
 
-  const communityName = community
-    ? community.name.items?.["en"]?.["original"]?.text
-    : null;
-
-  /**
-   * If whether the client is Indigenous was previous marked as "Unknown",
-   * adding a community also transitions `isIndigenous->"Yes"`.
-   *
-   * Only if `isIndigenous === "No"` do we want to hide this option.
-   */
-  const shouldEnableAddCommunity = !communityName && isIndigenous !== "No";
-
   return (
     <div>
       <h1>Client</h1>
@@ -51,27 +107,13 @@ export const ClientDetailPage = (): JSX.Element => {
         {fullName.firstName} {middleInitials} {fullName.lastName}
       </h2>
       <p data-testid="client-details-dob">DOB: {dateOfBirth}</p>
-      {communityName ? (
-        <p data-testid="client-details-community">Community: {communityName}</p>
-      ) : null}
-      {shouldEnableAddCommunity ? (
-        <CommandExecutor
-          type={"ADD_COMMUNITY_AFFILIATION_FOR_CLIENT"}
-          label={"Add Client's Community"}
-          description={
-            "Record the community with which the client is officially registered"
-          }
-          form={({ onClose }) => (
-            <AddCommunityAffiliationForClientCommandForm
-              onClose={onClose}
-              context={{
-                type: "client",
-                id: id || "",
-              }}
-            />
-          )}
-        />
-      ) : null}
+      {/*
+        We might want to have a `Render SDUI Block` just for such properties.
+        We could bridge this to a full `SduiView` at some point.
+        Right now we are merging a SDUI command form with a JSON data based representation
+        of the client's community. But we could return a `TextView` or a `Link` from the server.
+      */}
+      <CommunityPresenter community={community} />
       <p data-testid="client-details-isIndigenous">
         Is Indigenous? {isIndigenous}
       </p>
@@ -87,6 +129,7 @@ export const ClientDetailPage = (): JSX.Element => {
               }
 
               // TODO even though we know this should exist, let's be more defensive here
+              // TODO this is just being converted back to a date string. Just send the text from the server.
               const submissionDate = new Date(
                 parseInt(sr.submissionTime as string),
               );

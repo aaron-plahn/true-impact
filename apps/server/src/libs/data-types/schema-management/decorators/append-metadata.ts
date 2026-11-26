@@ -32,6 +32,7 @@ export const isObjectSchemaPropertyMetadata = (
   (input as ObjectSchemaPropertyMetadata).type === 'object';
 
 export type SimpleSchemaPropertyMetadata = {
+  // It would be nice if this were `SIMPLE` and there were another `dataType` property here
   type: string;
   isOptional: boolean;
   mustBeUnique: boolean;

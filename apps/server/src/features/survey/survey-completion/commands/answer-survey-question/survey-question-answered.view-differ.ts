@@ -136,6 +136,7 @@ export class SurveyQuestionAnsweredViewDiffer {
 
     const field: TISduiFormField = {
       name: 'chosenOptionLabel',
+      isRequired: true,
       type: 'SINGLE_SELECT_INPUT',
       label: label,
       options: selectOptions,

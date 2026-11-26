@@ -8,6 +8,7 @@ import {
   QueryOptions,
   SimpleQueryCondition,
 } from "../../../shared";
+import { TISduiCommand } from "../../../shared/command-action.interface";
 import { ClientSearchSliceState } from "./client-search.slice";
 
 // BEGIN copied from server
@@ -29,15 +30,18 @@ export interface ClientViewModel {
     middleName: string[];
   };
   isIndigenous: "Yes" | "No" | "Unknown";
-  community?: {
-    id: string;
-    bandNumber: string;
-    revision: string;
-    // languageCode -> translationType(role) -> text item
-    name: {
-      items: Record<string, Record<string, { text: string }>>;
-    };
-  };
+  community:
+    | {
+        id: string;
+        bandNumber: string;
+        revision: string;
+        // languageCode -> translationType(role) -> text item
+        name: {
+          items: Record<string, Record<string, { text: string }>>;
+        };
+      }
+    | TISduiCommand
+    | null;
   surveyResponses: ClientSurveyResponseRecord[];
 }
 // END copied from server

@@ -1,7 +1,8 @@
 import { Stack } from "@mui/material";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { MultiTextInput } from "../common";
+import { DatePicker, MultiTextInput, TextInputField } from "../common";
+import { SelectOne } from "../common/forms/select-one";
 import { ApiResponseErrorInfo } from "../error-handling";
 import { Loading } from "../loading";
 import { DynamicClientCommunitySelector } from "./dynamic-client-community-selector";
@@ -59,75 +60,68 @@ export const NewClientPage = () => {
         }}
       >
         <Stack>
-          <label htmlFor="firstName-input">
-            First Name
-            <input
-              required
-              id="firstName-input"
-              // firstName-input-text ? Should the test ID track the field type?
-              data-testid="firstName-input"
-              type="text"
-              value={firstName}
-              onChange={(e) => {
-                setFirstName(e.target.value);
-              }}
-            />
-          </label>
-          <label>Middle Names</label>
+          <TextInputField
+            name={"firstName"}
+            label={"First Name"}
+            isRequired={true}
+            value={firstName}
+            onChange={(newValue) => {
+              setFirstName(newValue || "");
+            }}
+          />
           <MultiTextInput
             onChange={(newValue) => {
               setMiddleNames(newValue);
             }}
+            label="Middle Names"
             name={"middleNames"}
             values={middleNames}
           />
-          <label htmlFor="lastName-input">
-            Last Name
-            <input
-              required
-              id="lastName-input"
-              data-testid="lastName-input"
-              type="text"
-              value={lastName}
-              onChange={(e) => {
-                setLastName(e.target.value);
-              }}
-            />
-          </label>
-          <label htmlFor="dateOfBirth-input">
-            Date of Birth
-            {/* TODO tool tips */}
-            <input
-              id="dateOfBirth-input"
-              required
-              data-testid="dateOfBirth-input"
-              type="date"
-              value={dateOfBirth}
-              onChange={(e) => {
-                setDateOfBirth(e.target.value);
-              }}
-            />
-          </label>
-          <label htmlFor="isIndigenous-input">
-            Is Indigenous?
-            <select
-              id="isIndigenous-input"
-              data-testid="isIndigenous-input"
-              onChange={(e) => {
-                setIsIndigenous(e.target.value as "Yes" | "No" | "Unknown");
-              }}
-            >
-              <option key="indigenous-unknown" value="Unknown" selected>
-                unknown
-              </option>
-              <option key="indigenous-yes" value="Yes">
-                yes
-              </option>
-              <option key="indigenous-no" value="No">
-                no
-              </option>
-            </select>
-          </label>
+          <TextInputField
+            name="lastName"
+            label="Last Name"
+            isRequired={true}
+            value={lastName}
+            onChange={(newValue) => {
+              setLastName(newValue || "");
+            }}
+          />
+          <DatePicker
+            name={"dateOfBirth"}
+            label={"Date of Birth"}
+            isRequired={true}
+            value={dateOfBirth}
+            onChange={(newValue) => {
+              setDateOfBirth(newValue || "");
+            }}
+          />
+          <SelectOne
+            name={"isIndigenous"}
+            label={"Is Indigenous?"}
+            isRequired={true}
+            value={isIndigenous}
+            onChange={(newValue) => {
+              setIsIndigenous(newValue as "Yes" | "No" | "Unknown");
+            }}
+            options={[
+              {
+                value: "Unknown",
+                label: "unknown",
+              },
+              {
+                value: "Yes",
+                label: "yes",
+              },
+              {
+                value: "No",
+                label: "no",
+              },
+            ]}
+          />
+          {/* This part is tricky to do with dynamic forms. What we would need is the
+            concept of a "dependent field". I.e., communityId is only to be specified
+            if `isIndigenous === "Yes"`;
+          */}
           {isIndigenous === "Yes" ? (
             <DynamicClientCommunitySelector
               onChange={function (newValue: string | undefined): void {

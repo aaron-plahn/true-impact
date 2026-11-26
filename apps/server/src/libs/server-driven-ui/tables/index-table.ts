@@ -1,4 +1,5 @@
 import { LogicalOperator } from 'src/libs/query-language';
+import { TISduiCommand } from '../commands';
 
 // TODO
 // export class TextCell {
@@ -93,4 +94,5 @@ export class IndexTable<T> {
   layout: TableLayout<keyof T>;
   rows: T[];
   navigationPanel: NavigationPanel;
+  actions: Record<string, TISduiCommand>;
 }

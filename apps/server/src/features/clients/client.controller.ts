@@ -341,6 +341,16 @@ export class ClientController implements OnModuleInit {
         availablePageSizes: PAGE_SIZES.filter((ps) => ps !== pageSize),
         totalNumberOfResults: clients.length,
       },
+      actions: {
+        /**
+         * Note that this key is redundant with the `commandType` property.
+         * The reason why we want a key-value structure is so it's natural to merge changes
+         * to the set of available commands in a given context. But in the index context, this
+         * will typically just be one creation command.
+         */
+        // CREATE_CLIENT: createClientTISduiCommand,
+        // TODO dynamically generate index-scoped client commands
+      },
     };
 
     return result;

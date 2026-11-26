@@ -1,3 +1,4 @@
+export * from './commands';
 export * from './content-node';
 export * from './html';
 export * from './screen-size';

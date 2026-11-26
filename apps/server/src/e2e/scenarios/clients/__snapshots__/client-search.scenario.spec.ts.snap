@@ -2,6 +2,7 @@
 
 exports[`Client index endpoint (POST /clients) when the user has permission to execute the query when the query request is well-formed when no filters or pagination have been provided when there is no data in the database should return the expected empty response 1`] = `
 {
+  "actions": {},
   "layout": {
     "columns": [
       {
