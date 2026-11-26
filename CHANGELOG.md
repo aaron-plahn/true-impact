@@ -2,6 +2,11 @@
 
 This first release of the True Impact platform introduces a working model for user management, client management, and survey creation and completion.
 
+## 102
+In this PR, we update our test of the client detail's admin UX to ensure that the "community" is not rendered whenever the
+client is known to be non-indigenous. We also tweak some details of this test to avoid the need to modify any tests in
+refactor PR #101.
+
 ## 100
 In this PR, we add a UI e2e test for completing a survey as a client and reviewing the results and custom reports as an admin.
 

@@ -15,7 +15,7 @@ Feature: Client Details page
         And I complete the select field "isIndigenous" by chosing the option with label "unknown"
         And I submit the command "Create Client"
         # It is assumed that the app redirects to the client detail page for the new client at this point
-        And I begin the command with label "Add Client's Community"
+        And I begin the command with label "Add"
         And I complete the dynamic selector field "communityId" by typing "Big" and choosing the result "Big Creek"
         # TODO Shouldn't this be "Add Client's Community"?
         And I submit the command "Add Community"
@@ -94,3 +94,4 @@ Feature: Client Details page
         And I complete the select field "isIndigenous" by chosing the option with label "no"
         And I submit the command "Create Client"
         Then The client's "isIndigenous" should appear as "No"
+        And The client's "community" should not appear

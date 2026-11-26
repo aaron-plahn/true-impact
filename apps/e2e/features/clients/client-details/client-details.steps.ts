@@ -15,3 +15,9 @@ Then(
     await expect(targetEl).toHaveText(expectedText, { containing: true });
   },
 );
+
+Then("The client's {string} should not appear", async (propertyLabel) => {
+  const targetEl = $(`[data-testid="client-details-${propertyLabel}"]`);
+
+  await expect(targetEl).not.toBeExisting();
+});
