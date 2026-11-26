@@ -17,6 +17,7 @@ Feature: Client Details page
         # It is assumed that the app redirects to the client detail page for the new client at this point
         And I begin the command with label "Add"
         And I complete the dynamic selector field "communityId" by typing "Big" and choosing the result "Big Creek"
+        # TODO Shouldn't this be "Add Client's Community"?
         And I submit the command "Add Community"
         Then The client's "community" should appear as "Big Creek"
         And The client's "isIndigenous" should appear as "Yes"
@@ -68,7 +69,6 @@ Feature: Client Details page
         And I submit the command "Add Community"
         Then The client's "community" should appear as "Little Creek"
 
-    @only
     Scenario: When adding the client's community in the client detail view
         Given I am logged in as an admin
         When I open the new client page

@@ -185,7 +185,7 @@ export class ClientViewModelClientDto {
     description: 'the community to which the client is registered',
   })
   // or an `Action` if not defined
-  community: CommunityViewModelClientDto | TISduiCommand;
+  community?: CommunityViewModelClientDto | TISduiCommand;
 
   // flag client action
   @LookupTable(() => FlagViewModelClientDto, {
@@ -271,6 +271,9 @@ export class ClientViewModel {
   }
 
   toClientDto(): ClientViewModelClientDto {
+    const isAddCommunityAvailable =
+      !this.community && this.isIndigenous !== 'No';
+
     const result: ClientViewModelClientDto = {
       id: this.id,
       createdAt: this.createdAt,
@@ -278,25 +281,26 @@ export class ClientViewModel {
       revision: this.revision,
       fullName: this.fullName.toDto(),
       isIndigenous: this.isIndigenous,
-      community:
-        this.community ||
-        buildCommandForm(
-          AddCommunityAffiliationForClient,
-          'clients/commands',
-          // context
-          {
-            aggregateCompositeIdentifier: {
-              type: CLIENT_AGGREGATE_TYPE,
-              id: this.id,
+      community: isAddCommunityAvailable
+        ? buildCommandForm(
+            AddCommunityAffiliationForClient,
+            'clients/commands',
+            // context
+            {
+              aggregateCompositeIdentifier: {
+                type: CLIENT_AGGREGATE_TYPE,
+                id: this.id,
+              },
             },
-          },
-          // TODO this should come from an annotation `@Command({label,description})`
-          {
-            label: `Add Community`,
-            description:
-              'add the community to which this client is officially registered',
-          },
-        ),
+            // TODO this should come from an annotation `@Command({label,description})`
+            {
+              label: `Add Community`,
+              description:
+                'add the community to which this client is officially registered',
+            },
+          )
+        : // possibly `null`
+          this.community,
 
       // {
       //   type: 'COMMAND',

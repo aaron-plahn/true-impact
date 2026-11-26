@@ -36,8 +36,6 @@ const CommunityPresenter = ({
       return <ApiResponseErrorInfo error={error} />;
     }
 
-    console.log({ communityForm: JSON.stringify(community) });
-
     return (
       <CommandExecutor
         form={({ onClose }) => (
@@ -50,6 +48,8 @@ const CommunityPresenter = ({
                 type: community.commandType,
                 payload,
               });
+
+              onClose();
             }}
           />
         )}
@@ -125,8 +125,13 @@ export const ClientDetailPage = (): JSX.Element => {
         {fullName.firstName} {middleInitials} {fullName.lastName}
       </h2>
       <p data-testid="client-details-dob">DOB: {dateOfBirth}</p>
+      {/*
+        We might want to have a `Render SDUI Block` just for such properties.
+        We could bridge this to a full `SduiView` at some point.
+        Right now we are merging a SDUI command form with a JSON data based representation
+        of the client's community. But we could return a `TextView` or a `Link` from the server.
+      */}
       <CommunityPresenter community={community} />
-
       <p data-testid="client-details-isIndigenous">
         Is Indigenous? {isIndigenous}
       </p>
@@ -142,6 +147,7 @@ export const ClientDetailPage = (): JSX.Element => {
               }
 
               // TODO even though we know this should exist, let's be more defensive here
+              // TODO this is just being converted back to a date string. Just send the text from the server.
               const submissionDate = new Date(
                 parseInt(sr.submissionTime as string),
               );
