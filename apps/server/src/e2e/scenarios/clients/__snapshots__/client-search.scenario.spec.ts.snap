@@ -2,70 +2,7 @@
 
 exports[`Client index endpoint (POST /clients) when the user has permission to execute the query when the query request is well-formed when no filters or pagination have been provided when there is no data in the database should return the expected empty response 1`] = `
 {
-  "actions": {
-    "CREATE_CLIENT": {
-      "commandType": "CREATE_CLIENT",
-      "context": {},
-      "fields": [
-        {
-          "isRequired": true,
-          "label": "First Name",
-          "name": "firstName",
-          "type": "TEXT_INPUT",
-        },
-        {
-          "isRequired": false,
-          "label": "Middle Names",
-          "name": "middleNames",
-          "type": "TEXT_INPUT",
-        },
-        {
-          "isRequired": true,
-          "label": "Last Name",
-          "name": "lastName",
-          "type": "TEXT_INPUT",
-        },
-        {
-          "isRequired": true,
-          "label": "DOB",
-          "name": "dateOfBirth",
-          "type": "DATE_PICKER",
-        },
-        {
-          "isRequired": true,
-          "label": "Is Indigenous?",
-          "name": "isIndigenous",
-          "options": [
-            {
-              "label": "yes",
-              "value": "Yes",
-            },
-            {
-              "label": "no",
-              "value": "No",
-            },
-            {
-              "label": "unknown",
-              "value": "Unknown",
-            },
-          ],
-          "type": "SINGLE_SELECT_INPUT",
-        },
-        {
-          "isRequired": false,
-          "label": "",
-          "name": "",
-          "path": "/communities/search",
-          "type": "DYNAMIC_SELECTOR",
-        },
-      ],
-      "label": "CREATE_CLIENT",
-      "method": "POST",
-      "path": "/clients/commands",
-      "tooltip": "Add a new client to the system",
-      "type": "COMMAND",
-    },
-  },
+  "actions": {},
   "layout": {
     "columns": [
       {
