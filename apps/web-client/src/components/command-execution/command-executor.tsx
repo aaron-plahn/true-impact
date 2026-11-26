@@ -6,7 +6,7 @@ type Form = ({ onClose }: { onClose: () => void }) => JSX.Element;
 interface CommandExecutorProps {
   type: string;
   label: string;
-  description: string;
+  tooltip: string;
   // TODO Build this from the schema
   form: Form;
   customId?: string;
@@ -15,7 +15,7 @@ interface CommandExecutorProps {
 export const CommandExecutor = ({
   type: commandType,
   label,
-  description,
+  tooltip: description,
   form: ProvidedForm,
   customId,
 }: CommandExecutorProps): JSX.Element => {

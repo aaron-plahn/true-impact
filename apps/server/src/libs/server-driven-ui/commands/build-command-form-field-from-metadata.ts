@@ -7,7 +7,6 @@ import {
   isSetPropertyMetadata,
   NON_EMPTY_STRING,
   SchemaPropertyMetadata,
-  SimpleSchemaPropertyMetadata,
 } from '../../../libs/data-types';
 import { TISduiFormField, TISduiTextInput } from '../forms';
 
@@ -22,20 +21,11 @@ export const buildCommandFormFieldFromMetadata = (
     isLookupTablePropertyMetadata(metadataForProperty) ||
     isSetPropertyMetadata(metadataForProperty) ||
     isLiteralDataTypeMetadata(metadataForProperty)
-    // type === 'object' ||
-    // type === 'ENUMERATED_TYPE' ||
-    // type === 'array' ||
-    // type === 'lookup-table-object' ||
-    // type === 'set' ||
-    // type === 'LITERAL'
   ) {
     throw new Error(
       `Failed to generate dynamic form. Unsupported command property type [${metadataForProperty.type}] for property [${propertyKey}].`,
     );
   }
-
-  // This is a static exhaustive check
-  const _foo: SimpleSchemaPropertyMetadata = metadataForProperty;
 
   if (metadataForProperty.type === NON_EMPTY_STRING) {
     const field: TISduiTextInput = {

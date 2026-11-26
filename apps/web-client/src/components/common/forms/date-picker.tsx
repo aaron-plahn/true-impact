@@ -3,7 +3,7 @@ import { JSX } from "react/jsx-runtime";
 export interface DatePickerProps {
   name: string;
   label: string;
-  // TODO use this
+  // TODO We should use this. We should also specify the "placement".
   tooltip?: string;
   isRequired: boolean;
   value: string;

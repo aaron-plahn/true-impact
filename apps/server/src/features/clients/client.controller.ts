@@ -7,7 +7,6 @@ import {
   SimpleQueryFilterCondition,
 } from 'src/libs/query-language';
 import { IndexTable, TableLayout } from 'src/libs/server-driven-ui';
-import { createClientTISduiCommand } from 'src/libs/server-driven-ui/commands';
 import { AdminRbacAuthGuard } from '../../auth/guards';
 import type { CommandResult, ICommandFsa } from '../../libs/cqrs-es';
 import { CommandHandlerService } from '../../libs/cqrs-es';
@@ -344,9 +343,13 @@ export class ClientController implements OnModuleInit {
       },
       actions: {
         /**
-         * TODO Dynamically build this from the command Schema.
+         * Note that this key is redundant with the `commandType` property.
+         * The reason why we want a key-value structure is so it's natural to merge changes
+         * to the set of available commands in a given context. But in the index context, this
+         * will typically just be one creation command.
          */
-        CREATE_CLIENT: createClientTISduiCommand,
+        // CREATE_CLIENT: createClientTISduiCommand,
+        // TODO dynamically generate index-scoped client commands
       },
     };
 

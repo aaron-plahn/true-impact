@@ -1,4 +1,4 @@
-import { ClientViewModel } from 'src/features/clients/queries';
+import { DeepPartial } from '@nestjs/swagger';
 import { TISduiFormField } from '../forms';
 
 export interface TISduiCommand<T = unknown> {
@@ -6,72 +6,16 @@ export interface TISduiCommand<T = unknown> {
   commandType: string;
   label: string;
   tooltip: string;
-  // Deep Partial?
-  context: Record<string, Partial<T>>;
+  context: DeepPartial<T>;
   fields: TISduiFormField[];
   method: 'POST';
+  /**
+   * Note that we aren't currently using this in the client. That's because
+   * we need to execute the command using a RTK mutation in order to invalidate
+   * the Redux cache. What we really need is some way to align the request with the
+   * corresponding cache entry. For now, we treat this as out-of-band knowledge. It stays
+   * fairly isolated in the client codebase. In the long run, we will stream deltas in a
+   * write hook on the query DB anyway.
+   */
   path: string; // relative to base
 }
-
-export const createClientTISduiCommand: TISduiCommand<ClientViewModel> = {
-  type: 'COMMAND',
-  commandType: 'CREATE_CLIENT',
-  method: 'POST',
-  path: '/clients/commands',
-  label: 'CREATE_CLIENT',
-  tooltip: 'Add a new client to the system',
-  context: {},
-  fields: [
-    {
-      type: 'TEXT_INPUT',
-      label: 'First Name',
-      name: 'firstName',
-      isRequired: true,
-    },
-    {
-      type: 'TEXT_INPUT',
-      label: 'Middle Names',
-      name: 'middleNames',
-      isRequired: false,
-    },
-    {
-      type: 'TEXT_INPUT',
-      label: 'Last Name',
-      name: 'lastName',
-      isRequired: true,
-    },
-    {
-      type: 'DATE_PICKER',
-      label: 'DOB',
-      name: 'dateOfBirth',
-      isRequired: true,
-    },
-    {
-      type: 'SINGLE_SELECT_INPUT',
-      label: 'Is Indigenous?',
-      name: 'isIndigenous',
-      isRequired: true,
-      options: [
-        {
-          label: 'yes',
-          value: 'Yes',
-        },
-        {
-          label: 'no',
-          value: 'No',
-        },
-        {
-          label: 'unknown',
-          value: 'Unknown',
-        },
-      ],
-    },
-    {
-      type: 'DYNAMIC_SELECTOR',
-      label: '',
-      name: '',
-      isRequired: false,
-      path: '/communities/search',
-    },
-  ],
-};

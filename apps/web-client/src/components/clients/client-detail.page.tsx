@@ -56,27 +56,9 @@ const CommunityPresenter = ({
         type={community.type}
         label={community.label}
         // TODO should we rename this on the executor?
-        description={community.tooltip}
+        tooltip={community.tooltip}
       />
     );
-    // return (
-    //   <CommandExecutor
-    //     type={"ADD_COMMUNITY_AFFILIATION_FOR_CLIENT"}
-    //     label={"Add Client's Community"}
-    //     description={
-    //       "Record the community with which the client is officially registered"
-    //     }
-    //     form={({ onClose }) => (
-    //       <AddCommunityAffiliationForClientCommandForm
-    //         onClose={onClose}
-    //         context={{
-    //           type: "client",
-    //           id: community.context.aggregateCompositeIdentifier.id || "",
-    //         }}
-    //       />
-    //     )}
-    //   />
-    // );
   }
 
   // TODO move this logic to the server

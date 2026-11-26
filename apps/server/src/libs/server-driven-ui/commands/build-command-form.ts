@@ -51,10 +51,20 @@ export const buildCommandForm = <TPayload extends ICommandPayload>(
       if (propertyKey in dynamicSelectionMetadata) {
         const { path } = dynamicSelectionMetadata[propertyKey];
 
+        /**
+         * We should sort out the interaction between dynamic selector fields and the corresponding property data type metadata.
+         * For now, we assume that dynamic selections are required to be completed unless the property metadata explicitly
+         * states otherwise.
+         */
+        const isRequired =
+          'isRequired' in propertyMetadata
+            ? (propertyMetadata as { isRequired: boolean }).isRequired
+            : true;
+
         const field: TISduiDynamicSelector = {
           type: 'DYNAMIC_SELECTOR',
           // TODO sort out the interaction of this with the property metadata
-          isRequired: true,
+          isRequired,
           // TODO constrain the @DynamicallySelected decorator to only target fields with appropriate data types
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
           label: propertyMetadata.label,
@@ -84,7 +94,6 @@ export const buildCommandForm = <TPayload extends ICommandPayload>(
     commandType,
     label: commandMetadata.label,
     tooltip: commandMetadata.description,
-    // @ts-expect-error TODO Fix the type here
     context,
     fields,
     method: 'POST',
